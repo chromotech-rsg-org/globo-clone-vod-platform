@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const PlansSection = () => {
