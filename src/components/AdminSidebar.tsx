@@ -9,8 +9,10 @@ import {
   Ticket, 
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -19,6 +21,7 @@ interface AdminSidebarProps {
 
 const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   const menuItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -32,11 +35,11 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   return (
     <div className={`bg-gray-800 text-white transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
-    } min-h-screen relative`}>
+    } min-h-screen relative flex flex-col`}>
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-6 bg-gray-800 border border-gray-600 rounded-full p-1 hover:bg-gray-700"
+        className="absolute -right-3 top-6 bg-gray-800 border border-gray-600 rounded-full p-1 hover:bg-gray-700 z-10"
       >
         {isCollapsed ? (
           <ChevronRight className="h-4 w-4" />
@@ -47,16 +50,16 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
       {/* Logo */}
       <div className="p-4 border-b border-gray-700">
-        <div className="flex items-center space-x-2">
+        <Link to="/" className="flex items-center space-x-2">
           <div className="text-red-500 font-bold text-xl">G</div>
           {!isCollapsed && (
             <span className="font-bold text-lg">Globoplay Admin</span>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6">
+      <nav className="mt-6 flex-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -69,7 +72,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                 isActive ? 'bg-gray-700 border-r-2 border-red-500 text-white' : ''
               }`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-5 w-5 min-w-[20px]" />
               {!isCollapsed && (
                 <span className="ml-3">{item.label}</span>
               )}
@@ -77,6 +80,19 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           );
         })}
       </nav>
+
+      {/* Logout Button */}
+      <div className="p-4 border-t border-gray-700">
+        <button
+          onClick={logout}
+          className="flex items-center w-full px-4 py-3 text-gray-300 hover:bg-gray-700 transition-colors rounded"
+        >
+          <LogOut className="h-5 w-5 min-w-[20px]" />
+          {!isCollapsed && (
+            <span className="ml-3">Sair</span>
+          )}
+        </button>
+      </div>
     </div>
   );
 };

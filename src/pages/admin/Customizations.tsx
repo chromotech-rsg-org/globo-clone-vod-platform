@@ -4,13 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, Save, X } from 'lucide-react';
+import { Edit, Save, X, Upload, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
@@ -26,20 +23,37 @@ interface Customization {
 }
 
 const AdminCustomizations = () => {
-  const [customizations, setCustomizations] = useState<Customization[]>([]);
+  const [customizations, setCustomizations] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [editingItem, setEditingItem] = useState<Customization | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState(false);
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState({
-    page: '',
-    section: '',
-    element_type: '',
-    element_key: '',
-    element_value: '',
-    active: true
-  });
+  const defaultCustomizations = {
+    // Hero Section
+    'hero_title': 'The Last of Us',
+    'hero_subtitle': 'SÉRIE ORIGINAL HBO',
+    'hero_description': 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.',
+    'hero_button_text': 'Assistir',
+    'hero_background_image': 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop',
+    'hero_title_color': '#ffffff',
+    'hero_button_color': '#ffffff',
+    
+    // Plans Section
+    'plans_title': 'Escolha seu Plano',
+    'plans_subtitle': 'Acesso ilimitado ao melhor do entretenimento',
+    'plans_background_color': '#1f2937',
+    
+    // Header
+    'header_logo_text': 'Globoplay',
+    'header_background_color': '#111827',
+    
+    // Login Page
+    'login_title': 'Acesse sua conta',
+    'login_subtitle': 'Entre ou cadastre-se no Globoplay',
+    'login_background_color': '#111827',
+    'login_card_background': '#1f2937'
+  };
 
   useEffect(() => {
     fetchCustomizations();
@@ -50,68 +64,75 @@ const AdminCustomizations = () => {
       const { data, error } = await supabase
         .from('customizations')
         .select('*')
-        .order('page', { ascending: true });
+        .eq('active', true);
 
       if (error) throw error;
-      setCustomizations(data || []);
+
+      const customizationsMap: Record<string, string> = { ...defaultCustomizations };
+      data?.forEach((item: Customization) => {
+        const key = `${item.section}_${item.element_key}`;
+        if (item.element_value) {
+          customizationsMap[key] = item.element_value;
+        }
+      });
+
+      setCustomizations(customizationsMap);
     } catch (error) {
       console.error('Erro ao buscar personalizações:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as personalizações",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSave = async () => {
+  const saveCustomization = async (key: string, value: string) => {
     try {
-      if (editingItem) {
+      const [section, elementKey] = key.split('_', 2);
+      const remainingKey = key.substring(section.length + 1);
+      
+      // Check if customization exists
+      const { data: existing } = await supabase
+        .from('customizations')
+        .select('id')
+        .eq('page', section === 'login' ? 'login' : 'home')
+        .eq('section', section)
+        .eq('element_key', remainingKey)
+        .single();
+
+      if (existing) {
         // Update existing
         const { error } = await supabase
           .from('customizations')
           .update({
-            page: formData.page,
-            section: formData.section,
-            element_type: formData.element_type,
-            element_key: formData.element_key,
-            element_value: formData.element_value,
-            active: formData.active,
+            element_value: value,
             updated_at: new Date().toISOString()
           })
-          .eq('id', editingItem.id);
+          .eq('id', existing.id);
 
         if (error) throw error;
-        toast({
-          title: "Sucesso",
-          description: "Personalização atualizada com sucesso"
-        });
       } else {
         // Create new
         const { error } = await supabase
           .from('customizations')
-          .insert([{
-            page: formData.page,
-            section: formData.section,
-            element_type: formData.element_type,
-            element_key: formData.element_key,
-            element_value: formData.element_value,
-            active: formData.active
-          }]);
+          .insert({
+            page: section === 'login' ? 'login' : 'home',
+            section: section,
+            element_type: key.includes('color') ? 'color' : key.includes('image') ? 'image' : 'text',
+            element_key: remainingKey,
+            element_value: value,
+            active: true
+          });
 
         if (error) throw error;
-        toast({
-          title: "Sucesso",
-          description: "Personalização criada com sucesso"
-        });
       }
 
-      fetchCustomizations();
-      resetForm();
+      setCustomizations(prev => ({ ...prev, [key]: value }));
+      
+      toast({
+        title: "Sucesso",
+        description: "Personalização salva com sucesso"
+      });
     } catch (error) {
-      console.error('Erro ao salvar:', error);
+      console.error('Erro ao salvar personalização:', error);
       toast({
         title: "Erro",
         description: "Não foi possível salvar a personalização",
@@ -120,63 +141,120 @@ const AdminCustomizations = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta personalização?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('customizations')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Sucesso",
-        description: "Personalização excluída com sucesso"
-      });
-      fetchCustomizations();
-    } catch (error) {
-      console.error('Erro ao excluir:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir a personalização",
-        variant: "destructive"
-      });
-    }
+  const handleImageUpload = async (key: string, file: File) => {
+    // For demo purposes, we'll use a placeholder URL
+    // In production, you would upload to Supabase Storage
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      saveCustomization(key, result);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleEdit = (item: Customization) => {
-    setEditingItem(item);
-    setFormData({
-      page: item.page,
-      section: item.section,
-      element_type: item.element_type,
-      element_key: item.element_key,
-      element_value: item.element_value || '',
-      active: item.active
-    });
-    setIsCreating(false);
-  };
+  const renderElementEditor = (key: string, label: string, type: 'text' | 'color' | 'image' | 'textarea' = 'text') => {
+    const value = customizations[key] || '';
 
-  const resetForm = () => {
-    setEditingItem(null);
-    setIsCreating(false);
-    setFormData({
-      page: '',
-      section: '',
-      element_type: '',
-      element_key: '',
-      element_value: '',
-      active: true
-    });
+    return (
+      <Card className="bg-gray-800 border-gray-700 mb-4">
+        <CardHeader>
+          <CardTitle className="text-white text-sm flex items-center justify-between">
+            {label}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelectedElement(selectedElement === key ? null : key)}
+              className="text-gray-400 hover:text-white"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        {selectedElement === key && (
+          <CardContent className="space-y-4">
+            {type === 'text' && (
+              <Input
+                value={value}
+                onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder={label}
+              />
+            )}
+            
+            {type === 'textarea' && (
+              <Textarea
+                value={value}
+                onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder={label}
+                rows={3}
+              />
+            )}
+            
+            {type === 'color' && (
+              <div className="flex space-x-2">
+                <Input
+                  type="color"
+                  value={value}
+                  onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
+                  className="w-16 h-10 bg-gray-700 border-gray-600"
+                />
+                <Input
+                  value={value}
+                  onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
+                  className="flex-1 bg-gray-700 border-gray-600 text-white"
+                  placeholder="#ffffff"
+                />
+              </div>
+            )}
+            
+            {type === 'image' && (
+              <div className="space-y-2">
+                <Input
+                  value={value}
+                  onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="URL da imagem"
+                />
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor={`file-${key}`} className="cursor-pointer">
+                    <div className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm text-white">
+                      <Upload className="h-4 w-4" />
+                      <span>Upload</span>
+                    </div>
+                  </Label>
+                  <input
+                    id={`file-${key}`}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(key, file);
+                    }}
+                  />
+                </div>
+                {value && (
+                  <img src={value} alt="Preview" className="w-full h-32 object-cover rounded" />
+                )}
+              </div>
+            )}
+            
+            <Button 
+              onClick={() => {
+                saveCustomization(key, value);
+                setSelectedElement(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 w-full"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Salvar
+            </Button>
+          </CardContent>
+        )}
+      </Card>
+    );
   };
-
-  const groupedCustomizations = customizations.reduce((acc, item) => {
-    if (!acc[item.page]) acc[item.page] = [];
-    acc[item.page].push(item);
-    return acc;
-  }, {} as Record<string, Customization[]>);
 
   if (loading) {
     return (
@@ -191,249 +269,127 @@ const AdminCustomizations = () => {
   return (
     <AdminLayout>
       <header className="bg-gray-800 border-b border-gray-700">
-        <div className="px-6 py-4">
-          <h1 className="text-xl font-bold text-white">Personalização</h1>
+        <div className="px-6 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold text-white">Personalização Visual</h1>
+          <Button
+            onClick={() => setPreviewMode(!previewMode)}
+            variant="outline"
+            className="border-gray-600 text-gray-300"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            {previewMode ? 'Sair do Preview' : 'Visualizar'}
+          </Button>
         </div>
       </header>
 
-      <div className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Form Panel */}
-          <div className="lg:col-span-1">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center justify-between">
-                  {editingItem ? 'Editar Personalização' : 'Nova Personalização'}
-                  {(editingItem || isCreating) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={resetForm}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="page" className="text-gray-300">Página</Label>
-                  <Select value={formData.page} onValueChange={(value) => setFormData({...formData, page: value})}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue placeholder="Selecione a página" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="home">Home</SelectItem>
-                      <SelectItem value="plans">Planos</SelectItem>
-                      <SelectItem value="login">Login</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="section" className="text-gray-300">Seção</Label>
-                  <Input
-                    id="section"
-                    value={formData.section}
-                    onChange={(e) => setFormData({...formData, section: e.target.value})}
-                    className="bg-gray-700 border-gray-600 text-white"
-                    placeholder="Ex: hero, header, footer"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="element_type" className="text-gray-300">Tipo do Elemento</Label>
-                  <Select value={formData.element_type} onValueChange={(value) => setFormData({...formData, element_type: value})}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text">Texto</SelectItem>
-                      <SelectItem value="image">Imagem</SelectItem>
-                      <SelectItem value="color">Cor</SelectItem>
-                      <SelectItem value="logo">Logo</SelectItem>
-                      <SelectItem value="favicon">Favicon</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="element_key" className="text-gray-300">Chave do Elemento</Label>
-                  <Input
-                    id="element_key"
-                    value={formData.element_key}
-                    onChange={(e) => setFormData({...formData, element_key: e.target.value})}
-                    className="bg-gray-700 border-gray-600 text-white"
-                    placeholder="Ex: title, subtitle, background_color"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="element_value" className="text-gray-300">Valor</Label>
-                  <Textarea
-                    id="element_value"
-                    value={formData.element_value}
-                    onChange={(e) => setFormData({...formData, element_value: e.target.value})}
-                    className="bg-gray-700 border-gray-600 text-white"
-                    placeholder="Valor do elemento"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="active"
-                    checked={formData.active}
-                    onCheckedChange={(checked) => setFormData({...formData, active: checked})}
-                  />
-                  <Label htmlFor="active" className="text-gray-300">Ativo</Label>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button onClick={handleSave} className="bg-red-600 hover:bg-red-700 flex-1">
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar
-                  </Button>
-                  {!editingItem && !isCreating && (
-                    <Button 
-                      onClick={() => setIsCreating(true)} 
-                      variant="outline" 
-                      className="border-gray-600 text-gray-300"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* List Panel */}
-          <div className="lg:col-span-2">
-            <Tabs defaultValue="all" className="space-y-4">
-              <TabsList className="bg-gray-800">
-                <TabsTrigger value="all">Todas</TabsTrigger>
-                <TabsTrigger value="home">Home</TabsTrigger>
-                <TabsTrigger value="plans">Planos</TabsTrigger>
-                <TabsTrigger value="login">Login</TabsTrigger>
+      <div className="flex h-screen">
+        {/* Editor Panel */}
+        <div className="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto">
+          <div className="p-4">
+            <Tabs defaultValue="home" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-700">
+                <TabsTrigger value="home" className="text-gray-300">Home</TabsTrigger>
+                <TabsTrigger value="login" className="text-gray-300">Login</TabsTrigger>
               </TabsList>
-
-              <TabsContent value="all">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-gray-700">
-                          <TableHead className="text-gray-300">Página</TableHead>
-                          <TableHead className="text-gray-300">Seção</TableHead>
-                          <TableHead className="text-gray-300">Tipo</TableHead>
-                          <TableHead className="text-gray-300">Chave</TableHead>
-                          <TableHead className="text-gray-300">Status</TableHead>
-                          <TableHead className="text-gray-300">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {customizations.map((item) => (
-                          <TableRow key={item.id} className="border-gray-700">
-                            <TableCell className="text-white capitalize">{item.page}</TableCell>
-                            <TableCell className="text-white">{item.section}</TableCell>
-                            <TableCell className="text-white">{item.element_type}</TableCell>
-                            <TableCell className="text-white">{item.element_key}</TableCell>
-                            <TableCell>
-                              <Badge variant={item.active ? 'default' : 'secondary'}>
-                                {item.active ? 'Ativo' : 'Inativo'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleEdit(item)}
-                                  className="text-gray-400 hover:text-white"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDelete(item.id)}
-                                  className="text-red-400 hover:text-red-300"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
+              
+              <TabsContent value="home" className="space-y-4 mt-4">
+                <div>
+                  <h3 className="text-white font-semibold mb-3">Seção Hero</h3>
+                  {renderElementEditor('hero_title', 'Título Principal', 'text')}
+                  {renderElementEditor('hero_subtitle', 'Subtítulo', 'text')}
+                  {renderElementEditor('hero_description', 'Descrição', 'textarea')}
+                  {renderElementEditor('hero_button_text', 'Texto do Botão', 'text')}
+                  {renderElementEditor('hero_background_image', 'Imagem de Fundo', 'image')}
+                  {renderElementEditor('hero_title_color', 'Cor do Título', 'color')}
+                  {renderElementEditor('hero_button_color', 'Cor do Botão', 'color')}
+                </div>
+                
+                <div>
+                  <h3 className="text-white font-semibold mb-3">Seção Planos</h3>
+                  {renderElementEditor('plans_title', 'Título dos Planos', 'text')}
+                  {renderElementEditor('plans_subtitle', 'Subtítulo dos Planos', 'text')}
+                  {renderElementEditor('plans_background_color', 'Cor de Fundo', 'color')}
+                </div>
+                
+                <div>
+                  <h3 className="text-white font-semibold mb-3">Cabeçalho</h3>
+                  {renderElementEditor('header_logo_text', 'Texto do Logo', 'text')}
+                  {renderElementEditor('header_background_color', 'Cor de Fundo', 'color')}
+                </div>
               </TabsContent>
-
-              {['home', 'plans', 'login'].map((page) => (
-                <TabsContent key={page} value={page}>
-                  <Card className="bg-gray-800 border-gray-700">
-                    <CardHeader>
-                      <CardTitle className="text-white capitalize">Personalização - {page}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-gray-700">
-                            <TableHead className="text-gray-300">Seção</TableHead>
-                            <TableHead className="text-gray-300">Tipo</TableHead>
-                            <TableHead className="text-gray-300">Chave</TableHead>
-                            <TableHead className="text-gray-300">Valor</TableHead>
-                            <TableHead className="text-gray-300">Status</TableHead>
-                            <TableHead className="text-gray-300">Ações</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {(groupedCustomizations[page] || []).map((item) => (
-                            <TableRow key={item.id} className="border-gray-700">
-                              <TableCell className="text-white">{item.section}</TableCell>
-                              <TableCell className="text-white">{item.element_type}</TableCell>
-                              <TableCell className="text-white">{item.element_key}</TableCell>
-                              <TableCell className="text-white truncate max-w-xs">
-                                {item.element_value}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant={item.active ? 'default' : 'secondary'}>
-                                  {item.active ? 'Ativo' : 'Inativo'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex space-x-2">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleEdit(item)}
-                                    className="text-gray-400 hover:text-white"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleDelete(item.id)}
-                                    className="text-red-400 hover:text-red-300"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              ))}
+              
+              <TabsContent value="login" className="space-y-4 mt-4">
+                <div>
+                  <h3 className="text-white font-semibold mb-3">Página de Login</h3>
+                  {renderElementEditor('login_title', 'Título', 'text')}
+                  {renderElementEditor('login_subtitle', 'Subtítulo', 'text')}
+                  {renderElementEditor('login_background_color', 'Cor de Fundo', 'color')}
+                  {renderElementEditor('login_card_background', 'Cor do Card', 'color')}
+                </div>
+              </TabsContent>
             </Tabs>
+          </div>
+        </div>
+
+        {/* Preview Panel */}
+        <div className="flex-1 bg-gray-900 overflow-auto">
+          <div className="p-6">
+            <div className="bg-gray-800 rounded-lg p-8 text-center">
+              <h2 className="text-white text-2xl mb-4">Preview das Personalizações</h2>
+              <p className="text-gray-400 mb-8">
+                As alterações feitas aparecem automaticamente na sua página real. 
+                Use o botão "Visualizar" para ver as mudanças em tempo real.
+              </p>
+              
+              {/* Mini Preview */}
+              <div className="bg-gray-700 rounded-lg p-6 max-w-2xl mx-auto">
+                <div 
+                  className="text-center p-8 rounded-lg mb-6"
+                  style={{ backgroundColor: customizations.hero_background_color || '#1f2937' }}
+                >
+                  <h3 
+                    className="text-2xl font-bold mb-2"
+                    style={{ color: customizations.hero_title_color || '#ffffff' }}
+                  >
+                    {customizations.hero_title || 'Título Principal'}
+                  </h3>
+                  <p className="text-gray-300 mb-4">
+                    {customizations.hero_description || 'Descrição do conteúdo'}
+                  </p>
+                  <button 
+                    className="px-6 py-2 rounded font-semibold"
+                    style={{ 
+                      backgroundColor: customizations.hero_button_color || '#3b82f6',
+                      color: customizations.hero_button_color === '#ffffff' ? '#000000' : '#ffffff'
+                    }}
+                  >
+                    {customizations.hero_button_text || 'Botão'}
+                  </button>
+                </div>
+                
+                <div 
+                  className="p-6 rounded-lg"
+                  style={{ backgroundColor: customizations.plans_background_color || '#1f2937' }}
+                >
+                  <h4 className="text-white text-xl mb-2">
+                    {customizations.plans_title || 'Título dos Planos'}
+                  </h4>
+                  <p className="text-gray-300">
+                    {customizations.plans_subtitle || 'Subtítulo dos planos'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-8">
+                <Button
+                  onClick={() => window.open('/', '_blank')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver Site Completo
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

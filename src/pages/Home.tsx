@@ -74,7 +74,7 @@ const Home = () => {
       <Header />
       <HeroBanner />
       
-      <div className="px-4 md:px-8 space-y-12 pb-20">
+      <div id="content" className="px-4 md:px-8 space-y-12 pb-20 pt-16">
         <ContentCarousel 
           title="Em alta" 
           items={featuredContent}
