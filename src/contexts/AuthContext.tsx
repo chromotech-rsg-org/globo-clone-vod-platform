@@ -1,25 +1,25 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-interface User {
+interface UserProfile {
   id: string;
   name: string;
   email: string;
-  cpf: string;
-  phone: string;
+  cpf: string | null;
+  phone: string | null;
   role: 'user' | 'admin' | 'desenvolvedor';
-  subscription?: {
-    plan: string;
-    status: 'active' | 'inactive';
-    expiresAt: string;
-  };
+  created_at: string;
+  updated_at: string;
 }
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  register: (userData: RegisterData) => Promise<void>;
+  user: UserProfile | null;
+  session: Session | null;
+  login: (email: string, password: string) => Promise<{ error: any }>;
+  logout: () => Promise<void>;
+  register: (userData: RegisterData) => Promise<{ error: any }>;
   isLoading: boolean;
 }
 
@@ -27,9 +27,8 @@ interface RegisterData {
   name: string;
   email: string;
   password: string;
-  cpf: string;
-  phone: string;
-  plan: string;
+  cpf?: string;
+  phone?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,58 +42,81 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
     }
-    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch user profile data
+          setTimeout(async () => {
+            const profile = await fetchUserProfile(session.user.id);
+            if (profile) {
+              setUser(profile);
+            }
+          }, 0);
+        } else {
+          setUser(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user.id).then(profile => {
+          if (profile) {
+            setUser(profile);
+          }
+          setIsLoading(false);
+        });
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Mock login - in real app, this would be an API call
-      const mockUsers = [
-        {
-          id: '1',
-          name: 'Admin User',
-          email: 'admin@globoplay.com',
-          cpf: '123.456.789-00',
-          phone: '(11) 99999-9999',
-          role: 'admin' as const,
-          password: '123456'
-        },
-        {
-          id: '2',
-          name: 'User Test',
-          email: 'user@test.com',
-          cpf: '987.654.321-00',
-          phone: '(11) 88888-8888',
-          role: 'user' as const,
-          password: '123456',
-          subscription: {
-            plan: 'Globoplay Premiere',
-            status: 'active' as const,
-            expiresAt: '2024-12-31'
-          }
-        }
-      ];
-
-      const foundUser = mockUsers.find(u => u.email === email && u.password === password);
-      if (!foundUser) {
-        throw new Error('Credenciais inválidas');
-      }
-
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      return { error };
     } catch (error) {
-      throw error;
+      return { error };
     } finally {
       setIsLoading(false);
     }
@@ -103,37 +125,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
     try {
-      // Mock registration - in real app, this would be an API call
-      const newUser: User = {
-        id: Date.now().toString(),
-        name: userData.name,
+      const { error } = await supabase.auth.signUp({
         email: userData.email,
-        cpf: userData.cpf,
-        phone: userData.phone,
-        role: 'user',
-        subscription: {
-          plan: userData.plan,
-          status: 'active',
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        password: userData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name: userData.name,
+            cpf: userData.cpf || '',
+            phone: userData.phone || ''
+          }
         }
-      };
+      });
 
-      setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
+      return { error };
     } catch (error) {
-      throw error;
+      return { error };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('user');
+    setSession(null);
   };
 
   const value = {
     user,
+    session,
     login,
     logout,
     register,

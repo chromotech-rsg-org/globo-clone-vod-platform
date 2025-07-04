@@ -6,36 +6,67 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    cpf: '',
+    phone: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      await login(email, password);
-      navigate('/dashboard');
+    const { error } = await login(loginEmail, loginPassword);
+    
+    if (error) {
+      toast({
+        title: "Erro no login",
+        description: error.message || "Credenciais inválidas. Tente novamente.",
+        variant: "destructive"
+      });
+    } else {
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao Globoplay"
       });
-    } catch (error) {
+      navigate('/dashboard');
+    }
+    
+    setIsLoading(false);
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const { error } = await register(registerData);
+    
+    if (error) {
       toast({
-        title: "Erro no login",
-        description: "Credenciais inválidas. Tente novamente.",
+        title: "Erro no cadastro",
+        description: error.message || "Não foi possível criar a conta. Tente novamente.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Verifique seu email para confirmar a conta."
+      });
     }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -50,47 +81,131 @@ const Login = () => {
 
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white text-2xl">Entrar</CardTitle>
-            <CardDescription className="text-gray-400">
-              Acesse sua conta do Globoplay
+            <CardTitle className="text-white text-2xl text-center">Acesse sua conta</CardTitle>
+            <CardDescription className="text-gray-400 text-center">
+              Entre ou cadastre-se no Globoplay
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="seu@email.com"
-                  required
-                />
-              </div>
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-700">
+                <TabsTrigger value="login" className="text-gray-300">Entrar</TabsTrigger>
+                <TabsTrigger value="register" className="text-gray-300">Cadastrar</TabsTrigger>
+              </TabsList>
               
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-300">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
+              <TabsContent value="login">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email" className="text-gray-300">Email</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="seu@email.com"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password" className="text-gray-300">Senha</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Entrando...' : 'Entrar'}
-              </Button>
-            </form>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Entrando...' : 'Entrar'}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="register">
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="register-name" className="text-gray-300">Nome Completo</Label>
+                    <Input
+                      id="register-name"
+                      type="text"
+                      value={registerData.name}
+                      onChange={(e) => setRegisterData({...registerData, name: e.target.value})}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="Seu nome completo"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="register-email" className="text-gray-300">Email</Label>
+                    <Input
+                      id="register-email"
+                      type="email"
+                      value={registerData.email}
+                      onChange={(e) => setRegisterData({...registerData, email: e.target.value})}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="seu@email.com"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="register-password" className="text-gray-300">Senha</Label>
+                    <Input
+                      id="register-password"
+                      type="password"
+                      value={registerData.password}
+                      onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="register-cpf" className="text-gray-300">CPF (opcional)</Label>
+                    <Input
+                      id="register-cpf"
+                      type="text"
+                      value={registerData.cpf}
+                      onChange={(e) => setRegisterData({...registerData, cpf: e.target.value})}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="register-phone" className="text-gray-300">Telefone (opcional)</Label>
+                    <Input
+                      id="register-phone"
+                      type="text"
+                      value={registerData.phone}
+                      onChange={(e) => setRegisterData({...registerData, phone: e.target.value})}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Cadastrando...' : 'Cadastrar'}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
 
             <div className="mt-6 text-center">
               <p className="text-gray-400 text-sm">
@@ -99,14 +214,6 @@ const Login = () => {
                   Assine agora
                 </Link>
               </p>
-            </div>
-
-            <div className="mt-4 p-4 bg-gray-700 rounded-lg">
-              <p className="text-gray-300 text-sm font-medium mb-2">Contas de teste:</p>
-              <div className="text-xs text-gray-400 space-y-1">
-                <p><strong>Admin:</strong> admin@globoplay.com / 123456</p>
-                <p><strong>Usuário:</strong> user@test.com / 123456</p>
-              </div>
             </div>
           </CardContent>
         </Card>
