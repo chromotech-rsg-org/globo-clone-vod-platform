@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +26,7 @@ const Login = () => {
 
   // Redirect if already logged in
   useEffect(() => {
+    console.log('Login page - user state:', user, 'isLoading:', isLoading);
     if (user && !isLoading) {
       console.log('User already logged in, redirecting to dashboard');
       navigate('/dashboard', { replace: true });
@@ -33,7 +35,7 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || isLoading) return;
     
     console.log('Login form submitted');
     setIsSubmitting(true);
@@ -48,15 +50,19 @@ const Login = () => {
           description: error.message || "Credenciais inválidas. Tente novamente.",
           variant: "destructive"
         });
+        setIsSubmitting(false);
       } else {
-        console.log('Login successful, showing success toast');
+        console.log('Login successful');
         toast({
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o dashboard..."
         });
         
-        // The redirect will happen automatically via the useEffect above
-        // when the user state is updated
+        // Wait a bit for the auth state to update
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+          setIsSubmitting(false);
+        }, 1000);
       }
     } catch (error) {
       console.error('Login exception:', error);
@@ -65,7 +71,6 @@ const Login = () => {
         description: "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive"
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -94,8 +99,20 @@ const Login = () => {
     setIsSubmitting(false);
   };
 
+  // Show loading while checking authentication state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-white">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Don't render the login form if user is already logged in
-  if (user && !isLoading) {
+  if (user) {
     return null;
   }
 
@@ -154,7 +171,7 @@ const Login = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-blue-600 hover:bg-blue-700"
-                    disabled={isSubmitting || isLoading}
+                    disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Entrando...' : 'Entrar'}
                   </Button>
