@@ -29,6 +29,7 @@ interface RegisterData {
   password: string;
   cpf?: string;
   phone?: string;
+  plan?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -59,7 +60,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
 
-      return data;
+      // Type-safe role conversion
+      const validRoles: ('user' | 'admin' | 'desenvolvedor')[] = ['user', 'admin', 'desenvolvedor'];
+      const role = validRoles.includes(data.role as any) ? data.role as 'user' | 'admin' | 'desenvolvedor' : 'user';
+
+      return {
+        ...data,
+        role
+      } as UserProfile;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;

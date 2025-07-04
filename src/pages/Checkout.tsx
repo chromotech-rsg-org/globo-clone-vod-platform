@@ -72,7 +72,7 @@ const Checkout = () => {
     setIsLoading(true);
 
     try {
-      await register({
+      const { error } = await register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -81,11 +81,19 @@ const Checkout = () => {
         plan: plans[selectedPlan as keyof typeof plans].name
       });
       
-      navigate('/dashboard');
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Bem-vindo ao Globoplay"
-      });
+      if (error) {
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao criar conta. Tente novamente.",
+          variant: "destructive"
+        });
+      } else {
+        navigate('/dashboard');
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Bem-vindo ao Globoplay"
+        });
+      }
     } catch (error) {
       toast({
         title: "Erro",
