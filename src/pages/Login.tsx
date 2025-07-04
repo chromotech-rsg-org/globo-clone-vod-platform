@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -19,37 +18,63 @@ const Login = () => {
     cpf: '',
     phone: ''
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const { login, register } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, register, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !isLoading) {
+      console.log('User already logged in, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, isLoading, navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    const { error } = await login(loginEmail, loginPassword);
+    if (isSubmitting) return;
     
-    if (error) {
+    console.log('Login form submitted');
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await login(loginEmail, loginPassword);
+      
+      if (error) {
+        console.error('Login error:', error);
+        toast({
+          title: "Erro no login",
+          description: error.message || "Credenciais inválidas. Tente novamente.",
+          variant: "destructive"
+        });
+      } else {
+        console.log('Login successful, showing success toast');
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando para o dashboard..."
+        });
+        
+        // The redirect will happen automatically via the useEffect above
+        // when the user state is updated
+      }
+    } catch (error) {
+      console.error('Login exception:', error);
       toast({
         title: "Erro no login",
-        description: error.message || "Credenciais inválidas. Tente novamente.",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao Globoplay"
-      });
-      navigate('/dashboard');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
 
     const { error } = await register(registerData);
     
@@ -66,8 +91,13 @@ const Login = () => {
       });
     }
     
-    setIsLoading(false);
+    setIsSubmitting(false);
   };
+
+  // Don't render the login form if user is already logged in
+  if (user && !isLoading) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
@@ -124,9 +154,9 @@ const Login = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-blue-600 hover:bg-blue-700"
-                    disabled={isLoading}
+                    disabled={isSubmitting || isLoading}
                   >
-                    {isLoading ? 'Entrando...' : 'Entrar'}
+                    {isSubmitting ? 'Entrando...' : 'Entrar'}
                   </Button>
                 </form>
               </TabsContent>
@@ -199,9 +229,9 @@ const Login = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-blue-600 hover:bg-blue-700"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   >
-                    {isLoading ? 'Cadastrando...' : 'Cadastrar'}
+                    {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
                   </Button>
                 </form>
               </TabsContent>
