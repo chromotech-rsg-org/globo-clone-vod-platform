@@ -1,221 +1,361 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Package } from 'lucide-react';
+import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import AdminLayout from '@/components/AdminLayout';
+
+interface Package {
+  id: string;
+  name: string;
+  code: string;
+  vendor_id: string | null;
+  active: boolean | null;
+  suspension_package: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
 
 const AdminPackages = () => {
-  const [packages, setPackages] = useState([
-    {
-      id: '1',
-      name: 'Globoplay Básico',
-      code: 'GLOBO_BASIC',
-      vendorId: 'VEN001',
-      active: true,
-      suspensionPackage: false
-    },
-    {
-      id: '2',
-      name: 'Globoplay Premium',
-      code: 'GLOBO_PREMIUM',
-      vendorId: 'VEN002',
-      active: true,
-      suspensionPackage: false
-    },
-    {
-      id: '3',
-      name: 'Pacote Suspensão',
-      code: 'GLOBO_SUSPENSION',
-      vendorId: 'VEN999',
-      active: true,
-      suspensionPackage: true
-    }
-  ]);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingItem, setEditingItem] = useState<Package | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const [newPackage, setNewPackage] = useState({
+  const [formData, setFormData] = useState({
     name: '',
     code: '',
-    vendorId: '',
+    vendor_id: '',
     active: true,
-    suspensionPackage: false
+    suspension_package: false
   });
 
-  const [showForm, setShowForm] = useState(false);
+  useEffect(() => {
+    fetchPackages();
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const packageToAdd = {
-      ...newPackage,
-      id: Date.now().toString()
-    };
-    setPackages([...packages, packageToAdd]);
-    setNewPackage({
+  const fetchPackages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('packages')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setPackages(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar pacotes:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os pacotes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      if (editingItem) {
+        // Update existing
+        const { error } = await supabase
+          .from('packages')
+          .update({
+            name: formData.name,
+            code: formData.code,
+            vendor_id: formData.vendor_id || null,
+            active: formData.active,
+            suspension_package: formData.suspension_package,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingItem.id);
+
+        if (error) throw error;
+        toast({
+          title: "Sucesso",
+          description: "Pacote atualizado com sucesso"
+        });
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('packages')
+          .insert([{
+            name: formData.name,
+            code: formData.code,
+            vendor_id: formData.vendor_id || null,
+            active: formData.active,
+            suspension_package: formData.suspension_package
+          }]);
+
+        if (error) throw error;
+        toast({
+          title: "Sucesso",
+          description: "Pacote criado com sucesso"
+        });
+      }
+
+      fetchPackages();
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar o pacote",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este pacote?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('packages')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Pacote excluído com sucesso"
+      });
+      fetchPackages();
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o pacote",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEdit = (item: Package) => {
+    setEditingItem(item);
+    setFormData({
+      name: item.name,
+      code: item.code,
+      vendor_id: item.vendor_id || '',
+      active: item.active || false,
+      suspension_package: item.suspension_package || false
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleCreate = () => {
+    setEditingItem(null);
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditingItem(null);
+    setIsDialogOpen(false);
+    setFormData({
       name: '',
       code: '',
-      vendorId: '',
+      vendor_id: '',
       active: true,
-      suspensionPackage: false
+      suspension_package: false
     });
-    setShowForm(false);
   };
 
-  const togglePackageStatus = (id: string) => {
-    setPackages(packages.map(pkg => 
-      pkg.id === id ? { ...pkg, active: !pkg.active } : pkg
-    ));
-  };
+  const filteredPackages = packages.filter(pkg =>
+    pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pkg.code.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="p-6">
+          <div className="text-white">Carregando...</div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
+    <AdminLayout>
       <header className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard" className="text-gray-400 hover:text-white">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <h1 className="text-xl font-bold text-white">Cadastro de Pacotes</h1>
-            </div>
-            <Button 
-              onClick={() => setShowForm(!showForm)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Pacote
-            </Button>
-          </div>
+        <div className="px-6 py-4">
+          <h1 className="text-xl font-bold text-white">Gerenciar Pacotes</h1>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* New Package Form */}
-        {showForm && (
-          <Card className="bg-gray-800 border-gray-700 mb-6">
-            <CardHeader>
-              <CardTitle className="text-white">Novo Pacote</CardTitle>
-              <CardDescription className="text-gray-400">
-                Criar um novo pacote de conteúdo
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-gray-300">Nome</Label>
-                    <Input
-                      id="name"
-                      value={newPackage.name}
-                      onChange={(e) => setNewPackage({...newPackage, name: e.target.value})}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="Nome do pacote"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="code" className="text-gray-300">Código</Label>
-                    <Input
-                      id="code"
-                      value={newPackage.code}
-                      onChange={(e) => setNewPackage({...newPackage, code: e.target.value})}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="CODIGO_PACOTE"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="vendorId" className="text-gray-300">Vendor ID</Label>
-                    <Input
-                      id="vendorId"
-                      value={newPackage.vendorId}
-                      onChange={(e) => setNewPackage({...newPackage, vendorId: e.target.value})}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="VEN001"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-6">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="active"
-                      checked={newPackage.active}
-                      onCheckedChange={(checked) => setNewPackage({...newPackage, active: checked})}
-                    />
-                    <Label htmlFor="active" className="text-gray-300">Ativo</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="suspensionPackage"
-                      checked={newPackage.suspensionPackage}
-                      onCheckedChange={(checked) => setNewPackage({...newPackage, suspensionPackage: checked})}
-                    />
-                    <Label htmlFor="suspensionPackage" className="text-gray-300">Pacote de Suspensão</Label>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-4">
-                  <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                    Salvar Pacote
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setShowForm(false)}
-                    className="border-gray-600 text-gray-300"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
+      <div className="p-6">
+        {/* Search and Create */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar pacotes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-gray-700 border-gray-600 text-white"
+            />
+          </div>
+          
+          <Button onClick={handleCreate} className="bg-red-600 hover:bg-red-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Pacote
+          </Button>
+        </div>
+
+        {/* Packages Table */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-700">
+                  <TableHead className="text-gray-300">Nome</TableHead>
+                  <TableHead className="text-gray-300">Código</TableHead>
+                  <TableHead className="text-gray-300">Vendor ID</TableHead>
+                  <TableHead className="text-gray-300">Status</TableHead>
+                  <TableHead className="text-gray-300">Suspensão</TableHead>
+                  <TableHead className="text-gray-300">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPackages.map((pkg) => (
+                  <TableRow key={pkg.id} className="border-gray-700">
+                    <TableCell className="text-white">{pkg.name}</TableCell>
+                    <TableCell className="text-white">{pkg.code}</TableCell>
+                    <TableCell className="text-white">{pkg.vendor_id || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={pkg.active ? 'default' : 'secondary'}>
+                        {pkg.active ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={pkg.suspension_package ? 'destructive' : 'outline'}>
+                        {pkg.suspension_package ? 'Sim' : 'Não'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(pkg)}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(pkg.id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {filteredPackages.length === 0 && (
+          <Card className="bg-gray-800 border-gray-700 mt-6">
+            <CardContent className="p-12 text-center">
+              <p className="text-gray-400">Nenhum pacote encontrado</p>
             </CardContent>
           </Card>
         )}
-
-        {/* Packages List */}
-        <div className="space-y-4">
-          {packages.map((pkg) => (
-            <Card key={pkg.id} className="bg-gray-800 border-gray-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <Package className="h-8 w-8 text-blue-500" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{pkg.name}</h3>
-                      <p className="text-gray-400 text-sm">Código: {pkg.code}</p>
-                      <p className="text-gray-400 text-sm">Vendor ID: {pkg.vendorId}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    {pkg.suspensionPackage && (
-                      <span className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">
-                        Suspensão
-                      </span>
-                    )}
-                    <Switch
-                      checked={pkg.active}
-                      onCheckedChange={() => togglePackageStatus(pkg.id)}
-                    />
-                    <span className="text-gray-300 text-sm">
-                      {pkg.active ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       </div>
-    </div>
+
+      {/* Edit/Create Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle>
+              {editingItem ? 'Editar Pacote' : 'Novo Pacote'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name" className="text-gray-300">Nome</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder="Nome do pacote"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="code" className="text-gray-300">Código</Label>
+              <Input
+                id="code"
+                value={formData.code}
+                onChange={(e) => setFormData({...formData, code: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder="Código único do pacote"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="vendor_id" className="text-gray-300">Vendor ID</Label>
+              <Input
+                id="vendor_id"
+                value={formData.vendor_id}
+                onChange={(e) => setFormData({...formData, vendor_id: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder="ID do fornecedor (opcional)"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="active"
+                checked={formData.active}
+                onCheckedChange={(checked) => setFormData({...formData, active: checked})}
+              />
+              <Label htmlFor="active" className="text-gray-300">Ativo</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="suspension_package"
+                checked={formData.suspension_package}
+                onCheckedChange={(checked) => setFormData({...formData, suspension_package: checked})}
+              />
+              <Label htmlFor="suspension_package" className="text-gray-300">Pacote de Suspensão</Label>
+            </div>
+
+            <div className="flex space-x-2 pt-4">
+              <Button onClick={handleSave} className="bg-red-600 hover:bg-red-700 flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                Salvar
+              </Button>
+              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-gray-300">
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </AdminLayout>
   );
 };
 
