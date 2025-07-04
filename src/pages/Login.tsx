@@ -26,9 +26,9 @@ const Login = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    console.log('Login page - user state:', user, 'isLoading:', isLoading);
+    console.log('Login page - checking auth state:', { user: !!user, isLoading });
     if (user && !isLoading) {
-      console.log('User already logged in, redirecting to dashboard');
+      console.log('User is authenticated, redirecting to dashboard');
       navigate('/dashboard', { replace: true });
     }
   }, [user, isLoading, navigate]);
@@ -52,17 +52,19 @@ const Login = () => {
         });
         setIsSubmitting(false);
       } else {
-        console.log('Login successful');
+        console.log('Login successful, showing success message');
         toast({
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o dashboard..."
         });
         
-        // Wait a bit for the auth state to update
+        // The redirect will happen automatically via useEffect when user state updates
+        // But add a timeout as fallback
         setTimeout(() => {
+          console.log('Fallback redirect after login');
           navigate('/dashboard', { replace: true });
           setIsSubmitting(false);
-        }, 1000);
+        }, 2000);
       }
     } catch (error) {
       console.error('Login exception:', error);
@@ -113,7 +115,14 @@ const Login = () => {
 
   // Don't render the login form if user is already logged in
   if (user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-white">Redirecionando...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
