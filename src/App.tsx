@@ -68,6 +68,11 @@ const App = () => (
                 <AdminCoupons />
               </ProtectedRoute>
             } />
+            <Route path="/admin/personalizacao" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminCustomizations />
+              </ProtectedRoute>
+            } />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

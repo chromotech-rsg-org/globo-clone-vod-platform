@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, Edit, Eye } from 'lucide-react';
+import { Search, Edit, Eye } from 'lucide-react';
+import AdminLayout from '@/components/AdminLayout';
 
 const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,22 +49,15 @@ const AdminUsers = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <AdminLayout>
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard" className="text-gray-400 hover:text-white">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <h1 className="text-xl font-bold text-white">Gerenciar Usuários</h1>
-            </div>
-          </div>
+        <div className="px-6 py-4">
+          <h1 className="text-xl font-bold text-white">Gerenciar Usuários</h1>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="p-6">
         {/* Search */}
         <Card className="bg-gray-800 border-gray-700 mb-6">
           <CardContent className="p-6">
@@ -141,7 +134,7 @@ const AdminUsers = () => {
           </Card>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
