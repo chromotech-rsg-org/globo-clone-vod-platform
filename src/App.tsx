@@ -15,6 +15,7 @@ import AdminUsers from "./pages/admin/Users";
 import AdminPackages from "./pages/admin/Packages";
 import AdminPlans from "./pages/admin/Plans";
 import AdminCoupons from "./pages/admin/Coupons";
+import AdminCustomizations from "./pages/admin/Customizations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
