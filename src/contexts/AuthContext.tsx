@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContextType, UserProfile } from '@/types/auth';
@@ -24,6 +24,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { fetchUserProfile } = useUserProfile();
   const { login, register, logout: performLogout } = useAuthOperations();
 
+  // Memoize the profile fetching function to avoid infinite loops
+  const loadUserProfile = useCallback(async (userId: string) => {
+    try {
+      console.log('Loading profile for user:', userId);
+      const profile = await fetchUserProfile(userId);
+      console.log('Profile loaded:', profile);
+      setUser(profile);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      setUser(null);
+    }
+  }, [fetchUserProfile]);
+
   const handleLogout = async () => {
     setIsLoading(true);
     await performLogout();
@@ -37,15 +50,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         
         if (session?.user) {
-          console.log('User authenticated, fetching profile...');
-          const profile = await fetchUserProfile(session.user.id);
-          console.log('Profile loaded:', profile);
-          setUser(profile);
+          // Defer profile loading to avoid infinite loops
+          setTimeout(() => {
+            loadUserProfile(session.user.id);
+          }, 0);
         } else {
           console.log('No session, clearing user');
           setUser(null);
@@ -69,13 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         console.log('Initial session:', session?.user?.id);
+        setSession(session);
         
         if (session?.user) {
-          console.log('Initial session found, fetching profile...');
-          const profile = await fetchUserProfile(session.user.id);
-          console.log('Initial profile:', profile);
-          setUser(profile);
-          setSession(session);
+          await loadUserProfile(session.user.id);
         }
         
         setIsLoading(false);
@@ -88,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getInitialSession();
 
     return () => subscription.unsubscribe();
-  }, [fetchUserProfile]);
+  }, []); // Remove fetchUserProfile dependency to prevent infinite loops
 
   const value = {
     user,

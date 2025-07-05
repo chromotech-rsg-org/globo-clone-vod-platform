@@ -45,14 +45,7 @@ const Login = () => {
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o dashboard..."
         });
-        
-        // The redirect will happen automatically via useEffect when user state updates
-        // But add a timeout as fallback
-        setTimeout(() => {
-          console.log('Fallback redirect after login');
-          navigate('/dashboard', { replace: true });
-          setIsSubmitting(false);
-        }, 2000);
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error('Login exception:', error);
