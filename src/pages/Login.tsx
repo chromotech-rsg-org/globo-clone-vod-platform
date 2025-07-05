@@ -9,18 +9,18 @@ import { RegisterData } from '@/types/auth';
 
 const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, register, user, isLoading } = useAuth();
+  const { login, register, user, session, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Redirect if already logged in
   useEffect(() => {
-    console.log('Login page - checking auth state:', { user: !!user, isLoading });
-    if (user && !isLoading) {
-      console.log('User is authenticated, redirecting to dashboard');
+    console.log('Login page - checking auth state:', { user: !!user, session: !!session, isLoading });
+    if (session && !isLoading) {
+      console.log('User has session, redirecting to dashboard');
       navigate('/dashboard', { replace: true });
     }
-  }, [user, isLoading, navigate]);
+  }, [session, isLoading, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     if (isSubmitting || isLoading) return;
