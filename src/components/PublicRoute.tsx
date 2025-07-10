@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -10,11 +9,7 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  console.log('PublicRoute - Current location:', location.pathname);
-  console.log('PublicRoute - Auth state:', { isLoading, hasUser: !!user });
-
   if (isLoading) {
-    console.log('PublicRoute - Loading auth state');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
@@ -27,12 +22,9 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
 
   // Se o usuário está logado e está tentando acessar login, redireciona para dashboard
   if (user && location.pathname === '/login') {
-    console.log('PublicRoute - Authenticated user accessing login, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Para outras rotas públicas (como a home "/"), não redireciona automaticamente
-  console.log('PublicRoute - Allowing access to public route');
   return <>{children}</>;
 };
 

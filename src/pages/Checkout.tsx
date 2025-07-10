@@ -37,8 +37,7 @@ const Checkout = () => {
         email: formData.email,
         password: formData.password,
         cpf: formData.cpf,
-        phone: formData.phone,
-        plan: currentPlan.name
+        phone: formData.phone
       });
       
       if (error) {

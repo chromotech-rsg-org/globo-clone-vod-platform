@@ -1,7 +1,5 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,18 +9,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
 
-  useEffect(() => {
-    console.log('ProtectedRoute - Auth state:', { 
-      isLoading, 
-      hasUser: !!user, 
-      userId: user?.id, 
-      userRole: user?.role,
-      requiredRole 
-    });
-  }, [isLoading, user, requiredRole]);
-
   if (isLoading) {
-    console.log('ProtectedRoute - Still loading auth state');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
@@ -34,16 +21,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   }
 
   if (!user) {
-    console.log('ProtectedRoute - No user found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   if (requiredRole && user.role !== requiredRole && user.role !== 'desenvolvedor') {
-    console.log('ProtectedRoute - Insufficient role:', user.role, 'required:', requiredRole);
     return <Navigate to="/dashboard" replace />;
   }
 
-  console.log('ProtectedRoute - Access granted for user:', user.id, 'role:', user.role);
   return <>{children}</>;
 };
 
