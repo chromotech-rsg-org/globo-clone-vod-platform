@@ -16,11 +16,11 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     console.log('Login page - checking auth state:', { user: !!user, session: !!session, isLoading });
-    if (session && !isLoading) {
-      console.log('User has session, redirecting to dashboard');
+    if (user && session && !isLoading) {
+      console.log('User authenticated, redirecting to dashboard');
       navigate('/dashboard', { replace: true });
     }
-  }, [session, isLoading, navigate]);
+  }, [user, session, isLoading, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     if (isSubmitting || isLoading) return;

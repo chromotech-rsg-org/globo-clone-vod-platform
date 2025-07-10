@@ -1,9 +1,8 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContextType, UserProfile } from '@/types/auth';
-import { useUserProfile } from '@/hooks/useUserProfile';
 import { useAuthOperations } from '@/hooks/useAuthOperations';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,90 +19,138 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const { fetchUserProfile } = useUserProfile();
   const { login, register, logout: performLogout } = useAuthOperations();
 
-  // Memoize the profile fetching function to avoid infinite loops
-  const loadUserProfile = useCallback(async (userId: string) => {
+  // Direct profile fetching function without hooks to avoid dependencies
+  const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      console.log('Loading profile for user:', userId);
-      const profile = await fetchUserProfile(userId);
-      console.log('Profile loaded:', profile);
-      setUser(profile);
+      console.log('Fetching profile for user:', userId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      console.log('Profile data received:', data);
+
+      // Type-safe role conversion
+      const validRoles: ('user' | 'admin' | 'desenvolvedor')[] = ['user', 'admin', 'desenvolvedor'];
+      const role = validRoles.includes(data.role as any) ? data.role as 'user' | 'admin' | 'desenvolvedor' : 'user';
+
+      return {
+        ...data,
+        role
+      } as UserProfile;
     } catch (error) {
-      console.error('Error loading profile:', error);
-      setUser(null);
+      console.error('Error fetching user profile:', error);
+      return null;
     }
-  }, [fetchUserProfile]);
+  };
 
   const handleLogout = async () => {
-    setIsLoading(true);
-    await performLogout();
-    setUser(null);
-    setSession(null);
-    setIsLoading(false);
+    try {
+      console.log('Logging out...');
+      setIsLoading(true);
+      await performLogout();
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
+    let mounted = true;
+    
     console.log('Setting up auth state listener');
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+      async (event, session) => {
+        if (!mounted) return;
         
-        setSession(session);
+        console.log('Auth state changed:', event, session?.user?.id || 'no user');
         
-        if (session?.user) {
-          console.log('User authenticated, loading profile...');
-          // Use setTimeout to avoid infinite loops
-          setTimeout(() => {
-            loadUserProfile(session.user.id);
-          }, 0);
-        } else {
-          console.log('No session, clearing user');
-          setUser(null);
+        try {
+          setSession(session);
+          
+          if (session?.user?.id) {
+            console.log('User authenticated, loading profile...');
+            const profile = await fetchProfile(session.user.id);
+            if (mounted) {
+              setUser(profile);
+            }
+          } else {
+            console.log('No session, clearing user');
+            if (mounted) {
+              setUser(null);
+            }
+          }
+        } catch (error) {
+          console.error('Error in auth state change:', error);
+          if (mounted) {
+            setUser(null);
+          }
+        } finally {
+          if (mounted) {
+            setIsLoading(false);
+            setIsInitialized(true);
+          }
         }
-        
-        setIsLoading(false);
       }
     );
 
     // Check for initial session
-    const getInitialSession = async () => {
+    const initializeAuth = async () => {
+      if (!mounted) return;
+      
       try {
         console.log('Getting initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting initial session:', error);
-          setIsLoading(false);
           return;
         }
 
-        console.log('Initial session:', session?.user?.id);
-        setSession(session);
+        console.log('Initial session:', session?.user?.id || 'no session');
         
-        if (session?.user) {
-          setTimeout(() => {
-            loadUserProfile(session.user.id);
-          }, 0);
-        } else {
-          setIsLoading(false);
+        if (mounted) {
+          setSession(session);
+          
+          if (session?.user?.id) {
+            const profile = await fetchProfile(session.user.id);
+            if (mounted) {
+              setUser(profile);
+            }
+          }
         }
       } catch (error) {
-        console.error('Error in getInitialSession:', error);
-        setIsLoading(false);
+        console.error('Error in initializeAuth:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
       }
     };
 
-    getInitialSession();
+    initializeAuth();
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, [loadUserProfile]);
+  }, []); // Empty dependency array - no dependencies needed
 
   const value = {
     user,

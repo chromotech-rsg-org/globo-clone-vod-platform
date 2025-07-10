@@ -25,9 +25,9 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
     );
   }
 
-  // Se o usuário está logado e está tentando acessar login ou checkout, redireciona para dashboard
-  if (user && (location.pathname === '/login' || location.pathname === '/checkout')) {
-    console.log('PublicRoute - Authenticated user accessing public route, redirecting to dashboard');
+  // Se o usuário está logado e está tentando acessar login, redireciona para dashboard
+  if (user && location.pathname === '/login') {
+    console.log('PublicRoute - Authenticated user accessing login, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
