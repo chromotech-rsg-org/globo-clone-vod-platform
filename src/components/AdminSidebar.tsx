@@ -32,13 +32,18 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/personalizacao', icon: Settings, label: 'Personalização' },
   ];
 
+  console.log('AdminSidebar - isCollapsed:', isCollapsed);
+
   return (
     <div className={`bg-gray-800 text-white transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
     } min-h-screen relative flex flex-col`}>
       {/* Toggle Button */}
       <button
-        onClick={onToggle}
+        onClick={() => {
+          console.log('Sidebar toggle button clicked');
+          onToggle();
+        }}
         className="absolute -right-3 top-6 bg-gray-800 border border-gray-600 rounded-full p-1 hover:bg-gray-700 z-10"
       >
         {isCollapsed ? (

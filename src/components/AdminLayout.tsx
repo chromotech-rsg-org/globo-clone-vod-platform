@@ -9,11 +9,18 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  console.log('AdminLayout - sidebarCollapsed:', sidebarCollapsed);
+
+  const handleToggle = () => {
+    console.log('Toggle clicked, changing from:', sidebarCollapsed, 'to:', !sidebarCollapsed);
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-900">
       <AdminSidebar 
         isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onToggle={handleToggle}
       />
       <div className="flex-1 overflow-auto">
         {children}
