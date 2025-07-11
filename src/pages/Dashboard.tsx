@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Users, CreditCard, Package, DollarSign, Settings, LogOut } from 'lucide-react';
+import AdminLayout from '@/components/AdminLayout';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -54,16 +55,15 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <AdminLayout>
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link to="/" className="flex items-center space-x-2">
-                <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold">G</div>
-                <span className="text-white font-bold">Globoplay</span>
-              </Link>
+              <h1 className="text-xl font-bold text-white">
+                Dashboard {user.role === 'user' ? 'Pessoal' : 'Administrativo'}
+              </h1>
               <Badge variant="secondary">{user.role}</Badge>
             </div>
             
@@ -148,7 +148,7 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

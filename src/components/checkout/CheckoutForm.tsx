@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { formatCpf, formatPhone } from '@/utils/formatters';
 import { validatePassword, validatePasswordMatch } from '@/utils/validators';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CheckoutFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -33,6 +34,10 @@ const CheckoutForm = ({ onSubmit, isLoading }: CheckoutFormProps) => {
     confirmPassword: ''
   });
 
+  const [couponCode, setCouponCode] = useState('');
+  const [couponValid, setCouponValid] = useState<boolean | null>(null);
+  const [discount, setDiscount] = useState(0);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let formattedValue = value;
@@ -44,6 +49,43 @@ const CheckoutForm = ({ onSubmit, isLoading }: CheckoutFormProps) => {
     }
 
     setFormData(prev => ({ ...prev, [name]: formattedValue }));
+  };
+
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponValid(null);
+      setDiscount(0);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('code', couponCode.toUpperCase())
+        .eq('active', true)
+        .single();
+
+      if (error || !data) {
+        setCouponValid(false);
+        setDiscount(0);
+        toast({
+          title: "Cupom inválido",
+          description: "Cupom não encontrado ou expirado",
+          variant: "destructive"
+        });
+      } else {
+        setCouponValid(true);
+        setDiscount(data.discount_percentage);
+        toast({
+          title: "Cupom aplicado!",
+          description: `Desconto de ${data.discount_percentage}% aplicado`
+        });
+      }
+    } catch (error) {
+      setCouponValid(false);
+      setDiscount(0);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -163,6 +205,35 @@ const CheckoutForm = ({ onSubmit, isLoading }: CheckoutFormProps) => {
               minLength={6}
               required
             />
+          </div>
+
+          {/* Cupom de desconto */}
+          <div className="space-y-2">
+            <Label htmlFor="coupon" className="text-gray-300">Cupom de Desconto (opcional)</Label>
+            <div className="flex space-x-2">
+              <Input
+                id="coupon"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder="Digite o código do cupom"
+              />
+              <Button 
+                type="button"
+                onClick={validateCoupon}
+                variant="outline"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                disabled={!couponCode.trim()}
+              >
+                Aplicar
+              </Button>
+            </div>
+            {couponValid === true && (
+              <p className="text-green-400 text-sm">✓ Cupom válido - {discount}% de desconto</p>
+            )}
+            {couponValid === false && (
+              <p className="text-red-400 text-sm">✗ Cupom inválido</p>
+            )}
           </div>
 
           <Button 
