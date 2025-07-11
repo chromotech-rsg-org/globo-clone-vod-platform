@@ -9,10 +9,7 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  console.log('AdminLayout - sidebarCollapsed:', sidebarCollapsed);
-
   const handleToggle = () => {
-    console.log('Toggle clicked, changing from:', sidebarCollapsed, 'to:', !sidebarCollapsed);
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
