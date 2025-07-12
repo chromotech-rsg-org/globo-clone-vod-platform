@@ -10,7 +10,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Images
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -29,6 +30,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
+    { path: '/admin/imagens', icon: Images, label: 'Imagens' },
     { path: '/admin/personalizacao', icon: Settings, label: 'Personalização' },
   ];
 

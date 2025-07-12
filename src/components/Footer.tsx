@@ -1,7 +1,12 @@
 
 import React from 'react';
+import { useCustomizations } from '@/hooks/useCustomizations';
 
 const Footer = () => {
+  const { getCustomization } = useCustomizations('home');
+  
+  const logoText = getCustomization('header', 'logo_text', 'Globoplay');
+  
   return (
     <footer className="bg-gray-900 border-t border-gray-800 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -9,7 +14,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold">G</div>
-              <span className="text-white font-bold">Globoplay</span>
+              <span className="text-white font-bold">{logoText}</span>
             </div>
             <p className="text-gray-400 text-sm">
               Sua plataforma de streaming com o melhor conteúdo nacional e internacional.

@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Edit, Save, X, Upload, Eye } from 'lucide-react';
+import { Edit, Save, X, Upload, Eye, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
+import ImageUpload from '@/components/ui/image-upload';
 
 interface Customization {
   id: string;
@@ -141,15 +142,8 @@ const AdminCustomizations = () => {
     }
   };
 
-  const handleImageUpload = async (key: string, file: File) => {
-    // For demo purposes, we'll use a placeholder URL
-    // In production, you would upload to Supabase Storage
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      saveCustomization(key, result);
-    };
-    reader.readAsDataURL(file);
+  const handleImageUpload = async (key: string, url: string) => {
+    await saveCustomization(key, url);
   };
 
   const renderElementEditor = (key: string, label: string, type: 'text' | 'color' | 'image' | 'textarea' = 'text') => {
@@ -209,33 +203,27 @@ const AdminCustomizations = () => {
             )}
             
             {type === 'image' && (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <Input
                   value={value}
                   onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
                   className="bg-gray-700 border-gray-600 text-white"
                   placeholder="URL da imagem"
                 />
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor={`file-${key}`} className="cursor-pointer">
-                    <div className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm text-white">
-                      <Upload className="h-4 w-4" />
-                      <span>Upload</span>
-                    </div>
-                  </Label>
-                  <input
-                    id={`file-${key}`}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(key, file);
-                    }}
+                
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-4">
+                  <ImageUpload
+                    onImageUploaded={(url) => handleImageUpload(key, url)}
+                    folder="customizations"
+                    maxSizeKB={5120}
                   />
                 </div>
+                
                 {value && (
-                  <img src={value} alt="Preview" className="w-full h-32 object-cover rounded" />
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Preview:</Label>
+                    <img src={value} alt="Preview" className="w-full h-32 object-cover rounded border border-gray-600" />
+                  </div>
                 )}
               </div>
             )}

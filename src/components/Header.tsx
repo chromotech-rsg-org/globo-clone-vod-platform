@@ -2,9 +2,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, User } from 'lucide-react';
+import { useCustomizations } from '@/hooks/useCustomizations';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { getCustomization } = useCustomizations('home');
+
+  const logoText = getCustomization('header', 'logo_text', 'Globoplay');
+  const backgroundColor = getCustomization('header', 'background_color', '#111827');
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -15,13 +20,16 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-gray-900/95 backdrop-blur-sm fixed w-full top-0 z-50 border-b border-gray-800">
+    <header 
+      className="backdrop-blur-sm fixed w-full top-0 z-50 border-b border-gray-800"
+      style={{ backgroundColor: backgroundColor + '95' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">G</div>
-            <span className="text-white font-bold text-xl">Globoplay</span>
+            <span className="text-white font-bold text-xl">{logoText}</span>
           </Link>
 
           {/* Desktop Navigation */}
