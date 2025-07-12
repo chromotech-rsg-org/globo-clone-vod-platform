@@ -78,63 +78,107 @@ const AdminPlans = () => {
 
   const handleSave = async () => {
     try {
+      console.log('🔄 Iniciando salvamento do plano...', { editingItem: !!editingItem, formData });
+      
+      // Verificar autenticação
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Sessão atual:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id,
+        userRole: session?.user?.user_metadata?.role 
+      });
+
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Validar dados obrigatórios
+      if (!formData.name.trim()) {
+        throw new Error('Nome é obrigatório');
+      }
+      if (!formData.price || formData.price < 0) {
+        throw new Error('Preço deve ser maior que zero');
+      }
+
       const benefitsArray = formData.benefits.split('\n').filter(b => b.trim());
+      
+      const planData = {
+        name: formData.name.trim(),
+        active: formData.active,
+        best_seller: formData.best_seller,
+        price: Number(formData.price),
+        free_days: Number(formData.free_days) || 0,
+        billing_cycle: formData.billing_cycle,
+        payment_type: formData.payment_type,
+        description: formData.description.trim() || null,
+        benefits: benefitsArray.length > 0 ? benefitsArray : null,
+        priority: Number(formData.priority) || 0
+      };
+
+      console.log('📋 Dados a serem salvos:', planData);
       
       if (editingItem) {
         // Update existing
-        const { error } = await supabase
+        console.log('✏️ Atualizando plano existente ID:', editingItem.id);
+        const { data, error } = await supabase
           .from('plans')
           .update({
-            name: formData.name,
-            active: formData.active,
-            best_seller: formData.best_seller,
-            price: formData.price,
-            free_days: formData.free_days,
-            billing_cycle: formData.billing_cycle,
-            payment_type: formData.payment_type,
-            description: formData.description,
-            benefits: benefitsArray,
-            priority: formData.priority,
+            ...planData,
             updated_at: new Date().toISOString()
           })
-          .eq('id', editingItem.id);
+          .eq('id', editingItem.id)
+          .select();
 
+        console.log('📝 Resultado da atualização:', { data, error });
         if (error) throw error;
+        
         toast({
           title: "Sucesso",
           description: "Plano atualizado com sucesso"
         });
       } else {
         // Create new
-        const { error } = await supabase
+        console.log('➕ Criando novo plano');
+        const { data, error } = await supabase
           .from('plans')
-          .insert([{
-            name: formData.name,
-            active: formData.active,
-            best_seller: formData.best_seller,
-            price: formData.price,
-            free_days: formData.free_days,
-            billing_cycle: formData.billing_cycle,
-            payment_type: formData.payment_type,
-            description: formData.description,
-            benefits: benefitsArray,
-            priority: formData.priority
-          }]);
+          .insert([planData])
+          .select();
 
+        console.log('📝 Resultado da criação:', { data, error });
         if (error) throw error;
+        
         toast({
           title: "Sucesso",
           description: "Plano criado com sucesso"
         });
       }
 
-      fetchPlans();
+      console.log('✅ Plano salvo com sucesso, recarregando lista...');
+      await fetchPlans();
       resetForm();
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao salvar plano:', error);
+      console.error('📊 Detalhes do erro:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      let errorMessage = "Não foi possível salvar o plano";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para realizar esta ação";
+      } else if (error.message.includes('obrigatório')) {
+        errorMessage = error.message;
+      } else if (error.code === '23505') {
+        errorMessage = "Já existe um plano com este nome";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para realizar esta ação";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o plano",
+        description: errorMessage,
         variant: "destructive"
       });
     }

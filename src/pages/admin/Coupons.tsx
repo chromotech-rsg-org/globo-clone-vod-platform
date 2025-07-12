@@ -68,51 +68,102 @@ const AdminCoupons = () => {
 
   const handleSave = async () => {
     try {
+      console.log('🔄 Iniciando salvamento do cupom...', { editingItem: !!editingItem, formData });
+      
+      // Verificar autenticação
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Sessão atual:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id 
+      });
+
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Validar dados obrigatórios
+      if (!formData.name.trim()) {
+        throw new Error('Nome é obrigatório');
+      }
+      if (!formData.code.trim()) {
+        throw new Error('Código é obrigatório');
+      }
+      if (!formData.discount_percentage || formData.discount_percentage <= 0 || formData.discount_percentage > 100) {
+        throw new Error('Desconto deve ser entre 1% e 100%');
+      }
+
+      const couponData = {
+        name: formData.name.trim(),
+        code: formData.code.trim().toUpperCase(),
+        discount_percentage: Number(formData.discount_percentage),
+        active: formData.active,
+        notes: formData.notes.trim() || null
+      };
+
+      console.log('📋 Dados a serem salvos:', couponData);
+
       if (editingItem) {
         // Update existing
-        const { error } = await supabase
+        console.log('✏️ Atualizando cupom existente ID:', editingItem.id);
+        const { data, error } = await supabase
           .from('coupons')
           .update({
-            name: formData.name,
-            code: formData.code,
-            discount_percentage: formData.discount_percentage,
-            active: formData.active,
-            notes: formData.notes || null,
+            ...couponData,
             updated_at: new Date().toISOString()
           })
-          .eq('id', editingItem.id);
+          .eq('id', editingItem.id)
+          .select();
 
+        console.log('📝 Resultado da atualização:', { data, error });
         if (error) throw error;
+        
         toast({
           title: "Sucesso",
           description: "Cupom atualizado com sucesso"
         });
       } else {
         // Create new
-        const { error } = await supabase
+        console.log('➕ Criando novo cupom');
+        const { data, error } = await supabase
           .from('coupons')
-          .insert([{
-            name: formData.name,
-            code: formData.code,
-            discount_percentage: formData.discount_percentage,
-            active: formData.active,
-            notes: formData.notes || null
-          }]);
+          .insert([couponData])
+          .select();
 
+        console.log('📝 Resultado da criação:', { data, error });
         if (error) throw error;
+        
         toast({
           title: "Sucesso",
           description: "Cupom criado com sucesso"
         });
       }
 
-      fetchCoupons();
+      console.log('✅ Cupom salvo com sucesso, recarregando lista...');
+      await fetchCoupons();
       resetForm();
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao salvar cupom:', error);
+      console.error('📊 Detalhes do erro:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      let errorMessage = "Não foi possível salvar o cupom";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para realizar esta ação";
+      } else if (error.message.includes('obrigatório') || error.message.includes('Desconto')) {
+        errorMessage = error.message;
+      } else if (error.code === '23505') {
+        errorMessage = "Já existe um cupom com este código";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para realizar esta ação";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o cupom",
+        description: errorMessage,
         variant: "destructive"
       });
     }

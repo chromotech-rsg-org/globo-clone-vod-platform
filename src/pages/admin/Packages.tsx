@@ -67,51 +67,99 @@ const AdminPackages = () => {
 
   const handleSave = async () => {
     try {
+      console.log('🔄 Iniciando salvamento do pacote...', { editingItem: !!editingItem, formData });
+      
+      // Verificar autenticação
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Sessão atual:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id 
+      });
+
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Validar dados obrigatórios
+      if (!formData.name.trim()) {
+        throw new Error('Nome é obrigatório');
+      }
+      if (!formData.code.trim()) {
+        throw new Error('Código é obrigatório');
+      }
+
+      const packageData = {
+        name: formData.name.trim(),
+        code: formData.code.trim(),
+        vendor_id: formData.vendor_id.trim() || null,
+        active: formData.active,
+        suspension_package: formData.suspension_package
+      };
+
+      console.log('📋 Dados a serem salvos:', packageData);
+
       if (editingItem) {
         // Update existing
-        const { error } = await supabase
+        console.log('✏️ Atualizando pacote existente ID:', editingItem.id);
+        const { data, error } = await supabase
           .from('packages')
           .update({
-            name: formData.name,
-            code: formData.code,
-            vendor_id: formData.vendor_id || null,
-            active: formData.active,
-            suspension_package: formData.suspension_package,
+            ...packageData,
             updated_at: new Date().toISOString()
           })
-          .eq('id', editingItem.id);
+          .eq('id', editingItem.id)
+          .select();
 
+        console.log('📝 Resultado da atualização:', { data, error });
         if (error) throw error;
+        
         toast({
           title: "Sucesso",
           description: "Pacote atualizado com sucesso"
         });
       } else {
         // Create new
-        const { error } = await supabase
+        console.log('➕ Criando novo pacote');
+        const { data, error } = await supabase
           .from('packages')
-          .insert([{
-            name: formData.name,
-            code: formData.code,
-            vendor_id: formData.vendor_id || null,
-            active: formData.active,
-            suspension_package: formData.suspension_package
-          }]);
+          .insert([packageData])
+          .select();
 
+        console.log('📝 Resultado da criação:', { data, error });
         if (error) throw error;
+        
         toast({
           title: "Sucesso",
           description: "Pacote criado com sucesso"
         });
       }
 
-      fetchPackages();
+      console.log('✅ Pacote salvo com sucesso, recarregando lista...');
+      await fetchPackages();
       resetForm();
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao salvar pacote:', error);
+      console.error('📊 Detalhes do erro:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      let errorMessage = "Não foi possível salvar o pacote";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para realizar esta ação";
+      } else if (error.message.includes('obrigatório')) {
+        errorMessage = error.message;
+      } else if (error.code === '23505') {
+        errorMessage = "Já existe um pacote com este código";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para realizar esta ação";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o pacote",
+        description: errorMessage,
         variant: "destructive"
       });
     }

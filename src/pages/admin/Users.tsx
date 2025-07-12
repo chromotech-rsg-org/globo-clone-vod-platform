@@ -86,18 +86,45 @@ const AdminUsers = () => {
     if (!editingUser) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: formData.name,
-          email: formData.email,
-          cpf: formData.cpf || null,
-          phone: formData.phone || null,
-          role: formData.role,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editingUser.id);
+      console.log('🔄 Iniciando atualização do usuário...', { userId: editingUser.id, formData });
+      
+      // Verificar autenticação
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Sessão atual:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id 
+      });
 
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Validar dados obrigatórios
+      if (!formData.name.trim()) {
+        throw new Error('Nome é obrigatório');
+      }
+      if (!formData.email.trim()) {
+        throw new Error('Email é obrigatório');
+      }
+
+      const userData = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        cpf: formData.cpf.trim() || null,
+        phone: formData.phone.trim() || null,
+        role: formData.role,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('📋 Dados a serem atualizados:', userData);
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(userData)
+        .eq('id', editingUser.id)
+        .select();
+
+      console.log('📝 Resultado da atualização:', { data, error });
       if (error) throw error;
 
       toast({
@@ -105,13 +132,32 @@ const AdminUsers = () => {
         description: "Usuário atualizado com sucesso"
       });
 
-      fetchUsers();
+      console.log('✅ Usuário atualizado com sucesso, recarregando lista...');
+      await fetchUsers();
       resetForm();
-    } catch (error) {
-      console.error('Erro ao salvar usuário:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao salvar usuário:', error);
+      console.error('📊 Detalhes do erro:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      let errorMessage = "Não foi possível atualizar o usuário";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para realizar esta ação";
+      } else if (error.message.includes('obrigatório')) {
+        errorMessage = error.message;
+      } else if (error.code === '23505') {
+        errorMessage = "Já existe um usuário com este email";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para realizar esta ação";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o usuário",
+        description: errorMessage,
         variant: "destructive"
       });
     }

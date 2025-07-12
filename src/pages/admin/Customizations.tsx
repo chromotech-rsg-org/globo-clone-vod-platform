@@ -87,42 +87,68 @@ const AdminCustomizations = () => {
 
   const saveCustomization = async (key: string, value: string) => {
     try {
+      console.log('🔄 Iniciando salvamento da personalização...', { key, value });
+      
+      // Verificar autenticação
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Sessão atual:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id 
+      });
+
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const [section, elementKey] = key.split('_', 2);
       const remainingKey = key.substring(section.length + 1);
       
+      console.log('📋 Dados da personalização:', { section, elementKey, remainingKey, value });
+      
       // Check if customization exists
-      const { data: existing } = await supabase
+      const { data: existing, error: selectError } = await supabase
         .from('customizations')
         .select('id')
         .eq('page', section === 'login' ? 'login' : 'home')
         .eq('section', section)
         .eq('element_key', remainingKey)
-        .single();
+        .maybeSingle();
+
+      if (selectError) throw selectError;
+      console.log('🔍 Personalização existente:', existing);
 
       if (existing) {
         // Update existing
-        const { error } = await supabase
+        console.log('✏️ Atualizando personalização existente ID:', existing.id);
+        const { data, error } = await supabase
           .from('customizations')
           .update({
             element_value: value,
             updated_at: new Date().toISOString()
           })
-          .eq('id', existing.id);
+          .eq('id', existing.id)
+          .select();
 
+        console.log('📝 Resultado da atualização:', { data, error });
         if (error) throw error;
       } else {
         // Create new
-        const { error } = await supabase
-          .from('customizations')
-          .insert({
-            page: section === 'login' ? 'login' : 'home',
-            section: section,
-            element_type: key.includes('color') ? 'color' : key.includes('image') ? 'image' : 'text',
-            element_key: remainingKey,
-            element_value: value,
-            active: true
-          });
+        console.log('➕ Criando nova personalização');
+        const customizationData = {
+          page: section === 'login' ? 'login' : 'home',
+          section: section,
+          element_type: key.includes('color') ? 'color' : key.includes('image') ? 'image' : 'text',
+          element_key: remainingKey,
+          element_value: value,
+          active: true
+        };
 
+        const { data, error } = await supabase
+          .from('customizations')
+          .insert(customizationData)
+          .select();
+
+        console.log('📝 Resultado da criação:', { data, error });
         if (error) throw error;
       }
 
@@ -132,11 +158,26 @@ const AdminCustomizations = () => {
         title: "Sucesso",
         description: "Personalização salva com sucesso"
       });
-    } catch (error) {
-      console.error('Erro ao salvar personalização:', error);
+      console.log('✅ Personalização salva com sucesso');
+    } catch (error: any) {
+      console.error('❌ Erro ao salvar personalização:', error);
+      console.error('📊 Detalhes do erro:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      let errorMessage = "Não foi possível salvar a personalização";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para realizar esta ação";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para realizar esta ação";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível salvar a personalização",
+        description: errorMessage,
         variant: "destructive"
       });
     }
