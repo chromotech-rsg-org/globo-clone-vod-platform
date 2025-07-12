@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Users, 
@@ -22,6 +22,7 @@ interface AdminSidebarProps {
 
 const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { logout } = useAuth();
 
   const menuItems = [
@@ -52,12 +53,15 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
       {/* Logo */}
       <div className="p-4 border-b border-gray-700">
-        <Link to="/" className="flex items-center space-x-2">
+        <button 
+          onClick={() => navigate('/')} 
+          className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+        >
           <div className="text-red-500 font-bold text-xl">G</div>
           {!isCollapsed && (
             <span className="font-bold text-lg">Globoplay Admin</span>
           )}
-        </Link>
+        </button>
       </div>
 
       {/* Navigation */}
@@ -67,10 +71,13 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           const isActive = location.pathname === item.path;
           
           return (
-            <Link
+            <button
               key={item.path}
-              to={item.path}
-              className={`flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 transition-colors ${
+              onClick={() => {
+                console.log('🔗 Navegando para:', item.path);
+                navigate(item.path);
+              }}
+              className={`flex items-center w-full px-4 py-3 text-gray-300 hover:bg-gray-700 transition-colors ${
                 isActive ? 'bg-gray-700 border-r-2 border-red-500 text-white' : ''
               }`}
             >
@@ -78,7 +85,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
               {!isCollapsed && (
                 <span className="ml-3">{item.label}</span>
               )}
-            </Link>
+            </button>
           );
         })}
       </nav>
