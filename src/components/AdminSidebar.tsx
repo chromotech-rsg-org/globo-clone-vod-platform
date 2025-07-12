@@ -73,6 +73,13 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
               className={`flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 transition-colors ${
                 isActive ? 'bg-gray-700 border-r-2 border-red-500 text-white' : ''
               }`}
+              onClick={(e) => {
+                console.log('🔗 Navegando para:', item.path);
+                // Force navigation if needed
+                if (location.pathname === item.path) {
+                  window.location.reload();
+                }
+              }}
             >
               <Icon className="h-5 w-5 min-w-[20px]" />
               {!isCollapsed && (
