@@ -67,14 +67,8 @@ const AdminPackages = () => {
 
   const handleSave = async () => {
     try {
-      console.log('🔄 Iniciando salvamento do pacote...', { editingItem: !!editingItem, formData });
-      
       // Verificar autenticação
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔐 Sessão atual:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id 
-      });
 
       if (!session) {
         throw new Error('Usuário não autenticado');
@@ -96,21 +90,13 @@ const AdminPackages = () => {
         suspension_package: formData.suspension_package
       };
 
-      console.log('📋 Dados a serem salvos:', packageData);
-
       if (editingItem) {
         // Update existing
-        console.log('✏️ Atualizando pacote existente ID:', editingItem.id);
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('packages')
-          .update({
-            ...packageData,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingItem.id)
-          .select();
+          .update(packageData)
+          .eq('id', editingItem.id);
 
-        console.log('📝 Resultado da atualização:', { data, error });
         if (error) throw error;
         
         toast({
@@ -119,13 +105,10 @@ const AdminPackages = () => {
         });
       } else {
         // Create new
-        console.log('➕ Criando novo pacote');
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('packages')
-          .insert([packageData])
-          .select();
+          .insert([packageData]);
 
-        console.log('📝 Resultado da criação:', { data, error });
         if (error) throw error;
         
         toast({
@@ -134,18 +117,9 @@ const AdminPackages = () => {
         });
       }
 
-      console.log('✅ Pacote salvo com sucesso, recarregando lista...');
       await fetchPackages();
       resetForm();
     } catch (error: any) {
-      console.error('❌ Erro ao salvar pacote:', error);
-      console.error('📊 Detalhes do erro:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
-      
       let errorMessage = "Não foi possível salvar o pacote";
       if (error.message === 'Usuário não autenticado') {
         errorMessage = "Você precisa estar logado para realizar esta ação";

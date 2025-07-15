@@ -68,14 +68,8 @@ const AdminCoupons = () => {
 
   const handleSave = async () => {
     try {
-      console.log('🔄 Iniciando salvamento do cupom...', { editingItem: !!editingItem, formData });
-      
       // Verificar autenticação
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔐 Sessão atual:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id 
-      });
 
       if (!session) {
         throw new Error('Usuário não autenticado');
@@ -100,21 +94,13 @@ const AdminCoupons = () => {
         notes: formData.notes.trim() || null
       };
 
-      console.log('📋 Dados a serem salvos:', couponData);
-
       if (editingItem) {
         // Update existing
-        console.log('✏️ Atualizando cupom existente ID:', editingItem.id);
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('coupons')
-          .update({
-            ...couponData,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingItem.id)
-          .select();
+          .update(couponData)
+          .eq('id', editingItem.id);
 
-        console.log('📝 Resultado da atualização:', { data, error });
         if (error) throw error;
         
         toast({
@@ -123,13 +109,10 @@ const AdminCoupons = () => {
         });
       } else {
         // Create new
-        console.log('➕ Criando novo cupom');
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('coupons')
-          .insert([couponData])
-          .select();
+          .insert([couponData]);
 
-        console.log('📝 Resultado da criação:', { data, error });
         if (error) throw error;
         
         toast({
@@ -138,18 +121,9 @@ const AdminCoupons = () => {
         });
       }
 
-      console.log('✅ Cupom salvo com sucesso, recarregando lista...');
       await fetchCoupons();
       resetForm();
     } catch (error: any) {
-      console.error('❌ Erro ao salvar cupom:', error);
-      console.error('📊 Detalhes do erro:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
-      
       let errorMessage = "Não foi possível salvar o cupom";
       if (error.message === 'Usuário não autenticado') {
         errorMessage = "Você precisa estar logado para realizar esta ação";

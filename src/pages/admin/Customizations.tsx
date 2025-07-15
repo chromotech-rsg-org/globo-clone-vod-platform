@@ -87,14 +87,8 @@ const AdminCustomizations = () => {
 
   const saveCustomization = async (key: string, value: string) => {
     try {
-      console.log('🔄 Iniciando salvamento da personalização...', { key, value });
-      
       // Verificar autenticação
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔐 Sessão atual:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id 
-      });
 
       if (!session) {
         throw new Error('Usuário não autenticado');
@@ -102,8 +96,6 @@ const AdminCustomizations = () => {
 
       const [section, elementKey] = key.split('_', 2);
       const remainingKey = key.substring(section.length + 1);
-      
-      console.log('📋 Dados da personalização:', { section, elementKey, remainingKey, value });
       
       // Check if customization exists
       const { data: existing, error: selectError } = await supabase
@@ -115,25 +107,20 @@ const AdminCustomizations = () => {
         .maybeSingle();
 
       if (selectError) throw selectError;
-      console.log('🔍 Personalização existente:', existing);
 
       if (existing) {
         // Update existing
-        console.log('✏️ Atualizando personalização existente ID:', existing.id);
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('customizations')
           .update({
             element_value: value,
             updated_at: new Date().toISOString()
           })
-          .eq('id', existing.id)
-          .select();
+          .eq('id', existing.id);
 
-        console.log('📝 Resultado da atualização:', { data, error });
         if (error) throw error;
       } else {
         // Create new
-        console.log('➕ Criando nova personalização');
         const customizationData = {
           page: section === 'login' ? 'login' : 'home',
           section: section,
@@ -143,12 +130,10 @@ const AdminCustomizations = () => {
           active: true
         };
 
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('customizations')
-          .insert(customizationData)
-          .select();
+          .insert(customizationData);
 
-        console.log('📝 Resultado da criação:', { data, error });
         if (error) throw error;
       }
 
@@ -158,16 +143,7 @@ const AdminCustomizations = () => {
         title: "Sucesso",
         description: "Personalização salva com sucesso"
       });
-      console.log('✅ Personalização salva com sucesso');
     } catch (error: any) {
-      console.error('❌ Erro ao salvar personalização:', error);
-      console.error('📊 Detalhes do erro:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
-      
       let errorMessage = "Não foi possível salvar a personalização";
       if (error.message === 'Usuário não autenticado') {
         errorMessage = "Você precisa estar logado para realizar esta ação";

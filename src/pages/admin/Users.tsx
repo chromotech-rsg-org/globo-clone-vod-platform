@@ -86,14 +86,8 @@ const AdminUsers = () => {
     if (!editingUser) return;
 
     try {
-      console.log('🔄 Iniciando atualização do usuário...', { userId: editingUser.id, formData });
-      
       // Verificar autenticação
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔐 Sessão atual:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id 
-      });
 
       if (!session) {
         throw new Error('Usuário não autenticado');
@@ -112,19 +106,14 @@ const AdminUsers = () => {
         email: formData.email.trim(),
         cpf: formData.cpf.trim() || null,
         phone: formData.phone.trim() || null,
-        role: formData.role,
-        updated_at: new Date().toISOString()
+        role: formData.role
       };
 
-      console.log('📋 Dados a serem atualizados:', userData);
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update(userData)
-        .eq('id', editingUser.id)
-        .select();
+        .eq('id', editingUser.id);
 
-      console.log('📝 Resultado da atualização:', { data, error });
       if (error) throw error;
 
       toast({
@@ -132,18 +121,9 @@ const AdminUsers = () => {
         description: "Usuário atualizado com sucesso"
       });
 
-      console.log('✅ Usuário atualizado com sucesso, recarregando lista...');
       await fetchUsers();
       resetForm();
     } catch (error: any) {
-      console.error('❌ Erro ao salvar usuário:', error);
-      console.error('📊 Detalhes do erro:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
-      
       let errorMessage = "Não foi possível atualizar o usuário";
       if (error.message === 'Usuário não autenticado') {
         errorMessage = "Você precisa estar logado para realizar esta ação";

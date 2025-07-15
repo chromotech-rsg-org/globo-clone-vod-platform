@@ -78,15 +78,8 @@ const AdminPlans = () => {
 
   const handleSave = async () => {
     try {
-      console.log('🔄 Iniciando salvamento do plano...', { editingItem: !!editingItem, formData });
-      
       // Verificar autenticação
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔐 Sessão atual:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id,
-        userRole: session?.user?.user_metadata?.role 
-      });
 
       if (!session) {
         throw new Error('Usuário não autenticado');
@@ -114,22 +107,14 @@ const AdminPlans = () => {
         benefits: benefitsArray.length > 0 ? benefitsArray : null,
         priority: Number(formData.priority) || 0
       };
-
-      console.log('📋 Dados a serem salvos:', planData);
       
       if (editingItem) {
         // Update existing
-        console.log('✏️ Atualizando plano existente ID:', editingItem.id);
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('plans')
-          .update({
-            ...planData,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingItem.id)
-          .select();
+          .update(planData)
+          .eq('id', editingItem.id);
 
-        console.log('📝 Resultado da atualização:', { data, error });
         if (error) throw error;
         
         toast({
@@ -138,13 +123,10 @@ const AdminPlans = () => {
         });
       } else {
         // Create new
-        console.log('➕ Criando novo plano');
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('plans')
-          .insert([planData])
-          .select();
+          .insert([planData]);
 
-        console.log('📝 Resultado da criação:', { data, error });
         if (error) throw error;
         
         toast({
@@ -153,18 +135,9 @@ const AdminPlans = () => {
         });
       }
 
-      console.log('✅ Plano salvo com sucesso, recarregando lista...');
       await fetchPlans();
       resetForm();
     } catch (error: any) {
-      console.error('❌ Erro ao salvar plano:', error);
-      console.error('📊 Detalhes do erro:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
-      
       let errorMessage = "Não foi possível salvar o plano";
       if (error.message === 'Usuário não autenticado') {
         errorMessage = "Você precisa estar logado para realizar esta ação";
