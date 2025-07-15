@@ -10,6 +10,10 @@ const Header = () => {
 
   const logoText = getCustomization('header', 'logo_text', 'Globoplay');
   const backgroundColor = getCustomization('header', 'background_color', '#111827');
+  const logoColor = getCustomization('header', 'logo_color', '#ffffff');
+  const menuTextColor = getCustomization('header', 'menu_text_color', '#ffffff');
+  const subscribeBtnBg = getCustomization('header', 'subscribe_button_background', '#3b82f6');
+  const subscribeBtnText = getCustomization('header', 'subscribe_button_text_color', '#ffffff');
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -29,37 +33,48 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">G</div>
-            <span className="text-white font-bold text-xl">{logoText}</span>
+            <span className="font-bold text-xl" style={{ color: logoColor }}>{logoText}</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <button 
               onClick={() => scrollToSection('hero')}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="transition-colors hover:opacity-80"
+              style={{ color: menuTextColor }}
             >
-              Início
+              {getCustomization('header', 'menu_home', 'Início')}
             </button>
             <button 
               onClick={() => scrollToSection('content')}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="transition-colors hover:opacity-80"
+              style={{ color: menuTextColor }}
             >
-              Conteúdo
+              {getCustomization('header', 'menu_series', 'Conteúdo')}
             </button>
             <button 
               onClick={() => scrollToSection('plans')}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="transition-colors hover:opacity-80"
+              style={{ color: menuTextColor }}
             >
-              Planos
+              {getCustomization('header', 'menu_movies', 'Planos')}
             </button>
-            <Link to="/login" className="text-gray-300 hover:text-white transition-colors">
-              Entrar
+            <Link 
+              to="/login" 
+              className="transition-colors hover:opacity-80"
+              style={{ color: menuTextColor }}
+            >
+              {getCustomization('header', 'menu_login', 'Entrar')}
             </Link>
             <Link 
               to="/checkout" 
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 rounded-md transition-colors hover:opacity-90"
+              style={{ 
+                backgroundColor: subscribeBtnBg,
+                color: subscribeBtnText
+              }}
             >
-              Assinar
+              {getCustomization('header', 'menu_subscribe', 'Assinar')}
             </Link>
           </nav>
 

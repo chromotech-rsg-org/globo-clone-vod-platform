@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      content_items: {
+        Row: {
+          active: boolean | null
+          category: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          order_index: number
+          rating: string | null
+          section_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          rating?: string | null
+          section_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          rating?: string | null
+          section_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_items_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "content_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_sections: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          order_index: number
+          page: string
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          page: string
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          page?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           active: boolean | null

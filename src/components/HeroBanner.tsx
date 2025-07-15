@@ -46,14 +46,13 @@ const HeroBanner = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <button 
                 className="px-8 py-3 rounded-md font-semibold flex items-center justify-center space-x-2 hover:opacity-90 transition-colors"
-                style={{ backgroundColor: buttonColor, color: buttonColor === '#ffffff' ? '#000000' : '#ffffff' }}
+                style={{ 
+                  backgroundColor: getCustomization('hero', 'button_background_color', buttonColor),
+                  color: getCustomization('hero', 'button_text_color', buttonColor === '#ffffff' ? '#000000' : '#ffffff')
+                }}
               >
                 <Play className="h-5 w-5 fill-current" />
                 <span>{buttonText}</span>
-              </button>
-              
-              <button className="bg-gray-700/80 text-white px-8 py-3 rounded-md font-semibold hover:bg-gray-600 transition-colors">
-                Mais Informações
               </button>
             </div>
           </div>

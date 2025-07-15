@@ -19,6 +19,7 @@ interface Plan {
 
 const PlansSection = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [activeCycle, setActiveCycle] = useState<string>('monthly');
   const [loading, setLoading] = useState(true);
   const { getCustomization } = useCustomizations('home');
 
@@ -49,7 +50,19 @@ const PlansSection = () => {
       currency: 'BRL'
     });
     
-    return cycle === 'annual' ? `${formattedPrice}/ano` : `${formattedPrice}/mês`;
+    return cycle === 'annually' ? `${formattedPrice}/ano` : `${formattedPrice}/mês`;
+  };
+
+  const filteredPlans = plans.filter(plan => plan.billing_cycle === activeCycle);
+  const availableCycles = [...new Set(plans.map(plan => plan.billing_cycle))].filter(Boolean);
+
+  const getCycleLabel = (cycle: string) => {
+    switch (cycle) {
+      case 'monthly': return 'Mensal';
+      case 'annually': return 'Anual';
+      case 'quarterly': return 'Trimestral';
+      default: return cycle;
+    }
   };
 
   if (loading) {
@@ -79,8 +92,17 @@ const PlansSection = () => {
     );
   }
 
+  const sectionBgColor = getCustomization('plans', 'section_background_color', '#1f2937');
+  const popularBorderColor = getCustomization('plans', 'popular_border_color', '#3b82f6');
+  const popularBadgeBg = getCustomization('plans', 'popular_badge_background', '#3b82f6');
+  const popularBadgeText = getCustomization('plans', 'popular_badge_text_color', '#ffffff');
+
   return (
-    <section id="plans" className="py-20 bg-gray-800">
+    <section 
+      id="plans" 
+      className="py-20"
+      style={{ backgroundColor: sectionBgColor }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -91,18 +113,48 @@ const PlansSection = () => {
           </p>
         </div>
 
+        {/* Billing Cycle Tabs */}
+        {availableCycles.length > 1 && (
+          <div className="flex justify-center mb-8">
+            <div className="bg-gray-700 rounded-lg p-1 flex">
+              {availableCycles.map((cycle) => (
+                <button
+                  key={cycle}
+                  onClick={() => setActiveCycle(cycle)}
+                  className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                    activeCycle === cycle
+                      ? 'bg-white text-gray-900'
+                      : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  {getCycleLabel(cycle)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {plans.map((plan) => (
+          {filteredPlans.map((plan) => (
             <div 
               key={plan.id}
-              className={`bg-gray-900 rounded-xl p-8 relative ${
-                plan.best_seller ? 'ring-2 ring-blue-500' : ''
-              }`}
+              className="bg-gray-900 rounded-xl p-8 relative"
+              style={{
+                border: plan.best_seller 
+                  ? `2px solid ${popularBorderColor}` 
+                  : '1px solid #374151'
+              }}
             >
               {plan.best_seller && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
-                    Mais Popular
+                  <span 
+                    className="px-4 py-1 rounded-full text-sm font-medium"
+                    style={{ 
+                      backgroundColor: popularBadgeBg,
+                      color: popularBadgeText
+                    }}
+                  >
+                    {getCustomization('plans', 'popular_badge_text', 'Mais Popular')}
                   </span>
                 </div>
               )}

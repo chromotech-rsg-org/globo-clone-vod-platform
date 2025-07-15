@@ -5,10 +5,15 @@ import { useCustomizations } from '@/hooks/useCustomizations';
 const Footer = () => {
   const { getCustomization } = useCustomizations('home');
   
-  const logoText = getCustomization('header', 'logo_text', 'Globoplay');
+  const logoText = getCustomization('footer', 'logo_text', 'Globoplay');
+  const footerBgColor = getCustomization('footer', 'background_color', '#111827');
+  const footerTextColor = getCustomization('footer', 'text_color', '#ffffff');
   
   return (
-    <footer className="bg-gray-900 border-t border-gray-800 py-12">
+    <footer 
+      className="border-t border-gray-800 py-12"
+      style={{ backgroundColor: footerBgColor, color: footerTextColor }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -17,7 +22,7 @@ const Footer = () => {
               <span className="text-white font-bold">{logoText}</span>
             </div>
             <p className="text-gray-400 text-sm">
-              Sua plataforma de streaming com o melhor conteúdo nacional e internacional.
+              {getCustomization('footer', 'description', 'Sua plataforma de streaming com o melhor conteúdo nacional e internacional.')}
             </p>
           </div>
           
@@ -54,7 +59,7 @@ const Footer = () => {
         
         <div className="border-t border-gray-800 mt-8 pt-8">
           <p className="text-gray-400 text-sm text-center">
-            © 2024 Globoplay. Todos os direitos reservados.
+            {getCustomization('footer', 'copyright_text', '© 2024 Globoplay. Todos os direitos reservados.')}
           </p>
         </div>
       </div>
