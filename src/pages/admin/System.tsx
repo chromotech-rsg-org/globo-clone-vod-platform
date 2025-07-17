@@ -192,14 +192,40 @@ const AdminSystem = () => {
 
   const saveCustomization = async (key: string, value: string) => {
     try {
+      console.log('🔧 Salvando personalização:', { key, value });
+      
       const { data: { session } } = await supabase.auth.getSession();
-
       if (!session) {
         throw new Error('Usuário não autenticado');
       }
 
+      console.log('👤 Usuário atual:', session.user.email);
+
+      // Verificar papel do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Erro ao buscar perfil do usuário:', profileError);
+        throw new Error('Erro ao verificar permissões do usuário');
+      }
+
+      console.log('👤 Papel do usuário:', profile?.role);
+
+      if (!profile || !['admin', 'desenvolvedor'].includes(profile.role)) {
+        throw new Error(`Usuário não tem permissões de administrador. Papel atual: ${profile?.role || 'nenhum'}`);
+      }
+
       const customization = systemCustomizations.find(c => c.element_key === key);
-      if (!customization) return;
+      if (!customization) {
+        console.error('Personalização não encontrada:', key);
+        return;
+      }
+
+      console.log('🔧 Dados da personalização:', customization);
 
       // Verificar se já existe
       const { data: existing, error: selectError } = await supabase
@@ -210,11 +236,16 @@ const AdminSystem = () => {
         .eq('element_key', key)
         .maybeSingle();
 
-      if (selectError) throw selectError;
+      if (selectError) {
+        console.error('Erro ao verificar personalização existente:', selectError);
+        throw selectError;
+      }
 
-      if (existing) {
+      console.log('🔧 Personalização existente:', existing);
+
+      if (existing?.id) {
         // Atualizar existente
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from('customizations')
           .update({
             element_value: value,
@@ -222,10 +253,14 @@ const AdminSystem = () => {
           })
           .eq('id', existing.id);
 
-        if (error) throw error;
+        if (updateError) {
+          console.error('Erro ao atualizar personalização:', updateError);
+          throw updateError;
+        }
+        console.log('✅ Personalização atualizada com sucesso');
       } else {
         // Criar novo
-        const { error } = await supabase
+        const { error: insertError } = await supabase
           .from('customizations')
           .insert({
             page: 'admin',
@@ -236,7 +271,11 @@ const AdminSystem = () => {
             active: true
           });
 
-        if (error) throw error;
+        if (insertError) {
+          console.error('Erro ao inserir personalização:', insertError);
+          throw insertError;
+        }
+        console.log('✅ Personalização criada com sucesso');
       }
 
       setCustomizations(prev => ({ ...prev, [key]: value }));
@@ -256,12 +295,10 @@ const AdminSystem = () => {
         document.title = value;
       }
     } catch (error: any) {
-      console.error('Erro ao salvar personalização:', error);
+      console.error('❌ Erro completo ao salvar personalização:', error);
       toast({
         title: "Erro",
-        description: error.message === 'Usuário não autenticado' 
-          ? "Você precisa estar logado para realizar esta ação"
-          : "Não foi possível salvar a personalização",
+        description: error.message || "Não foi possível salvar a personalização",
         variant: "destructive"
       });
     }

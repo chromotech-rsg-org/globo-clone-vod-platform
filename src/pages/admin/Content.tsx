@@ -361,11 +361,13 @@ const AdminContent = () => {
                       {item.image_url && (
                         <img src={item.image_url} alt={item.title} className="w-full h-32 object-cover rounded" />
                       )}
-                      <ImageUpload
-                        onImageUploaded={(url) => saveItemField(item.id, 'image_url', url)}
-                        folder="content"
-                        maxSizeKB={5120}
-                      />
+                      <div className="flex gap-2">
+                        <ImageUpload
+                          onImageUploaded={(url) => saveItemField(item.id, 'image_url', url)}
+                          folder="content"
+                          maxSizeKB={5120}
+                        />
+                      </div>
                     </div>
 
                     {/* Título do Item */}
