@@ -14,7 +14,7 @@ import {
   Images
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCustomizations } from '@/hooks/useCustomizations';
+import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -25,19 +25,20 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { getCustomization } = useCustomizations('admin');
+  const { getCustomization } = useAdminCustomizations();
 
-  // Aplicar cores personalizadas
+  // Listen for customization updates
   useEffect(() => {
-    const sidebarBg = getCustomization('colors', 'sidebar_bg', '#1f2937');
-    const sidebarText = getCustomization('colors', 'sidebar_text_color', '#f3f4f6');
+    const handleCustomizationUpdate = () => {
+      // The colors are applied via CSS variables, no need for manual updates
+    };
+
+    window.addEventListener('adminCustomizationUpdated', handleCustomizationUpdate);
     
-    const sidebar = document.querySelector('.admin-sidebar');
-    if (sidebar) {
-      (sidebar as HTMLElement).style.backgroundColor = sidebarBg;
-      (sidebar as HTMLElement).style.color = sidebarText;
-    }
-  }, [getCustomization]);
+    return () => {
+      window.removeEventListener('adminCustomizationUpdated', handleCustomizationUpdate);
+    };
+  }, []);
 
   const menuItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -48,15 +49,14 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/personalizacao', icon: Settings, label: 'Personalização' },
   ];
 
-  const sidebarBg = getCustomization('colors', 'sidebar_bg', '#1f2937');
-  const sidebarText = getCustomization('colors', 'sidebar_text_color', '#f3f4f6');
+  const adminTitle = getCustomization('admin_title', 'Globoplay Admin');
+  const adminLogo = getCustomization('admin_logo', '');
 
   return (
     <div 
       className={`admin-sidebar transition-all duration-300 ${
         isCollapsed ? 'w-16' : 'w-64'
-      } h-screen relative flex flex-col overflow-y-auto`}
-      style={{ backgroundColor: sidebarBg, color: sidebarText }}
+      } h-screen relative flex flex-col overflow-y-auto bg-admin-sidebar-bg text-admin-sidebar-text`}
     >
       {/* Toggle Button */}
       <button
@@ -76,9 +76,13 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           onClick={() => navigate('/')} 
           className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
         >
-          <div className="text-admin-primary font-bold text-xl">G</div>
+          {adminLogo ? (
+            <img src={adminLogo} alt="Logo" className="w-8 h-8 object-contain" />
+          ) : (
+            <div className="text-admin-primary font-bold text-xl">G</div>
+          )}
           {!isCollapsed && (
-            <span className="font-bold text-lg text-admin-sidebar-foreground">Globoplay Admin</span>
+            <span className="font-bold text-lg text-admin-sidebar-text">{adminTitle}</span>
           )}
         </button>
       </div>
