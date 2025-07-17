@@ -231,7 +231,7 @@ const AdminPackages = () => {
             />
           </div>
           
-          <Button onClick={handleCreate} className="bg-red-600 hover:bg-red-700">
+          <Button onClick={handleCreate} variant="admin">
             <Plus className="h-4 w-4 mr-2" />
             Novo Pacote
           </Button>
@@ -258,12 +258,15 @@ const AdminPackages = () => {
                     <TableCell className="text-white">{pkg.code}</TableCell>
                     <TableCell className="text-white">{pkg.vendor_id || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant={pkg.active ? 'default' : 'secondary'}>
+                      <Badge variant={pkg.active ? 'admin-success' : 'admin-muted'}>
                         {pkg.active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={pkg.suspension_package ? 'destructive' : 'outline'}>
+                      <Badge 
+                        variant={pkg.suspension_package ? 'admin-danger' : 'outline'}
+                        className={!pkg.suspension_package ? 'text-white' : ''}
+                      >
                         {pkg.suspension_package ? 'Sim' : 'Não'}
                       </Badge>
                     </TableCell>
@@ -365,7 +368,7 @@ const AdminPackages = () => {
             </div>
 
             <div className="flex space-x-2 pt-4">
-              <Button onClick={handleSave} className="bg-red-600 hover:bg-red-700 flex-1">
+              <Button onClick={handleSave} variant="admin" className="flex-1">
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>

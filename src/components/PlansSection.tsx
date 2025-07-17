@@ -4,6 +4,7 @@ import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomizations } from '@/hooks/useCustomizations';
+import { formatBillingCycle } from '@/utils/formatters';
 
 interface Plan {
   id: string;
@@ -56,14 +57,7 @@ const PlansSection = () => {
   const filteredPlans = plans.filter(plan => plan.billing_cycle === activeCycle);
   const availableCycles = [...new Set(plans.map(plan => plan.billing_cycle))].filter(Boolean);
 
-  const getCycleLabel = (cycle: string) => {
-    switch (cycle) {
-      case 'monthly': return 'Mensal';
-      case 'annually': return 'Anual';
-      case 'quarterly': return 'Trimestral';
-      default: return cycle;
-    }
-  };
+  const getCycleLabel = (cycle: string) => formatBillingCycle(cycle);
 
   if (loading) {
     return (
@@ -138,7 +132,7 @@ const PlansSection = () => {
           {filteredPlans.map((plan) => (
             <div 
               key={plan.id}
-              className="bg-gray-900 rounded-xl p-8 relative"
+              className="bg-gray-900 rounded-xl p-8 relative flex flex-col"
               style={{
                 border: plan.best_seller 
                   ? `2px solid ${popularBorderColor}` 
@@ -175,7 +169,7 @@ const PlansSection = () => {
               </div>
 
               {plan.benefits && plan.benefits.length > 0 && (
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-4 mb-8 flex-grow">
                   {plan.benefits.map((benefit, index) => (
                     <li key={index} className="flex items-center text-gray-300">
                       <Check className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
@@ -185,17 +179,19 @@ const PlansSection = () => {
                 </ul>
               )}
 
-              <Link
-                to="/checkout"
-                state={{ selectedPlan: plan.id }}
-                className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
-                  plan.best_seller
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-700 text-white hover:bg-gray-600'
-                }`}
-              >
-                Escolher Plano
-              </Link>
+              <div className="mt-auto">
+                <Link
+                  to="/checkout"
+                  state={{ selectedPlan: plan.id }}
+                  className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
+                    plan.best_seller
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                  }`}
+                >
+                  Escolher Plano
+                </Link>
+              </div>
             </div>
           ))}
         </div>

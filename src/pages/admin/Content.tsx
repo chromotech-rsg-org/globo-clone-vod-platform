@@ -115,6 +115,10 @@ const AdminContent = () => {
 
       setItems(prev => prev.map(i => i.id === item.id ? item : i));
       setEditingItem(null);
+      
+      // Força a atualização do cache das seções de conteúdo
+      window.dispatchEvent(new CustomEvent('contentUpdated'));
+      
       toast({
         title: "Sucesso",
         description: "Item atualizado com sucesso",
@@ -334,8 +338,9 @@ const AdminContent = () => {
                           maxSizeKB={5120}
                         />
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={() => saveItem(item)}>
-                            <Save className="h-4 w-4" />
+                          <Button size="sm" variant="admin" onClick={() => saveItem(item)}>
+                            <Save className="h-4 w-4 mr-1" />
+                            Salvar
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
                             <X className="h-4 w-4" />
@@ -353,7 +358,7 @@ const AdminContent = () => {
                         <h3 className="font-medium">{item.title}</h3>
                         <p className="text-sm text-gray-600">{item.category}</p>
                         <p className="text-xs text-gray-500">Classificação: {item.rating}</p>
-                        <Button size="sm" variant="outline" onClick={() => setEditingItem(item.id)}>
+                        <Button size="sm" variant="admin" onClick={() => setEditingItem(item.id)}>
                           <Edit2 className="h-4 w-4 mr-2" />
                           Editar
                         </Button>

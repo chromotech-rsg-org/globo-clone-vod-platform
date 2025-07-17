@@ -71,6 +71,13 @@ const AdminSystem = () => {
       section: 'colors'
     },
     {
+      element_key: 'admin_warning_color',
+      element_value: '#f59e0b',
+      element_type: 'color',
+      label: 'Cor de Aviso',
+      section: 'colors'
+    },
+    {
       element_key: 'admin_sidebar_bg',
       element_value: '#1f2937',
       element_type: 'color',
@@ -82,6 +89,27 @@ const AdminSystem = () => {
       element_value: '#111827',
       element_type: 'color',
       label: 'Fundo do Conteúdo',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_button_text_color',
+      element_value: '#ffffff',
+      element_type: 'color',
+      label: 'Cor do Texto dos Botões',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_table_header_bg',
+      element_value: '#374151',
+      element_type: 'color',
+      label: 'Fundo do Cabeçalho da Tabela',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_table_text_color',
+      element_value: '#f3f4f6',
+      element_type: 'color',
+      label: 'Cor do Texto das Tabelas',
       section: 'colors'
     }
   ];
@@ -187,6 +215,11 @@ const AdminSystem = () => {
       if (customization.element_type === 'color') {
         applyColorToSystem(key, value);
       }
+      
+      // Aplicar mudanças globalmente se necessário
+      if (key === 'admin_title') {
+        document.title = value;
+      }
     } catch (error: any) {
       console.error('Erro ao salvar personalização:', error);
       toast({
@@ -206,21 +239,37 @@ const AdminSystem = () => {
     switch (key) {
       case 'admin_primary_color':
         root.style.setProperty('--admin-primary', hslColor);
+        root.style.setProperty('--primary', hslColor);
         break;
       case 'admin_success_color':
         root.style.setProperty('--admin-success', hslColor);
         break;
       case 'admin_danger_color':
         root.style.setProperty('--admin-danger', hslColor);
+        root.style.setProperty('--destructive', hslColor);
+        break;
+      case 'admin_warning_color':
+        root.style.setProperty('--admin-warning', hslColor);
+        break;
+      case 'admin_button_text_color':
+        root.style.setProperty('--admin-button-text', hslColor);
+        break;
+      case 'admin_table_text_color':
+        root.style.setProperty('--admin-table-text', hslColor);
+        break;
+      case 'admin_table_header_bg':
+        root.style.setProperty('--admin-table-header', hslColor);
         break;
       case 'admin_sidebar_bg':
-        const sidebars = document.querySelectorAll('.admin-sidebar');
+        root.style.setProperty('--admin-sidebar-bg', hslColor);
+        const sidebars = document.querySelectorAll('.admin-sidebar, [class*="sidebar"]');
         sidebars.forEach(sidebar => {
           (sidebar as HTMLElement).style.backgroundColor = color;
         });
         break;
       case 'admin_content_bg':
-        const contents = document.querySelectorAll('.admin-content');
+        root.style.setProperty('--admin-content-bg', hslColor);
+        const contents = document.querySelectorAll('.admin-content, [class*="admin-layout"]');
         contents.forEach(content => {
           (content as HTMLElement).style.backgroundColor = color;
         });

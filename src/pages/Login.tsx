@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useCustomizations } from '@/hooks/useCustomizations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ const Login = () => {
   const { login, register, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { getCustomization } = useCustomizations('login');
 
   // Redirect if already logged in
   useEffect(() => {
@@ -121,13 +123,31 @@ const Login = () => {
     );
   }
 
+  const siteBgColor = getCustomization('global', 'site_background_color', '#111827');
+  const siteName = getCustomization('global', 'site_name', 'Globoplay');
+  const siteLogoUrl = getCustomization('global', 'site_logo', '');
+  const primaryColor = getCustomization('global', 'primary_color', '#3b82f6');
+  const buttonTextColor = getCustomization('global', 'button_text_color', '#ffffff');
+
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: siteBgColor }}
+    >
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2">
-            <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">G</div>
-            <span className="text-white font-bold text-2xl">Globoplay</span>
+            {siteLogoUrl ? (
+              <img src={siteLogoUrl} alt={siteName} className="h-10 w-auto" />
+            ) : (
+              <div 
+                className="text-white px-3 py-1 rounded font-bold text-xl"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {siteName.charAt(0)}
+              </div>
+            )}
+            <span className="text-white font-bold text-2xl">{siteName}</span>
           </Link>
         </div>
 
@@ -177,7 +197,12 @@ const Login = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full"
+                    style={{ 
+                      backgroundColor: primaryColor, 
+                      color: buttonTextColor,
+                      borderColor: primaryColor
+                    }}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Entrando...' : 'Entrar'}
@@ -231,7 +256,12 @@ const Login = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full"
+                    style={{ 
+                      backgroundColor: primaryColor, 
+                      color: buttonTextColor,
+                      borderColor: primaryColor
+                    }}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
@@ -243,7 +273,11 @@ const Login = () => {
             <div className="mt-6 text-center">
               <p className="text-gray-400 text-sm">
                 Não tem uma conta?{' '}
-                <Link to="/checkout" className="text-blue-400 hover:text-blue-300">
+                <Link 
+                  to="/checkout" 
+                  style={{ color: primaryColor }}
+                  className="hover:opacity-80"
+                >
                   Assine agora
                 </Link>
               </p>

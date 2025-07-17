@@ -14,6 +14,7 @@ import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
+import { formatBillingCycle } from '@/utils/formatters';
 
 interface Plan {
   id: string;
@@ -285,9 +286,9 @@ const AdminPlans = () => {
                     <TableCell className="text-white">{plan.priority}</TableCell>
                     <TableCell className="text-white">{plan.name}</TableCell>
                     <TableCell className="text-white">R$ {plan.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-white capitalize">{plan.billing_cycle}</TableCell>
+                    <TableCell className="text-white">{formatBillingCycle(plan.billing_cycle || '')}</TableCell>
                     <TableCell>
-                      <Badge variant={plan.active ? 'admin-success' : 'admin-danger'}>
+                      <Badge variant={plan.active ? 'admin-success' : 'admin-muted'}>
                         {plan.active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>

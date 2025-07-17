@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Edit, Eye, Save, X } from 'lucide-react';
+import { Search, Edit, Eye, Save, X, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
@@ -180,17 +180,23 @@ const AdminUsers = () => {
       </header>
 
       <div className="p-6">
-        {/* Search */}
+        {/* Search and Create */}
         <Card className="bg-gray-800 border-gray-700 mb-6">
           <CardContent className="p-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar usuários por nome ou email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-700 border-gray-600 text-white"
-              />
+            <div className="flex justify-between items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Buscar usuários por nome ou email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
+              <Button variant="admin">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Usuário
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -330,7 +336,7 @@ const AdminUsers = () => {
             </div>
 
             <div className="flex space-x-2 pt-4">
-              <Button onClick={handleSave} className="bg-red-600 hover:bg-red-700 flex-1">
+              <Button onClick={handleSave} variant="admin" className="flex-1">
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>

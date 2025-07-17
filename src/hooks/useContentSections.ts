@@ -24,52 +24,34 @@ export const useContentSections = (page: string) => {
   const [sections, setSections] = useState<ContentSection[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchContentSections();
-  }, [page]);
-
   const fetchContentSections = async () => {
     try {
-      // Buscar seções com seus itens em uma única query usando join
-      const { data, error } = await supabase
+      const { data: sectionsData, error: sectionsError } = await supabase
         .from('content_sections')
-        .select(`
-          *,
-          content_items (
-            id,
-            title,
-            image_url,
-            category,
-            rating,
-            order_index,
-            active
-          )
-        `)
+        .select('*')
         .eq('page', page)
         .eq('active', true)
         .order('order_index');
 
-      if (error) throw error;
+      if (sectionsError) throw sectionsError;
 
-      if (!data || data.length === 0) {
-        setSections([]);
-        return;
-      }
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('content_items')
+        .select('*')
+        .eq('active', true)
+        .order('order_index');
 
-      // Filtrar e mapear as seções com itens ativos
-      const sectionsWithFilteredItems = data.map(section => ({
-        id: section.id,
-        title: section.title,
+      if (itemsError) throw itemsError;
+
+      const sectionsWithItems = (sectionsData || []).map(section => ({
+        ...section,
         type: section.type as 'horizontal' | 'vertical',
-        page: section.page,
-        order_index: section.order_index,
-        active: section.active,
-        items: (section.content_items || [])
-          .filter(item => item.active)
-          .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+        items: (itemsData || [])
+          .filter(item => item.section_id === section.id)
+          .sort((a, b) => a.order_index - b.order_index)
       }));
 
-      setSections(sectionsWithFilteredItems);
+      setSections(sectionsWithItems);
     } catch (error) {
       console.error('Erro ao buscar seções de conteúdo:', error);
       setSections([]);
@@ -77,6 +59,21 @@ export const useContentSections = (page: string) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchContentSections();
+    
+    // Listener para atualizações de conteúdo
+    const handleContentUpdate = () => {
+      fetchContentSections();
+    };
+    
+    window.addEventListener('contentUpdated', handleContentUpdate);
+    
+    return () => {
+      window.removeEventListener('contentUpdated', handleContentUpdate);
+    };
+  }, [page]);
 
   return { sections, loading, refetch: fetchContentSections };
 };
