@@ -31,18 +31,17 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
-    { path: '/admin/imagens', icon: Images, label: 'Imagens' },
     { path: '/admin/personalizacao', icon: Settings, label: 'Personalização' },
   ];
 
   return (
-    <div className={`bg-gray-800 text-white transition-all duration-300 ${
+    <div className={`bg-admin-sidebar text-admin-sidebar-foreground transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
-    } min-h-screen relative flex flex-col`}>
+    } h-screen relative flex flex-col overflow-y-auto`}>
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-6 bg-gray-800 border border-gray-600 rounded-full p-1 hover:bg-gray-700 z-10"
+        className="absolute -right-3 top-6 bg-admin-sidebar border border-admin-border rounded-full p-1 hover:bg-admin-sidebar/80 z-10"
       >
         {isCollapsed ? (
           <ChevronRight className="h-4 w-4" />
@@ -52,14 +51,14 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       </button>
 
       {/* Logo */}
-      <div className="p-4 border-b border-gray-700">
+      <div className="p-4 border-b border-admin-border">
         <button 
           onClick={() => navigate('/')} 
           className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
         >
-          <div className="text-red-500 font-bold text-xl">G</div>
+          <div className="text-admin-primary font-bold text-xl">G</div>
           {!isCollapsed && (
-            <span className="font-bold text-lg">Globoplay Admin</span>
+            <span className="font-bold text-lg text-admin-sidebar-foreground">Globoplay Admin</span>
           )}
         </button>
       </div>
@@ -77,8 +76,8 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                 console.log('🔗 Navegando para:', item.path);
                 navigate(item.path);
               }}
-              className={`flex items-center w-full px-4 py-3 text-gray-300 hover:bg-gray-700 transition-colors ${
-                isActive ? 'bg-gray-700 border-r-2 border-red-500 text-white' : ''
+              className={`flex items-center w-full px-4 py-3 text-admin-muted-foreground hover:bg-admin-muted transition-colors ${
+                isActive ? 'bg-admin-muted border-r-2 border-admin-primary text-admin-sidebar-foreground' : ''
               }`}
             >
               <Icon className="h-5 w-5 min-w-[20px]" />
@@ -91,10 +90,10 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 border-t border-admin-border mt-auto">
         <button
           onClick={logout}
-          className="flex items-center w-full px-4 py-3 text-gray-300 hover:bg-gray-700 transition-colors rounded"
+          className="flex items-center w-full px-4 py-3 text-admin-muted-foreground hover:bg-admin-muted transition-colors rounded"
         >
           <LogOut className="h-5 w-5 min-w-[20px]" />
           {!isCollapsed && (

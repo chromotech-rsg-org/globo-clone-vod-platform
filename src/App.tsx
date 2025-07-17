@@ -15,8 +15,7 @@ import AdminUsers from "./pages/admin/Users";
 import AdminPackages from "./pages/admin/Packages";
 import AdminPlans from "./pages/admin/Plans";
 import AdminCoupons from "./pages/admin/Coupons";
-import AdminImages from "./pages/admin/Images";
-import AdminCustomizations from "./pages/admin/Customizations";
+import AdminPersonalization from "./pages/admin/Personalization";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,14 +69,9 @@ const App = () => (
                 <AdminCoupons />
               </ProtectedRoute>
             } />
-            <Route path="/admin/imagens" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminImages />
-              </ProtectedRoute>
-            } />
             <Route path="/admin/personalizacao" element={
               <ProtectedRoute requiredRole="admin">
-                <AdminCustomizations />
+                <AdminPersonalization />
               </ProtectedRoute>
             } />
             

@@ -30,41 +30,49 @@ export const useContentSections = (page: string) => {
 
   const fetchContentSections = async () => {
     try {
-      const { data: sectionsData, error: sectionsError } = await supabase
+      // Buscar seções com seus itens em uma única query usando join
+      const { data, error } = await supabase
         .from('content_sections')
-        .select('*')
+        .select(`
+          *,
+          content_items (
+            id,
+            title,
+            image_url,
+            category,
+            rating,
+            order_index,
+            active
+          )
+        `)
         .eq('page', page)
         .eq('active', true)
         .order('order_index');
 
-      if (sectionsError) throw sectionsError;
+      if (error) throw error;
 
-      const sectionsWithItems = await Promise.all(
-        sectionsData.map(async (section) => {
-          const { data: itemsData, error: itemsError } = await supabase
-            .from('content_items')
-            .select('*')
-            .eq('section_id', section.id)
-            .eq('active', true)
-            .order('order_index');
+      if (!data || data.length === 0) {
+        setSections([]);
+        return;
+      }
 
-          if (itemsError) throw itemsError;
+      // Filtrar e mapear as seções com itens ativos
+      const sectionsWithFilteredItems = data.map(section => ({
+        id: section.id,
+        title: section.title,
+        type: section.type as 'horizontal' | 'vertical',
+        page: section.page,
+        order_index: section.order_index,
+        active: section.active,
+        items: (section.content_items || [])
+          .filter(item => item.active)
+          .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+      }));
 
-          return {
-            id: section.id,
-            title: section.title,
-            type: section.type as 'horizontal' | 'vertical',
-            page: section.page,
-            order_index: section.order_index,
-            active: section.active,
-            items: itemsData || []
-          };
-        })
-      );
-
-      setSections(sectionsWithItems);
+      setSections(sectionsWithFilteredItems);
     } catch (error) {
       console.error('Erro ao buscar seções de conteúdo:', error);
+      setSections([]);
     } finally {
       setLoading(false);
     }
