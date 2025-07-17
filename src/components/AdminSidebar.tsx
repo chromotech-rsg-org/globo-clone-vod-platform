@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -14,6 +14,7 @@ import {
   Images
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCustomizations } from '@/hooks/useCustomizations';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -24,6 +25,19 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { getCustomization } = useCustomizations('admin');
+
+  // Aplicar cores personalizadas
+  useEffect(() => {
+    const sidebarBg = getCustomization('colors', 'sidebar_bg', '#1f2937');
+    const sidebarText = getCustomization('colors', 'sidebar_text_color', '#f3f4f6');
+    
+    const sidebar = document.querySelector('.admin-sidebar');
+    if (sidebar) {
+      (sidebar as HTMLElement).style.backgroundColor = sidebarBg;
+      (sidebar as HTMLElement).style.color = sidebarText;
+    }
+  }, [getCustomization]);
 
   const menuItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -34,10 +48,16 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/personalizacao', icon: Settings, label: 'Personalização' },
   ];
 
+  const sidebarBg = getCustomization('colors', 'sidebar_bg', '#1f2937');
+  const sidebarText = getCustomization('colors', 'sidebar_text_color', '#f3f4f6');
+
   return (
-    <div className={`bg-admin-sidebar text-admin-sidebar-foreground transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    } h-screen relative flex flex-col overflow-y-auto`}>
+    <div 
+      className={`admin-sidebar transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-64'
+      } h-screen relative flex flex-col overflow-y-auto`}
+      style={{ backgroundColor: sidebarBg, color: sidebarText }}
+    >
       {/* Toggle Button */}
       <button
         onClick={onToggle}

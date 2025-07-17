@@ -30,7 +30,7 @@ const AdminSystem = () => {
       element_key: 'admin_logo',
       element_value: '',
       element_type: 'image',
-      label: 'Logo do Admin',
+      label: 'Logo do Sistema',
       section: 'system'
     },
     {
@@ -51,44 +51,16 @@ const AdminSystem = () => {
     // Cores do Sistema Admin
     {
       element_key: 'admin_primary_color',
-      element_value: '#1e40af',
+      element_value: '#3b82f6',
       element_type: 'color',
-      label: 'Cor Primária (Botões)',
+      label: 'Cor Primária',
       section: 'colors'
     },
     {
-      element_key: 'admin_success_color',
-      element_value: '#059669',
+      element_key: 'admin_button_bg_color',
+      element_value: '#3b82f6',
       element_type: 'color',
-      label: 'Cor de Sucesso',
-      section: 'colors'
-    },
-    {
-      element_key: 'admin_danger_color',
-      element_value: '#dc2626',
-      element_type: 'color',
-      label: 'Cor de Perigo',
-      section: 'colors'
-    },
-    {
-      element_key: 'admin_warning_color',
-      element_value: '#f59e0b',
-      element_type: 'color',
-      label: 'Cor de Aviso',
-      section: 'colors'
-    },
-    {
-      element_key: 'admin_sidebar_bg',
-      element_value: '#1f2937',
-      element_type: 'color',
-      label: 'Fundo da Sidebar',
-      section: 'colors'
-    },
-    {
-      element_key: 'admin_content_bg',
-      element_value: '#111827',
-      element_type: 'color',
-      label: 'Fundo do Conteúdo',
+      label: 'Cor de Fundo dos Botões',
       section: 'colors'
     },
     {
@@ -99,6 +71,41 @@ const AdminSystem = () => {
       section: 'colors'
     },
     {
+      element_key: 'admin_button_hover_color',
+      element_value: '#2563eb',
+      element_type: 'color',
+      label: 'Cor Hover dos Botões',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_sidebar_bg',
+      element_value: '#1f2937',
+      element_type: 'color',
+      label: 'Fundo da Sidebar',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_sidebar_text_color',
+      element_value: '#f3f4f6',
+      element_type: 'color',
+      label: 'Cor do Texto da Sidebar',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_content_bg',
+      element_value: '#111827',
+      element_type: 'color',
+      label: 'Fundo do Dashboard',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_dashboard_text_color',
+      element_value: '#f3f4f6',
+      element_type: 'color',
+      label: 'Cor do Texto do Dashboard',
+      section: 'colors'
+    },
+    {
       element_key: 'admin_table_header_bg',
       element_value: '#374151',
       element_type: 'color',
@@ -106,10 +113,38 @@ const AdminSystem = () => {
       section: 'colors'
     },
     {
+      element_key: 'admin_table_bg_color',
+      element_value: '#1f2937',
+      element_type: 'color',
+      label: 'Cor de Fundo das Tabelas',
+      section: 'colors'
+    },
+    {
       element_key: 'admin_table_text_color',
       element_value: '#f3f4f6',
       element_type: 'color',
       label: 'Cor do Texto das Tabelas',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_success_color',
+      element_value: '#10b981',
+      element_type: 'color',
+      label: 'Cor de Sucesso',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_danger_color',
+      element_value: '#ef4444',
+      element_type: 'color',
+      label: 'Cor de Perigo',
+      section: 'colors'
+    },
+    {
+      element_key: 'admin_warning_color',
+      element_value: '#f59e0b',
+      element_type: 'color',
+      label: 'Cor de Aviso',
       section: 'colors'
     }
   ];
@@ -241,6 +276,15 @@ const AdminSystem = () => {
         root.style.setProperty('--admin-primary', hslColor);
         root.style.setProperty('--primary', hslColor);
         break;
+      case 'admin_button_bg_color':
+        root.style.setProperty('--admin-button-bg', hslColor);
+        break;
+      case 'admin_button_text_color':
+        root.style.setProperty('--admin-button-text', hslColor);
+        break;
+      case 'admin_button_hover_color':
+        root.style.setProperty('--admin-button-hover', hslColor);
+        break;
       case 'admin_success_color':
         root.style.setProperty('--admin-success', hslColor);
         break;
@@ -251,30 +295,33 @@ const AdminSystem = () => {
       case 'admin_warning_color':
         root.style.setProperty('--admin-warning', hslColor);
         break;
-      case 'admin_button_text_color':
-        root.style.setProperty('--admin-button-text', hslColor);
+      case 'admin_sidebar_bg':
+        root.style.setProperty('--admin-sidebar-bg', hslColor);
         break;
-      case 'admin_table_text_color':
-        root.style.setProperty('--admin-table-text', hslColor);
+      case 'admin_sidebar_text_color':
+        root.style.setProperty('--admin-sidebar-text', hslColor);
+        break;
+      case 'admin_content_bg':
+        root.style.setProperty('--admin-content-bg', hslColor);
+        break;
+      case 'admin_dashboard_text_color':
+        root.style.setProperty('--admin-dashboard-text', hslColor);
         break;
       case 'admin_table_header_bg':
         root.style.setProperty('--admin-table-header', hslColor);
         break;
-      case 'admin_sidebar_bg':
-        root.style.setProperty('--admin-sidebar-bg', hslColor);
-        const sidebars = document.querySelectorAll('.admin-sidebar, [class*="sidebar"]');
-        sidebars.forEach(sidebar => {
-          (sidebar as HTMLElement).style.backgroundColor = color;
-        });
+      case 'admin_table_bg_color':
+        root.style.setProperty('--admin-table-bg', hslColor);
         break;
-      case 'admin_content_bg':
-        root.style.setProperty('--admin-content-bg', hslColor);
-        const contents = document.querySelectorAll('.admin-content, [class*="admin-layout"]');
-        contents.forEach(content => {
-          (content as HTMLElement).style.backgroundColor = color;
-        });
+      case 'admin_table_text_color':
+        root.style.setProperty('--admin-table-text', hslColor);
         break;
     }
+    
+    // Força a aplicação das cores em tempo real
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('adminColorsUpdated'));
+    }, 100);
   };
 
   const hexToHsl = (hex: string): string => {
@@ -308,29 +355,29 @@ const AdminSystem = () => {
     const value = customizations[customization.element_key] || customization.element_value;
 
     return (
-      <Card key={customization.element_key} className="bg-gray-800 border-gray-700">
-        <CardContent className="p-4">
-          <Label className="text-gray-300 mb-2 block">{customization.label}</Label>
-          
-          {customization.element_type === 'text' && (
-            <div className="flex space-x-2">
-              <Input
-                value={value}
-                onChange={(e) => setCustomizations(prev => ({ ...prev, [customization.element_key]: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white flex-1"
-                placeholder={customization.label}
-              />
-              <Button
-                onClick={() => saveCustomization(customization.element_key, customizations[customization.element_key] || '')}
-                variant="admin"
-                size="sm"
-              >
-                <Save className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+      <div key={customization.element_key} className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+        <Label className="text-gray-300 mb-3 block font-medium">{customization.label}</Label>
+        
+        {customization.element_type === 'text' && (
+          <div className="flex space-x-2">
+            <Input
+              value={value}
+              onChange={(e) => setCustomizations(prev => ({ ...prev, [customization.element_key]: e.target.value }))}
+              className="bg-gray-700 border-gray-600 text-white flex-1"
+              placeholder={customization.label}
+            />
+            <Button
+              onClick={() => saveCustomization(customization.element_key, customizations[customization.element_key] || '')}
+              variant="admin"
+              size="sm"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
-          {customization.element_type === 'color' && (
+        {customization.element_type === 'color' && (
+          <div className="space-y-2">
             <div className="flex space-x-2">
               <Input
                 type="color"
@@ -340,7 +387,7 @@ const AdminSystem = () => {
                   setCustomizations(prev => ({ ...prev, [customization.element_key]: newValue }));
                   saveCustomization(customization.element_key, newValue);
                 }}
-                className="bg-gray-700 border-gray-600 w-20 h-10"
+                className="bg-gray-700 border-gray-600 w-16 h-10 p-1 rounded"
               />
               <Input
                 value={value}
@@ -356,22 +403,30 @@ const AdminSystem = () => {
                 <Save className="h-4 w-4" />
               </Button>
             </div>
-          )}
+            {/* Preview da cor */}
+            <div 
+              className="w-full h-6 rounded border border-gray-600" 
+              style={{ backgroundColor: value }}
+              title={`Preview: ${customization.label}`}
+            />
+          </div>
+        )}
 
-          {customization.element_type === 'image' && (
-            <div className="space-y-2">
-              {value && (
-                <img src={value} alt={customization.label} className="w-32 h-20 object-contain bg-gray-700 rounded" />
-              )}
-              <ImageUpload
-                onImageUploaded={(url) => handleImageUpload(customization.element_key, url)}
-                folder="admin"
-                maxSizeKB={2048}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {customization.element_type === 'image' && (
+          <div className="space-y-3">
+            {value && (
+              <div className="bg-gray-700 rounded p-2">
+                <img src={value} alt={customization.label} className="w-full max-w-[200px] h-auto object-contain rounded" />
+              </div>
+            )}
+            <ImageUpload
+              onImageUploaded={(url) => handleImageUpload(customization.element_key, url)}
+              folder="admin"
+              maxSizeKB={2048}
+            />
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -407,7 +462,7 @@ const AdminSystem = () => {
           </TabsList>
 
           <TabsContent value="system" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {systemCustomizations
                 .filter(c => c.section === 'system')
                 .map(renderElementEditor)}
@@ -415,7 +470,7 @@ const AdminSystem = () => {
           </TabsContent>
 
           <TabsContent value="colors" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {systemCustomizations
                 .filter(c => c.section === 'colors')
                 .map(renderElementEditor)}

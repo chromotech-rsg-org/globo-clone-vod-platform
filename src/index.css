@@ -52,9 +52,19 @@
 
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Admin System Colors */
+    /* Admin System Colors - Valores padrão que podem ser sobrescritos dinamicamente */
     --admin-primary: 224 71% 25%;
     --admin-primary-foreground: 0 0% 100%;
+    --admin-button-bg: 224 71% 25%;
+    --admin-button-text: 0 0% 100%;
+    --admin-button-hover: 224 71% 20%;
+    --admin-sidebar-bg: 215 14% 34%;
+    --admin-sidebar-text: 0 0% 100%;
+    --admin-content-bg: 222 84% 5%;
+    --admin-dashboard-text: 0 0% 100%;
+    --admin-table-header: 217 33% 18%;
+    --admin-table-bg: 215 14% 34%;
+    --admin-table-text: 0 0% 100%;
     --admin-success: 142 76% 36%;
     --admin-success-foreground: 0 0% 100%;
     --admin-danger: 0 84% 60%;
