@@ -51,6 +51,18 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Admin System Colors */
+    --admin-primary: 224 71% 25%;
+    --admin-primary-foreground: 0 0% 100%;
+    --admin-success: 142 76% 36%;
+    --admin-success-foreground: 0 0% 100%;
+    --admin-danger: 0 84% 60%;
+    --admin-danger-foreground: 0 0% 100%;
+    --admin-warning: 48 96% 53%;
+    --admin-warning-foreground: 0 0% 0%;
+    --admin-muted: 215 14% 34%;
+    --admin-muted-foreground: 0 0% 100%;
   }
 
   .dark {

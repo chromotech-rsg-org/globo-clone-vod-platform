@@ -258,7 +258,7 @@ const AdminPlans = () => {
             />
           </div>
           
-          <Button onClick={handleCreate} className="bg-red-600 hover:bg-red-700">
+          <Button onClick={handleCreate} variant="admin">
             <Plus className="h-4 w-4 mr-2" />
             Novo Plano
           </Button>
@@ -287,12 +287,12 @@ const AdminPlans = () => {
                     <TableCell className="text-white">R$ {plan.price.toFixed(2)}</TableCell>
                     <TableCell className="text-white capitalize">{plan.billing_cycle}</TableCell>
                     <TableCell>
-                      <Badge variant={plan.active ? 'default' : 'secondary'}>
+                      <Badge variant={plan.active ? 'admin-success' : 'admin-danger'}>
                         {plan.active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={plan.best_seller ? 'destructive' : 'outline'}>
+                      <Badge variant={plan.best_seller ? 'admin-success' : 'admin-muted'}>
                         {plan.best_seller ? 'Sim' : 'Não'}
                       </Badge>
                     </TableCell>
@@ -471,7 +471,7 @@ const AdminPlans = () => {
             </div>
 
             <div className="flex space-x-2 pt-4">
-              <Button onClick={handleSave} className="bg-red-600 hover:bg-red-700 flex-1">
+              <Button onClick={handleSave} variant="admin" className="flex-1">
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>

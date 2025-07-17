@@ -15,11 +15,16 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   return (
     <div className="flex min-h-screen bg-gray-900">
-      <AdminSidebar 
-        isCollapsed={sidebarCollapsed}
-        onToggle={handleToggle}
-      />
-      <div className="flex-1 overflow-auto">
+      <div className="fixed left-0 top-0 h-full z-10">
+        <AdminSidebar 
+          isCollapsed={sidebarCollapsed}
+          onToggle={handleToggle}
+        />
+      </div>
+      <div 
+        className="flex-1 overflow-auto transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? '64px' : '256px' }}
+      >
         {children}
       </div>
     </div>

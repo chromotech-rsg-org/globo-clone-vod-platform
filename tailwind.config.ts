@@ -61,6 +61,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				admin: {
+					primary: 'hsl(var(--admin-primary))',
+					'primary-foreground': 'hsl(var(--admin-primary-foreground))',
+					success: 'hsl(var(--admin-success))',
+					'success-foreground': 'hsl(var(--admin-success-foreground))',
+					danger: 'hsl(var(--admin-danger))',
+					'danger-foreground': 'hsl(var(--admin-danger-foreground))',
+					warning: 'hsl(var(--admin-warning))',
+					'warning-foreground': 'hsl(var(--admin-warning-foreground))',
+					muted: 'hsl(var(--admin-muted))',
+					'muted-foreground': 'hsl(var(--admin-muted-foreground))'
 				}
 			},
 			borderRadius: {
