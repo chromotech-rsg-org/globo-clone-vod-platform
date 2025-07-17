@@ -40,9 +40,10 @@ export const useAdminCustomizations = () => {
   useEffect(() => {
     fetchCustomizations();
     
-    // Listen for updates
+    // Listen for updates with unique channel name
+    const channelId = `admin-customizations-${Date.now()}`;
     const channel = supabase
-      .channel('admin-customizations')
+      .channel(channelId)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -54,7 +55,7 @@ export const useAdminCustomizations = () => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, []);
 

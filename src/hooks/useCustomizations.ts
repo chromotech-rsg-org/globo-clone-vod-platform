@@ -18,6 +18,24 @@ export const useCustomizations = (page: string) => {
 
   useEffect(() => {
     fetchCustomizations();
+    
+    // Listen for updates with unique channel name
+    const channelId = `customizations-${page}-${Date.now()}`;
+    const channel = supabase
+      .channel(channelId)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'customizations',
+        filter: `page=eq.${page}`
+      }, () => {
+        fetchCustomizations();
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, [page]);
 
   const fetchCustomizations = async () => {
