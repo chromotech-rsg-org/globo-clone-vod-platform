@@ -8,6 +8,7 @@ interface ContentItem {
   image: string;
   category: string;
   rating: string;
+  age_rating_background_color?: string;
 }
 
 interface ContentCarouselProps {
@@ -80,7 +81,10 @@ const ContentCarousel = ({ title, items, type }: ContentCarouselProps) => {
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-gray-300">{item.category}</span>
-                      <span className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold">
+                      <span 
+                        className="text-black px-2 py-1 rounded text-xs font-bold"
+                        style={{ backgroundColor: item.age_rating_background_color || '#fbbf24' }}
+                      >
                         {item.rating}
                       </span>
                     </div>

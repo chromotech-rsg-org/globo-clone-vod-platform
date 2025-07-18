@@ -2,6 +2,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import HeroBanner from '@/components/HeroBanner';
+import HeroSlider from '@/components/HeroSlider';
 import ContentCarousel from '@/components/ContentCarousel';
 import PlansSection from '@/components/PlansSection';
 import Footer from '@/components/Footer';
@@ -13,6 +14,7 @@ const Home = () => {
   const { getCustomization } = useCustomizations('home');
 
   const siteBgColor = getCustomization('global', 'site_background_color', '#0f172a');
+  const heroSliderImages = getCustomization('hero', 'hero_slider_images', '');
 
   return (
     <div 
@@ -20,7 +22,7 @@ const Home = () => {
       style={{ backgroundColor: siteBgColor }}
     >
       <Header />
-      <HeroBanner />
+      {heroSliderImages ? <HeroSlider /> : <HeroBanner />}
       
       <div id="content" className="px-4 md:px-8 space-y-12 pb-20 pt-16">
         {loading ? (
@@ -35,7 +37,8 @@ const Home = () => {
                 title: item.title,
                 image: item.image_url || '',
                 category: item.category || '',
-                rating: item.rating || ''
+                rating: item.rating || '',
+                age_rating_background_color: item.age_rating_background_color || '#fbbf24'
               }))}
               type={section.type}
             />

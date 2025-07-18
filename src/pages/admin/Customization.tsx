@@ -8,6 +8,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
 import { CustomizationEditor } from '@/components/admin/CustomizationEditor';
 import ContentEditor from '@/components/admin/ContentEditor';
+import HeroSliderEditor from '@/components/admin/HeroSliderEditor';
 
 interface CustomizationConfig {
   key: string;
@@ -27,7 +28,7 @@ const AdminCustomization = () => {
 
   // Configurações de personalização organizadas por página e seção
   const customizationConfigs: CustomizationConfig[] = [
-    // HOME - HERO SECTION
+    // HOME - HERO SECTION (for single image mode)
     {
       key: 'hero_title',
       label: 'Título Principal',
@@ -35,7 +36,7 @@ const AdminCustomization = () => {
       section: 'hero',
       page: 'home',
       placeholder: 'Ex: The Last of Us',
-      description: 'Título principal do banner hero',
+      description: 'Título principal do banner hero (modo imagem única)',
       defaultValue: 'The Last of Us'
     },
     {
@@ -74,7 +75,7 @@ const AdminCustomization = () => {
       type: 'image',
       section: 'hero',
       page: 'home',
-      description: 'Imagem de fundo do banner principal',
+      description: 'Imagem de fundo do banner principal (modo imagem única)',
       defaultValue: 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop'
     },
     {
@@ -116,6 +117,46 @@ const AdminCustomization = () => {
       defaultValue: ''
     },
     {
+      key: 'header_menu_home',
+      label: 'Título Menu - Início',
+      type: 'text',
+      section: 'header',
+      page: 'home',
+      placeholder: 'Início',
+      description: 'Texto do link do menu Início',
+      defaultValue: 'Início'
+    },
+    {
+      key: 'header_menu_content',
+      label: 'Título Menu - Conteúdo',
+      type: 'text',
+      section: 'header',
+      page: 'home',
+      placeholder: 'Conteúdo',
+      description: 'Texto do link do menu Conteúdo',
+      defaultValue: 'Conteúdo'
+    },
+    {
+      key: 'header_menu_plans',
+      label: 'Título Menu - Planos',
+      type: 'text',
+      section: 'header',
+      page: 'home',
+      placeholder: 'Planos',
+      description: 'Texto do link do menu Planos',
+      defaultValue: 'Planos'
+    },
+    {
+      key: 'header_menu_login',
+      label: 'Título Menu - Login',
+      type: 'text',
+      section: 'header',
+      page: 'home',
+      placeholder: 'Entrar',
+      description: 'Texto do botão de login',
+      defaultValue: 'Entrar'
+    },
+    {
       key: 'header_background_color',
       label: 'Cor de Fundo do Header',
       type: 'color',
@@ -132,6 +173,15 @@ const AdminCustomization = () => {
       page: 'home',
       description: 'Cor dos links do menu de navegação',
       defaultValue: '#ffffff'
+    },
+    {
+      key: 'header_hover_color',
+      label: 'Cor do Hover do Menu',
+      type: 'color',
+      section: 'header',
+      page: 'home',
+      description: 'Cor dos links do menu ao passar o mouse',
+      defaultValue: '#ef4444'
     },
 
     // HOME - FOOTER
@@ -420,7 +470,8 @@ const AdminCustomization = () => {
           </TabsList>
 
           <TabsContent value="home" className="space-y-6">
-            {renderSection('home', 'hero', 'Banner Principal', 'Configure o banner principal da página inicial')}
+            <HeroSliderEditor />
+            {renderSection('home', 'hero', 'Banner Principal (Modo Simples)', 'Configure o banner com imagem única (desabilitado se usar slider)')}
             {renderSection('home', 'header', 'Cabeçalho', 'Configure o cabeçalho do site')}
             {renderSection('home', 'plans', 'Seção de Planos', 'Configure a seção de planos de assinatura')}
             {renderSection('home', 'footer', 'Rodapé', 'Configure o rodapé do site')}

@@ -26,6 +26,7 @@ interface ContentItem {
   image_url: string | null;
   category: string | null;
   rating: string | null;
+  age_rating_background_color?: string | null;
   section_id: string;
   order_index: number;
   active: boolean;
@@ -123,6 +124,7 @@ const ContentEditor = () => {
             image_url: item.image_url,
             category: item.category,
             rating: item.rating,
+            age_rating_background_color: item.age_rating_background_color,
             updated_at: new Date().toISOString()
           })
           .eq('id', item.id);
@@ -137,6 +139,7 @@ const ContentEditor = () => {
             image_url: item.image_url,
             category: item.category,
             rating: item.rating,
+            age_rating_background_color: item.age_rating_background_color,
             section_id: item.section_id,
             order_index: 0,
             active: true
@@ -193,6 +196,7 @@ const ContentEditor = () => {
       image_url: item?.image_url || '',
       category: item?.category || '',
       rating: item?.rating || '',
+      age_rating_background_color: item?.age_rating_background_color || '#fbbf24',
       section_id: sectionId
     });
 
@@ -253,6 +257,24 @@ const ContentEditor = () => {
               className="bg-admin-input border-admin-border text-admin-foreground"
               placeholder="Ex: 12+, 16+, Livre"
             />
+          </div>
+
+          <div>
+            <Label className="text-admin-foreground">Cor de Fundo da Faixa Etária</Label>
+            <div className="flex space-x-2">
+              <input
+                type="color"
+                value={formData.age_rating_background_color || '#fbbf24'}
+                onChange={(e) => setFormData(prev => ({ ...prev, age_rating_background_color: e.target.value }))}
+                className="w-12 h-8 rounded border border-admin-border cursor-pointer"
+              />
+              <Input
+                value={formData.age_rating_background_color || '#fbbf24'}
+                onChange={(e) => setFormData(prev => ({ ...prev, age_rating_background_color: e.target.value }))}
+                className="bg-admin-input border-admin-border text-admin-foreground flex-1"
+                placeholder="#fbbf24"
+              />
+            </div>
           </div>
 
           <div>
@@ -461,7 +483,15 @@ const ContentEditor = () => {
                                   {item.category}
                                 </span>
                                 {item.rating && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge 
+                                    variant="outline" 
+                                    className="text-xs"
+                                    style={{ 
+                                      backgroundColor: item.age_rating_background_color || '#fbbf24',
+                                      color: '#000000',
+                                      borderColor: item.age_rating_background_color || '#fbbf24'
+                                    }}
+                                  >
                                     {item.rating}
                                   </Badge>
                                 )}
