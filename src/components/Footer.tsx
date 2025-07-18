@@ -5,8 +5,10 @@ import { useCustomizations } from '@/hooks/useCustomizations';
 const Footer = () => {
   const { getCustomization } = useCustomizations('home');
   
-  const footerBgColor = getCustomization('footer', 'background_color', '#1f2937');
-  const footerTextColor = getCustomization('footer', 'text_color', '#9ca3af');
+  const footerBgColor = getCustomization('footer', 'footer_background_color', '#1f2937');
+  const footerTextColor = getCustomization('footer', 'footer_text_color', '#ffffff');
+  const copyrightText = getCustomization('footer', 'footer_copyright', '© 2024 Todos os direitos reservados');
+  const logoImage = getCustomization('footer', 'footer_logo_image', '');
   const siteName = getCustomization('global', 'site_name', 'Globoplay');
   
   return (
@@ -59,7 +61,7 @@ const Footer = () => {
         
         <div className="border-t border-gray-800 mt-8 pt-8">
           <p className="text-center text-sm" style={{ color: footerTextColor }}>
-            &copy; 2024 {siteName}. Todos os direitos reservados.
+            {copyrightText}
           </p>
         </div>
       </div>

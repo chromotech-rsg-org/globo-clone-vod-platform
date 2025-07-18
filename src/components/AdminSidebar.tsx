@@ -7,7 +7,7 @@ import {
   Package, 
   CreditCard, 
   Ticket, 
-  Settings,
+  Palette,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -46,7 +46,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
-    { path: '/admin/personalizacao', icon: Settings, label: 'Personalização' },
+    { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
   ];
 
   const adminTitle = getCustomization('admin_title', 'Globoplay Admin');

@@ -15,7 +15,7 @@ import AdminUsers from "./pages/admin/Users";
 import AdminPackages from "./pages/admin/Packages";
 import AdminPlans from "./pages/admin/Plans";
 import AdminCoupons from "./pages/admin/Coupons";
-import AdminPersonalization from "./pages/admin/Personalization";
+import AdminCustomization from "./pages/admin/Customization";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,7 +71,7 @@ const App = () => (
             } />
             <Route path="/admin/personalizacao" element={
               <ProtectedRoute requiredRole="admin">
-                <AdminPersonalization />
+                <AdminCustomization />
               </ProtectedRoute>
             } />
             

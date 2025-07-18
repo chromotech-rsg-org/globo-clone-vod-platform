@@ -8,12 +8,10 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getCustomization } = useCustomizations('home');
 
-  const logoText = getCustomization('header', 'logo_text', 'Globoplay');
-  const backgroundColor = getCustomization('header', 'background_color', '#111827');
-  const logoColor = getCustomization('header', 'logo_color', '#ffffff');
-  const menuTextColor = getCustomization('header', 'menu_text_color', '#ffffff');
-  const subscribeBtnBg = getCustomization('header', 'subscribe_button_background', '#3b82f6');
-  const subscribeBtnText = getCustomization('header', 'subscribe_button_text_color', '#ffffff');
+  const logoImage = getCustomization('header', 'header_logo_image', '');
+  const siteName = getCustomization('global', 'site_name', 'Globoplay');
+  const backgroundColor = getCustomization('header', 'header_background_color', 'transparent');
+  const menuTextColor = getCustomization('header', 'header_text_color', '#ffffff');
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -32,8 +30,12 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">G</div>
-            <span className="font-bold text-xl" style={{ color: logoColor }}>{logoText}</span>
+            {logoImage ? (
+              <img src={logoImage} alt={siteName} className="h-8 w-auto" />
+            ) : (
+              <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">G</div>
+            )}
+            <span className="font-bold text-xl" style={{ color: menuTextColor }}>{siteName}</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -68,11 +70,7 @@ const Header = () => {
             </Link>
             <Link 
               to="/checkout" 
-              className="px-4 py-2 rounded-md transition-colors hover:opacity-90"
-              style={{ 
-                backgroundColor: subscribeBtnBg,
-                color: subscribeBtnText
-              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md transition-colors hover:bg-blue-700"
             >
               {getCustomization('header', 'menu_subscribe', 'Assinar')}
             </Link>

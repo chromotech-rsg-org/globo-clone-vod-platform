@@ -6,13 +6,14 @@ import { useCustomizations } from '@/hooks/useCustomizations';
 const HeroBanner = () => {
   const { getCustomization } = useCustomizations('home');
 
-  const backgroundImage = getCustomization('hero', 'background_image', 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop');
-  const title = getCustomization('hero', 'title', 'The Last of Us');
-  const subtitle = getCustomization('hero', 'subtitle', 'SÉRIE ORIGINAL HBO');
-  const description = getCustomization('hero', 'description', 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.');
-  const buttonText = getCustomization('hero', 'button_text', 'Assistir');
-  const buttonColor = getCustomization('hero', 'button_color', '#ffffff');
-  const titleColor = getCustomization('hero', 'title_color', '#ffffff');
+  const backgroundImage = getCustomization('hero', 'hero_background_image', 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop');
+  const title = getCustomization('hero', 'hero_title', 'The Last of Us');
+  const subtitle = getCustomization('hero', 'hero_subtitle', 'SÉRIE ORIGINAL HBO');
+  const description = getCustomization('hero', 'hero_description', 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.');
+  const buttonText = getCustomization('hero', 'hero_button_text', 'Assistir');
+  const titleColor = getCustomization('hero', 'hero_title_color', '#ffffff');
+  const buttonBackgroundColor = getCustomization('hero', 'hero_button_background_color', '#ffffff');
+  const buttonTextColor = getCustomization('hero', 'hero_button_text_color', '#000000');
 
   return (
     <div id="hero" className="relative h-[70vh] bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900">
@@ -47,8 +48,8 @@ const HeroBanner = () => {
               <button 
                 className="px-8 py-3 rounded-md font-semibold flex items-center justify-center space-x-2 hover:opacity-90 transition-colors"
                 style={{ 
-                  backgroundColor: getCustomization('hero', 'button_background_color', buttonColor),
-                  color: getCustomization('hero', 'button_text_color', buttonColor === '#ffffff' ? '#000000' : '#ffffff')
+                  backgroundColor: buttonBackgroundColor,
+                  color: buttonTextColor
                 }}
               >
                 <Play className="h-5 w-5 fill-current" />

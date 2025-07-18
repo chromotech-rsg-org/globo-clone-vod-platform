@@ -2,17 +2,20 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Save } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Save, Eye } from 'lucide-react';
 import ImageUpload from '@/components/ui/image-upload';
 
 interface CustomizationEditorProps {
   id: string;
   label: string;
   value: string;
-  type: 'text' | 'color' | 'image';
+  type: 'text' | 'color' | 'image' | 'textarea';
   onChange: (value: string) => void;
   onSave: () => void;
   loading?: boolean;
+  placeholder?: string;
+  description?: string;
 }
 
 export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
@@ -22,16 +25,23 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
   type,
   onChange,
   onSave,
-  loading = false
+  loading = false,
+  placeholder,
+  description
 }) => {
   const handleImageUpload = (url: string) => {
     onChange(url);
-    onSave();
+    // Não salva automaticamente - usuário deve clicar no botão salvar
   };
 
   return (
     <div className="bg-admin-card border border-admin-border rounded-lg p-4 space-y-3">
-      <Label className="text-admin-foreground font-medium">{label}</Label>
+      <div className="space-y-1">
+        <Label className="text-admin-foreground font-medium">{label}</Label>
+        {description && (
+          <p className="text-xs text-admin-muted-foreground">{description}</p>
+        )}
+      </div>
       
       {type === 'text' && (
         <div className="flex space-x-2">
@@ -40,7 +50,7 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className="bg-admin-input border-admin-border text-admin-foreground flex-1"
-            placeholder={label}
+            placeholder={placeholder || label}
           />
           <Button
             onClick={onSave}
@@ -53,16 +63,36 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
         </div>
       )}
 
+      {type === 'textarea' && (
+        <div className="space-y-2">
+          <Textarea
+            id={id}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="bg-admin-input border-admin-border text-admin-foreground resize-none"
+            placeholder={placeholder || label}
+            rows={3}
+          />
+          <Button
+            onClick={onSave}
+            variant="admin"
+            size="sm"
+            disabled={loading}
+            className="w-full"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Salvar
+          </Button>
+        </div>
+      )}
+
       {type === 'color' && (
         <div className="space-y-2">
           <div className="flex space-x-2">
             <Input
               type="color"
               value={value}
-              onChange={(e) => {
-                onChange(e.target.value);
-                onSave();
-              }}
+              onChange={(e) => onChange(e.target.value)}
               className="bg-admin-input border-admin-border w-16 h-10 p-1 rounded"
             />
             <Input
@@ -81,11 +111,17 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
             </Button>
           </div>
           {/* Preview da cor */}
-          <div 
-            className="w-full h-6 rounded border border-admin-border" 
-            style={{ backgroundColor: value }}
-            title={`Preview: ${label}`}
-          />
+          <div className="flex items-center space-x-2">
+            <div 
+              className="w-8 h-8 rounded border border-admin-border flex-shrink-0" 
+              style={{ backgroundColor: value }}
+              title={`Preview: ${label}`}
+            />
+            <div className="text-xs text-admin-muted-foreground flex items-center">
+              <Eye className="h-3 w-3 mr-1" />
+              Preview
+            </div>
+          </div>
         </div>
       )}
 
@@ -93,6 +129,10 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
         <div className="space-y-3">
           {value && (
             <div className="bg-admin-muted rounded p-2">
+              <div className="flex items-center space-x-2 mb-2">
+                <Eye className="h-3 w-3 text-admin-muted-foreground" />
+                <span className="text-xs text-admin-muted-foreground">Preview atual:</span>
+              </div>
               <img 
                 src={value} 
                 alt={label} 
@@ -100,11 +140,25 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
               />
             </div>
           )}
-          <ImageUpload
-            onImageUploaded={handleImageUpload}
-            folder="admin"
-            maxSizeKB={2048}
-          />
+          <div className="space-y-2">
+            <ImageUpload
+              onImageUploaded={handleImageUpload}
+              folder="customizations"
+              maxSizeKB={5120}
+            />
+            {value && (
+              <Button
+                onClick={onSave}
+                variant="admin"
+                size="sm"
+                disabled={loading}
+                className="w-full"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Salvar Imagem
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
