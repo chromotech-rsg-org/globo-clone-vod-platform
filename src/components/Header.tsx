@@ -10,8 +10,15 @@ const Header = () => {
 
   const logoImage = getCustomization('header', 'header_logo_image', '');
   const siteName = getCustomization('global', 'site_name', 'Globoplay');
-  const backgroundColor = getCustomization('header', 'header_background_color', 'transparent');
-  const menuTextColor = getCustomization('header', 'header_text_color', '#ffffff');
+  const headerBgColor = getCustomization('header', 'header_background_color', 'transparent');
+  const headerTextColor = getCustomization('header', 'header_text_color', '#ffffff');
+  const headerHoverColor = getCustomization('header', 'header_hover_color', '#ef4444');
+  
+  // Menu titles
+  const menuHome = getCustomization('header', 'header_menu_home', 'Início');
+  const menuContent = getCustomization('header', 'header_menu_content', 'Conteúdo');
+  const menuPlans = getCustomization('header', 'header_menu_plans', 'Planos');
+  const menuLogin = getCustomization('header', 'header_menu_login', 'Entrar');
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -24,7 +31,7 @@ const Header = () => {
   return (
     <header 
       className="backdrop-blur-sm fixed w-full top-0 z-50 border-b border-gray-800"
-      style={{ backgroundColor: backgroundColor + '95' }}
+      style={{ backgroundColor: headerBgColor === 'transparent' ? 'rgba(0,0,0,0.8)' : headerBgColor }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -35,51 +42,64 @@ const Header = () => {
             ) : (
               <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">G</div>
             )}
-            <span className="font-bold text-xl" style={{ color: menuTextColor }}>{siteName}</span>
+            <span className="font-bold text-xl" style={{ color: headerTextColor }}>{siteName}</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <button 
               onClick={() => scrollToSection('hero')}
-              className="transition-colors hover:opacity-80"
-              style={{ color: menuTextColor }}
+              className="hover:transition-colors" 
+              style={{ 
+                color: headerTextColor,
+                '--hover-color': headerHoverColor
+              } as React.CSSProperties}
+              onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
+              onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
             >
-              {getCustomization('header', 'menu_home', 'Início')}
+              {menuHome}
             </button>
             <button 
               onClick={() => scrollToSection('content')}
-              className="transition-colors hover:opacity-80"
-              style={{ color: menuTextColor }}
+              className="hover:transition-colors"
+              style={{ 
+                color: headerTextColor,
+                '--hover-color': headerHoverColor
+              } as React.CSSProperties}
+              onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
+              onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
             >
-              {getCustomization('header', 'menu_series', 'Conteúdo')}
+              {menuContent}
             </button>
             <button 
               onClick={() => scrollToSection('plans')}
-              className="transition-colors hover:opacity-80"
-              style={{ color: menuTextColor }}
+              className="hover:transition-colors"
+              style={{ 
+                color: headerTextColor,
+                '--hover-color': headerHoverColor
+              } as React.CSSProperties}
+              onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
+              onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
             >
-              {getCustomization('header', 'menu_movies', 'Planos')}
+              {menuPlans}
             </button>
             <Link 
               to="/login" 
-              className="transition-colors hover:opacity-80"
-              style={{ color: menuTextColor }}
+              className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md"
+              style={{ 
+                backgroundColor: headerHoverColor,
+                color: '#ffffff'
+              }}
             >
-              {getCustomization('header', 'menu_login', 'Entrar')}
-            </Link>
-            <Link 
-              to="/checkout" 
-              className="px-4 py-2 bg-blue-600 text-white rounded-md transition-colors hover:bg-blue-700"
-            >
-              {getCustomization('header', 'menu_subscribe', 'Assinar')}
+              {menuLogin}
             </Link>
           </nav>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-white p-2"
+            className="md:hidden p-2"
+            style={{ color: headerTextColor }}
           >
             {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -87,39 +107,54 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden bg-gray-800 border-t border-gray-700">
+          <div className="md:hidden border-t" style={{ backgroundColor: headerBgColor === 'transparent' ? 'rgba(0,0,0,0.9)' : headerBgColor, borderColor: 'rgba(255,255,255,0.1)' }}>
             <div className="px-2 pt-2 pb-3 space-y-1">
               <button 
                 onClick={() => scrollToSection('hero')}
-                className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
+                style={{ 
+                  color: headerTextColor,
+                  '--hover-color': headerHoverColor
+                } as React.CSSProperties}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                Início
+                {menuHome}
               </button>
               <button 
                 onClick={() => scrollToSection('content')}
-                className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
+                style={{ 
+                  color: headerTextColor,
+                  '--hover-color': headerHoverColor
+                } as React.CSSProperties}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                Conteúdo
+                {menuContent}
               </button>
               <button 
                 onClick={() => scrollToSection('plans')}
-                className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
+                style={{ 
+                  color: headerTextColor,
+                  '--hover-color': headerHoverColor
+                } as React.CSSProperties}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                Planos
+                {menuPlans}
               </button>
               <Link 
                 to="/login" 
-                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+                className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4"
+                style={{ 
+                  backgroundColor: headerHoverColor,
+                  color: '#ffffff'
+                }}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Entrar
-              </Link>
-              <Link 
-                to="/checkout" 
-                className="block px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Assinar
+                {menuLogin}
               </Link>
             </div>
           </div>

@@ -17,6 +17,7 @@ export type Database = {
       content_items: {
         Row: {
           active: boolean | null
+          age_rating_background_color: string | null
           category: string | null
           created_at: string | null
           id: string
@@ -29,6 +30,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          age_rating_background_color?: string | null
           category?: string | null
           created_at?: string | null
           id?: string
@@ -41,6 +43,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          age_rating_background_color?: string | null
           category?: string | null
           created_at?: string | null
           id?: string

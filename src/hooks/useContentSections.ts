@@ -7,6 +7,7 @@ interface ContentItem {
   image_url: string | null;
   category: string | null;
   rating: string | null;
+  age_rating_background_color?: string | null;
   order_index: number;
 }
 
