@@ -14,7 +14,7 @@ const Home = () => {
   const { getCustomization } = useCustomizations('home');
 
   const siteBgColor = getCustomization('global', 'site_background_color', '#0f172a');
-  const heroSliderImages = getCustomization('hero', 'hero_slider_images', '');
+  const heroSliderImages = getCustomization('hero', 'slider_images', '');
 
   return (
     <div 
