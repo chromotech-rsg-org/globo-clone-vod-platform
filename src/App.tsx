@@ -16,6 +16,9 @@ import AdminPackages from "./pages/admin/Packages";
 import AdminPlans from "./pages/admin/Plans";
 import AdminCoupons from "./pages/admin/Coupons";
 import AdminCustomization from "./pages/admin/Customization";
+import AdminHeroSlider from "./pages/admin/HeroSlider";
+import AdminContent from "./pages/admin/Content";
+import AdminImages from "./pages/admin/Images";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,6 +75,21 @@ const App = () => (
             <Route path="/admin/personalizacao" element={
               <ProtectedRoute requiredRole="admin">
                 <AdminCustomization />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/hero-slider" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminHeroSlider />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/conteudo" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminContent />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/imagens" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminImages />
               </ProtectedRoute>
             } />
             

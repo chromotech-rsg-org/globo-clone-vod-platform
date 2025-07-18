@@ -11,7 +11,9 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Images
+  Images,
+  FileText,
+  Presentation
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
@@ -47,6 +49,9 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
+    { path: '/admin/hero-slider', icon: Presentation, label: 'Slider Hero' },
+    { path: '/admin/conteudo', icon: FileText, label: 'Conteúdo' },
+    { path: '/admin/imagens', icon: Images, label: 'Imagens' },
   ];
 
   const adminTitle = getCustomization('admin_title', 'Globoplay Admin');

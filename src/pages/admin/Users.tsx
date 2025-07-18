@@ -30,6 +30,7 @@ const AdminUsers = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingUser, setViewingUser] = useState<UserProfile | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -80,6 +81,76 @@ const AdminUsers = () => {
   const handleView = (user: UserProfile) => {
     setViewingUser(user);
     setIsViewDialogOpen(true);
+  };
+
+  const handleCreate = () => {
+    setFormData({
+      name: '',
+      email: '',
+      cpf: '',
+      phone: '',
+      role: 'user'
+    });
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleCreateSave = async () => {
+    try {
+      // Verificar autenticação
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Validar dados obrigatórios
+      if (!formData.name.trim()) {
+        throw new Error('Nome é obrigatório');
+      }
+      if (!formData.email.trim()) {
+        throw new Error('Email é obrigatório');
+      }
+
+      const userData = {
+        id: crypto.randomUUID(),
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        cpf: formData.cpf.trim() || null,
+        phone: formData.phone.trim() || null,
+        role: formData.role
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .insert(userData);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Usuário criado com sucesso"
+      });
+
+      await fetchUsers();
+      resetCreateForm();
+    } catch (error: any) {
+      let errorMessage = "Não foi possível criar o usuário";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para realizar esta ação";
+      } else if (error.message.includes('obrigatório')) {
+        errorMessage = error.message;
+      } else if (error.code === '23505') {
+        errorMessage = "Já existe um usuário com este email";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para realizar esta ação";
+      }
+      
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -143,9 +214,48 @@ const AdminUsers = () => {
     }
   };
 
+  const handleDelete = async (userId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Usuário excluído com sucesso"
+      });
+
+      await fetchUsers();
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o usuário",
+        variant: "destructive"
+      });
+    }
+  };
+
   const resetForm = () => {
     setEditingUser(null);
     setIsDialogOpen(false);
+    setFormData({
+      name: '',
+      email: '',
+      cpf: '',
+      phone: '',
+      role: 'user'
+    });
+  };
+
+  const resetCreateForm = () => {
+    setIsCreateDialogOpen(false);
     setFormData({
       name: '',
       email: '',
@@ -193,7 +303,7 @@ const AdminUsers = () => {
                   className="pl-10 bg-gray-700 border-gray-600 text-white"
                 />
               </div>
-              <Button variant="admin">
+              <Button variant="admin" onClick={handleCreate}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Usuário
               </Button>
@@ -253,6 +363,14 @@ const AdminUsers = () => {
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="bg-black text-white hover:bg-gray-800"
+                      onClick={() => handleDelete(user.id)}
+                    >
+                      Excluir
                     </Button>
                   </div>
                 </div>
@@ -388,6 +506,87 @@ const AdminUsers = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Criar Usuário</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="create-name" className="text-gray-300">Nome</Label>
+              <Input
+                id="create-name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder="Nome completo"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="create-email" className="text-gray-300">Email</Label>
+              <Input
+                id="create-email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder="email@exemplo.com"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="create-cpf" className="text-gray-300">CPF</Label>
+              <Input
+                id="create-cpf"
+                value={formData.cpf}
+                onChange={(e) => setFormData({...formData, cpf: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder="000.000.000-00"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="create-phone" className="text-gray-300">Telefone</Label>
+              <Input
+                id="create-phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="create-role" className="text-gray-300">Função</Label>
+              <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="desenvolvedor">Desenvolvedor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex space-x-2 pt-4">
+              <Button onClick={handleCreateSave} variant="admin" className="flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                Criar
+              </Button>
+              <Button onClick={resetCreateForm} variant="outline" className="border-gray-600 text-gray-300">
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </AdminLayout>

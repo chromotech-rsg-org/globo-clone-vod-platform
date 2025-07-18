@@ -26,7 +26,7 @@ const HeroSliderEditor = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load existing slides
+    // Load existing slides from corrected key
     const slideImages = getCustomization('hero_slider_images', '');
     const duration = getCustomization('hero_slider_autoplay_duration', '5000');
     
@@ -35,16 +35,28 @@ const HeroSliderEditor = () => {
     if (slideImages) {
       try {
         const parsedSlides = JSON.parse(slideImages);
-        setSlides(parsedSlides);
+        if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
+          setSlides(parsedSlides);
+        } else {
+          // Initialize with default slide
+          setSlides([{
+            id: '1',
+            image: 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop',
+            title: 'The Last of Us',
+            subtitle: 'SÉRIE ORIGINAL HBO',
+            description: 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.',
+            buttonText: 'Assistir'
+          }]);
+        }
       } catch (error) {
         console.error('Error parsing slider images:', error);
         // Initialize with default slide
         setSlides([{
           id: '1',
-          image: '',
-          title: 'Título do Slide',
-          subtitle: 'Subtítulo',
-          description: 'Descrição do conteúdo...',
+          image: 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop',
+          title: 'The Last of Us',
+          subtitle: 'SÉRIE ORIGINAL HBO',
+          description: 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.',
           buttonText: 'Assistir'
         }]);
       }
@@ -52,10 +64,10 @@ const HeroSliderEditor = () => {
       // Initialize with default slide
       setSlides([{
         id: '1',
-        image: '',
-        title: 'Título do Slide',
-        subtitle: 'Subtítulo',
-        description: 'Descrição do conteúdo...',
+        image: 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop',
+        title: 'The Last of Us',
+        subtitle: 'SÉRIE ORIGINAL HBO',
+        description: 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.',
         buttonText: 'Assistir'
       }]);
     }
