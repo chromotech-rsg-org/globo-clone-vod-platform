@@ -102,7 +102,7 @@ const HeroSliderEditor = () => {
         'hero_slider_images', 
         JSON.stringify(slides), 
         'hero', 
-        'textarea'
+        'text'
       );
 
       // Save autoplay duration
