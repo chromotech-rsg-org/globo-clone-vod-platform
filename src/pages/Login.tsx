@@ -123,7 +123,14 @@ const Login = () => {
     );
   }
 
-  const siteBgColor = getCustomization('global', 'site_background_color', '#111827');
+  // Get customizations using the correct keys
+  const loginTitle = getCustomization('form', 'title', 'Acesse sua conta');
+  const loginSubtitle = getCustomization('form', 'subtitle', 'Entre ou cadastre-se no Globoplay');
+  const loginBgColor = getCustomization('background', 'color', '#111827');
+  const loginBgImage = getCustomization('background', 'image', '');
+  const loginCardBgColor = getCustomization('card', 'background', '#1f2937');
+  
+  // Global customizations
   const siteName = getCustomization('global', 'site_name', 'Globoplay');
   const siteLogoUrl = getCustomization('global', 'site_logo', '');
   const primaryColor = getCustomization('global', 'primary_color', '#3b82f6');
@@ -132,7 +139,12 @@ const Login = () => {
   return (
     <div 
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ backgroundColor: siteBgColor }}
+      style={{ 
+        backgroundColor: loginBgColor,
+        backgroundImage: loginBgImage ? `url('${loginBgImage}')` : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
     >
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
@@ -151,11 +163,14 @@ const Login = () => {
           </Link>
         </div>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card 
+          className="border-gray-700"
+          style={{ backgroundColor: loginCardBgColor }}
+        >
           <CardHeader>
-            <CardTitle className="text-white text-2xl text-center">Acesse sua conta</CardTitle>
+            <CardTitle className="text-white text-2xl text-center">{loginTitle}</CardTitle>
             <CardDescription className="text-gray-400 text-center">
-              Entre ou cadastre-se no Globoplay
+              {loginSubtitle}
             </CardDescription>
           </CardHeader>
           <CardContent>

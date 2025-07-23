@@ -30,7 +30,7 @@ const AdminCustomization = () => {
   const customizationConfigs: CustomizationConfig[] = [
     // HOME - HERO SECTION (for single image mode)
     {
-      key: 'hero_title',
+      key: 'title',
       label: 'Título Principal',
       type: 'text',
       section: 'hero',
@@ -40,7 +40,7 @@ const AdminCustomization = () => {
       defaultValue: 'The Last of Us'
     },
     {
-      key: 'hero_subtitle',
+      key: 'subtitle',
       label: 'Subtítulo',
       type: 'text',
       section: 'hero',
@@ -50,7 +50,7 @@ const AdminCustomization = () => {
       defaultValue: 'SÉRIE ORIGINAL HBO'
     },
     {
-      key: 'hero_description',
+      key: 'description',
       label: 'Descrição',
       type: 'textarea',
       section: 'hero',
@@ -60,7 +60,7 @@ const AdminCustomization = () => {
       defaultValue: 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.'
     },
     {
-      key: 'hero_button_text',
+      key: 'button_text',
       label: 'Texto do Botão',
       type: 'text',
       section: 'hero',
@@ -70,7 +70,7 @@ const AdminCustomization = () => {
       defaultValue: 'Assistir'
     },
     {
-      key: 'hero_background_image',
+      key: 'background_image',
       label: 'Imagem de Fundo',
       type: 'image',
       section: 'hero',
@@ -79,7 +79,7 @@ const AdminCustomization = () => {
       defaultValue: 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop'
     },
     {
-      key: 'hero_title_color',
+      key: 'title_color',
       label: 'Cor do Título',
       type: 'color',
       section: 'hero',
@@ -88,7 +88,7 @@ const AdminCustomization = () => {
       defaultValue: '#ffffff'
     },
     {
-      key: 'hero_button_background_color',
+      key: 'button_background_color',
       label: 'Cor de Fundo do Botão',
       type: 'color',
       section: 'hero',
@@ -97,7 +97,7 @@ const AdminCustomization = () => {
       defaultValue: '#ffffff'
     },
     {
-      key: 'hero_button_text_color',
+      key: 'button_text_color',
       label: 'Cor do Texto do Botão',
       type: 'color',
       section: 'hero',
@@ -108,7 +108,7 @@ const AdminCustomization = () => {
 
     // HOME - HEADER
     {
-      key: 'header_logo_image',
+      key: 'logo_image',
       label: 'Logo do Site',
       type: 'image',
       section: 'header',
@@ -117,7 +117,7 @@ const AdminCustomization = () => {
       defaultValue: ''
     },
     {
-      key: 'header_menu_home',
+      key: 'menu_home',
       label: 'Título Menu - Início',
       type: 'text',
       section: 'header',
@@ -127,7 +127,7 @@ const AdminCustomization = () => {
       defaultValue: 'Início'
     },
     {
-      key: 'header_menu_content',
+      key: 'menu_content',
       label: 'Título Menu - Conteúdo',
       type: 'text',
       section: 'header',
@@ -137,7 +137,7 @@ const AdminCustomization = () => {
       defaultValue: 'Conteúdo'
     },
     {
-      key: 'header_menu_plans',
+      key: 'menu_plans',
       label: 'Título Menu - Planos',
       type: 'text',
       section: 'header',
@@ -147,7 +147,7 @@ const AdminCustomization = () => {
       defaultValue: 'Planos'
     },
     {
-      key: 'header_menu_login',
+      key: 'menu_login',
       label: 'Título Menu - Login',
       type: 'text',
       section: 'header',
@@ -157,7 +157,7 @@ const AdminCustomization = () => {
       defaultValue: 'Entrar'
     },
     {
-      key: 'header_background_color',
+      key: 'background_color',
       label: 'Cor de Fundo do Header',
       type: 'color',
       section: 'header',
@@ -166,7 +166,7 @@ const AdminCustomization = () => {
       defaultValue: 'transparent'
     },
     {
-      key: 'header_text_color',
+      key: 'text_color',
       label: 'Cor do Texto do Menu',
       type: 'color',
       section: 'header',
@@ -175,7 +175,7 @@ const AdminCustomization = () => {
       defaultValue: '#ffffff'
     },
     {
-      key: 'header_hover_color',
+      key: 'hover_color',
       label: 'Cor do Hover do Menu',
       type: 'color',
       section: 'header',
@@ -295,48 +295,48 @@ const AdminCustomization = () => {
 
     // LOGIN PAGE
     {
-      key: 'login_title',
+      key: 'title',
       label: 'Título da Página',
       type: 'text',
-      section: 'login',
+      section: 'form',
       page: 'login',
       placeholder: 'Faça seu login',
       description: 'Título principal da página de login',
       defaultValue: 'Faça seu login'
     },
     {
-      key: 'login_subtitle',
+      key: 'subtitle',
       label: 'Subtítulo',
       type: 'text',
-      section: 'login',
+      section: 'form',
       page: 'login',
       placeholder: 'Acesse sua conta para continuar',
       description: 'Subtítulo da página de login',
       defaultValue: 'Acesse sua conta para continuar'
     },
     {
-      key: 'login_background_image',
+      key: 'image',
       label: 'Imagem de Fundo',
       type: 'image',
-      section: 'login',
+      section: 'background',
       page: 'login',
       description: 'Imagem de fundo da página de login',
       defaultValue: ''
     },
     {
-      key: 'login_background_color',
+      key: 'color',
       label: 'Cor de Fundo',
       type: 'color',
-      section: 'login',
+      section: 'background',
       page: 'login',
       description: 'Cor de fundo da página de login',
       defaultValue: '#0f172a'
     },
     {
-      key: 'login_card_background_color',
+      key: 'background',
       label: 'Cor de Fundo do Card',
       type: 'color',
-      section: 'login',
+      section: 'card',
       page: 'login',
       description: 'Cor de fundo do card de login',
       defaultValue: '#1f2937'
@@ -492,7 +492,9 @@ const AdminCustomization = () => {
           </TabsContent>
 
           <TabsContent value="login" className="space-y-6">
-            {renderSection('login', 'login', 'Página de Login', 'Configure a aparência da página de login')}
+            {renderSection('login', 'form', 'Formulário de Login', 'Configure o título e subtítulo do formulário')}
+            {renderSection('login', 'background', 'Fundo da Página', 'Configure a cor e imagem de fundo')}
+            {renderSection('login', 'card', 'Card de Login', 'Configure a aparência do card de login')}
           </TabsContent>
 
           <TabsContent value="global" className="space-y-6">
