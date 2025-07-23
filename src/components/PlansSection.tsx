@@ -86,10 +86,10 @@ const PlansSection = () => {
     );
   }
 
-  const sectionBgColor = getCustomization('plans', 'background_color', '#1f2937');
-  const popularBorderColor = getCustomization('plans', 'border_color', '#3b82f6');
-  const popularBadgeBg = getCustomization('plans', 'badge_background', '#3b82f6');
-  const popularBadgeText = getCustomization('plans', 'badge_text_color', '#ffffff');
+  const sectionBgColor = getCustomization('plans', 'plans_background_color', '#1f2937');
+  const popularBorderColor = getCustomization('plans', 'plans_border_color', '#3b82f6');
+  const popularBadgeBg = getCustomization('plans', 'plans_badge_background', '#3b82f6');
+  const popularBadgeText = getCustomization('plans', 'plans_badge_text_color', '#ffffff');
 
   return (
     <section 
@@ -148,7 +148,7 @@ const PlansSection = () => {
                       color: popularBadgeText
                     }}
                   >
-                    {getCustomization('plans', 'badge_text', 'Mais Popular')}
+                    {getCustomization('plans', 'plans_badge_text', 'Mais Popular')}
                   </span>
                 </div>
               )}

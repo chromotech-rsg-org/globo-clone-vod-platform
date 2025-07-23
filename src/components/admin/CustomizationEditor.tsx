@@ -36,6 +36,12 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
     setLocalValue(value);
   }, [value]);
 
+  const handleSave = async () => {
+    await onSave();
+    // Atualizar o valor local após salvar
+    setLocalValue(value);
+  };
+
   const handleInputChange = (newValue: string) => {
     setLocalValue(newValue);
     onChange(newValue);
@@ -65,7 +71,7 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
             placeholder={placeholder || label}
           />
           <Button
-            onClick={onSave}
+            onClick={handleSave}
             variant="admin"
             size="sm"
             disabled={loading}
@@ -86,7 +92,7 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
             rows={3}
           />
           <Button
-            onClick={onSave}
+            onClick={handleSave}
             variant="admin"
             size="sm"
             disabled={loading}
@@ -114,7 +120,7 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
               placeholder="#000000"
             />
             <Button
-              onClick={onSave}
+            onClick={handleSave}
               variant="admin"
               size="sm"
               disabled={loading}
@@ -160,7 +166,7 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
             />
             {localValue && (
               <Button
-                onClick={onSave}
+                onClick={handleSave}
                 variant="admin"
                 size="sm"
                 disabled={loading}

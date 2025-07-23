@@ -224,7 +224,7 @@ const AdminCustomization = () => {
 
     // HOME - FOOTER
     {
-      key: 'footer_footer_logo_image',
+      key: 'footer_logo_image',
       label: 'Logo do Rodapé',
       type: 'image',
       section: 'footer',
@@ -233,7 +233,7 @@ const AdminCustomization = () => {
       defaultValue: ''
     },
     {
-      key: 'footer_footer_copyright',
+      key: 'footer_copyright',
       label: 'Texto de Copyright',
       type: 'text',
       section: 'footer',
@@ -243,7 +243,7 @@ const AdminCustomization = () => {
       defaultValue: '© 2024 Todos os direitos reservados'
     },
     {
-      key: 'footer_footer_background_color',
+      key: 'footer_background_color',
       label: 'Cor de Fundo do Rodapé',
       type: 'color',
       section: 'footer',
@@ -252,7 +252,7 @@ const AdminCustomization = () => {
       defaultValue: '#1f2937'
     },
     {
-      key: 'footer_footer_text_color',
+      key: 'footer_text_color',
       label: 'Cor do Texto do Rodapé',
       type: 'color',
       section: 'footer',
@@ -290,6 +290,43 @@ const AdminCustomization = () => {
       page: 'home',
       description: 'Cor de fundo da seção de planos',
       defaultValue: '#0f172a'
+    },
+    {
+      key: 'plans_border_color',
+      label: 'Cor da Borda do Plano Popular',
+      type: 'color',
+      section: 'plans',
+      page: 'home',
+      description: 'Cor da borda do plano em destaque',
+      defaultValue: '#3b82f6'
+    },
+    {
+      key: 'plans_badge_background',
+      label: 'Cor de Fundo do Badge Popular',
+      type: 'color',
+      section: 'plans',
+      page: 'home',
+      description: 'Cor de fundo do badge "Mais Popular"',
+      defaultValue: '#3b82f6'
+    },
+    {
+      key: 'plans_badge_text_color',
+      label: 'Cor do Texto do Badge',
+      type: 'color',
+      section: 'plans',
+      page: 'home',
+      description: 'Cor do texto do badge popular',
+      defaultValue: '#ffffff'
+    },
+    {
+      key: 'plans_badge_text',
+      label: 'Texto do Badge Popular',
+      type: 'text',
+      section: 'plans',
+      page: 'home',
+      placeholder: 'Mais Popular',
+      description: 'Texto exibido no badge do plano em destaque',
+      defaultValue: 'Mais Popular'
     },
 
     // GLOBAL SETTINGS
