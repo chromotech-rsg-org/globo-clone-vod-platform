@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Home, LogIn, Settings, Image, Palette, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
-import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
+import { useCustomizations } from '@/hooks/useCustomizations';
+import { useAdminLoginCustomizations } from '@/hooks/useAdminLoginCustomizations';
+import { supabase } from '@/integrations/supabase/client';
 import { CustomizationEditor } from '@/components/admin/CustomizationEditor';
 import ContentEditor from '@/components/admin/ContentEditor';
 import HeroSliderEditor from '@/components/admin/HeroSliderEditor';
@@ -23,8 +25,43 @@ interface CustomizationConfig {
 
 const AdminCustomization = () => {
   const { toast } = useToast();
-  const { customizations, getCustomization, saveCustomization, loading } = useAdminCustomizations();
+  const { customizations, refetch } = useCustomizations('home');
+  const { customizations: loginCustomizations, saveCustomization: saveLoginCustomization, saving: loginSaving } = useAdminLoginCustomizations();
   const [localChanges, setLocalChanges] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+
+  const getCustomization = (key: string, defaultValue: string = '') => {
+    return customizations[key] || defaultValue;
+  };
+
+  const saveCustomization = async (key: string, value: string, section: string, elementType: string) => {
+    setSaving(prev => ({ ...prev, [key]: true }));
+    
+    try {
+      const { error } = await supabase
+        .from('customizations')
+        .upsert({
+          page: 'home',
+          section: section,
+          element_type: elementType,
+          element_key: key,
+          element_value: value,
+          active: true
+        }, {
+          onConflict: 'page,section,element_key'
+        });
+
+      if (error) throw error;
+      
+      await refetch();
+      return { success: true };
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      return { success: false, error: 'Erro ao salvar personalização' };
+    } finally {
+      setSaving(prev => ({ ...prev, [key]: false }));
+    }
+  };
 
   // Configurações de personalização organizadas por página e seção
   const customizationConfigs: CustomizationConfig[] = [
@@ -345,6 +382,11 @@ const AdminCustomization = () => {
 
   const getCurrentValue = (config: CustomizationConfig) => {
     const key = `${config.section}_${config.key}`;
+    
+    if (config.page === 'login') {
+      return localChanges[key] ?? (loginCustomizations[key] || config.defaultValue);
+    }
+    
     return localChanges[key] ?? getCustomization(key, config.defaultValue);
   };
 
@@ -357,7 +399,12 @@ const AdminCustomization = () => {
     const key = `${config.section}_${config.key}`;
     const value = getCurrentValue(config);
 
-    const result = await saveCustomization(key, value, config.section, config.type);
+    let result;
+    if (config.page === 'login') {
+      result = await saveLoginCustomization(key, value, config.section, config.type);
+    } else {
+      result = await saveCustomization(key, value, config.section, config.type);
+    }
     
     if (result.success) {
       // Remove from local changes since it's now saved
@@ -407,7 +454,7 @@ const AdminCustomization = () => {
               description={config.description}
               onChange={(value) => handleChange(config, value)}
               onSave={() => handleSave(config)}
-              loading={loading}
+              loading={config.page === 'login' ? (loginSaving[`${config.section}_${config.key}`] || false) : (saving[`${config.section}_${config.key}`] || false)}
             />
           ))}
         </CardContent>
@@ -415,7 +462,9 @@ const AdminCustomization = () => {
     );
   };
 
-  if (loading) {
+  const isLoading = Object.keys(customizations).length === 0;
+
+  if (isLoading) {
     return (
       <AdminLayout>
         <div className="p-6">

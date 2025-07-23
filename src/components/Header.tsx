@@ -8,17 +8,17 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getCustomization } = useCustomizations('home');
 
-  const logoImage = getCustomization('header', 'header_logo_image', '');
+  const logoImage = getCustomization('header', 'logo_image', '');
   const siteName = getCustomization('global', 'site_name', 'Globoplay');
-  const headerBgColor = getCustomization('header', 'header_background_color', 'transparent');
-  const headerTextColor = getCustomization('header', 'header_text_color', '#ffffff');
-  const headerHoverColor = getCustomization('header', 'header_hover_color', '#ef4444');
+  const headerBgColor = getCustomization('header', 'background_color', 'transparent');
+  const headerTextColor = getCustomization('header', 'text_color', '#ffffff');
+  const headerHoverColor = getCustomization('header', 'hover_color', '#ef4444');
   
   // Menu titles
-  const menuHome = getCustomization('header', 'header_menu_home', 'Início');
-  const menuContent = getCustomization('header', 'header_menu_content', 'Conteúdo');
-  const menuPlans = getCustomization('header', 'header_menu_plans', 'Planos');
-  const menuLogin = getCustomization('header', 'header_menu_login', 'Entrar');
+  const menuHome = getCustomization('header', 'menu_home', 'Início');
+  const menuContent = getCustomization('header', 'menu_content', 'Conteúdo');
+  const menuPlans = getCustomization('header', 'menu_plans', 'Planos');
+  const menuLogin = getCustomization('header', 'menu_login', 'Entrar');
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
