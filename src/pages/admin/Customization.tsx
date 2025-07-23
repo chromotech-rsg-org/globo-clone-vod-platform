@@ -419,13 +419,13 @@ const AdminCustomization = () => {
   ];
 
   const getCurrentValue = (config: CustomizationConfig) => {
-    const key = config.key;
+    const key = `${config.section}_${config.key}`;
     
     if (config.page === 'login') {
-      return localChanges[key] ?? (loginCustomizations[key] || config.defaultValue);
+      return localChanges[config.key] ?? (loginCustomizations[config.key] || config.defaultValue);
     }
     
-    return localChanges[key] ?? getCustomization(key, config.defaultValue);
+    return localChanges[config.key] ?? getCustomization(key, config.defaultValue);
   };
 
   const handleChange = (config: CustomizationConfig, value: string) => {
@@ -456,12 +456,16 @@ const AdminCustomization = () => {
         title: "Sucesso",
         description: `${config.label} atualizado com sucesso`
       });
+      
+      return { success: true };
     } else {
       toast({
         title: "Erro",
         description: result.error || "Não foi possível salvar a personalização",
         variant: "destructive"
       });
+      
+      return { success: false, error: result.error };
     }
   };
 

@@ -13,7 +13,7 @@ interface CustomizationEditorProps {
   value: string;
   type: 'text' | 'color' | 'image' | 'textarea';
   onChange: (value: string) => void;
-  onSave: () => void;
+  onSave: () => Promise<{ success: boolean; error?: string } | undefined>;
   loading?: boolean;
   placeholder?: string;
   description?: string;
@@ -37,9 +37,17 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
   }, [value]);
 
   const handleSave = async () => {
-    await onSave();
-    // Atualizar o valor local após salvar
-    setLocalValue(value);
+    try {
+      const result = await onSave();
+      // Não resetar o valor local após salvar - deixar o useEffect do value fazer isso
+      if (result && !result.success) {
+        // Se deu erro, reverter para o valor original
+        setLocalValue(value);
+      }
+    } catch (error) {
+      // Se deu erro, reverter para o valor original
+      setLocalValue(value);
+    }
   };
 
   const handleInputChange = (newValue: string) => {
