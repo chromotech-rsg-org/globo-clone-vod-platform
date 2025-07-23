@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,9 +30,20 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
   placeholder,
   description
 }) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleInputChange = (newValue: string) => {
+    setLocalValue(newValue);
+    onChange(newValue);
+  };
+
   const handleImageUpload = (url: string) => {
+    setLocalValue(url);
     onChange(url);
-    // Não salva automaticamente - usuário deve clicar no botão salvar
   };
 
   return (
@@ -47,8 +59,8 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
         <div className="flex space-x-2">
           <Input
             id={id}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
+            value={localValue}
+            onChange={(e) => handleInputChange(e.target.value)}
             className="bg-admin-input border-admin-border text-admin-foreground flex-1"
             placeholder={placeholder || label}
           />
@@ -67,8 +79,8 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
         <div className="space-y-2">
           <Textarea
             id={id}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
+            value={localValue}
+            onChange={(e) => handleInputChange(e.target.value)}
             className="bg-admin-input border-admin-border text-admin-foreground resize-none"
             placeholder={placeholder || label}
             rows={3}
@@ -91,13 +103,13 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
           <div className="flex space-x-2">
             <Input
               type="color"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
+              value={localValue}
+              onChange={(e) => handleInputChange(e.target.value)}
               className="bg-admin-input border-admin-border w-16 h-10 p-1 rounded"
             />
             <Input
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
+              value={localValue}
+              onChange={(e) => handleInputChange(e.target.value)}
               className="bg-admin-input border-admin-border text-admin-foreground flex-1"
               placeholder="#000000"
             />
@@ -114,7 +126,7 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
           <div className="flex items-center space-x-2">
             <div 
               className="w-8 h-8 rounded border border-admin-border flex-shrink-0" 
-              style={{ backgroundColor: value }}
+              style={{ backgroundColor: localValue }}
               title={`Preview: ${label}`}
             />
             <div className="text-xs text-admin-muted-foreground flex items-center">
@@ -127,14 +139,14 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
 
       {type === 'image' && (
         <div className="space-y-3">
-          {value && (
+          {localValue && (
             <div className="bg-admin-muted rounded p-2">
               <div className="flex items-center space-x-2 mb-2">
                 <Eye className="h-3 w-3 text-admin-muted-foreground" />
                 <span className="text-xs text-admin-muted-foreground">Preview atual:</span>
               </div>
               <img 
-                src={value} 
+                src={localValue} 
                 alt={label} 
                 className="w-full max-w-[200px] h-auto object-contain rounded" 
               />
@@ -146,7 +158,7 @@ export const CustomizationEditor: React.FC<CustomizationEditorProps> = ({
               folder="customizations"
               maxSizeKB={5120}
             />
-            {value && (
+            {localValue && (
               <Button
                 onClick={onSave}
                 variant="admin"

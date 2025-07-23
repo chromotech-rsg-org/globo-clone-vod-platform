@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -145,7 +146,7 @@ const AdminCustomization = () => {
 
     // HOME - HEADER
     {
-      key: 'logo_image',
+      key: 'header_logo_image',
       label: 'Logo do Site',
       type: 'image',
       section: 'header',
@@ -154,7 +155,7 @@ const AdminCustomization = () => {
       defaultValue: ''
     },
     {
-      key: 'menu_home',
+      key: 'header_menu_home',
       label: 'Título Menu - Início',
       type: 'text',
       section: 'header',
@@ -164,7 +165,7 @@ const AdminCustomization = () => {
       defaultValue: 'Início'
     },
     {
-      key: 'menu_content',
+      key: 'header_menu_content',
       label: 'Título Menu - Conteúdo',
       type: 'text',
       section: 'header',
@@ -174,7 +175,7 @@ const AdminCustomization = () => {
       defaultValue: 'Conteúdo'
     },
     {
-      key: 'menu_plans',
+      key: 'header_menu_plans',
       label: 'Título Menu - Planos',
       type: 'text',
       section: 'header',
@@ -184,7 +185,7 @@ const AdminCustomization = () => {
       defaultValue: 'Planos'
     },
     {
-      key: 'menu_login',
+      key: 'header_menu_login',
       label: 'Título Menu - Login',
       type: 'text',
       section: 'header',
@@ -194,7 +195,7 @@ const AdminCustomization = () => {
       defaultValue: 'Entrar'
     },
     {
-      key: 'background_color',
+      key: 'header_background_color',
       label: 'Cor de Fundo do Header',
       type: 'color',
       section: 'header',
@@ -203,7 +204,7 @@ const AdminCustomization = () => {
       defaultValue: 'transparent'
     },
     {
-      key: 'text_color',
+      key: 'header_text_color',
       label: 'Cor do Texto do Menu',
       type: 'color',
       section: 'header',
@@ -212,7 +213,7 @@ const AdminCustomization = () => {
       defaultValue: '#ffffff'
     },
     {
-      key: 'hover_color',
+      key: 'header_hover_color',
       label: 'Cor do Hover do Menu',
       type: 'color',
       section: 'header',
@@ -223,7 +224,7 @@ const AdminCustomization = () => {
 
     // HOME - FOOTER
     {
-      key: 'footer_logo_image',
+      key: 'footer_footer_logo_image',
       label: 'Logo do Rodapé',
       type: 'image',
       section: 'footer',
@@ -232,7 +233,7 @@ const AdminCustomization = () => {
       defaultValue: ''
     },
     {
-      key: 'footer_copyright',
+      key: 'footer_footer_copyright',
       label: 'Texto de Copyright',
       type: 'text',
       section: 'footer',
@@ -242,7 +243,7 @@ const AdminCustomization = () => {
       defaultValue: '© 2024 Todos os direitos reservados'
     },
     {
-      key: 'footer_background_color',
+      key: 'footer_footer_background_color',
       label: 'Cor de Fundo do Rodapé',
       type: 'color',
       section: 'footer',
@@ -251,7 +252,7 @@ const AdminCustomization = () => {
       defaultValue: '#1f2937'
     },
     {
-      key: 'footer_text_color',
+      key: 'footer_footer_text_color',
       label: 'Cor do Texto do Rodapé',
       type: 'color',
       section: 'footer',
@@ -293,7 +294,7 @@ const AdminCustomization = () => {
 
     // GLOBAL SETTINGS
     {
-      key: 'site_name',
+      key: 'global_site_name',
       label: 'Nome do Site',
       type: 'text',
       section: 'global',
@@ -303,7 +304,7 @@ const AdminCustomization = () => {
       defaultValue: 'Globoplay'
     },
     {
-      key: 'site_background_color',
+      key: 'global_site_background_color',
       label: 'Cor de Fundo Global',
       type: 'color',
       section: 'global',
@@ -312,7 +313,7 @@ const AdminCustomization = () => {
       defaultValue: '#0f172a'
     },
     {
-      key: 'primary_color',
+      key: 'global_primary_color',
       label: 'Cor Primária',
       type: 'color',
       section: 'global',
@@ -321,7 +322,7 @@ const AdminCustomization = () => {
       defaultValue: '#ef4444'
     },
     {
-      key: 'secondary_color',
+      key: 'global_secondary_color',
       label: 'Cor Secundária',
       type: 'color',
       section: 'global',
@@ -332,7 +333,7 @@ const AdminCustomization = () => {
 
     // LOGIN PAGE
     {
-      key: 'title',
+      key: 'login_title',
       label: 'Título da Página',
       type: 'text',
       section: 'form',
@@ -342,7 +343,7 @@ const AdminCustomization = () => {
       defaultValue: 'Faça seu login'
     },
     {
-      key: 'subtitle',
+      key: 'login_subtitle',
       label: 'Subtítulo',
       type: 'text',
       section: 'form',
@@ -352,7 +353,7 @@ const AdminCustomization = () => {
       defaultValue: 'Acesse sua conta para continuar'
     },
     {
-      key: 'image',
+      key: 'login_background_image',
       label: 'Imagem de Fundo',
       type: 'image',
       section: 'background',
@@ -361,7 +362,7 @@ const AdminCustomization = () => {
       defaultValue: ''
     },
     {
-      key: 'color',
+      key: 'login_background_color',
       label: 'Cor de Fundo',
       type: 'color',
       section: 'background',
@@ -370,7 +371,7 @@ const AdminCustomization = () => {
       defaultValue: '#0f172a'
     },
     {
-      key: 'background',
+      key: 'login_card_background_color',
       label: 'Cor de Fundo do Card',
       type: 'color',
       section: 'card',
@@ -381,7 +382,7 @@ const AdminCustomization = () => {
   ];
 
   const getCurrentValue = (config: CustomizationConfig) => {
-    const key = `${config.section}_${config.key}`;
+    const key = config.key;
     
     if (config.page === 'login') {
       return localChanges[key] ?? (loginCustomizations[key] || config.defaultValue);
@@ -391,12 +392,12 @@ const AdminCustomization = () => {
   };
 
   const handleChange = (config: CustomizationConfig, value: string) => {
-    const key = `${config.section}_${config.key}`;
+    const key = config.key;
     setLocalChanges(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async (config: CustomizationConfig) => {
-    const key = `${config.section}_${config.key}`;
+    const key = config.key;
     const value = getCurrentValue(config);
 
     let result;
@@ -445,8 +446,8 @@ const AdminCustomization = () => {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sectionConfigs.map((config) => (
             <CustomizationEditor
-              key={`${config.section}_${config.key}`}
-              id={`${config.section}_${config.key}`}
+              key={config.key}
+              id={config.key}
               label={config.label}
               value={getCurrentValue(config)}
               type={config.type}
@@ -454,7 +455,7 @@ const AdminCustomization = () => {
               description={config.description}
               onChange={(value) => handleChange(config, value)}
               onSave={() => handleSave(config)}
-              loading={config.page === 'login' ? (loginSaving[`${config.section}_${config.key}`] || false) : (saving[`${config.section}_${config.key}`] || false)}
+              loading={config.page === 'login' ? (loginSaving[config.key] || false) : (saving[config.key] || false)}
             />
           ))}
         </CardContent>
