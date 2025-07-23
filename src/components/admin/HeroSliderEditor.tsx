@@ -27,8 +27,8 @@ const HeroSliderEditor = () => {
 
   useEffect(() => {
     // Load existing slides from corrected key
-    const slideImages = getCustomization('hero_slider_images', '');
-    const duration = getCustomization('hero_slider_autoplay_duration', '5000');
+    const slideImages = getCustomization('slider_images', '');
+    const duration = getCustomization('slider_autoplay_duration', '5000');
     
     setAutoplayDuration(duration);
     
@@ -99,7 +99,7 @@ const HeroSliderEditor = () => {
     try {
       // Save slides
       const slidesResult = await saveCustomization(
-        'hero_slider_images', 
+        'slider_images', 
         JSON.stringify(slides), 
         'hero', 
         'text'
@@ -107,7 +107,7 @@ const HeroSliderEditor = () => {
 
       // Save autoplay duration
       const durationResult = await saveCustomization(
-        'hero_slider_autoplay_duration',
+        'slider_autoplay_duration',
         autoplayDuration,
         'hero',
         'text'
