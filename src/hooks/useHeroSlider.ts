@@ -28,8 +28,8 @@ export const useHeroSlider = () => {
 
   useEffect(() => {
     // Load existing slides using correct keys
-    const slideImages = getCustomization('hero_slider_images', '');
-    const duration = getCustomization('hero_slider_autoplay_duration', '5000');
+    const slideImages = getCustomization('hero', 'hero_slider_images', '');
+    const duration = getCustomization('hero', 'hero_slider_autoplay_duration', '5000');
     
     setAutoplayDuration(duration);
     
