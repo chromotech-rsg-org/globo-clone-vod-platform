@@ -33,25 +33,40 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       return;
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione um arquivo de imagem válido');
+    // Enhanced file type validation
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Apenas imagens JPEG, PNG, WebP e GIF são permitidas');
+      return;
+    }
+
+    // Validate file signature (magic numbers) for extra security
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const validImageSignature = validateImageSignature(uint8Array, file.type);
+    
+    if (!validImageSignature) {
+      toast.error('Formato de arquivo de imagem inválido');
       return;
     }
 
     setUploading(true);
 
     try {
-      // Create unique filename
+      // Generate unique filename to prevent path traversal
       const timestamp = Date.now();
       const fileExt = file.name.split('.').pop();
-      const fileName = `${timestamp}.${fileExt}`;
+      const randomSuffix = Math.random().toString(36).substring(2);
+      const fileName = `${timestamp}-${randomSuffix}.${fileExt}`;
       const filePath = folder ? `${folder}/${fileName}` : fileName;
 
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('site-images')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (error) throw error;
 
@@ -100,6 +115,24 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   const handlePreviewImage = (url: string) => {
     window.open(url, '_blank');
+  };
+
+  // Validate image file signature (magic numbers)
+  const validateImageSignature = (bytes: Uint8Array, mimeType: string): boolean => {
+    const signatures = {
+      'image/jpeg': [[0xFF, 0xD8, 0xFF]],
+      'image/jpg': [[0xFF, 0xD8, 0xFF]],
+      'image/png': [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]],
+      'image/gif': [[0x47, 0x49, 0x46, 0x38, 0x37, 0x61], [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]],
+      'image/webp': [[0x52, 0x49, 0x46, 0x46]]
+    };
+
+    const fileSignatures = signatures[mimeType as keyof typeof signatures];
+    if (!fileSignatures) return false;
+
+    return fileSignatures.some(signature => 
+      signature.every((byte, index) => bytes[index] === byte)
+    );
   };
 
   return (

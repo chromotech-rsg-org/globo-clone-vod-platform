@@ -11,6 +11,8 @@ import { Search, Edit, Eye, Save, X, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
+import RoleChangeConfirmation from '@/components/auth/RoleChangeConfirmation';
+import { sanitizeInput, validateEmail, validateCPF, validatePhone } from '@/utils/validators';
 
 interface UserProfile {
   id: string;
@@ -31,6 +33,19 @@ const AdminUsers = () => {
   const [viewingUser, setViewingUser] = useState<UserProfile | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [roleChangeConfirmation, setRoleChangeConfirmation] = useState<{
+    isOpen: boolean;
+    currentRole: string;
+    newRole: string;
+    userName: string;
+    userId: string;
+  }>({
+    isOpen: false,
+    currentRole: '',
+    newRole: '',
+    userName: '',
+    userId: ''
+  });
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -95,29 +110,51 @@ const AdminUsers = () => {
   };
 
   const handleCreateSave = async () => {
+    // Input validation
+    const errors: string[] = [];
+    
+    if (!formData.name.trim()) {
+      errors.push('Name is required');
+    }
+    
+    if (!validateEmail(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+    
+    if (formData.cpf && !validateCPF(formData.cpf)) {
+      errors.push('Please enter a valid CPF');
+    }
+    
+    if (formData.phone && !validatePhone(formData.phone)) {
+      errors.push('Please enter a valid phone number');
+    }
+    
+    if (errors.length > 0) {
+      toast({
+        title: "Erro de validação",
+        description: errors.join(', '),
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      // Verificar autenticação
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      // Validar dados obrigatórios
-      if (!formData.name.trim()) {
-        throw new Error('Nome é obrigatório');
-      }
-      if (!formData.email.trim()) {
-        throw new Error('Email é obrigatório');
-      }
+      // Sanitize inputs
+      const sanitizedData = {
+        name: sanitizeInput(formData.name),
+        email: formData.email.toLowerCase().trim(),
+        cpf: formData.cpf ? sanitizeInput(formData.cpf) : '',
+        phone: formData.phone ? sanitizeInput(formData.phone) : '',
+        role: formData.role
+      };
 
       const userData = {
         id: crypto.randomUUID(),
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        cpf: formData.cpf.trim() || null,
-        phone: formData.phone.trim() || null,
-        role: formData.role
+        name: sanitizedData.name,
+        email: sanitizedData.email,
+        cpf: sanitizedData.cpf || null,
+        phone: sanitizedData.phone || null,
+        role: sanitizedData.role
       };
 
       const { error } = await supabase
@@ -125,6 +162,9 @@ const AdminUsers = () => {
         .insert(userData);
 
       if (error) throw error;
+
+      // Log admin user creation for audit purposes
+      console.log(`[SECURITY AUDIT] User created: ${sanitizedData.name} (${sanitizedData.email}) with role ${sanitizedData.role}`);
 
       toast({
         title: "Sucesso",
@@ -156,28 +196,69 @@ const AdminUsers = () => {
   const handleSave = async () => {
     if (!editingUser) return;
 
+    // Input validation
+    const errors: string[] = [];
+    
+    if (!formData.name.trim()) {
+      errors.push('Name is required');
+    }
+    
+    if (!validateEmail(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+    
+    if (formData.cpf && !validateCPF(formData.cpf)) {
+      errors.push('Please enter a valid CPF');
+    }
+    
+    if (formData.phone && !validatePhone(formData.phone)) {
+      errors.push('Please enter a valid phone number');
+    }
+    
+    if (errors.length > 0) {
+      toast({
+        title: "Erro de validação",
+        description: errors.join(', '),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check for role change - if role is changing, show confirmation
+    if (formData.role !== editingUser.role) {
+      setRoleChangeConfirmation({
+        isOpen: true,
+        currentRole: editingUser.role,
+        newRole: formData.role,
+        userName: editingUser.name,
+        userId: editingUser.id
+      });
+      return;
+    }
+
+    // Proceed with update if no role change
+    await performUserUpdate();
+  };
+
+  const performUserUpdate = async () => {
+    if (!editingUser) return;
+
     try {
-      // Verificar autenticação
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      // Validar dados obrigatórios
-      if (!formData.name.trim()) {
-        throw new Error('Nome é obrigatório');
-      }
-      if (!formData.email.trim()) {
-        throw new Error('Email é obrigatório');
-      }
+      // Sanitize inputs
+      const sanitizedData = {
+        name: sanitizeInput(formData.name),
+        email: formData.email.toLowerCase().trim(),
+        cpf: formData.cpf ? sanitizeInput(formData.cpf) : '',
+        phone: formData.phone ? sanitizeInput(formData.phone) : '',
+        role: formData.role
+      };
 
       const userData = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        cpf: formData.cpf.trim() || null,
-        phone: formData.phone.trim() || null,
-        role: formData.role
+        name: sanitizedData.name,
+        email: sanitizedData.email,
+        cpf: sanitizedData.cpf || null,
+        phone: sanitizedData.phone || null,
+        role: sanitizedData.role
       };
 
       const { error } = await supabase
@@ -187,6 +268,11 @@ const AdminUsers = () => {
 
       if (error) throw error;
 
+      // Log role change for audit purposes
+      if (formData.role !== editingUser.role) {
+        console.log(`[SECURITY AUDIT] Role changed for user ${editingUser.name} (${editingUser.email}) from ${editingUser.role} to ${formData.role}`);
+      }
+
       toast({
         title: "Sucesso",
         description: "Usuário atualizado com sucesso"
@@ -194,6 +280,7 @@ const AdminUsers = () => {
 
       await fetchUsers();
       resetForm();
+      setRoleChangeConfirmation(prev => ({ ...prev, isOpen: false }));
     } catch (error: any) {
       let errorMessage = "Não foi possível atualizar o usuário";
       if (error.message === 'Usuário não autenticado') {
@@ -589,6 +676,15 @@ const AdminUsers = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <RoleChangeConfirmation
+        isOpen={roleChangeConfirmation.isOpen}
+        onClose={() => setRoleChangeConfirmation(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={performUserUpdate}
+        currentRole={roleChangeConfirmation.currentRole}
+        newRole={roleChangeConfirmation.newRole}
+        userName={roleChangeConfirmation.userName}
+      />
     </AdminLayout>
   );
 };
