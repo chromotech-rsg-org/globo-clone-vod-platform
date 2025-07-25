@@ -14,7 +14,7 @@ const Home = () => {
   const { getCustomization } = useCustomizations('home');
 
   const siteBgColor = getCustomization('global', 'site_background_color', '#0f172a');
-  const heroSliderImages = getCustomization('hero', 'slider_images', '');
+  const heroSliderImages = getCustomization('hero_slider_images', '');
 
   return (
     <div 
@@ -22,7 +22,7 @@ const Home = () => {
       style={{ backgroundColor: siteBgColor }}
     >
       <Header />
-      {heroSliderImages ? <HeroSlider /> : <HeroBanner />}
+      {heroSliderImages && heroSliderImages.trim() !== '' && heroSliderImages !== '[]' ? <HeroSlider /> : <HeroBanner />}
       
       <div id="content" className="px-4 md:px-8 space-y-12 pb-20 pt-16">
         {loading ? (

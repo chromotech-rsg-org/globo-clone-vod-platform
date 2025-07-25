@@ -27,22 +27,26 @@ export const useHeroSlider = () => {
   const { getCustomization, refetch } = useCustomizations('home');
 
   useEffect(() => {
-    // Load existing slides
-    const slideImages = getCustomization('hero', 'slider_images', '');
-    const duration = getCustomization('hero', 'slider_autoplay_duration', '5000');
+    // Load existing slides using correct keys
+    const slideImages = getCustomization('hero_slider_images', '');
+    const duration = getCustomization('hero_slider_autoplay_duration', '5000');
     
     setAutoplayDuration(duration);
     
-    if (slideImages) {
+    if (slideImages && slideImages.trim() !== '' && slideImages !== '[]') {
       try {
         const parsedSlides = JSON.parse(slideImages);
         if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
           setSlides(parsedSlides);
+        } else {
+          setSlides([defaultSlide]);
         }
       } catch (error) {
         console.error('Error parsing slider images:', error);
         setSlides([defaultSlide]);
       }
+    } else {
+      setSlides([defaultSlide]);
     }
   }, [getCustomization]);
 
@@ -99,14 +103,14 @@ export const useHeroSlider = () => {
     setSaving(true);
     try {
       const slidesResult = await saveCustomization(
-        'slider_images', 
+        'hero_slider_images', 
         JSON.stringify(slides), 
         'hero', 
         'text'
       );
 
       const durationResult = await saveCustomization(
-        'slider_autoplay_duration',
+        'hero_slider_autoplay_duration',
         autoplayDuration,
         'hero',
         'text'

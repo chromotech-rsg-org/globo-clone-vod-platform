@@ -11,50 +11,47 @@ interface HeroSlide {
   buttonText: string;
 }
 
+const defaultSlide: HeroSlide = {
+  id: '1',
+  image: 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop',
+  title: 'The Last of Us',
+  subtitle: 'SÉRIE ORIGINAL HBO',
+  description: 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.',
+  buttonText: 'Assistir'
+};
+
 const HeroSlider = () => {
   const { getCustomization } = useCustomizations('home');
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [slides, setSlides] = useState<HeroSlide[]>([defaultSlide]);
 
   // Get customization data
-  const titleColor = getCustomization('hero', 'title_color', '#ffffff');
-  const buttonBackgroundColor = getCustomization('hero', 'button_color', '#ffffff');
-  const buttonTextColor = getCustomization('hero', 'button_text_color', '#000000');
+  const titleColor = getCustomization('hero_title_color', '#ffffff');
+  const buttonBackgroundColor = getCustomization('hero_button_color', '#ffffff');
+  const buttonTextColor = getCustomization('hero_button_text_color', '#000000');
   
   // Get slider configuration
-  const slideImages = getCustomization('hero', 'slider_images', '');
-  const autoplayDuration = parseInt(getCustomization('hero', 'slider_autoplay_duration', '5000'));
+  const slideImages = getCustomization('hero_slider_images', '');
+  const autoplayDuration = parseInt(getCustomization('hero_slider_autoplay_duration', '5000'));
 
   useEffect(() => {
     // Parse slider images from customizations
-    if (slideImages) {
+    if (slideImages && slideImages.trim() !== '' && slideImages !== '[]') {
       try {
         const parsedSlides = JSON.parse(slideImages);
-        setSlides(parsedSlides);
+        if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
+          setSlides(parsedSlides);
+        } else {
+          setSlides([defaultSlide]);
+        }
       } catch (error) {
         console.error('Error parsing slider images:', error);
-        // Fallback to default slide
-        setSlides([{
-          id: '1',
-          image: getCustomization('hero', 'background_image', 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop'),
-          title: getCustomization('hero', 'title', 'The Last of Us'),
-          subtitle: getCustomization('hero', 'subtitle', 'SÉRIE ORIGINAL HBO'),
-          description: getCustomization('hero', 'description', 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.'),
-          buttonText: getCustomization('hero', 'button_text', 'Assistir')
-        }]);
+        setSlides([defaultSlide]);
       }
     } else {
-      // Default slide
-      setSlides([{
-        id: '1',
-        image: getCustomization('hero', 'background_image', 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop'),
-        title: getCustomization('hero', 'title', 'The Last of Us'),
-        subtitle: getCustomization('hero', 'subtitle', 'SÉRIE ORIGINAL HBO'),
-        description: getCustomization('hero', 'description', 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.'),
-        buttonText: getCustomization('hero', 'button_text', 'Assistir')
-      }]);
+      setSlides([defaultSlide]);
     }
-  }, [slideImages, getCustomization]);
+  }, [slideImages]);
 
   // Auto-advance slides
   useEffect(() => {
