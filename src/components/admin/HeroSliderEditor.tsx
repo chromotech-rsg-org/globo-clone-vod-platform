@@ -182,6 +182,38 @@ const HeroSliderEditor = () => {
                     placeholder="Texto do botão"
                   />
                 </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label htmlFor={`titleColor-${slide.id}`}>Cor do Título</Label>
+                    <Input
+                      id={`titleColor-${slide.id}`}
+                      type="color"
+                      value={slide.titleColor}
+                      onChange={(e) => updateSlide(slide.id, 'titleColor', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`buttonBackgroundColor-${slide.id}`}>Cor de Fundo do Botão</Label>
+                    <Input
+                      id={`buttonBackgroundColor-${slide.id}`}
+                      type="color"
+                      value={slide.buttonBackgroundColor}
+                      onChange={(e) => updateSlide(slide.id, 'buttonBackgroundColor', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`buttonTextColor-${slide.id}`}>Cor do Texto do Botão</Label>
+                    <Input
+                      id={`buttonTextColor-${slide.id}`}
+                      type="color"
+                      value={slide.buttonTextColor}
+                      onChange={(e) => updateSlide(slide.id, 'buttonTextColor', e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -206,14 +238,25 @@ const HeroSliderEditor = () => {
                       style={{ backgroundImage: `url(${slide.image})` }}
                     >
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <div className="text-center text-white p-4">
-                          <h3 className="text-xl font-bold mb-2">{slide.title}</h3>
-                          <p className="text-sm mb-2">{slide.subtitle}</p>
-                          <p className="text-xs mb-4 line-clamp-2">{slide.description}</p>
-                          <div className="inline-block bg-white text-black px-4 py-2 rounded text-sm">
-                            {slide.buttonText}
-                          </div>
-                        </div>
+                       <div className="text-center p-4">
+                           <h3 
+                             className="text-xl font-bold mb-2" 
+                             style={{ color: slide.titleColor }}
+                           >
+                             {slide.title}
+                           </h3>
+                           <p className="text-sm mb-2 text-white">{slide.subtitle}</p>
+                           <p className="text-xs mb-4 line-clamp-2 text-white">{slide.description}</p>
+                           <div 
+                             className="inline-block px-4 py-2 rounded text-sm"
+                             style={{ 
+                               backgroundColor: slide.buttonBackgroundColor,
+                               color: slide.buttonTextColor
+                             }}
+                           >
+                             {slide.buttonText}
+                           </div>
+                         </div>
                       </div>
                     </div>
                   </div>

@@ -562,7 +562,7 @@ const AdminCustomization = () => {
 
           <TabsContent value="home" className="space-y-6">
             <HeroSliderEditor />
-            {renderSection('home', 'hero', 'Banner Principal (Modo Simples)', 'Configure o banner com imagem única (desabilitado se usar slider)')}
+            {renderSection('home', 'hero', 'Banner Principal (Modo Simples)')}
             {renderSection('home', 'header', 'Cabeçalho', 'Configure o cabeçalho do site')}
             {renderSection('home', 'plans', 'Seção de Planos', 'Configure a seção de planos de assinatura')}
             {renderSection('home', 'footer', 'Rodapé', 'Configure o rodapé do site')}

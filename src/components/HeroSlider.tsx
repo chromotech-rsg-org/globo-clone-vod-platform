@@ -9,6 +9,9 @@ interface HeroSlide {
   subtitle: string;
   description: string;
   buttonText: string;
+  titleColor: string;
+  buttonBackgroundColor: string;
+  buttonTextColor: string;
 }
 
 const defaultSlide: HeroSlide = {
@@ -17,7 +20,10 @@ const defaultSlide: HeroSlide = {
   title: 'The Last of Us',
   subtitle: 'SÉRIE ORIGINAL HBO',
   description: 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.',
-  buttonText: 'Assistir'
+  buttonText: 'Assistir',
+  titleColor: '#ffffff',
+  buttonBackgroundColor: '#ffffff',
+  buttonTextColor: '#000000'
 };
 
 const HeroSlider = () => {
@@ -50,7 +56,10 @@ const HeroSlider = () => {
             title: slide.title || 'Slide',
             subtitle: slide.subtitle || '',
             description: slide.description || '',
-            buttonText: slide.buttonText || 'Assistir'
+            buttonText: slide.buttonText || 'Assistir',
+            titleColor: slide.titleColor || '#ffffff',
+            buttonBackgroundColor: slide.buttonBackgroundColor || '#ffffff',
+            buttonTextColor: slide.buttonTextColor || '#000000'
           }));
           
           console.log('✅ HeroSlider: Using', validSlides.length, 'slides');
@@ -129,7 +138,7 @@ const HeroSlider = () => {
             
             <h1 
               className="text-4xl md:text-6xl font-bold mb-4 transition-all duration-500"
-              style={{ color: titleColor }}
+              style={{ color: currentSlideData.titleColor }}
             >
               {currentSlideData.title}
             </h1>
@@ -142,8 +151,8 @@ const HeroSlider = () => {
               <button 
                 className="px-8 py-3 rounded-md font-semibold flex items-center justify-center space-x-2 hover:opacity-90 transition-colors"
                 style={{ 
-                  backgroundColor: buttonBackgroundColor,
-                  color: buttonTextColor
+                  backgroundColor: currentSlideData.buttonBackgroundColor,
+                  color: currentSlideData.buttonTextColor
                 }}
               >
                 <Play className="h-5 w-5 fill-current" />

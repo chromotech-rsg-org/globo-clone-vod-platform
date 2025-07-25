@@ -9,6 +9,9 @@ interface HeroSlide {
   subtitle: string;
   description: string;
   buttonText: string;
+  titleColor: string;
+  buttonBackgroundColor: string;
+  buttonTextColor: string;
 }
 
 const defaultSlide: HeroSlide = {
@@ -17,7 +20,10 @@ const defaultSlide: HeroSlide = {
   title: 'The Last of Us',
   subtitle: 'SÉRIE ORIGINAL HBO',
   description: 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.',
-  buttonText: 'Assistir'
+  buttonText: 'Assistir',
+  titleColor: '#ffffff',
+  buttonBackgroundColor: '#ffffff', 
+  buttonTextColor: '#000000'
 };
 
 export const useHeroSlider = () => {
@@ -56,7 +62,10 @@ export const useHeroSlider = () => {
             title: slide.title || 'Novo Slide',
             subtitle: slide.subtitle || 'Subtítulo',
             description: slide.description || 'Descrição...',
-            buttonText: slide.buttonText || 'Assistir'
+            buttonText: slide.buttonText || 'Assistir',
+            titleColor: slide.titleColor || '#ffffff',
+            buttonBackgroundColor: slide.buttonBackgroundColor || '#ffffff',
+            buttonTextColor: slide.buttonTextColor || '#000000'
           }));
           setSlides(validSlides);
         } else {
@@ -107,7 +116,10 @@ export const useHeroSlider = () => {
       title: 'Novo Slide',
       subtitle: 'Subtítulo',
       description: 'Descrição do novo slide...',
-      buttonText: 'Assistir'
+      buttonText: 'Assistir',
+      titleColor: '#ffffff',
+      buttonBackgroundColor: '#ffffff',
+      buttonTextColor: '#000000'
     };
     
     const updatedSlides = [...slides, newSlide];
