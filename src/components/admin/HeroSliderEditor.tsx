@@ -19,7 +19,8 @@ const HeroSliderEditor = () => {
     updateSlide,
     saveSlide,
     saveSettings,
-    saving
+    saving,
+    isLoaded
   } = useHeroSlider();
   
   const { toast } = useToast();
@@ -55,6 +56,17 @@ const HeroSliderEditor = () => {
       });
     }
   };
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="text-lg">Carregando dados do slider...</div>
+          <div className="text-sm text-gray-500 mt-2">Aguarde um momento</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

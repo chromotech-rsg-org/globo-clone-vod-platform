@@ -24,31 +24,56 @@ export const useHeroSlider = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([defaultSlide]);
   const [autoplayDuration, setAutoplayDuration] = useState('5000');
   const [saving, setSaving] = useState(false);
-  const { getCustomization, refetch } = useCustomizations('home');
+  const [isLoaded, setIsLoaded] = useState(false);
+  const { getCustomization, refetch, loading } = useCustomizations('home');
 
   useEffect(() => {
+    if (loading) return;
+    
+    console.log('🔄 Loading hero slider data...');
+    
     // Load existing slides using correct keys
     const slideImages = getCustomization('hero', 'hero_slider_images', '');
     const duration = getCustomization('hero', 'hero_slider_autoplay_duration', '5000');
     
-    setAutoplayDuration(duration);
+    console.log('📊 Loaded data:', { slideImages, duration });
     
+    // Set duration with validation
+    const validDuration = duration && duration.trim() !== '' ? duration : '5000';
+    setAutoplayDuration(validDuration);
+    
+    // Parse and set slides
     if (slideImages && slideImages.trim() !== '' && slideImages !== '[]') {
       try {
         const parsedSlides = JSON.parse(slideImages);
+        console.log('📋 Parsed slides:', parsedSlides);
+        
         if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
-          setSlides(parsedSlides);
+          // Ensure each slide has all required properties
+          const validSlides = parsedSlides.map(slide => ({
+            id: slide.id || Date.now().toString(),
+            image: slide.image || '',
+            title: slide.title || 'Novo Slide',
+            subtitle: slide.subtitle || 'Subtítulo',
+            description: slide.description || 'Descrição...',
+            buttonText: slide.buttonText || 'Assistir'
+          }));
+          setSlides(validSlides);
         } else {
+          console.log('📋 No valid slides found, using default');
           setSlides([defaultSlide]);
         }
       } catch (error) {
-        console.error('Error parsing slider images:', error);
+        console.error('❌ Error parsing slider images:', error);
         setSlides([defaultSlide]);
       }
     } else {
+      console.log('📋 No slide data found, using default');
       setSlides([defaultSlide]);
     }
-  }, [getCustomization]);
+    
+    setIsLoaded(true);
+  }, [getCustomization, loading]);
 
   const saveCustomization = async (key: string, value: string, section: string, elementType: string) => {
     try {
@@ -75,7 +100,7 @@ export const useHeroSlider = () => {
     }
   };
 
-  const addSlide = () => {
+  const addSlide = async () => {
     const newSlide: HeroSlide = {
       id: Date.now().toString(),
       image: '',
@@ -84,16 +109,60 @@ export const useHeroSlider = () => {
       description: 'Descrição do novo slide...',
       buttonText: 'Assistir'
     };
-    setSlides(prev => [...prev, newSlide]);
+    
+    const updatedSlides = [...slides, newSlide];
+    setSlides(updatedSlides);
+    
+    // Auto-save when adding new slide
+    console.log('💾 Auto-saving new slide...');
+    try {
+      const result = await saveCustomization(
+        'hero_slider_images', 
+        JSON.stringify(updatedSlides), 
+        'hero', 
+        'text'
+      );
+      
+      if (result.success) {
+        console.log('✅ New slide saved successfully');
+        await refetch();
+      } else {
+        console.error('❌ Failed to save new slide:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Error saving new slide:', error);
+    }
   };
 
-  const removeSlide = (slideId: string) => {
+  const removeSlide = async (slideId: string) => {
     if (slides.length > 1) {
-      setSlides(prev => prev.filter(slide => slide.id !== slideId));
+      const updatedSlides = slides.filter(slide => slide.id !== slideId);
+      setSlides(updatedSlides);
+      
+      // Auto-save after removing slide
+      console.log('💾 Auto-saving after slide removal...');
+      try {
+        const result = await saveCustomization(
+          'hero_slider_images', 
+          JSON.stringify(updatedSlides), 
+          'hero', 
+          'text'
+        );
+        
+        if (result.success) {
+          console.log('✅ Slide removal saved successfully');
+          await refetch();
+        } else {
+          console.error('❌ Failed to save slide removal:', result.error);
+        }
+      } catch (error) {
+        console.error('❌ Error saving slide removal:', error);
+      }
     }
   };
 
   const updateSlide = (slideId: string, field: keyof HeroSlide, value: string) => {
+    console.log('🔄 Updating slide:', { slideId, field, value });
     setSlides(prev => prev.map(slide => 
       slide.id === slideId ? { ...slide, [field]: value } : slide
     ));
@@ -154,6 +223,7 @@ export const useHeroSlider = () => {
     updateSlide,
     saveSlide,
     saveSettings,
-    saving
+    saving,
+    isLoaded
   };
 };

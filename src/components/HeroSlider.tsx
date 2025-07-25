@@ -35,16 +35,33 @@ const HeroSlider = () => {
 
   // Parse slides from customizations
   const slides = useMemo(() => {
+    console.log('🔄 HeroSlider: Processing slide images:', slideImages);
+    
     if (slideImages && slideImages.trim() !== '' && slideImages !== '[]') {
       try {
         const parsedSlides = JSON.parse(slideImages);
+        console.log('📋 HeroSlider: Parsed slides:', parsedSlides);
+        
         if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
-          return parsedSlides;
+          // Ensure each slide has valid properties
+          const validSlides = parsedSlides.map(slide => ({
+            id: slide.id || Date.now().toString(),
+            image: slide.image || '',
+            title: slide.title || 'Slide',
+            subtitle: slide.subtitle || '',
+            description: slide.description || '',
+            buttonText: slide.buttonText || 'Assistir'
+          }));
+          
+          console.log('✅ HeroSlider: Using', validSlides.length, 'slides');
+          return validSlides;
         }
       } catch (error) {
-        console.error('Error parsing slider images:', error);
+        console.error('❌ HeroSlider: Error parsing slider images:', error);
       }
     }
+    
+    console.log('📋 HeroSlider: Using default slide');
     return [defaultSlide];
   }, [slideImages]);
 
