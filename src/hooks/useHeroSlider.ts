@@ -99,16 +99,32 @@ export const useHeroSlider = () => {
     ));
   };
 
-  const saveSlides = async () => {
+  const saveSlide = async (slideId: string) => {
     setSaving(true);
     try {
-      const slidesResult = await saveCustomization(
+      const result = await saveCustomization(
         'hero_slider_images', 
         JSON.stringify(slides), 
         'hero', 
         'text'
       );
 
+      if (result.success) {
+        return { success: true };
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Error saving slide:', error);
+      return { success: false, error: 'Erro ao salvar slide' };
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    try {
       const durationResult = await saveCustomization(
         'hero_slider_autoplay_duration',
         autoplayDuration,
@@ -116,14 +132,14 @@ export const useHeroSlider = () => {
         'text'
       );
 
-      if (slidesResult.success && durationResult.success) {
+      if (durationResult.success) {
         return { success: true };
       } else {
-        throw new Error(slidesResult.error || durationResult.error);
+        throw new Error(durationResult.error);
       }
     } catch (error) {
-      console.error('Error saving slider settings:', error);
-      return { success: false, error: 'Erro ao salvar slider' };
+      console.error('Error saving settings:', error);
+      return { success: false, error: 'Erro ao salvar configurações' };
     } finally {
       setSaving(false);
     }
@@ -136,7 +152,8 @@ export const useHeroSlider = () => {
     addSlide,
     removeSlide,
     updateSlide,
-    saveSlides,
+    saveSlide,
+    saveSettings,
     saving
   };
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCustomizations } from '@/hooks/useCustomizations';
 
@@ -23,34 +23,29 @@ const defaultSlide: HeroSlide = {
 const HeroSlider = () => {
   const { getCustomization } = useCustomizations('home');
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [slides, setSlides] = useState<HeroSlide[]>([defaultSlide]);
 
-  // Get customization data
-  const titleColor = getCustomization('hero_title_color', '#ffffff');
-  const buttonBackgroundColor = getCustomization('hero_button_color', '#ffffff');
-  const buttonTextColor = getCustomization('hero_button_text_color', '#000000');
+  // Get customization data with memoization to prevent infinite loops
+  const titleColor = useMemo(() => getCustomization('hero', 'title_color', '#ffffff'), [getCustomization]);
+  const buttonBackgroundColor = useMemo(() => getCustomization('hero', 'button_color', '#ffffff'), [getCustomization]);
+  const buttonTextColor = useMemo(() => getCustomization('hero', 'button_text_color', '#000000'), [getCustomization]);
   
   // Get slider configuration
-  const slideImages = getCustomization('hero_slider_images', '');
-  const autoplayDuration = parseInt(getCustomization('hero_slider_autoplay_duration', '5000'));
+  const slideImages = useMemo(() => getCustomization('hero', 'slider_images', ''), [getCustomization]);
+  const autoplayDuration = useMemo(() => parseInt(getCustomization('hero', 'slider_autoplay_duration', '5000')), [getCustomization]);
 
-  useEffect(() => {
-    // Parse slider images from customizations
+  // Parse slides from customizations
+  const slides = useMemo(() => {
     if (slideImages && slideImages.trim() !== '' && slideImages !== '[]') {
       try {
         const parsedSlides = JSON.parse(slideImages);
         if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
-          setSlides(parsedSlides);
-        } else {
-          setSlides([defaultSlide]);
+          return parsedSlides;
         }
       } catch (error) {
         console.error('Error parsing slider images:', error);
-        setSlides([defaultSlide]);
       }
-    } else {
-      setSlides([defaultSlide]);
     }
+    return [defaultSlide];
   }, [slideImages]);
 
   // Auto-advance slides
