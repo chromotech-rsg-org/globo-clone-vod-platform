@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Users, CreditCard, Package, DollarSign, Settings, LogOut } from 'lucide-react';
-import AdminLayout from '@/components/AdminLayout';
+
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -55,7 +55,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <AdminLayout>
+    <>
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
@@ -148,7 +148,7 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

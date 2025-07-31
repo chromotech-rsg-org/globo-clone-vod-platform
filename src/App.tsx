@@ -92,7 +92,9 @@ function AppContent() {
       {/* Protected Routes */}
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <Dashboard />
+          <AdminLayout>
+            <Dashboard />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/profile" element={
