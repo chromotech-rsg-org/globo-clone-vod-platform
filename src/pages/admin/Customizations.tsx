@@ -299,7 +299,7 @@ const AdminCustomizations = () => {
               
               <TabsContent value="home" className="space-y-4 mt-4">
                 <div>
-                  <h3 className="text-white font-semibold mb-3">Seção Hero</h3>
+                  <h3 className="font-semibold mb-3" style={{ color: 'hsl(var(--admin-primary))' }}>Seção Hero</h3>
                   {renderElementEditor('hero_title', 'Título Principal', 'text')}
                   {renderElementEditor('hero_subtitle', 'Subtítulo', 'text')}
                   {renderElementEditor('hero_description', 'Descrição', 'textarea')}
@@ -310,14 +310,14 @@ const AdminCustomizations = () => {
                 </div>
                 
                 <div>
-                  <h3 className="text-white font-semibold mb-3">Seção Planos</h3>
+                  <h3 className="font-semibold mb-3" style={{ color: 'hsl(var(--admin-primary))' }}>Seção Planos</h3>
                   {renderElementEditor('plans_title', 'Título dos Planos', 'text')}
                   {renderElementEditor('plans_subtitle', 'Subtítulo dos Planos', 'text')}
                   {renderElementEditor('plans_background_color', 'Cor de Fundo', 'color')}
                 </div>
                 
                 <div>
-                  <h3 className="text-white font-semibold mb-3">Cabeçalho</h3>
+                  <h3 className="font-semibold mb-3" style={{ color: 'hsl(var(--admin-primary))' }}>Cabeçalho</h3>
                   {renderElementEditor('header_logo_text', 'Texto do Logo', 'text')}
                   {renderElementEditor('header_background_color', 'Cor de Fundo', 'color')}
                 </div>
@@ -325,7 +325,7 @@ const AdminCustomizations = () => {
               
               <TabsContent value="login" className="space-y-4 mt-4">
                 <div>
-                  <h3 className="text-white font-semibold mb-3">Página de Login</h3>
+                  <h3 className="font-semibold mb-3" style={{ color: 'hsl(var(--admin-primary))' }}>Página de Login</h3>
                   {renderElementEditor('login_title', 'Título', 'text')}
                   {renderElementEditor('login_subtitle', 'Subtítulo', 'text')}
                   {renderElementEditor('login_background_color', 'Cor de Fundo', 'color')}

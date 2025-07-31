@@ -53,9 +53,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
-    { path: '/admin/imagens', icon: Images, label: 'Imagens' },
-    { path: '/admin/conteudo', icon: FileText, label: 'Conteúdo' },
-    { path: '/admin/hero-slider', icon: Presentation, label: 'Hero Slider' },
   ];
 
   const clientMenuItems = [
