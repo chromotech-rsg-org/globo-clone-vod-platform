@@ -8,8 +8,22 @@ export const useAdminLoginCustomizations = () => {
   const [saving, setSaving] = useState<Record<string, boolean>>({});
 
   const getCustomization = (key: string, defaultValue: string = '') => {
-    const fullKey = `branding_${key}`;
-    return customizations[fullKey] || customizations[`form_${key}`] || customizations[`background_${key}`] || customizations[`theme_${key}`] || customizations[key] || defaultValue;
+    // Try different prefixes to find the value
+    const possibleKeys = [
+      `branding_${key}`,
+      `form_${key}`,
+      `background_${key}`,
+      `theme_${key}`,
+      key
+    ];
+    
+    for (const possibleKey of possibleKeys) {
+      if (customizations[possibleKey] !== undefined) {
+        return customizations[possibleKey];
+      }
+    }
+    
+    return defaultValue;
   };
 
   const saveCustomization = async (key: string, value: string, section: string, elementType: string) => {

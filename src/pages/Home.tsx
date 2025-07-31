@@ -6,6 +6,7 @@ import HeroSlider from '@/components/HeroSlider';
 import ContentCarousel from '@/components/ContentCarousel';
 import PlansSection from '@/components/PlansSection';
 import Footer from '@/components/Footer';
+import BackToTop from '@/components/BackToTop';
 import { useContentSections } from '@/hooks/useContentSections';
 import { useCustomizations } from '@/hooks/useCustomizations';
 
@@ -15,8 +16,7 @@ const Home = () => {
 
   const siteBgColor = getCustomization('global', 'site_background_color', '#0f172a');
   const heroSliderImages = getCustomization('hero', 'hero_slider_images', '');
-
-  const contentBgColor = getCustomization('global', 'content_background_color', 'transparent');
+  const contentBgColor = getCustomization('header', 'content_background_color', 'transparent');
 
   return (
     <div 
@@ -54,6 +54,7 @@ const Home = () => {
 
       <PlansSection />
       <Footer />
+      <BackToTop />
     </div>
   );
 };

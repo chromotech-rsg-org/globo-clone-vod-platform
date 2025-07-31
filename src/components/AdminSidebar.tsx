@@ -16,7 +16,7 @@ import {
   Presentation
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
+import { useCustomizations } from '@/hooks/useCustomizations';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -27,7 +27,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { getCustomization } = useAdminCustomizations();
+  const { getCustomization } = useCustomizations('home');
 
   // Listen for customization updates
   useEffect(() => {
@@ -51,8 +51,8 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
   ];
 
-  const adminTitle = getCustomization('admin_title', 'Globoplay Admin');
-  const adminLogo = getCustomization('admin_logo', '');
+  const adminTitle = getCustomization('global', 'admin_title', 'Painel Administrativo');
+  const adminLogo = getCustomization('global', 'admin_logo_image', '');
 
   return (
     <div 

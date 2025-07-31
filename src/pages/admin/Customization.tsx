@@ -191,6 +191,15 @@ const AdminCustomization = () => {
       description: 'URL para onde o botão customizado irá redirecionar',
       defaultValue: ''
     },
+    {
+      key: 'content_background_color',
+      label: 'Cor de Fundo do Conteúdo',
+      type: 'color',
+      section: 'header',
+      page: 'home',
+      description: 'Cor de fundo da área de conteúdo',
+      defaultValue: 'transparent'
+    },
 
     // HOME - FOOTER
     {
@@ -307,15 +316,6 @@ const AdminCustomization = () => {
       description: 'Cor de fundo dos cards de planos',
       defaultValue: '#111827'
     },
-    {
-      key: 'content_background_color',
-      label: 'Cor de Fundo do Conteúdo',
-      type: 'color',
-      section: 'global',
-      page: 'home',
-      description: 'Cor de fundo da área de conteúdo',
-      defaultValue: 'transparent'
-    },
 
     // GLOBAL SETTINGS
     {
@@ -354,6 +354,15 @@ const AdminCustomization = () => {
       page: 'home',
       description: 'Cor secundária do tema',
       defaultValue: '#1f2937'
+    },
+    {
+      key: 'admin_logo_image',
+      label: 'Logo do Painel Administrativo',
+      type: 'image',
+      section: 'global',
+      page: 'home',
+      description: 'Logo exibido no painel administrativo',
+      defaultValue: ''
     },
 
     // LOGIN PAGE

@@ -113,12 +113,13 @@ const Header = () => {
             )}
             <Link 
               to="/login" 
-              className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md"
+              className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
               style={{ 
                 backgroundColor: headerHoverColor,
                 color: '#ffffff'
               }}
             >
+              <User className="h-4 w-4 mr-2" />
               {menuLogin}
             </Link>
           </nav>
@@ -193,13 +194,14 @@ const Header = () => {
               )}
               <Link 
                 to="/login" 
-                className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4"
+                className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4 flex items-center"
                 style={{ 
                   backgroundColor: headerHoverColor,
                   color: '#ffffff'
                 }}
                 onClick={() => setIsMenuOpen(false)}
               >
+                <User className="h-4 w-4 mr-2" />
                 {menuLogin}
               </Link>
             </div>

@@ -20,7 +20,11 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold">G</div>
+              {logoImage ? (
+                <img src={logoImage} alt={siteName} className="h-10 w-auto" />
+              ) : (
+                <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold">G</div>
+              )}
               <span className="text-white font-bold">{siteName}</span>
             </div>
             <p className="text-gray-400 text-sm">
