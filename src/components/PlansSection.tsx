@@ -55,13 +55,14 @@ const PlansSection = () => {
   };
 
   const getCycleLabel = (cycle: string) => {
-    switch (cycle) {
+    switch (cycle?.toLowerCase()) {
       case 'monthly':
-        return 'Mensal';
+        return 'MENSAL';
       case 'annually':
-        return 'Anual';
+      case 'annual':
+        return 'ANUAL';
       default:
-        return cycle;
+        return cycle?.toUpperCase() || '';
     }
   };
 
@@ -193,7 +194,7 @@ const PlansSection = () => {
               <div className="mt-auto">
                 <Link
                   to="/checkout"
-                  state={{ selectedPlan: plan.id }}
+                  state={{ planId: plan.id }}
                   className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
                     plan.best_seller
                       ? 'bg-blue-600 text-white hover:bg-blue-700'

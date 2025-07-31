@@ -19,13 +19,45 @@ import AdminCustomization from "./pages/admin/Customization";
 import AdminHeroSlider from "./pages/admin/HeroSlider";
 import AdminContent from "./pages/admin/Content";
 import AdminImages from "./pages/admin/Images";
+import Profile from "./pages/Profile";
+import Subscription from "./pages/Subscription";
+import AdminLayout from "./components/AdminLayout";
 import NotFound from "./pages/NotFound";
 import { useSiteTitle } from "./hooks/useSiteTitle";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
   useSiteTitle();
+
+  // Apply favicon from customizations on route changes
+  useEffect(() => {
+    const applyFavicon = async () => {
+      try {
+        const { data } = await supabase
+          .from('customizations')
+          .select('element_value')
+          .eq('page', 'global')
+          .eq('section', 'site')
+          .eq('element_key', 'favicon')
+          .eq('active', true)
+          .maybeSingle();
+
+        if (data?.element_value) {
+          const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
+          if (favicon) {
+            favicon.href = data.element_value;
+          }
+        }
+      } catch (error) {
+        console.log('No custom favicon found');
+      }
+    };
+
+    applyFavicon();
+  }, []);
 
   return (
     <Routes>
@@ -48,46 +80,76 @@ function AppContent() {
           <Dashboard />
         </ProtectedRoute>
       } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <AdminLayout>
+            <Profile />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/subscription" element={
+        <ProtectedRoute>
+          <AdminLayout>
+            <Subscription />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
       
       {/* Admin Routes */}
       <Route path="/admin/usuarios" element={
         <ProtectedRoute requiredRole="admin">
-          <AdminUsers />
+          <AdminLayout>
+            <AdminUsers />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/pacotes" element={
         <ProtectedRoute requiredRole="admin">
-          <AdminPackages />
+          <AdminLayout>
+            <AdminPackages />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/planos" element={
         <ProtectedRoute requiredRole="admin">
-          <AdminPlans />
+          <AdminLayout>
+            <AdminPlans />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/cupons" element={
         <ProtectedRoute requiredRole="admin">
-          <AdminCoupons />
+          <AdminLayout>
+            <AdminCoupons />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/personalizacao" element={
         <ProtectedRoute requiredRole="admin">
-          <AdminCustomization />
+          <AdminLayout>
+            <AdminCustomization />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/hero-slider" element={
         <ProtectedRoute requiredRole="admin">
-          <AdminHeroSlider />
+          <AdminLayout>
+            <AdminHeroSlider />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/conteudo" element={
         <ProtectedRoute requiredRole="admin">
-          <AdminContent />
+          <AdminLayout>
+            <AdminContent />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/imagens" element={
         <ProtectedRoute requiredRole="admin">
-          <AdminImages />
+          <AdminLayout>
+            <AdminImages />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       

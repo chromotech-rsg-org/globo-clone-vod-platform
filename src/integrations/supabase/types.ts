@@ -348,6 +348,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_active_subscription: {
+        Args: { user_uuid: string }
+        Returns: {
+          id: string
+          plan_id: string
+          status: string
+          start_date: string
+          end_date: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

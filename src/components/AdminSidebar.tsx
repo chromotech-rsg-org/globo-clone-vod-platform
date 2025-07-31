@@ -13,7 +13,8 @@ import {
   LogOut,
   Images,
   FileText,
-  Presentation
+  Presentation,
+  User
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
@@ -26,7 +27,7 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { getCustomization } = useAdminCustomizations();
 
   // Listen for customization updates
@@ -42,7 +43,10 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     };
   }, []);
 
-  const menuItems = [
+  const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
+  const isClient = user?.role === 'user';
+
+  const adminMenuItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/admin/usuarios', icon: Users, label: 'Usuários' },
     { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
@@ -50,6 +54,13 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
   ];
+
+  const clientMenuItems = [
+    { path: '/profile', icon: User, label: 'Meu Perfil' },
+    { path: '/subscription', icon: CreditCard, label: 'Assinatura' },
+  ];
+
+  const menuItems = isAdmin ? adminMenuItems : clientMenuItems;
 
   const siteName = getCustomization('global_site_name', 'Painel Administrativo');
   const adminLogo = getCustomization('admin_logo_image', '');

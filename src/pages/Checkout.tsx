@@ -1,12 +1,20 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import CheckoutFooter from '@/components/checkout/CheckoutFooter';
-import PlanSummary from '@/components/checkout/PlanSummary';
-import CheckoutForm from '@/components/checkout/CheckoutForm';
+import CheckoutSteps from '@/components/checkout/CheckoutSteps';
+
+interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  billing_cycle: string;
+  description?: string;
+  benefits?: string[];
+}
 
 const Checkout = () => {
   const location = useLocation();
@@ -14,21 +22,48 @@ const Checkout = () => {
   const { register } = useAuth();
   const { toast } = useToast();
   
-  const selectedPlan = location.state?.selectedPlan || 'premiere';
-  const billingCycle = location.state?.billingCycle || 'anual';
-
+  const planId = location.state?.planId;
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const plans = {
-    premiere: { name: 'Globoplay Premiere', price: 36.90 },
-    cartola: { name: 'Globoplay Cartola', price: 15.40 },
-    telecine: { name: 'Globoplay Telecine', price: 29.90 },
-    combate: { name: 'Globoplay Combate', price: 28.80 }
-  };
+  useEffect(() => {
+    const fetchPlan = async () => {
+      if (!planId) {
+        navigate('/');
+        return;
+      }
 
-  const currentPlan = plans[selectedPlan as keyof typeof plans];
+      try {
+        const { data, error } = await supabase
+          .from('plans')
+          .select('*')
+          .eq('id', planId)
+          .eq('active', true)
+          .single();
+
+        if (error || !data) {
+          toast({
+            title: "Erro",
+            description: "Plano não encontrado.",
+            variant: "destructive"
+          });
+          navigate('/');
+          return;
+        }
+
+        setSelectedPlan(data);
+      } catch (error) {
+        console.error('Error fetching plan:', error);
+        navigate('/');
+      }
+    };
+
+    fetchPlan();
+  }, [planId, navigate, toast]);
 
   const handleFormSubmit = async (formData: any) => {
+    if (!selectedPlan) return;
+    
     setIsLoading(true);
 
     try {
@@ -47,10 +82,24 @@ const Checkout = () => {
           variant: "destructive"
         });
       } else {
+        // Create subscription after successful registration
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData.user) {
+          const endDate = new Date();
+          endDate.setMonth(endDate.getMonth() + (selectedPlan.billing_cycle === 'annually' ? 12 : 1));
+
+          await supabase.from('subscriptions').insert({
+            user_id: authData.user.id,
+            plan_id: selectedPlan.id,
+            status: 'active',
+            end_date: endDate.toISOString()
+          });
+        }
+
         navigate('/dashboard');
         toast({
           title: "Conta criada com sucesso!",
-          description: "Bem-vindo ao Globoplay"
+          description: `Bem-vindo ao ${selectedPlan.name}`
         });
       }
     } catch (error) {
@@ -64,18 +113,24 @@ const Checkout = () => {
     }
   };
 
+  if (!selectedPlan) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white">Carregando...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4">
         <CheckoutHeader />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <PlanSummary plan={currentPlan} />
-          <div>
-            <CheckoutForm onSubmit={handleFormSubmit} isLoading={isLoading} />
-            <CheckoutFooter />
-          </div>
-        </div>
+        <CheckoutSteps 
+          plan={selectedPlan} 
+          onSubmit={handleFormSubmit} 
+          isLoading={isLoading} 
+        />
+        <CheckoutFooter />
       </div>
     </div>
   );
