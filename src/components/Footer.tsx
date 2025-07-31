@@ -9,7 +9,7 @@ const Footer = () => {
   const footerTextColor = getCustomization('footer', 'footer_text_color', '#ffffff');
   const copyrightText = getCustomization('footer', 'footer_copyright', '© 2024 Todos os direitos reservados');
   const logoImage = getCustomization('footer', 'footer_logo_image', '');
-  const siteName = getCustomization('global', 'site_name', 'Globoplay');
+  const siteName = getCustomization('global', 'global_site_name', '');
   
   return (
     <footer 
@@ -21,11 +21,10 @@ const Footer = () => {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               {logoImage ? (
-                <img src={logoImage} alt={siteName} className="h-10 w-auto" />
-              ) : (
-                <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold">G</div>
-              )}
-              <span className="text-white font-bold">{siteName}</span>
+                <img src={logoImage} alt={siteName || 'Logo'} className="h-10 w-auto" />
+              ) : siteName ? (
+                <span className="text-white font-bold">{siteName}</span>
+              ) : null}
             </div>
             <p className="text-gray-400 text-sm">
               {getCustomization('footer', 'description', 'Sua plataforma de streaming com o melhor conteúdo nacional e internacional.')}

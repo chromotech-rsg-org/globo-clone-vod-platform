@@ -364,6 +364,69 @@ const AdminCustomization = () => {
       description: 'Logo exibido no painel administrativo',
       defaultValue: ''
     },
+    {
+      key: 'favicon_image',
+      label: 'Favicon do Site',
+      type: 'image',
+      section: 'global',
+      page: 'home',
+      description: 'Ícone exibido na aba do navegador',
+      defaultValue: ''
+    },
+    {
+      key: 'admin_content_bg_color',
+      label: 'Cor de Fundo do Sistema Administrativo',
+      type: 'color',
+      section: 'global',
+      page: 'home',
+      description: 'Cor de fundo do painel administrativo',
+      defaultValue: '#111827'
+    },
+    {
+      key: 'admin_sidebar_bg_color',
+      label: 'Cor de Fundo do Menu Lateral',
+      type: 'color',
+      section: 'global',
+      page: 'home',
+      description: 'Cor de fundo da barra lateral do admin',
+      defaultValue: '#374151'
+    },
+    {
+      key: 'admin_sidebar_text_color',
+      label: 'Cor do Texto do Menu Lateral',
+      type: 'color',
+      section: 'global',
+      page: 'home',
+      description: 'Cor do texto na barra lateral',
+      defaultValue: '#ffffff'
+    },
+    {
+      key: 'admin_primary_color',
+      label: 'Cor Primária do Sistema',
+      type: 'color',
+      section: 'global',
+      page: 'home',
+      description: 'Cor principal dos botões e elementos',
+      defaultValue: '#3b82f6'
+    },
+    {
+      key: 'admin_table_bg_color',
+      label: 'Cor de Fundo das Tabelas',
+      type: 'color',
+      section: 'global',
+      page: 'home',
+      description: 'Cor de fundo das tabelas no admin',
+      defaultValue: '#374151'
+    },
+    {
+      key: 'admin_card_bg_color',
+      label: 'Cor de Fundo dos Cards',
+      type: 'color',
+      section: 'global',
+      page: 'home',
+      description: 'Cor de fundo dos cards no admin',
+      defaultValue: '#374151'
+    },
 
     // LOGIN PAGE
     {

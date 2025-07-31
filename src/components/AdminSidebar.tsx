@@ -16,7 +16,7 @@ import {
   Presentation
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCustomizations } from '@/hooks/useCustomizations';
+import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -27,7 +27,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { getCustomization } = useCustomizations('home');
+  const { getCustomization } = useAdminCustomizations();
 
   // Listen for customization updates
   useEffect(() => {
@@ -51,8 +51,8 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
   ];
 
-  const adminTitle = getCustomization('global', 'admin_title', 'Painel Administrativo');
-  const adminLogo = getCustomization('global', 'admin_logo_image', '');
+  const siteName = getCustomization('global_site_name', 'Painel Administrativo');
+  const adminLogo = getCustomization('admin_logo_image', '');
 
   return (
     <div 
@@ -84,7 +84,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
             <div className="text-admin-primary font-bold text-xl">G</div>
           )}
           {!isCollapsed && (
-            <span className="font-bold text-lg text-admin-sidebar-text">{adminTitle}</span>
+            <span className="font-bold text-lg text-admin-sidebar-text">{siteName}</span>
           )}
         </button>
       </div>

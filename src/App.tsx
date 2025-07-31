@@ -20,8 +20,81 @@ import AdminHeroSlider from "./pages/admin/HeroSlider";
 import AdminContent from "./pages/admin/Content";
 import AdminImages from "./pages/admin/Images";
 import NotFound from "./pages/NotFound";
+import { useSiteTitle } from "./hooks/useSiteTitle";
 
 const queryClient = new QueryClient();
+
+function AppContent() {
+  useSiteTitle();
+
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      } />
+      <Route path="/checkout" element={
+        <PublicRoute>
+          <Checkout />
+        </PublicRoute>
+      } />
+      
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      
+      {/* Admin Routes */}
+      <Route path="/admin/usuarios" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminUsers />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/pacotes" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminPackages />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/planos" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminPlans />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/cupons" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminCoupons />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/personalizacao" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminCustomization />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/hero-slider" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminHeroSlider />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/conteudo" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminContent />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/imagens" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminImages />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -30,71 +103,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            } />
-            <Route path="/checkout" element={
-              <PublicRoute>
-                <Checkout />
-              </PublicRoute>
-            } />
-            
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            
-            {/* Admin Routes */}
-            <Route path="/admin/usuarios" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminUsers />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/pacotes" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminPackages />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/planos" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminPlans />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/cupons" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminCoupons />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/personalizacao" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminCustomization />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/hero-slider" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminHeroSlider />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/conteudo" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminContent />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/imagens" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminImages />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppContent />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
