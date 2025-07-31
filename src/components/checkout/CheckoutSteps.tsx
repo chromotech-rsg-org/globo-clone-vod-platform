@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import CheckoutPlanStep from './CheckoutPlanStep';
 import CheckoutPersonalStep from './CheckoutPersonalStep';
+import CheckoutCouponStep from './CheckoutCouponStep';
 import CheckoutCredentialsStep from './CheckoutCredentialsStep';
 
 interface Plan {
@@ -30,19 +31,21 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
     phone: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    coupon: null
   });
 
   const steps = [
     { number: 1, title: 'Plano', completed: currentStep > 1 },
     { number: 2, title: 'Dados Pessoais', completed: currentStep > 2 },
-    { number: 3, title: 'Credenciais', completed: false }
+    { number: 3, title: 'Cupom', completed: currentStep > 3 },
+    { number: 4, title: 'Credenciais', completed: false }
   ];
 
-  const progress = ((currentStep - 1) / 2) * 100;
+  const progress = ((currentStep - 1) / 3) * 100;
 
   const handleNext = () => {
-    if (currentStep < 3) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -56,11 +59,21 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
   const handleStepSubmit = (stepData: any) => {
     setFormData({ ...formData, ...stepData });
     
-    if (currentStep === 3) {
+    if (currentStep === 4) {
       onSubmit({ ...formData, ...stepData });
     } else {
       handleNext();
     }
+  };
+
+  const handleCouponApplied = (coupon: any) => {
+    setFormData({ ...formData, coupon });
+    handleNext();
+  };
+
+  const handleSkipCoupon = () => {
+    setFormData({ ...formData, coupon: null });
+    handleNext();
   };
 
   const renderStepContent = () => {
@@ -70,6 +83,8 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
       case 2:
         return <CheckoutPersonalStep initialData={formData} onSubmit={handleStepSubmit} />;
       case 3:
+        return <CheckoutCouponStep onCouponApplied={handleCouponApplied} onSkip={handleSkipCoupon} />;
+      case 4:
         return <CheckoutCredentialsStep initialData={formData} onSubmit={handleStepSubmit} isLoading={isLoading} />;
       default:
         return null;
@@ -111,7 +126,7 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white text-center">
-              Etapa {currentStep} de 3
+              Etapa {currentStep} de 4
             </CardTitle>
           </CardHeader>
           <CardContent>

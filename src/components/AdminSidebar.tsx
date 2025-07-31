@@ -53,11 +53,14 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
+    { path: '/admin/imagens', icon: Images, label: 'Imagens' },
+    { path: '/admin/conteudo', icon: FileText, label: 'Conteúdo' },
+    { path: '/admin/hero-slider', icon: Presentation, label: 'Hero Slider' },
   ];
 
   const clientMenuItems = [
     { path: '/profile', icon: User, label: 'Meu Perfil' },
-    { path: '/subscription', icon: CreditCard, label: 'Assinatura' },
+    { path: '/subscription', icon: CreditCard, label: 'Minha Assinatura' },
   ];
 
   const menuItems = isAdmin ? adminMenuItems : clientMenuItems;
@@ -67,14 +70,21 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
   return (
     <div 
-      className={`admin-sidebar transition-all duration-300 ${
+      className={`admin-sidebar transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-16' : 'w-64'
-      } h-screen relative flex flex-col bg-admin-sidebar-bg text-admin-sidebar-text overflow-hidden`}
+      } h-screen fixed left-0 top-0 flex flex-col bg-admin-sidebar-bg text-admin-sidebar-text shadow-lg z-40 border-r border-admin-border`}
+      style={{
+        backdropFilter: 'blur(8px)',
+        backgroundColor: 'rgba(var(--admin-sidebar-bg), 0.95)'
+      }}
     >
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-8 bg-admin-sidebar border border-admin-border rounded-full p-1 hover:bg-admin-sidebar/80 z-20"
+        className="absolute -right-4 top-6 bg-admin-content-bg border-2 border-admin-border rounded-full p-2 hover:bg-admin-muted transition-all duration-200 shadow-lg z-50"
+        style={{
+          color: 'hsl(var(--admin-primary))'
+        }}
       >
         {isCollapsed ? (
           <ChevronRight className="h-4 w-4" />
@@ -84,24 +94,33 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       </button>
 
       {/* Logo */}
-      <div className="p-4 border-b border-admin-border">
+      <div className="p-6 border-b border-admin-border/50">
         <button 
           onClick={() => navigate('/')} 
-          className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          className="flex items-center space-x-3 hover:opacity-80 transition-all duration-200 group"
         >
           {adminLogo ? (
-            <img src={adminLogo} alt="Logo" className="w-8 h-8 object-contain" />
+            <img src={adminLogo} alt="Logo" className="w-10 h-10 object-contain rounded-lg" />
           ) : (
-            <div className="text-admin-primary font-bold text-xl">G</div>
+            <div className="w-10 h-10 bg-gradient-to-br from-admin-primary to-admin-accent rounded-lg flex items-center justify-center text-admin-primary-foreground font-bold text-xl shadow-md">
+              G
+            </div>
           )}
           {!isCollapsed && (
-            <span className="font-bold text-lg text-admin-sidebar-text">{siteName}</span>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg text-admin-sidebar-text group-hover:text-admin-primary transition-colors">
+                {siteName}
+              </span>
+              <span className="text-xs text-admin-muted-foreground">
+                Painel Administrativo
+              </span>
+            </div>
           )}
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6 flex-1 overflow-y-auto">
+      <nav className="mt-2 flex-1 overflow-y-auto px-3 space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -113,13 +132,21 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                 console.log('🔗 Navegando para:', item.path);
                 navigate(item.path);
               }}
-              className={`flex items-center w-full px-4 py-3 text-admin-muted-foreground hover:bg-admin-muted transition-colors ${
-                isActive ? 'bg-admin-muted border-r-2 border-admin-primary text-admin-sidebar-foreground' : ''
+              className={`group flex items-center w-full px-3 py-3 rounded-lg transition-all duration-200 ${
+                isActive 
+                  ? 'bg-admin-primary text-admin-primary-foreground shadow-md scale-105' 
+                  : 'text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text hover:scale-102'
               }`}
+              title={isCollapsed ? item.label : undefined}
             >
-              <Icon className="h-5 w-5 min-w-[20px]" />
+              <Icon className={`h-5 w-5 min-w-[20px] transition-transform duration-200 ${
+                isActive ? 'scale-110' : 'group-hover:scale-105'
+              }`} />
               {!isCollapsed && (
-                <span className="ml-3">{item.label}</span>
+                <span className="ml-3 font-medium">{item.label}</span>
+              )}
+              {isActive && !isCollapsed && (
+                <div className="ml-auto w-2 h-2 bg-admin-primary-foreground rounded-full animate-pulse"></div>
               )}
             </button>
           );
@@ -127,14 +154,15 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-admin-border mt-auto">
+      <div className="p-4 border-t border-admin-border/50 mt-auto">
         <button
           onClick={logout}
-          className="flex items-center w-full px-4 py-3 text-admin-muted-foreground hover:bg-admin-muted transition-colors rounded"
+          className="group flex items-center w-full px-3 py-3 text-admin-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 rounded-lg"
+          title={isCollapsed ? 'Sair' : undefined}
         >
-          <LogOut className="h-5 w-5 min-w-[20px]" />
+          <LogOut className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
           {!isCollapsed && (
-            <span className="ml-3">Sair</span>
+            <span className="ml-3 font-medium">Sair</span>
           )}
         </button>
       </div>

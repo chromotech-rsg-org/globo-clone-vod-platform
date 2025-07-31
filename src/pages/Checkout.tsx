@@ -67,6 +67,15 @@ const Checkout = () => {
     setIsLoading(true);
 
     try {
+      // Calculate final price with coupon discount
+      let finalPrice = selectedPlan.price;
+      let discountAmount = 0;
+      
+      if (formData.coupon) {
+        discountAmount = (selectedPlan.price * formData.coupon.discount_percentage) / 100;
+        finalPrice = selectedPlan.price - discountAmount;
+      }
+
       const { error } = await register({
         name: formData.name,
         email: formData.email,
@@ -97,9 +106,14 @@ const Checkout = () => {
         }
 
         navigate('/dashboard');
+        
+        const successMessage = formData.coupon 
+          ? `Conta criada com sucesso! Desconto aplicado: R$ ${discountAmount.toFixed(2)}`
+          : `Bem-vindo ao ${selectedPlan.name}`;
+          
         toast({
           title: "Conta criada com sucesso!",
-          description: `Bem-vindo ao ${selectedPlan.name}`
+          description: successMessage
         });
       }
     } catch (error) {

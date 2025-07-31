@@ -32,19 +32,20 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   return (
     <div className="flex min-h-screen bg-admin-content-bg">
-      <div className="fixed left-0 top-0 h-screen z-10">
-        <AdminSidebar 
-          isCollapsed={sidebarCollapsed}
-          onToggle={handleToggle}
-        />
-      </div>
+      <AdminSidebar 
+        isCollapsed={sidebarCollapsed}
+        onToggle={handleToggle}
+      />
       <div 
-        className="flex-1 h-screen overflow-y-auto transition-all duration-300 bg-admin-content-bg"
+        className="flex-1 min-h-screen transition-all duration-300 ease-in-out bg-admin-content-bg"
         style={{ 
-          marginLeft: sidebarCollapsed ? '64px' : '256px'
+          marginLeft: sidebarCollapsed ? '64px' : '256px',
+          background: 'linear-gradient(135deg, hsl(var(--admin-content-bg)) 0%, hsl(var(--admin-muted)) 100%)'
         }}
       >
-        {children}
+        <div className="p-6 space-y-6">
+          {children}
+        </div>
       </div>
     </div>
   );
