@@ -30,14 +30,9 @@ const HeroSlider = () => {
   const { getCustomization } = useCustomizations('home');
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Get customization data with memoization to prevent infinite loops
-  const titleColor = useMemo(() => getCustomization('hero', 'title_color', '#ffffff'), [getCustomization]);
-  const buttonBackgroundColor = useMemo(() => getCustomization('hero', 'button_color', '#ffffff'), [getCustomization]);
-  const buttonTextColor = useMemo(() => getCustomization('hero', 'button_text_color', '#000000'), [getCustomization]);
-  
-  // Get slider configuration
-  const slideImages = useMemo(() => getCustomization('hero', 'hero_slider_images', ''), [getCustomization]);
-  const autoplayDuration = useMemo(() => parseInt(getCustomization('hero', 'hero_slider_autoplay_duration', '5000')), [getCustomization]);
+  // Get slider configuration - sem memoização para evitar loops infinitos
+  const slideImages = getCustomization('hero', 'hero_slider_images', '');
+  const autoplayDuration = parseInt(getCustomization('hero', 'hero_slider_autoplay_duration', '5000'));
 
   // Parse slides from customizations
   const slides = useMemo(() => {

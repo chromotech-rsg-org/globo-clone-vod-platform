@@ -82,7 +82,7 @@ export const useHeroSlider = () => {
     }
     
     setIsLoaded(true);
-  }, [getCustomization, loading]);
+  }, [loading]); // Removendo getCustomization da dependência para evitar loop infinito
 
   const saveCustomization = async (key: string, value: string, section: string, elementType: string) => {
     try {
@@ -135,12 +135,11 @@ export const useHeroSlider = () => {
         'text'
       );
       
-      if (result.success) {
-        console.log('✅ New slide saved successfully');
-        await refetch();
-      } else {
-        console.error('❌ Failed to save new slide:', result.error);
-      }
+        if (result.success) {
+          console.log('✅ New slide saved successfully');
+        } else {
+          console.error('❌ Failed to save new slide:', result.error);
+        }
     } catch (error) {
       console.error('❌ Error saving new slide:', error);
     }
@@ -163,7 +162,6 @@ export const useHeroSlider = () => {
         
         if (result.success) {
           console.log('✅ Slide removal saved successfully');
-          await refetch();
         } else {
           console.error('❌ Failed to save slide removal:', result.error);
         }
@@ -191,7 +189,6 @@ export const useHeroSlider = () => {
       );
 
       if (result.success) {
-        await refetch();
         return { success: true };
       } else {
         throw new Error(result.error);
