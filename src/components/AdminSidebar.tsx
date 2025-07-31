@@ -67,7 +67,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
   return (
     <div 
-      className={`admin-sidebar transition-all duration-300 ease-in-out ${
+      className={`transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-16' : 'w-64'
       } h-screen fixed left-0 top-0 flex flex-col bg-admin-sidebar-bg text-admin-sidebar-text shadow-lg z-40 border-r border-admin-border`}
       style={{
