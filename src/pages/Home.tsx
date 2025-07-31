@@ -16,6 +16,8 @@ const Home = () => {
   const siteBgColor = getCustomization('global', 'site_background_color', '#0f172a');
   const heroSliderImages = getCustomization('hero', 'hero_slider_images', '');
 
+  const contentBgColor = getCustomization('global', 'content_background_color', 'transparent');
+
   return (
     <div 
       className="min-h-screen"
@@ -24,7 +26,11 @@ const Home = () => {
       <Header />
       {heroSliderImages && heroSliderImages.trim() !== '' && heroSliderImages !== '[]' ? <HeroSlider /> : <HeroBanner />}
       
-      <div id="content" className="px-4 md:px-8 space-y-12 pb-20 pt-16">
+      <div 
+        id="content" 
+        className="px-4 md:px-8 space-y-12 pb-20 pt-16"
+        style={{ backgroundColor: contentBgColor }}
+      >
         {loading ? (
           <div className="text-center text-white">Carregando conteúdo...</div>
         ) : (

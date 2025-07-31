@@ -54,10 +54,19 @@ const PlansSection = () => {
     return cycle === 'annually' ? `${formattedPrice}/ano` : `${formattedPrice}/mês`;
   };
 
+  const getCycleLabel = (cycle: string) => {
+    switch (cycle) {
+      case 'monthly':
+        return 'Mensal';
+      case 'annually':
+        return 'Anual';
+      default:
+        return cycle;
+    }
+  };
+
   const filteredPlans = plans.filter(plan => plan.billing_cycle === activeCycle);
   const availableCycles = [...new Set(plans.map(plan => plan.billing_cycle))].filter(Boolean);
-
-  const getCycleLabel = (cycle: string) => formatBillingCycle(cycle);
 
   if (loading) {
     return (
@@ -90,6 +99,7 @@ const PlansSection = () => {
   const popularBorderColor = getCustomization('plans', 'plans_border_color', '#3b82f6');
   const popularBadgeBg = getCustomization('plans', 'plans_badge_background', '#3b82f6');
   const popularBadgeText = getCustomization('plans', 'plans_badge_text_color', '#ffffff');
+  const planCardBgColor = getCustomization('plans', 'plans_card_background_color', '#111827');
 
   return (
     <section 
@@ -132,8 +142,9 @@ const PlansSection = () => {
           {filteredPlans.map((plan) => (
             <div 
               key={plan.id}
-              className="bg-gray-900 rounded-xl p-8 relative flex flex-col"
+              className="rounded-xl p-8 relative flex flex-col"
               style={{
+                backgroundColor: planCardBgColor,
                 border: plan.best_seller 
                   ? `2px solid ${popularBorderColor}` 
                   : '1px solid #374151'

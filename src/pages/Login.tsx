@@ -129,9 +129,9 @@ const Login = () => {
   // Get customizations using the correct keys
   const loginTitle = getCustomization('form', 'title', 'Acessar Agro Play');
   const loginSubtitle = getCustomization('form', 'subtitle', 'Gerenciar Conta');
-  const logoText = getCustomization('branding', 'logo_text', 'AGRO');
-  const logoBottomText1 = getCustomization('branding', 'logo_bottom_text1', 'agro');
-  const logoBottomText2 = getCustomization('branding', 'logo_bottom_text2', 'mercado');
+  const mainLogoImage = getCustomization('branding', 'main_logo_image', '');
+  const bottomLogoImage = getCustomization('branding', 'bottom_logo_image', '');
+  const logoLink = getCustomization('branding', 'logo_link', '');
   const emailPlaceholder = getCustomization('form', 'email_placeholder', 'Usuário');
   const passwordPlaceholder = getCustomization('form', 'password_placeholder', 'Senha');
   const loginButtonText = getCustomization('form', 'login_button_text', 'Entrar');
@@ -145,6 +145,12 @@ const Login = () => {
   const buttonHoverColor = getCustomization('theme', 'button_hover_color', '#15803d');
   const textColor = getCustomization('theme', 'text_color', '#374151');
   const inputBgColor = getCustomization('form', 'input_background_color', '#f9fafb');
+
+  const handleLogoClick = () => {
+    if (logoLink) {
+      window.open(logoLink, '_blank');
+    }
+  };
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -170,21 +176,30 @@ const Login = () => {
           <div className="text-center space-y-4">
             <div className="flex justify-center">
               <div 
-                className="px-4 py-2 rounded-lg font-bold text-2xl"
+                className="px-4 py-2 rounded-lg font-bold text-2xl cursor-pointer"
                 style={{ 
                   backgroundColor: logoBackgroundColor,
                   color: logoTextColor 
                 }}
+                onClick={handleLogoClick}
               >
-                {logoText}
+                {mainLogoImage ? (
+                  <img src={mainLogoImage} alt="Logo Principal" className="h-12 w-auto" />
+                ) : (
+                  'AGRO'
+                )}
               </div>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2">
                 <h1 
-                  className="text-lg"
-                  style={{ color: textColor }}
+                  className="text-lg cursor-pointer"
+                  style={{ 
+                    color: textColor,
+                    textDecoration: 'none'
+                  }}
+                  onClick={handleLogoClick}
                 >
                   {loginTitle}
                 </h1>
@@ -273,18 +288,29 @@ const Login = () => {
             {/* Bottom Logo */}
             <div className="pt-8">
               <div className="text-center">
-                <span 
-                  className="font-bold text-lg"
-                  style={{ color: primaryColor }}
-                >
-                  {logoBottomText1}
-                </span>
-                <span 
-                  className="font-bold text-lg"
-                  style={{ color: textColor }}
-                >
-                  {logoBottomText2}
-                </span>
+                {bottomLogoImage ? (
+                  <img 
+                    src={bottomLogoImage} 
+                    alt="Logo Inferior" 
+                    className="h-8 mx-auto cursor-pointer" 
+                    onClick={handleLogoClick}
+                  />
+                ) : (
+                  <div onClick={handleLogoClick} className="cursor-pointer">
+                    <span 
+                      className="font-bold text-lg"
+                      style={{ color: primaryColor }}
+                    >
+                      agro
+                    </span>
+                    <span 
+                      className="font-bold text-lg"
+                      style={{ color: textColor }}
+                    >
+                      mercado
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

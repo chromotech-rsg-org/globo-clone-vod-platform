@@ -8,7 +8,8 @@ export const useAdminLoginCustomizations = () => {
   const [saving, setSaving] = useState<Record<string, boolean>>({});
 
   const getCustomization = (key: string, defaultValue: string = '') => {
-    return customizations[key] || defaultValue;
+    const fullKey = `branding_${key}`;
+    return customizations[fullKey] || customizations[`form_${key}`] || customizations[`background_${key}`] || customizations[`theme_${key}`] || customizations[key] || defaultValue;
   };
 
   const saveCustomization = async (key: string, value: string, section: string, elementType: string) => {

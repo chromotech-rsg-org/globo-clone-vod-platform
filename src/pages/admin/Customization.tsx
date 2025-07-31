@@ -144,6 +144,53 @@ const AdminCustomization = () => {
       description: 'Cor dos links do menu ao passar o mouse',
       defaultValue: '#ef4444'
     },
+    {
+      key: 'custom_button_text',
+      label: 'Texto do Botão Customizado',
+      type: 'text',
+      section: 'header',
+      page: 'home',
+      placeholder: 'Meu Botão',
+      description: 'Texto exibido no botão customizado',
+      defaultValue: ''
+    },
+    {
+      key: 'custom_button_bg_color',
+      label: 'Cor de Fundo do Botão Customizado',
+      type: 'color',
+      section: 'header',
+      page: 'home',
+      description: 'Cor de fundo do botão customizado',
+      defaultValue: '#3b82f6'
+    },
+    {
+      key: 'custom_button_text_color',
+      label: 'Cor do Texto do Botão Customizado',
+      type: 'color',
+      section: 'header',
+      page: 'home',
+      description: 'Cor do texto do botão customizado',
+      defaultValue: '#ffffff'
+    },
+    {
+      key: 'custom_button_icon',
+      label: 'Ícone do Botão Customizado',
+      type: 'image',
+      section: 'header',
+      page: 'home',
+      description: 'Ícone exibido no botão customizado',
+      defaultValue: ''
+    },
+    {
+      key: 'custom_button_link',
+      label: 'Link do Botão Customizado',
+      type: 'text',
+      section: 'header',
+      page: 'home',
+      placeholder: 'https://example.com',
+      description: 'URL para onde o botão customizado irá redirecionar',
+      defaultValue: ''
+    },
 
     // HOME - FOOTER
     {
@@ -248,8 +295,26 @@ const AdminCustomization = () => {
       section: 'plans',
       page: 'home',
       placeholder: 'Mais Popular',
-      description: 'Texto exibido no badge do plano em destaque',
+      description: 'Texto exibido no badge de plano popular',
       defaultValue: 'Mais Popular'
+    },
+    {
+      key: 'plans_card_background_color',
+      label: 'Cor de Fundo dos Cards dos Planos',
+      type: 'color',
+      section: 'plans',
+      page: 'home',
+      description: 'Cor de fundo dos cards de planos',
+      defaultValue: '#111827'
+    },
+    {
+      key: 'content_background_color',
+      label: 'Cor de Fundo do Conteúdo',
+      type: 'color',
+      section: 'global',
+      page: 'home',
+      description: 'Cor de fundo da área de conteúdo',
+      defaultValue: 'transparent'
     },
 
     // GLOBAL SETTINGS
@@ -313,34 +378,32 @@ const AdminCustomization = () => {
       defaultValue: 'Gerenciar Conta'
     },
     {
-      key: 'logo_text',
-      label: 'Texto do Logo',
-      type: 'text',
+      key: 'main_logo_image',
+      label: 'Logo Principal',
+      type: 'image',
       section: 'branding',
       page: 'login',
-      placeholder: 'AGRO',
-      description: 'Texto exibido no logo principal',
-      defaultValue: 'AGRO'
+      description: 'Upload do logo principal',
+      defaultValue: ''
     },
     {
-      key: 'logo_bottom_text1',
-      label: 'Texto Logo Inferior 1',
-      type: 'text',
+      key: 'bottom_logo_image',
+      label: 'Logo Inferior',
+      type: 'image',
       section: 'branding',
       page: 'login',
-      placeholder: 'agro',
-      description: 'Primeira parte do texto do logo inferior',
-      defaultValue: 'agro'
+      description: 'Upload do logo inferior',
+      defaultValue: ''
     },
     {
-      key: 'logo_bottom_text2',
-      label: 'Texto Logo Inferior 2',
+      key: 'logo_link',
+      label: 'Link dos Logos',
       type: 'text',
       section: 'branding',
       page: 'login',
-      placeholder: 'mercado',
-      description: 'Segunda parte do texto do logo inferior',
-      defaultValue: 'mercado'
+      placeholder: 'https://example.com',
+      description: 'Link que será aplicado aos logos (abre em nova aba)',
+      defaultValue: ''
     },
     {
       key: 'email_placeholder',
