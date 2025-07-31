@@ -137,168 +137,163 @@ const Login = () => {
   const buttonTextColor = getCustomization('global', 'button_text_color', '#ffffff');
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ 
-        backgroundColor: loginBgColor,
-        backgroundImage: loginBgImage ? `url('${loginBgImage}')` : 'none',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}
-    >
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center space-x-2">
-            {siteLogoUrl ? (
-              <img src={siteLogoUrl} alt={siteName} className="h-10 w-auto" />
-            ) : (
-              <div 
-                className="text-white px-3 py-1 rounded font-bold text-xl"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {siteName.charAt(0)}
-              </div>
-            )}
-            <span className="text-white font-bold text-2xl">{siteName}</span>
-          </Link>
-        </div>
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Background Image Section */}
+      <div 
+        className="hidden lg:block relative"
+        style={{
+          backgroundImage: `url('${loginBgImage || '/lovable-uploads/3c31e6f6-37f9-475f-b8fe-d62743f4c2e8.png'}')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        <div className="absolute inset-0 bg-black/20"></div>
+      </div>
 
-        <Card 
-          className="border-gray-700"
-          style={{ backgroundColor: loginCardBgColor }}
-        >
-          <CardHeader>
-            <CardTitle className="text-white text-2xl text-center">{loginTitle}</CardTitle>
-            <CardDescription className="text-gray-400 text-center">
-              {loginSubtitle}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-700">
-                <TabsTrigger value="login" className="text-gray-300">Entrar</TabsTrigger>
-                <TabsTrigger value="register" className="text-gray-300">Cadastrar</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email" className="text-gray-300">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="seu@email.com"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password" className="text-gray-300">Senha</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="••••••••"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    style={{ 
-                      backgroundColor: primaryColor, 
-                      color: buttonTextColor,
-                      borderColor: primaryColor
-                    }}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Entrando...' : 'Entrar'}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="register">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-name" className="text-gray-300">Nome</Label>
-                    <Input
-                      id="register-name"
-                      type="text"
-                      value={registerData.name}
-                      onChange={(e) => setRegisterData(prev => ({ ...prev, name: e.target.value }))}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="Seu nome completo"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email" className="text-gray-300">Email</Label>
-                    <Input
-                      id="register-email"
-                      type="email"
-                      value={registerData.email}
-                      onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="seu@email.com"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password" className="text-gray-300">Senha</Label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="••••••••"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    style={{ 
-                      backgroundColor: primaryColor, 
-                      color: buttonTextColor,
-                      borderColor: primaryColor
-                    }}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-
-            <div className="mt-6 text-center">
-              <p className="text-gray-400 text-sm">
-                Não tem uma conta?{' '}
-                <Link 
-                  to="/checkout" 
-                  style={{ color: primaryColor }}
-                  className="hover:opacity-80"
+      {/* Login Form Section */}
+      <div className="flex items-center justify-center px-8 py-12 bg-white">
+        <div className="w-full max-w-md space-y-8">
+          {/* Logo and Header */}
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              {siteLogoUrl ? (
+                <img src={siteLogoUrl} alt={siteName} className="h-16 w-auto" />
+              ) : (
+                <div 
+                  className="text-white px-4 py-2 rounded-lg font-bold text-2xl"
+                  style={{ backgroundColor: '#4ade80' }}
                 >
-                  Assine agora
-                </Link>
-              </p>
+                  AGRO
+                </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2">
+                <h1 className="text-lg text-gray-600">Acessar Agro Play</h1>
+                <span className="text-gray-400">↓</span>
+              </div>
+              <h2 className="text-2xl font-semibold text-green-600">Gerenciar Conta</h2>
+            </div>
+          </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Input
+                  type="email"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Usuário"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+              
+              <div>
+                <Input
+                  type="password"
+                  value={loginData.password}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Senha"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Entrando...' : 'Entrar'}
+            </Button>
+
+            <div className="text-center">
+              <Link 
+                to="/forgot-password"
+                className="text-gray-600 text-sm hover:text-green-600 transition-colors"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
+          </form>
+
+          {/* Register Link */}
+          <div className="text-center space-y-4">
+            <p className="text-gray-600 text-sm">
+              Não tem uma conta?{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  // Switch to register tab functionality
+                  const registerTab = document.querySelector('[data-value="register"]') as HTMLElement;
+                  registerTab?.click();
+                }}
+                className="text-green-600 hover:text-green-700 font-medium"
+              >
+                Cadastre-se
+              </button>
+            </p>
+            
+            {/* Bottom Logo */}
+            <div className="pt-8">
+              <div className="text-center">
+                <span className="text-green-600 font-bold text-lg">agro</span>
+                <span className="text-gray-600 font-bold text-lg">mercado</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hidden Register Form */}
+          <div className="hidden" data-register-form>
+            <form onSubmit={handleRegister} className="space-y-6">
+              <div className="space-y-4">
+                <Input
+                  type="text"
+                  value={registerData.name}
+                  onChange={(e) => setRegisterData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Nome completo"
+                  required
+                  disabled={isSubmitting}
+                />
+                
+                <Input
+                  type="email"
+                  value={registerData.email}
+                  onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Email"
+                  required
+                  disabled={isSubmitting}
+                />
+                
+                <Input
+                  type="password"
+                  value={registerData.password}
+                  onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Senha"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
+              </Button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );
