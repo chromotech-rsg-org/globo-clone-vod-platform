@@ -69,12 +69,12 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     <div 
       className={`admin-sidebar transition-all duration-300 ${
         isCollapsed ? 'w-16' : 'w-64'
-      } h-screen relative flex flex-col overflow-y-auto bg-admin-sidebar-bg text-admin-sidebar-text`}
+      } h-screen relative flex flex-col bg-admin-sidebar-bg text-admin-sidebar-text overflow-hidden`}
     >
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-6 bg-admin-sidebar border border-admin-border rounded-full p-1 hover:bg-admin-sidebar/80 z-10"
+        className="absolute -right-3 top-8 bg-admin-sidebar border border-admin-border rounded-full p-1 hover:bg-admin-sidebar/80 z-20"
       >
         {isCollapsed ? (
           <ChevronRight className="h-4 w-4" />
@@ -101,7 +101,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6 flex-1">
+      <nav className="mt-6 flex-1 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;

@@ -105,9 +105,23 @@ const Subscription = () => {
     if (!subscription) return;
 
     try {
+      // Calculate new end date based on plan billing cycle
+      const selectedPlan = availablePlans.find(plan => plan.id === newPlanId);
+      if (!selectedPlan) throw new Error("Plano não encontrado");
+
+      const newEndDate = new Date();
+      if (selectedPlan.billing_cycle === 'annually') {
+        newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+      } else {
+        newEndDate.setMonth(newEndDate.getMonth() + 1);
+      }
+
       const { error } = await supabase
         .from('subscriptions')
-        .update({ plan_id: newPlanId })
+        .update({ 
+          plan_id: newPlanId,
+          end_date: newEndDate.toISOString()
+        })
         .eq('id', subscription.id);
 
       if (error) throw error;
