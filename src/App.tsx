@@ -39,9 +39,7 @@ function AppContent() {
         const { data } = await supabase
           .from('customizations')
           .select('element_value')
-          .eq('page', 'global')
-          .eq('section', 'site')
-          .eq('element_key', 'favicon')
+          .eq('element_key', 'favicon_image')
           .eq('active', true)
           .maybeSingle();
 
