@@ -66,83 +66,6 @@ const AdminCustomization = () => {
 
   // Configurações de personalização organizadas por página e seção
   const customizationConfigs: CustomizationConfig[] = [
-    // HOME - HERO SECTION (for single image mode)
-    {
-      key: 'title',
-      label: 'Título Principal',
-      type: 'text',
-      section: 'hero',
-      page: 'home',
-      placeholder: 'Ex: The Last of Us',
-      description: 'Título principal do banner hero (modo imagem única)',
-      defaultValue: 'The Last of Us'
-    },
-    {
-      key: 'subtitle',
-      label: 'Subtítulo',
-      type: 'text',
-      section: 'hero',
-      page: 'home',
-      placeholder: 'Ex: SÉRIE ORIGINAL HBO',
-      description: 'Subtítulo ou categoria do conteúdo em destaque',
-      defaultValue: 'SÉRIE ORIGINAL HBO'
-    },
-    {
-      key: 'description',
-      label: 'Descrição',
-      type: 'textarea',
-      section: 'hero',
-      page: 'home',
-      placeholder: 'Descrição detalhada do conteúdo...',
-      description: 'Descrição completa do conteúdo em destaque',
-      defaultValue: 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.'
-    },
-    {
-      key: 'button_text',
-      label: 'Texto do Botão',
-      type: 'text',
-      section: 'hero',
-      page: 'home',
-      placeholder: 'Ex: Assistir',
-      description: 'Texto do botão principal do hero',
-      defaultValue: 'Assistir'
-    },
-    {
-      key: 'background_image',
-      label: 'Imagem de Fundo',
-      type: 'image',
-      section: 'hero',
-      page: 'home',
-      description: 'Imagem de fundo do banner principal (modo imagem única)',
-      defaultValue: 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop'
-    },
-    {
-      key: 'title_color',
-      label: 'Cor do Título',
-      type: 'color',
-      section: 'hero',
-      page: 'home',
-      description: 'Cor do texto do título principal',
-      defaultValue: '#ffffff'
-    },
-    {
-      key: 'button_background_color',
-      label: 'Cor de Fundo do Botão',
-      type: 'color',
-      section: 'hero',
-      page: 'home',
-      description: 'Cor de fundo do botão principal',
-      defaultValue: '#ffffff'
-    },
-    {
-      key: 'button_text_color',
-      label: 'Cor do Texto do Botão',
-      type: 'color',
-      section: 'hero',
-      page: 'home',
-      description: 'Cor do texto do botão principal',
-      defaultValue: '#000000'
-    },
 
     // HOME - HEADER
     {
@@ -370,51 +293,176 @@ const AdminCustomization = () => {
 
     // LOGIN PAGE
     {
-      key: 'login_title',
-      label: 'Título da Página',
+      key: 'title',
+      label: 'Título Principal',
       type: 'text',
       section: 'form',
       page: 'login',
-      placeholder: 'Faça seu login',
+      placeholder: 'Acessar Agro Play',
       description: 'Título principal da página de login',
-      defaultValue: 'Faça seu login'
+      defaultValue: 'Acessar Agro Play'
     },
     {
-      key: 'login_subtitle',
+      key: 'subtitle',
       label: 'Subtítulo',
       type: 'text',
       section: 'form',
       page: 'login',
-      placeholder: 'Acesse sua conta para continuar',
+      placeholder: 'Gerenciar Conta',
       description: 'Subtítulo da página de login',
-      defaultValue: 'Acesse sua conta para continuar'
+      defaultValue: 'Gerenciar Conta'
     },
     {
-      key: 'login_background_image',
+      key: 'logo_text',
+      label: 'Texto do Logo',
+      type: 'text',
+      section: 'branding',
+      page: 'login',
+      placeholder: 'AGRO',
+      description: 'Texto exibido no logo principal',
+      defaultValue: 'AGRO'
+    },
+    {
+      key: 'logo_bottom_text1',
+      label: 'Texto Logo Inferior 1',
+      type: 'text',
+      section: 'branding',
+      page: 'login',
+      placeholder: 'agro',
+      description: 'Primeira parte do texto do logo inferior',
+      defaultValue: 'agro'
+    },
+    {
+      key: 'logo_bottom_text2',
+      label: 'Texto Logo Inferior 2',
+      type: 'text',
+      section: 'branding',
+      page: 'login',
+      placeholder: 'mercado',
+      description: 'Segunda parte do texto do logo inferior',
+      defaultValue: 'mercado'
+    },
+    {
+      key: 'email_placeholder',
+      label: 'Placeholder Email',
+      type: 'text',
+      section: 'form',
+      page: 'login',
+      placeholder: 'Usuário',
+      description: 'Texto placeholder do campo email',
+      defaultValue: 'Usuário'
+    },
+    {
+      key: 'password_placeholder',
+      label: 'Placeholder Senha',
+      type: 'text',
+      section: 'form',
+      page: 'login',
+      placeholder: 'Senha',
+      description: 'Texto placeholder do campo senha',
+      defaultValue: 'Senha'
+    },
+    {
+      key: 'login_button_text',
+      label: 'Texto Botão Login',
+      type: 'text',
+      section: 'form',
+      page: 'login',
+      placeholder: 'Entrar',
+      description: 'Texto do botão de login',
+      defaultValue: 'Entrar'
+    },
+    {
+      key: 'forgot_password_text',
+      label: 'Texto Esqueci Senha',
+      type: 'text',
+      section: 'form',
+      page: 'login',
+      placeholder: 'Esqueci minha senha',
+      description: 'Texto do link esqueci minha senha',
+      defaultValue: 'Esqueci minha senha'
+    },
+    {
+      key: 'register_text',
+      label: 'Texto Cadastro',
+      type: 'text',
+      section: 'form',
+      page: 'login',
+      placeholder: 'Não tem uma conta? Cadastre-se',
+      description: 'Texto do link de cadastro',
+      defaultValue: 'Não tem uma conta? Cadastre-se'
+    },
+    {
+      key: 'background_image',
       label: 'Imagem de Fundo',
       type: 'image',
       section: 'background',
       page: 'login',
       description: 'Imagem de fundo da página de login',
-      defaultValue: ''
+      defaultValue: '/lovable-uploads/3c31e6f6-37f9-475f-b8fe-d62743f4c2e8.png'
     },
     {
-      key: 'login_background_color',
+      key: 'background_color',
       label: 'Cor de Fundo',
       type: 'color',
       section: 'background',
       page: 'login',
       description: 'Cor de fundo da página de login',
-      defaultValue: '#0f172a'
+      defaultValue: '#ffffff'
     },
     {
-      key: 'login_card_background_color',
-      label: 'Cor de Fundo do Card',
+      key: 'logo_background_color',
+      label: 'Cor Fundo Logo Principal',
       type: 'color',
-      section: 'card',
+      section: 'branding',
       page: 'login',
-      description: 'Cor de fundo do card de login',
-      defaultValue: '#1f2937'
+      description: 'Cor de fundo do logo principal',
+      defaultValue: '#4ade80'
+    },
+    {
+      key: 'logo_text_color',
+      label: 'Cor Texto Logo Principal',
+      type: 'color',
+      section: 'branding',
+      page: 'login',
+      description: 'Cor do texto do logo principal',
+      defaultValue: '#ffffff'
+    },
+    {
+      key: 'primary_color',
+      label: 'Cor Primária',
+      type: 'color',
+      section: 'theme',
+      page: 'login',
+      description: 'Cor primária dos elementos (botões, links)',
+      defaultValue: '#16a34a'
+    },
+    {
+      key: 'button_hover_color',
+      label: 'Cor Hover Botão',
+      type: 'color',
+      section: 'theme',
+      page: 'login',
+      description: 'Cor do botão ao passar o mouse',
+      defaultValue: '#15803d'
+    },
+    {
+      key: 'text_color',
+      label: 'Cor do Texto',
+      type: 'color',
+      section: 'theme',
+      page: 'login',
+      description: 'Cor principal do texto',
+      defaultValue: '#374151'
+    },
+    {
+      key: 'input_background_color',
+      label: 'Cor Fundo Input',
+      type: 'color',
+      section: 'form',
+      page: 'login',
+      description: 'Cor de fundo dos campos de entrada',
+      defaultValue: '#f9fafb'
     }
   ];
 
@@ -562,7 +610,6 @@ const AdminCustomization = () => {
 
           <TabsContent value="home" className="space-y-6">
             <HeroSliderEditor />
-            {renderSection('home', 'hero', 'Banner Principal (Modo Simples)')}
             {renderSection('home', 'header', 'Cabeçalho', 'Configure o cabeçalho do site')}
             {renderSection('home', 'plans', 'Seção de Planos', 'Configure a seção de planos de assinatura')}
             {renderSection('home', 'footer', 'Rodapé', 'Configure o rodapé do site')}
@@ -583,9 +630,10 @@ const AdminCustomization = () => {
           </TabsContent>
 
           <TabsContent value="login" className="space-y-6">
-            {renderSection('login', 'form', 'Formulário de Login', 'Configure o título e subtítulo do formulário')}
+            {renderSection('login', 'form', 'Formulário de Login', 'Configure textos e placeholders do formulário')}
+            {renderSection('login', 'branding', 'Logo e Marca', 'Configure os textos dos logos')}
             {renderSection('login', 'background', 'Fundo da Página', 'Configure a cor e imagem de fundo')}
-            {renderSection('login', 'card', 'Card de Login', 'Configure a aparência do card de login')}
+            {renderSection('login', 'theme', 'Cores do Tema', 'Configure as cores dos elementos')}
           </TabsContent>
 
           <TabsContent value="global" className="space-y-6">

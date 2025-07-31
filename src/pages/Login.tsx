@@ -127,17 +127,24 @@ const Login = () => {
   }
 
   // Get customizations using the correct keys
-  const loginTitle = getCustomization('form', 'title', 'Acesse sua conta');
-  const loginSubtitle = getCustomization('form', 'subtitle', 'Entre ou cadastre-se no Globoplay');
-  const loginBgColor = getCustomization('background', 'color', '#111827');
-  const loginBgImage = getCustomization('background', 'image', '');
-  const loginCardBgColor = getCustomization('card', 'background', '#1f2937');
-  
-  // Global customizations
-  const siteName = getCustomization('global', 'site_name', 'Globoplay');
-  const siteLogoUrl = getCustomization('global', 'site_logo', '');
-  const primaryColor = getCustomization('global', 'primary_color', '#3b82f6');
-  const buttonTextColor = getCustomization('global', 'button_text_color', '#ffffff');
+  const loginTitle = getCustomization('form', 'title', 'Acessar Agro Play');
+  const loginSubtitle = getCustomization('form', 'subtitle', 'Gerenciar Conta');
+  const logoText = getCustomization('branding', 'logo_text', 'AGRO');
+  const logoBottomText1 = getCustomization('branding', 'logo_bottom_text1', 'agro');
+  const logoBottomText2 = getCustomization('branding', 'logo_bottom_text2', 'mercado');
+  const emailPlaceholder = getCustomization('form', 'email_placeholder', 'Usuário');
+  const passwordPlaceholder = getCustomization('form', 'password_placeholder', 'Senha');
+  const loginButtonText = getCustomization('form', 'login_button_text', 'Entrar');
+  const forgotPasswordText = getCustomization('form', 'forgot_password_text', 'Esqueci minha senha');
+  const registerText = getCustomization('form', 'register_text', 'Não tem uma conta? Cadastre-se');
+  const loginBgImage = getCustomization('background', 'background_image', '/lovable-uploads/3c31e6f6-37f9-475f-b8fe-d62743f4c2e8.png');
+  const loginBgColor = getCustomization('background', 'background_color', '#ffffff');
+  const logoBackgroundColor = getCustomization('branding', 'logo_background_color', '#4ade80');
+  const logoTextColor = getCustomization('branding', 'logo_text_color', '#ffffff');
+  const primaryColor = getCustomization('theme', 'primary_color', '#16a34a');
+  const buttonHoverColor = getCustomization('theme', 'button_hover_color', '#15803d');
+  const textColor = getCustomization('theme', 'text_color', '#374151');
+  const inputBgColor = getCustomization('form', 'input_background_color', '#f9fafb');
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -154,29 +161,41 @@ const Login = () => {
       </div>
 
       {/* Login Form Section */}
-      <div className="flex items-center justify-center px-8 py-12 bg-white">
+      <div 
+        className="flex items-center justify-center px-8 py-12"
+        style={{ backgroundColor: loginBgColor }}
+      >
         <div className="w-full max-w-md space-y-8">
           {/* Logo and Header */}
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              {siteLogoUrl ? (
-                <img src={siteLogoUrl} alt={siteName} className="h-16 w-auto" />
-              ) : (
-                <div 
-                  className="text-white px-4 py-2 rounded-lg font-bold text-2xl"
-                  style={{ backgroundColor: '#4ade80' }}
-                >
-                  AGRO
-                </div>
-              )}
+              <div 
+                className="px-4 py-2 rounded-lg font-bold text-2xl"
+                style={{ 
+                  backgroundColor: logoBackgroundColor,
+                  color: logoTextColor 
+                }}
+              >
+                {logoText}
+              </div>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2">
-                <h1 className="text-lg text-gray-600">Acessar Agro Play</h1>
+                <h1 
+                  className="text-lg"
+                  style={{ color: textColor }}
+                >
+                  {loginTitle}
+                </h1>
                 <span className="text-gray-400">↓</span>
               </div>
-              <h2 className="text-2xl font-semibold text-green-600">Gerenciar Conta</h2>
+              <h2 
+                className="text-2xl font-semibold"
+                style={{ color: primaryColor }}
+              >
+                {loginSubtitle}
+              </h2>
             </div>
           </div>
 
@@ -188,8 +207,9 @@ const Login = () => {
                   type="email"
                   value={loginData.email}
                   onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Usuário"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:border-transparent"
+                  style={{ backgroundColor: inputBgColor }}
+                  placeholder={emailPlaceholder}
                   required
                   disabled={isSubmitting}
                 />
@@ -200,8 +220,9 @@ const Login = () => {
                   type={showLoginPassword ? "text" : "password"}
                   value={loginData.password}
                   onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Senha"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:border-transparent"
+                  style={{ backgroundColor: inputBgColor }}
+                  placeholder={passwordPlaceholder}
                   required
                   disabled={isSubmitting}
                 />
@@ -218,44 +239,52 @@ const Login = () => {
 
             <Button 
               type="submit" 
-              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+              className="w-full py-3 text-white font-semibold rounded-lg transition-colors hover:opacity-90"
+              style={{ backgroundColor: primaryColor }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Entrando...' : 'Entrar'}
+              {isSubmitting ? 'Entrando...' : loginButtonText}
             </Button>
 
             <div className="text-center">
               <Link 
                 to="/forgot-password"
-                className="text-gray-600 text-sm hover:text-green-600 transition-colors"
+                className="text-sm transition-colors hover:opacity-75"
+                style={{ color: textColor }}
               >
-                Esqueci minha senha
+                {forgotPasswordText}
               </Link>
             </div>
           </form>
 
           {/* Register Link */}
           <div className="text-center space-y-4">
-            <p className="text-gray-600 text-sm">
-              Não tem uma conta?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  // Switch to register tab functionality
-                  const registerTab = document.querySelector('[data-value="register"]') as HTMLElement;
-                  registerTab?.click();
-                }}
-                className="text-green-600 hover:text-green-700 font-medium"
+            <p className="text-sm" style={{ color: textColor }}>
+              {registerText.split('Cadastre-se')[0]}
+              <a 
+                href="/#planos" 
+                className="font-medium transition-colors hover:opacity-75"
+                style={{ color: primaryColor }}
               >
                 Cadastre-se
-              </button>
+              </a>
             </p>
             
             {/* Bottom Logo */}
             <div className="pt-8">
               <div className="text-center">
-                <span className="text-green-600 font-bold text-lg">agro</span>
-                <span className="text-gray-600 font-bold text-lg">mercado</span>
+                <span 
+                  className="font-bold text-lg"
+                  style={{ color: primaryColor }}
+                >
+                  {logoBottomText1}
+                </span>
+                <span 
+                  className="font-bold text-lg"
+                  style={{ color: textColor }}
+                >
+                  {logoBottomText2}
+                </span>
               </div>
             </div>
           </div>

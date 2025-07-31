@@ -180,7 +180,7 @@ export const useHeroSlider = () => {
     ));
   };
 
-  const saveSlide = async (slideId: string) => {
+  const saveSlide = async (slideId?: string) => {
     setSaving(true);
     try {
       const result = await saveCustomization(
@@ -191,6 +191,7 @@ export const useHeroSlider = () => {
       );
 
       if (result.success) {
+        await refetch();
         return { success: true };
       } else {
         throw new Error(result.error);

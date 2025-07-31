@@ -49,7 +49,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
-    { path: '/admin/hero-slider', icon: Presentation, label: 'Slider Hero' },
   ];
 
   const adminTitle = getCustomization('admin_title', 'Globoplay Admin');
