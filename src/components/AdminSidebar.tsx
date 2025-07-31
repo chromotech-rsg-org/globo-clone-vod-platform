@@ -51,6 +51,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/usuarios', icon: Users, label: 'Usuários' },
     { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
+    { path: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
   ];
@@ -67,9 +68,10 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
   return (
     <div 
+      id="admin-sidebar-unique"
       className={`transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-16' : 'w-64'
-      } h-screen fixed left-0 top-0 flex flex-col bg-admin-sidebar-bg text-admin-sidebar-text shadow-lg z-40 border-r border-admin-border`}
+      } h-screen fixed left-0 top-0 flex flex-col bg-admin-sidebar-bg text-admin-sidebar-text shadow-lg z-50 border-r border-admin-border`}
       style={{
         backdropFilter: 'blur(8px)',
         backgroundColor: 'rgba(var(--admin-sidebar-bg), 0.95)'
@@ -78,7 +80,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-4 top-6 bg-admin-content-bg border-2 border-admin-border rounded-full p-2 hover:bg-admin-muted transition-all duration-200 shadow-lg z-50"
+        className="absolute -right-4 top-6 bg-admin-content-bg border-2 border-admin-border rounded-full p-2 hover:bg-admin-muted transition-all duration-200 shadow-lg z-[60]"
         style={{
           color: 'hsl(var(--admin-primary))'
         }}

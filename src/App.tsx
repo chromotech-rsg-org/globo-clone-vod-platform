@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminPackages from "./pages/admin/Packages";
 import AdminPlans from "./pages/admin/Plans";
+import AdminSubscriptions from "./pages/admin/Subscriptions";
 import AdminCoupons from "./pages/admin/Coupons";
 import AdminCustomization from "./pages/admin/Customization";
 import AdminHeroSlider from "./pages/admin/HeroSlider";
@@ -128,6 +129,13 @@ function AppContent() {
         <ProtectedRoute requiredRole="admin">
           <AdminLayout>
             <AdminPlans />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/assinaturas" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminSubscriptions />
           </AdminLayout>
         </ProtectedRoute>
       } />
