@@ -32,7 +32,7 @@ const queryClient = new QueryClient();
 function AppContent() {
   useSiteTitle();
 
-  // Apply favicon from customizations on route changes
+  // Apply favicon from customizations globally
   useEffect(() => {
     const applyFavicon = async () => {
       try {
@@ -46,17 +46,33 @@ function AppContent() {
           .maybeSingle();
 
         if (data?.element_value) {
-          const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
-          if (favicon) {
-            favicon.href = data.element_value;
-          }
+          // Remove existing favicon links
+          const existingFavicons = document.querySelectorAll('link[rel="icon"]');
+          existingFavicons.forEach(link => link.remove());
+          
+          // Add new favicon
+          const link = document.createElement('link');
+          link.rel = 'icon';
+          link.type = 'image/png';
+          link.href = data.element_value;
+          document.head.appendChild(link);
+          
+          console.log('Custom favicon applied:', data.element_value);
         }
       } catch (error) {
-        console.log('No custom favicon found');
+        console.log('No custom favicon found, using default');
       }
     };
 
     applyFavicon();
+    
+    // Re-apply favicon on route changes
+    const handleRouteChange = () => {
+      setTimeout(applyFavicon, 100);
+    };
+    
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
   }, []);
 
   return (
