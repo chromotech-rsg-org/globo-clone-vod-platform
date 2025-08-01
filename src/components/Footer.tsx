@@ -38,6 +38,7 @@ const Footer = () => {
               <li><a href="#" className="hover:text-white transition-colors">Filmes</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Séries</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Novelas</a></li>
+              <li><a href="/auctions" className="hover:text-white transition-colors">Leilões</a></li>
             </ul>
           </div>
           

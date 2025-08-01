@@ -1,16 +1,26 @@
-import { useState } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuctions } from '@/hooks/useAuctions';
+import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
 import AuctionCard from '@/components/auction/AuctionCard';
+import SubscriptionRequired from '@/components/SubscriptionRequired';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Gavel, Trophy } from 'lucide-react';
 
 const AuctionHome = () => {
   const { auctions, loading } = useAuctions();
+  const { hasActiveSubscription, loading: subscriptionLoading } = useSubscriptionCheck();
 
   const liveAuctions = auctions.filter(auction => auction.is_live);
   const recordedAuctions = auctions.filter(auction => !auction.is_live);
 
-  if (loading) {
+  // Check subscription first
+  if (!subscriptionLoading && hasActiveSubscription === false) {
+    return <SubscriptionRequired />;
+  }
+
+  if (loading || subscriptionLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">

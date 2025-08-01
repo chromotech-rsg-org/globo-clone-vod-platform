@@ -7,6 +7,7 @@ import ContentCarousel from '@/components/ContentCarousel';
 import PlansSection from '@/components/PlansSection';
 import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
+import AuctionPromoBanner from '@/components/auction/AuctionPromoBanner';
 import { useContentSections } from '@/hooks/useContentSections';
 import { useCustomizations } from '@/hooks/useCustomizations';
 
@@ -31,6 +32,8 @@ const Home = () => {
         className="px-4 md:px-8 space-y-12 pb-20 pt-16"
         style={{ backgroundColor: contentBgColor }}
       >
+        <AuctionPromoBanner />
+        
         {loading ? (
           <div className="text-center text-white">Carregando conteúdo...</div>
         ) : (

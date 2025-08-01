@@ -96,6 +96,18 @@ const Header = () => {
             >
               {menuPlans}
             </button>
+            <Link 
+              to="/auctions"
+              className="hover:transition-colors"
+              style={{ 
+                color: headerTextColor,
+                '--hover-color': headerHoverColor
+              } as React.CSSProperties}
+              onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
+              onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
+            >
+              Leilões
+            </Link>
             {customButtonText && (
               <button
                 onClick={handleCustomButtonClick}
@@ -174,6 +186,19 @@ const Header = () => {
               >
                 {menuPlans}
               </button>
+              <Link 
+                to="/auctions"
+                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
+                style={{ 
+                  color: headerTextColor,
+                  '--hover-color': headerHoverColor
+                } as React.CSSProperties}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Leilões
+              </Link>
               {customButtonText && (
                 <button
                   onClick={() => {
