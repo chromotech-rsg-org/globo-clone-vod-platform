@@ -14,6 +14,242 @@ export type Database = {
   }
   public: {
     Tables: {
+      auction_items: {
+        Row: {
+          auction_id: string
+          created_at: string
+          current_value: number
+          description: string | null
+          id: string
+          image_url: string | null
+          initial_value: number
+          is_current: boolean
+          name: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          auction_id: string
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          initial_value?: number
+          is_current?: boolean
+          name: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          auction_id?: string
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          initial_value?: number
+          is_current?: boolean
+          name?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_items_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auction_registrations: {
+        Row: {
+          approved_by: string | null
+          auction_id: string
+          client_notes: string | null
+          created_at: string
+          id: string
+          internal_notes: string | null
+          next_registration_allowed_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          auction_id: string
+          client_notes?: string | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          next_registration_allowed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          auction_id?: string
+          client_notes?: string | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          next_registration_allowed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_registrations_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_registrations_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_registrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auctions: {
+        Row: {
+          auction_type: string
+          bid_increment: number
+          created_at: string
+          current_bid_value: number
+          description: string | null
+          end_date: string | null
+          id: string
+          initial_bid_value: number
+          is_live: boolean
+          name: string
+          start_date: string | null
+          status: string
+          updated_at: string
+          youtube_url: string | null
+        }
+        Insert: {
+          auction_type?: string
+          bid_increment?: number
+          created_at?: string
+          current_bid_value?: number
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          initial_bid_value?: number
+          is_live?: boolean
+          name: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Update: {
+          auction_type?: string
+          bid_increment?: number
+          created_at?: string
+          current_bid_value?: number
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          initial_bid_value?: number
+          is_live?: boolean
+          name?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      bids: {
+        Row: {
+          approved_by: string | null
+          auction_id: string
+          auction_item_id: string
+          bid_value: number
+          client_notes: string | null
+          created_at: string
+          id: string
+          internal_notes: string | null
+          is_winner: boolean
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          auction_id: string
+          auction_item_id: string
+          bid_value: number
+          client_notes?: string | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          is_winner?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          auction_id?: string
+          auction_item_id?: string
+          bid_value?: number
+          client_notes?: string | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          is_winner?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_auction_item_id_fkey"
+            columns: ["auction_item_id"]
+            isOneToOne: false
+            referencedRelation: "auction_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_items: {
         Row: {
           active: boolean | null
@@ -357,6 +593,14 @@ export type Database = {
           start_date: string
           end_date: string
         }[]
+      }
+      user_has_active_subscription: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
+      user_is_registered_for_auction: {
+        Args: { user_uuid: string; auction_uuid: string }
+        Returns: boolean
       }
     }
     Enums: {
