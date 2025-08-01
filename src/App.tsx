@@ -20,6 +20,9 @@ import AdminCustomization from "./pages/admin/Customization";
 import AdminHeroSlider from "./pages/admin/HeroSlider";
 import AdminContent from "./pages/admin/Content";
 import AdminImages from "./pages/admin/Images";
+import AdminAuctions from "./pages/admin/Auctions";
+import AuctionHome from "./pages/auction/AuctionHome";
+import AuctionRoom from "./pages/auction/AuctionRoom";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import AdminLayout from "./components/AdminLayout";
@@ -111,6 +114,16 @@ function AppContent() {
           </AdminLayout>
         </ProtectedRoute>
       } />
+      <Route path="/auctions" element={
+        <ProtectedRoute>
+          <AuctionHome />
+        </ProtectedRoute>
+      } />
+      <Route path="/auctions/:id" element={
+        <ProtectedRoute>
+          <AuctionRoom />
+        </ProtectedRoute>
+      } />
       
       {/* Admin Routes */}
       <Route path="/admin/usuarios" element={
@@ -173,6 +186,13 @@ function AppContent() {
         <ProtectedRoute requiredRole="admin">
           <AdminLayout>
             <AdminImages />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/leiloes" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminAuctions />
           </AdminLayout>
         </ProtectedRoute>
       } />
