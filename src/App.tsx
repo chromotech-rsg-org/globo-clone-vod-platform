@@ -21,6 +21,8 @@ import AdminHeroSlider from "./pages/admin/HeroSlider";
 import AdminContent from "./pages/admin/Content";
 import AdminImages from "./pages/admin/Images";
 import AdminAuctions from "./pages/admin/Auctions";
+import AdminRegistrations from "./pages/admin/Registrations";
+import AdminBids from "./pages/admin/Bids";
 import AuctionHome from "./pages/auction/AuctionHome";
 import AuctionRoom from "./pages/auction/AuctionRoom";
 import Profile from "./pages/Profile";
@@ -193,6 +195,20 @@ function AppContent() {
         <ProtectedRoute requiredRole="admin">
           <AdminLayout>
             <AdminAuctions />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/habilitacoes" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminRegistrations />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/lances" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminBids />
           </AdminLayout>
         </ProtectedRoute>
       } />

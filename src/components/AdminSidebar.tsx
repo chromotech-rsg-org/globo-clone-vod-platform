@@ -14,7 +14,10 @@ import {
   Images,
   FileText,
   Presentation,
-  User
+  User,
+  Gavel,
+  UserCheck,
+  HandHeart
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
@@ -53,6 +56,9 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
+    { path: '/admin/leiloes', icon: Gavel, label: 'Leilões' },
+    { path: '/admin/habilitacoes', icon: UserCheck, label: 'Habilitações' },
+    { path: '/admin/lances', icon: HandHeart, label: 'Lances' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
   ];
 
