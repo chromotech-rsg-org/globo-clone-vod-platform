@@ -37,7 +37,9 @@ const Home = () => {
       style={{ backgroundColor: siteBgColor }}
     >
       <Header />
-      {heroSliderImages && heroSliderImages.trim() !== '' && heroSliderImages !== '[]' ? <HeroSlider /> : <HeroBanner />}
+      {!customizationsLoading && (
+        heroSliderImages && heroSliderImages.trim() !== '' && heroSliderImages !== '[]' ? <HeroSlider /> : <HeroBanner />
+      )}
       
       <div 
         id="content" 

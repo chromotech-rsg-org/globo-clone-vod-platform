@@ -36,6 +36,11 @@ const HeroSlider = () => {
 
   // Parse slides from customizations
   const slides = useMemo(() => {
+    // Don't process slides if still loading
+    if (loading) {
+      return [];
+    }
+    
     console.log('🔄 HeroSlider: Processing slide images:', slideImages);
     
     if (slideImages && slideImages.trim() !== '' && slideImages !== '[]') {
@@ -65,9 +70,10 @@ const HeroSlider = () => {
       }
     }
     
+    // Only return default slide if customizations are loaded and no slides found
     console.log('📋 HeroSlider: Using default slide');
     return [defaultSlide];
-  }, [slideImages]);
+  }, [slideImages, loading]);
 
   // Auto-advance slides
   useEffect(() => {
