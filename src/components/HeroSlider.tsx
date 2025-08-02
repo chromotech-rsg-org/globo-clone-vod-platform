@@ -27,7 +27,7 @@ const defaultSlide: HeroSlide = {
 };
 
 const HeroSlider = () => {
-  const { getCustomization } = useCustomizations('home');
+  const { getCustomization, loading } = useCustomizations('home');
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Get slider configuration - sem memoização para evitar loops infinitos
@@ -87,6 +87,15 @@ const HeroSlider = () => {
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
+
+  // Don't show default content while loading customizations
+  if (loading) {
+    return (
+      <div className="relative h-[70vh] bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Carregando...</div>
+      </div>
+    );
+  }
 
   if (slides.length === 0) return null;
 

@@ -13,11 +13,23 @@ import { useCustomizations } from '@/hooks/useCustomizations';
 
 const Home = () => {
   const { sections, loading } = useContentSections('home');
-  const { getCustomization } = useCustomizations('home');
+  const { getCustomization, loading: customizationsLoading } = useCustomizations('home');
 
   const siteBgColor = getCustomization('global', 'site_background_color', '#0f172a');
   const heroSliderImages = getCustomization('hero', 'hero_slider_images', '');
   const contentBgColor = getCustomization('header', 'content_background_color', 'transparent');
+
+  // Show loading while customizations are being fetched
+  if (customizationsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-xl text-white">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 

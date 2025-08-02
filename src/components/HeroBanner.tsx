@@ -4,7 +4,16 @@ import { Play } from 'lucide-react';
 import { useCustomizations } from '@/hooks/useCustomizations';
 
 const HeroBanner = () => {
-  const { getCustomization } = useCustomizations('home');
+  const { getCustomization, loading } = useCustomizations('home');
+
+  // Don't show default content while loading
+  if (loading) {
+    return (
+      <div className="relative h-[70vh] bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Carregando...</div>
+      </div>
+    );
+  }
 
   const backgroundImage = getCustomization('hero', 'background_image', 'https://images.unsplash.com/photo-1489599135113-5ac34e8e2e3c?w=1920&h=1080&fit=crop');
   const title = getCustomization('hero', 'title', 'The Last of Us');
