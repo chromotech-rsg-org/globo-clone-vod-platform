@@ -40,8 +40,16 @@ function AppContent() {
 
   // Apply favicon from customizations globally
   useEffect(() => {
+    // Remove default favicon immediately to prevent showing Lovable logo
+    const removeDefaultFavicons = () => {
+      const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
+      existingFavicons.forEach(link => link.remove());
+    };
+
     const applyFavicon = async () => {
       try {
+        removeDefaultFavicons(); // Always remove first
+
         const { data } = await supabase
           .from('customizations')
           .select('element_value')
@@ -50,11 +58,7 @@ function AppContent() {
           .maybeSingle();
 
         if (data?.element_value) {
-          // Remove existing favicon links
-          const existingFavicons = document.querySelectorAll('link[rel="icon"]');
-          existingFavicons.forEach(link => link.remove());
-          
-          // Add new favicon
+          // Add custom favicon
           const link = document.createElement('link');
           link.rel = 'icon';
           link.type = 'image/png';
@@ -64,10 +68,14 @@ function AppContent() {
           console.log('Custom favicon applied:', data.element_value);
         }
       } catch (error) {
-        console.log('No custom favicon found, using default');
+        console.log('No custom favicon found');
       }
     };
 
+    // Remove default favicon immediately
+    removeDefaultFavicons();
+    
+    // Then apply custom favicon
     applyFavicon();
     
     // Re-apply favicon on route changes
