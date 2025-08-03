@@ -68,7 +68,7 @@ export const useAuctionBids = (auctionId: string) => {
   const submitBid = async (bidValue: number) => {
     if (!user || !auctionId) {
       toast({
-        title: "Erro",
+        title: "Erro", 
         description: "Usuário não autenticado",
         variant: "destructive"
       });
@@ -87,31 +87,42 @@ export const useAuctionBids = (auctionId: string) => {
     setSubmittingBid(true);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('bids')
         .insert([{
           user_id: user.id,
           auction_id: auctionId,
-          auction_item_id: auctionId, // Por enquanto usando o mesmo ID
+          auction_item_id: auctionId,
           bid_value: bidValue,
           status: 'pending'
-        }]);
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       toast({
         title: "Lance enviado",
         description: "Seu lance foi enviado para análise",
       });
 
-      fetchBids(); // Atualizar lista de lances
+      fetchBids();
       return true;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting bid:', error);
+      
+      let errorMessage = "Não foi possível enviar o lance";
+      if (error?.message) {
+        errorMessage = `Erro: ${error.message}`;
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível enviar o lance",
+        description: errorMessage,
         variant: "destructive"
       });
       return false;

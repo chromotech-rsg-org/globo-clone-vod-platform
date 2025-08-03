@@ -30,6 +30,8 @@ const Auctions = () => {
     initial_bid_value: 0,
     current_bid_value: 0,
     bid_increment: 100,
+    registration_wait_value: 5,
+    registration_wait_unit: 'minutes' as 'minutes' | 'hours' | 'days',
     auction_date: '',
     start_time: '',
     end_time: '',
@@ -130,6 +132,8 @@ const Auctions = () => {
       initial_bid_value: auction.initial_bid_value,
       current_bid_value: auction.current_bid_value,
       bid_increment: auction.bid_increment,
+      registration_wait_value: auction.registration_wait_value || 5,
+      registration_wait_unit: auction.registration_wait_unit || 'minutes',
       auction_date: auction.start_date ? auction.start_date.split('T')[0] : '',
       start_time: auction.start_date ? auction.start_date.split('T')[1]?.slice(0, 5) || '' : '',
       end_time: auction.end_date ? auction.end_date.split('T')[1]?.slice(0, 5) || '' : '',
@@ -149,6 +153,8 @@ const Auctions = () => {
       initial_bid_value: auction.initial_bid_value,
       current_bid_value: auction.initial_bid_value, // Reset para valor inicial
       bid_increment: auction.bid_increment,
+      registration_wait_value: auction.registration_wait_value || 5,
+      registration_wait_unit: auction.registration_wait_unit || 'minutes',
       auction_date: '',
       start_time: '',
       end_time: '',
@@ -195,6 +201,8 @@ const Auctions = () => {
       initial_bid_value: 0,
       current_bid_value: 0,
       bid_increment: 100,
+      registration_wait_value: 5,
+      registration_wait_unit: 'minutes',
       auction_date: '',
       start_time: '',
       end_time: '',
@@ -302,6 +310,33 @@ const Auctions = () => {
                     onChange={(value) => setFormData({ ...formData, bid_increment: value })}
                     placeholder="R$ 100,00"
                   />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="registration_wait_value">Tempo Espera Habilitação</Label>
+                  <Input
+                    id="registration_wait_value"
+                    type="number"
+                    min="1"
+                    value={formData.registration_wait_value}
+                    onChange={(e) => setFormData({ ...formData, registration_wait_value: parseInt(e.target.value) || 1 })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="registration_wait_unit">Unidade</Label>
+                  <Select value={formData.registration_wait_unit} onValueChange={(value: 'minutes' | 'hours' | 'days') => setFormData({ ...formData, registration_wait_unit: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="minutes">Minutos</SelectItem>
+                      <SelectItem value="hours">Horas</SelectItem>
+                      <SelectItem value="days">Dias</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               

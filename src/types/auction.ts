@@ -8,6 +8,8 @@ export interface Auction {
   bid_increment: number;
   start_date?: string;
   end_date?: string;
+  registration_wait_value: number;
+  registration_wait_unit: 'minutes' | 'hours' | 'days';
   status: 'active' | 'inactive';
   auction_type: 'rural' | 'judicial';
   is_live: boolean;

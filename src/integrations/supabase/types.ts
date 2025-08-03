@@ -137,6 +137,8 @@ export type Database = {
           initial_bid_value: number
           is_live: boolean
           name: string
+          registration_wait_unit: string | null
+          registration_wait_value: number | null
           start_date: string | null
           status: string
           updated_at: string
@@ -153,6 +155,8 @@ export type Database = {
           initial_bid_value?: number
           is_live?: boolean
           name: string
+          registration_wait_unit?: string | null
+          registration_wait_value?: number | null
           start_date?: string | null
           status?: string
           updated_at?: string
@@ -169,6 +173,8 @@ export type Database = {
           initial_bid_value?: number
           is_live?: boolean
           name?: string
+          registration_wait_unit?: string | null
+          registration_wait_value?: number | null
           start_date?: string | null
           status?: string
           updated_at?: string
