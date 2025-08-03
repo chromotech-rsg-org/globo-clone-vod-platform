@@ -5,6 +5,7 @@ import { useAuctions } from '@/hooks/useAuctions';
 import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
 import AuctionCard from '@/components/auction/AuctionCard';
 import SubscriptionRequired from '@/components/SubscriptionRequired';
+import Header from '@/components/Header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Gavel, Trophy } from 'lucide-react';
 
@@ -36,6 +37,7 @@ const AuctionHome = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border">
         <div className="container mx-auto px-4 py-12">

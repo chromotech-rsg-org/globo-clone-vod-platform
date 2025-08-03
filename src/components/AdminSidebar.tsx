@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -21,6 +21,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
+import { usePendingNotifications } from '@/hooks/usePendingNotifications';
+import NotificationBadge from '@/components/auction/NotificationBadge';
+import PendingNotificationModal from '@/components/auction/PendingNotificationModal';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -32,6 +35,8 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { getCustomization } = useAdminCustomizations();
+  const { pendingBids, pendingRegistrations, totalPending } = usePendingNotifications();
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   // Listen for customization updates
   useEffect(() => {
@@ -100,28 +105,38 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
       {/* Logo */}
       <div className="p-6 border-b border-admin-border/50">
-        <button 
-          onClick={() => navigate('/')} 
-          className="flex items-center space-x-3 hover:opacity-80 transition-all duration-200 group"
-        >
-          {adminLogo ? (
-            <img src={adminLogo} alt="Logo" className="w-10 h-10 object-contain rounded-lg" />
-          ) : (
-            <div className="w-10 h-10 bg-gradient-to-br from-admin-primary to-admin-accent rounded-lg flex items-center justify-center text-admin-primary-foreground font-bold text-xl shadow-md">
-              G
-            </div>
+        <div className="flex items-center justify-between">
+          <button 
+            onClick={() => navigate('/')} 
+            className="flex items-center space-x-3 hover:opacity-80 transition-all duration-200 group"
+          >
+            {adminLogo ? (
+              <img src={adminLogo} alt="Logo" className="w-10 h-10 object-contain rounded-lg" />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-br from-admin-primary to-admin-accent rounded-lg flex items-center justify-center text-admin-primary-foreground font-bold text-xl shadow-md">
+                G
+              </div>
+            )}
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <span className="font-bold text-lg text-admin-sidebar-text group-hover:text-admin-primary transition-colors">
+                  {siteName}
+                </span>
+                <span className="text-xs text-admin-muted-foreground">
+                  Painel Administrativo
+                </span>
+              </div>
+            )}
+          </button>
+          
+          {/* Notification Badge - Apenas para admins */}
+          {isAdmin && (
+            <NotificationBadge 
+              count={totalPending} 
+              onClick={() => setShowNotificationModal(true)} 
+            />
           )}
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="font-bold text-lg text-admin-sidebar-text group-hover:text-admin-primary transition-colors">
-                {siteName}
-              </span>
-              <span className="text-xs text-admin-muted-foreground">
-                Painel Administrativo
-              </span>
-            </div>
-          )}
-        </button>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -171,6 +186,16 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           )}
         </button>
       </div>
+
+      {/* Modal de Notificações */}
+      {isAdmin && (
+        <PendingNotificationModal
+          open={showNotificationModal}
+          onOpenChange={setShowNotificationModal}
+          pendingBids={pendingBids}
+          pendingRegistrations={pendingRegistrations}
+        />
+      )}
     </div>
   );
 };

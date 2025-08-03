@@ -1,7 +1,8 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuctionDetails } from '@/hooks/useAuctions';
 import { useAuctionRegistration } from '@/hooks/useAuctionRegistration';
+import { useAuctionBids } from '@/hooks/useAuctionBids';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,15 +10,18 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatCurrency } from '@/utils/formatters';
 import { BidUserState } from '@/types/auction';
-import { Play, Square, User, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Play, Square, User, AlertCircle, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
+import BidHistory from '@/components/auction/BidHistory';
 import { useToast } from '@/components/ui/use-toast';
 
 const AuctionRoom = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { auction, loading: auctionLoading } = useAuctionDetails(id!);
   const { registration, loading: registrationLoading, requestRegistration } = useAuctionRegistration(id!);
+  const { bids, submitBid, submittingBid, pendingBidExists, userPendingBid } = useAuctionBids(id!);
   const [userState, setUserState] = useState<BidUserState>('need_registration');
   const [showBidDialog, setShowBidDialog] = useState(false);
   const [nextBidValue, setNextBidValue] = useState(0);
@@ -35,11 +39,15 @@ const AuctionRoom = () => {
           setUserState('registration_rejected');
           break;
         case 'approved':
-          setUserState('can_bid');
+          if (userPendingBid) {
+            setUserState('bid_pending');
+          } else {
+            setUserState('can_bid');
+          }
           break;
       }
     }
-  }, [registration]);
+  }, [registration, userPendingBid]);
 
   useEffect(() => {
     if (auction) {
@@ -66,7 +74,8 @@ const AuctionRoom = () => {
           action: 'Solicitar Habilitação',
           variant: 'default' as const,
           icon: User,
-          onClick: requestRegistration
+          onClick: requestRegistration,
+          disabled: false
         };
       case 'registration_pending':
         return {
@@ -75,7 +84,8 @@ const AuctionRoom = () => {
           action: null,
           variant: 'default' as const,
           icon: Clock,
-          onClick: null
+          onClick: null,
+          disabled: false
         };
       case 'registration_rejected':
         return {
@@ -84,16 +94,30 @@ const AuctionRoom = () => {
           action: 'Solicitar Novamente',
           variant: 'destructive' as const,
           icon: AlertCircle,
-          onClick: requestRegistration
+          onClick: requestRegistration,
+          disabled: false
         };
       case 'can_bid':
         return {
           title: 'Habilitado para Lançar',
-          description: 'Você está habilitado a participar do leilão.',
+          description: pendingBidExists && !userPendingBid 
+            ? 'Há um lance em análise. Aguarde para fazer seu lance.' 
+            : 'Você está habilitado a participar do leilão.',
           action: 'Fazer Lance',
           variant: 'default' as const,
           icon: CheckCircle,
-          onClick: () => setShowBidDialog(true)
+          onClick: () => setShowBidDialog(true),
+          disabled: pendingBidExists
+        };
+      case 'bid_pending':
+        return {
+          title: 'Lance em Análise',
+          description: 'Seu lance está sendo analisado. Aguarde a resposta.',
+          action: 'Aguarde, lance em análise',
+          variant: 'default' as const,
+          icon: Clock,
+          onClick: null,
+          disabled: true
         };
       default:
         return null;
@@ -127,6 +151,18 @@ const AuctionRoom = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        {/* Botão Voltar */}
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/auctions')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            Voltar ao Painel
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Video Player */}
           <div className="lg:col-span-2">
@@ -230,36 +266,43 @@ const AuctionRoom = () => {
                     </AlertDescription>
                   </Alert>
                   
-                  {stateInfo.action && stateInfo.onClick && (
-                    <Button 
-                      onClick={stateInfo.onClick}
-                      className="w-full"
-                      variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
-                    >
-                      {stateInfo.action}
-                    </Button>
-                  )}
+                   {stateInfo.action && stateInfo.onClick && (
+                     <Button 
+                       onClick={stateInfo.onClick}
+                       className="w-full"
+                       variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
+                       disabled={stateInfo.disabled || submittingBid}
+                     >
+                       {submittingBid ? 'Enviando lance...' : stateInfo.action}
+                     </Button>
+                   )}
                 </CardContent>
               </Card>
-            )}
-          </div>
-        </div>
-      </div>
+             )}
+
+             {/* Histórico de Lances */}
+             <BidHistory 
+               bids={bids} 
+               loading={false} 
+               currentUserId={user?.id} 
+             />
+           </div>
+         </div>
+       </div>
 
       {/* Bid Confirmation Dialog */}
-      <BidConfirmationDialog
-        open={showBidDialog}
-        onOpenChange={setShowBidDialog}
-        auction={auction}
-        bidValue={nextBidValue}
-        onConfirm={() => {
-          setShowBidDialog(false);
-          toast({
-            title: "Lance enviado",
-            description: "Seu lance foi enviado para análise",
-          });
-        }}
-      />
+       <BidConfirmationDialog
+         open={showBidDialog}
+         onOpenChange={setShowBidDialog}
+         auction={auction}
+         bidValue={nextBidValue}
+         onConfirm={async () => {
+           const success = await submitBid(nextBidValue);
+           if (success) {
+             setShowBidDialog(false);
+           }
+         }}
+       />
     </div>
   );
 };

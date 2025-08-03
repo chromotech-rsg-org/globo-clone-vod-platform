@@ -13,7 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Auction } from '@/types/auction';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Edit, Trash2, Play, Square } from 'lucide-react';
+import CurrencyInput from '@/components/ui/currency-input';
+import { Plus, Edit, Trash2, Play, Square, Copy } from 'lucide-react';
 
 const Auctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -29,8 +30,9 @@ const Auctions = () => {
     initial_bid_value: 0,
     current_bid_value: 0,
     bid_increment: 100,
-    start_date: '',
-    end_date: '',
+    auction_date: '',
+    start_time: '',
+    end_time: '',
     status: 'inactive' as 'active' | 'inactive',
     auction_type: 'rural' as 'rural' | 'judicial',
     is_live: false
@@ -61,10 +63,30 @@ const Auctions = () => {
     e.preventDefault();
     
     try {
+      // Construir datas completas se fornecidas
+      const startDateTime = formData.auction_date && formData.start_time 
+        ? `${formData.auction_date}T${formData.start_time}:00`
+        : null;
+      
+      const endDateTime = formData.auction_date && formData.end_time
+        ? `${formData.auction_date}T${formData.end_time}:00`
+        : null;
+
+      const dataToSave = {
+        ...formData,
+        start_date: startDateTime,
+        end_date: endDateTime
+      };
+
+      // Remove campos temporários
+      delete dataToSave.auction_date;
+      delete dataToSave.start_time;
+      delete dataToSave.end_time;
+
       if (editingAuction) {
         const { error } = await supabase
           .from('auctions')
-          .update(formData)
+          .update(dataToSave)
           .eq('id', editingAuction.id);
         
         if (error) throw error;
@@ -76,7 +98,7 @@ const Auctions = () => {
       } else {
         const { error } = await supabase
           .from('auctions')
-          .insert([formData]);
+          .insert([dataToSave]);
         
         if (error) throw error;
         
@@ -108,11 +130,31 @@ const Auctions = () => {
       initial_bid_value: auction.initial_bid_value,
       current_bid_value: auction.current_bid_value,
       bid_increment: auction.bid_increment,
-      start_date: auction.start_date ? auction.start_date.split('T')[0] : '',
-      end_date: auction.end_date ? auction.end_date.split('T')[0] : '',
+      auction_date: auction.start_date ? auction.start_date.split('T')[0] : '',
+      start_time: auction.start_date ? auction.start_date.split('T')[1]?.slice(0, 5) || '' : '',
+      end_time: auction.end_date ? auction.end_date.split('T')[1]?.slice(0, 5) || '' : '',
       status: auction.status,
       auction_type: auction.auction_type,
       is_live: auction.is_live
+    });
+    setShowDialog(true);
+  };
+
+  const handleDuplicate = (auction: Auction) => {
+    setEditingAuction(null); // Não é edição, é duplicação
+    setFormData({
+      name: `${auction.name} (Cópia)`,
+      description: auction.description || '',
+      youtube_url: auction.youtube_url || '',
+      initial_bid_value: auction.initial_bid_value,
+      current_bid_value: auction.initial_bid_value, // Reset para valor inicial
+      bid_increment: auction.bid_increment,
+      auction_date: '',
+      start_time: '',
+      end_time: '',
+      status: 'inactive' as const, // Sempre inativo para cópias
+      auction_type: auction.auction_type,
+      is_live: false // Sempre falso para cópias
     });
     setShowDialog(true);
   };
@@ -153,8 +195,9 @@ const Auctions = () => {
       initial_bid_value: 0,
       current_bid_value: 0,
       bid_increment: 100,
-      start_date: '',
-      end_date: '',
+      auction_date: '',
+      start_time: '',
+      end_time: '',
       status: 'inactive',
       auction_type: 'rural',
       is_live: false
@@ -235,57 +278,61 @@ const Auctions = () => {
               
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="initial_bid_value">Lance Inicial (R$)</Label>
-                  <Input
-                    id="initial_bid_value"
-                    type="number"
-                    step="0.01"
+                  <Label htmlFor="initial_bid_value">Lance Inicial</Label>
+                  <CurrencyInput
                     value={formData.initial_bid_value}
-                    onChange={(e) => setFormData({ ...formData, initial_bid_value: parseFloat(e.target.value) })}
+                    onChange={(value) => setFormData({ ...formData, initial_bid_value: value })}
+                    placeholder="R$ 0,00"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="current_bid_value">Lance Atual (R$)</Label>
-                  <Input
-                    id="current_bid_value"
-                    type="number"
-                    step="0.01"
+                  <Label htmlFor="current_bid_value">Lance Atual</Label>
+                  <CurrencyInput
                     value={formData.current_bid_value}
-                    onChange={(e) => setFormData({ ...formData, current_bid_value: parseFloat(e.target.value) })}
+                    onChange={(value) => setFormData({ ...formData, current_bid_value: value })}
+                    placeholder="R$ 0,00"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="bid_increment">Incremento (R$)</Label>
-                  <Input
-                    id="bid_increment"
-                    type="number"
-                    step="0.01"
+                  <Label htmlFor="bid_increment">Incremento</Label>
+                  <CurrencyInput
                     value={formData.bid_increment}
-                    onChange={(e) => setFormData({ ...formData, bid_increment: parseFloat(e.target.value) })}
+                    onChange={(value) => setFormData({ ...formData, bid_increment: value })}
+                    placeholder="R$ 100,00"
                   />
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="start_date">Data de Início</Label>
+                  <Label htmlFor="auction_date">Data do Leilão</Label>
                   <Input
-                    id="start_date"
+                    id="auction_date"
                     type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    value={formData.auction_date}
+                    onChange={(e) => setFormData({ ...formData, auction_date: e.target.value })}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="end_date">Data de Fim</Label>
+                  <Label htmlFor="start_time">Hora de Início</Label>
                   <Input
-                    id="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    id="start_time"
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="end_time">Hora de Fim</Label>
+                  <Input
+                    id="end_time"
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                   />
                 </div>
               </div>
@@ -341,7 +388,7 @@ const Auctions = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Lance Atual</TableHead>
                   <TableHead>Transmissão</TableHead>
-                  <TableHead>Data Criação</TableHead>
+                  <TableHead>Programação</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -369,20 +416,41 @@ const Auctions = () => {
                         {auction.is_live ? 'Ao Vivo' : 'Gravado'}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatDate(auction.created_at)}</TableCell>
+                    <TableCell>
+                      {auction.start_date && auction.end_date ? (
+                        <div className="text-sm">
+                          <div>{formatDate(auction.start_date).split(' ')[0]}</div>
+                          <div className="text-muted-foreground">
+                            {auction.start_date.split('T')[1]?.slice(0, 5)} - {auction.end_date.split('T')[1]?.slice(0, 5)}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Não definida</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleEdit(auction)}
+                          title="Editar leilão"
                         >
                           <Edit size={14} />
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => handleDuplicate(auction)}
+                          title="Duplicar leilão"
+                        >
+                          <Copy size={14} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleDelete(auction.id)}
+                          title="Excluir leilão"
                         >
                           <Trash2 size={14} />
                         </Button>
