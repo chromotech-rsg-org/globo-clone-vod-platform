@@ -108,12 +108,29 @@ export const useAuctionBids = (auctionId: string) => {
         return false;
       }
 
+      // Buscar o auction_item correto para este leilão
+      const { data: auctionItem, error: itemError } = await supabase
+        .from('auction_items')
+        .select('id')
+        .eq('auction_id', auctionId)
+        .eq('is_current', true)
+        .maybeSingle();
+
+      if (itemError) {
+        console.error('Error fetching auction item:', itemError);
+        throw new Error('Não foi possível encontrar o item do leilão');
+      }
+
+      if (!auctionItem) {
+        throw new Error('Nenhum item ativo encontrado para este leilão');
+      }
+
       const { data, error } = await supabase
         .from('bids')
         .insert([{
           user_id: user.id,
           auction_id: auctionId,
-          auction_item_id: auctionId,
+          auction_item_id: auctionItem.id,
           bid_value: bidValue,
           status: 'pending'
         }])
