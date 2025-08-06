@@ -35,7 +35,7 @@ export const useAuctionBids = (auctionId: string) => {
         .from('bids')
         .select(`
           *,
-          profiles!inner(name)
+          profiles(name)
         `)
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
@@ -44,14 +44,18 @@ export const useAuctionBids = (auctionId: string) => {
 
       const formattedBids = (data || []).map((bid: any) => ({
         ...bid,
-        user_name: bid.profiles.name
+        user_name: bid.profiles?.name || 'Usuário desconhecido'
       }));
 
       setBids(formattedBids);
 
-      // Verificar se existe lance pendente
-      const hasPendingBid = formattedBids.some((bid: Bid) => bid.status === 'pending');
-      setPendingBidExists(hasPendingBid);
+      // Verificar se existe lance pendente do usuário atual
+      if (user?.id) {
+        const userHasPendingBid = formattedBids.some((bid: Bid) => 
+          bid.user_id === user.id && bid.status === 'pending'
+        );
+        setPendingBidExists(userHasPendingBid);
+      }
 
     } catch (error) {
       console.error('Error fetching bids:', error);
@@ -78,7 +82,7 @@ export const useAuctionBids = (auctionId: string) => {
     if (pendingBidExists) {
       toast({
         title: "Lance em análise",
-        description: "Aguarde a análise do lance atual",
+        description: "Aguarde a análise do seu lance atual",
         variant: "destructive"
       });
       return false;
@@ -87,6 +91,23 @@ export const useAuctionBids = (auctionId: string) => {
     setSubmittingBid(true);
 
     try {
+      // Verificar se o usuário tem lance pendente antes de enviar
+      const { data: existingBids } = await supabase
+        .from('bids')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('auction_id', auctionId)
+        .eq('status', 'pending');
+
+      if (existingBids && existingBids.length > 0) {
+        toast({
+          title: "Lance em análise",
+          description: "Você já possui um lance aguardando análise",
+          variant: "destructive"
+        });
+        return false;
+      }
+
       const { data, error } = await supabase
         .from('bids')
         .insert([{
@@ -109,14 +130,16 @@ export const useAuctionBids = (auctionId: string) => {
         description: "Seu lance foi enviado para análise",
       });
 
-      fetchBids();
+      await fetchBids();
       return true;
 
     } catch (error: any) {
       console.error('Error submitting bid:', error);
       
       let errorMessage = "Não foi possível enviar o lance";
-      if (error?.message) {
+      if (error?.message?.includes('duplicate')) {
+        errorMessage = "Você já possui um lance para este leilão";
+      } else if (error?.message) {
         errorMessage = `Erro: ${error.message}`;
       }
       
