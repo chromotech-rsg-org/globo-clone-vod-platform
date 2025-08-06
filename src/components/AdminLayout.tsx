@@ -31,13 +31,13 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const contentBgColor = getCustomization('admin_content_bg', '#111827');
 
   return (
-    <div className="flex min-h-screen bg-admin-content-bg">
+    <div className="admin-layout-container flex min-h-screen bg-admin-content-bg">
       <AdminSidebar 
         isCollapsed={sidebarCollapsed}
         onToggle={handleToggle}
       />
       <div 
-        className="flex-1 min-h-screen transition-all duration-300 ease-in-out bg-admin-content-bg"
+        className="admin-content-main flex-1 min-h-screen bg-admin-content-bg"
         style={{ 
           marginLeft: sidebarCollapsed ? '64px' : '256px',
           background: 'linear-gradient(135deg, hsl(var(--admin-content-bg)) 0%, hsl(var(--admin-muted)) 100%)'

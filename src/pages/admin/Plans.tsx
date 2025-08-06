@@ -14,6 +14,7 @@ import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { formatBillingCycle } from '@/utils/formatters';
 
 interface Plan {
@@ -58,18 +59,53 @@ const AdminPlans = () => {
 
   const fetchPlans = async () => {
     try {
+      setLoading(true);
+      
+      // Verificar autenticação antes de fazer a query
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from('plans')
-        .select('*')
+        .select(`
+          id,
+          name,
+          active,
+          best_seller,
+          price,
+          free_days,
+          billing_cycle,
+          payment_type,
+          description,
+          benefits,
+          package_id,
+          priority
+        `)
         .order('priority', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       setPlans(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar planos:', error);
+      
+      let errorMessage = "Não foi possível carregar os planos";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para acessar esta página";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para acessar esta página";
+      } else if (error.code === 'PGRST116') {
+        errorMessage = "Nenhum plano encontrado";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os planos",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -239,7 +275,8 @@ const AdminPlans = () => {
   }
 
   return (
-    <AdminLayout>
+    <ErrorBoundary>
+      <AdminLayout>
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Planos</h1>
@@ -484,7 +521,8 @@ const AdminPlans = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+      </AdminLayout>
+    </ErrorBoundary>
   );
 };
 

@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
 import RoleChangeConfirmation from '@/components/auth/RoleChangeConfirmation';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { sanitizeInput, validateEmail, validateCPF, validatePhone } from '@/utils/validators';
 
 interface UserProfile {
@@ -62,18 +63,48 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
+      
+      // Verificar autenticação antes de fazer a query
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          name,
+          email,
+          cpf,
+          phone,
+          role,
+          created_at
+        `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       setUsers(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar usuários:', error);
+      
+      let errorMessage = "Não foi possível carregar os usuários";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para acessar esta página";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para acessar esta página";
+      } else if (error.code === 'PGRST116') {
+        errorMessage = "Nenhum dado encontrado";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os usuários",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -368,7 +399,8 @@ const AdminUsers = () => {
   }
 
   return (
-    <AdminLayout>
+    <ErrorBoundary>
+      <AdminLayout>
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
@@ -685,7 +717,8 @@ const AdminUsers = () => {
         newRole={roleChangeConfirmation.newRole}
         userName={roleChangeConfirmation.userName}
       />
-    </AdminLayout>
+      </AdminLayout>
+    </ErrorBoundary>
   );
 };
 

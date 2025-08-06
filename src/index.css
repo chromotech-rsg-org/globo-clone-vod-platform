@@ -74,6 +74,27 @@
     --admin-warning-foreground: 0 0% 0%;
     --admin-muted: 215 14% 34%;
     --admin-muted-foreground: 0 0% 100%;
+    --admin-border: 215 14% 40%;
+  }
+
+  /* Prevent sidebar duplication and layout issues */
+  #admin-sidebar-unique {
+    position: fixed !important;
+    z-index: 50 !important;
+  }
+
+  /* Ensure only one sidebar renders */
+  .admin-layout-container {
+    position: relative;
+  }
+
+  .admin-layout-container #admin-sidebar-unique:not(:first-child) {
+    display: none !important;
+  }
+
+  /* Admin layout content spacing */
+  .admin-content-main {
+    transition: margin-left 0.3s ease-in-out;
   }
 
   .dark {

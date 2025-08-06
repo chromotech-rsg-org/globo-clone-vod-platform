@@ -13,6 +13,7 @@ import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface Coupon {
   id: string;
@@ -47,18 +48,49 @@ const AdminCoupons = () => {
 
   const fetchCoupons = async () => {
     try {
+      setLoading(true);
+      
+      // Verificar autenticação antes de fazer a query
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from('coupons')
-        .select('*')
+        .select(`
+          id,
+          name,
+          code,
+          discount_percentage,
+          active,
+          notes,
+          created_at,
+          updated_at
+        `)
         .order('name', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       setCoupons(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar cupons:', error);
+      
+      let errorMessage = "Não foi possível carregar os cupons";
+      if (error.message === 'Usuário não autenticado') {
+        errorMessage = "Você precisa estar logado para acessar esta página";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para acessar esta página";
+      } else if (error.code === 'PGRST116') {
+        errorMessage = "Nenhum cupom encontrado";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os cupons",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -215,7 +247,8 @@ const AdminCoupons = () => {
   }
 
   return (
-    <AdminLayout>
+    <ErrorBoundary>
+      <AdminLayout>
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Cupons</h1>
@@ -386,7 +419,8 @@ const AdminCoupons = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+      </AdminLayout>
+    </ErrorBoundary>
   );
 };
 
