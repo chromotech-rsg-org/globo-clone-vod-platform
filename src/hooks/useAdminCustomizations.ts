@@ -1,9 +1,10 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useCustomizations } from './useCustomizations';
 import { hexToHsl } from '@/utils/colorUtils';
 
 export const useAdminCustomizations = () => {
   const { customizations, refetch } = useCustomizations('home');
+  const isInitialized = useRef(false);
 
   const getCustomization = useCallback((key: string, defaultValue: string = '') => {
     const fullKey = `global_${key}`;
@@ -81,7 +82,10 @@ export const useAdminCustomizations = () => {
   }, [getCustomization]);
 
   useEffect(() => {
-    applyAdminStyles();
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      applyAdminStyles();
+    }
   }, [applyAdminStyles]);
 
   return {
