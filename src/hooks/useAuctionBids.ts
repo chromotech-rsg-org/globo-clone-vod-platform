@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Bid {
   id: string;
@@ -26,6 +27,7 @@ export const useAuctionBids = (auctionId: string) => {
   const [pendingBidExists, setPendingBidExists] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchBids = async () => {
     if (!auctionId) return;
@@ -175,29 +177,41 @@ export const useAuctionBids = (auctionId: string) => {
   useEffect(() => {
     fetchBids();
 
-    // Configurar realtime updates
-    const channel = supabase
-      .channel(`auction-bids-${auctionId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'bids',
-        filter: `auction_id=eq.${auctionId}`
-      }, () => {
-        fetchBids();
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'auctions',
-        filter: `id=eq.${auctionId}`
-      }, () => {
-        fetchBids();
-      })
-      .subscribe();
+    // Clean up existing channel
+    if (channelRef.current) {
+      channelRef.current.unsubscribe();
+      channelRef.current = null;
+    }
+
+    // Create new channel only if none exists
+    if (!channelRef.current && auctionId) {
+      const channelId = `auction-bids-${auctionId}-${Math.random().toString(36).substr(2, 9)}`;
+      channelRef.current = supabase
+        .channel(channelId)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'bids',
+          filter: `auction_id=eq.${auctionId}`
+        }, () => {
+          fetchBids();
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'auctions',
+          filter: `id=eq.${auctionId}`
+        }, () => {
+          fetchBids();
+        })
+        .subscribe();
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
     };
   }, [auctionId]);
 
