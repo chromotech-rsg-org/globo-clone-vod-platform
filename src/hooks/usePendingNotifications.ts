@@ -11,9 +11,6 @@ interface PendingItem {
   created_at: string;
 }
 
-// Global registry to track active channels
-const activeNotificationChannels = new Map<string, any>();
-
 export const usePendingNotifications = () => {
   const [pendingBids, setPendingBids] = useState<PendingItem[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingItem[]>([]);
@@ -25,75 +22,85 @@ export const usePendingNotifications = () => {
     if (!user || !mounted.current) return;
 
     try {
-      console.log('🔄 fetchPendingItems: Starting fetch for user:', user.id);
-
-      // Buscar lances pendentes usando foreign key explícita
+      // Buscar lances pendentes com queries separadas
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
-        .select(`
-          id,
-          bid_value,
-          created_at,
-          auction:auctions!bids_auction_id_fkey(name),
-          user_profile:profiles!bids_user_id_fkey(name)
-        `)
+        .select('id, bid_value, created_at, auction_id, user_id')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (bidsError) {
-        console.error('❌ fetchPendingItems: Bids error:', bidsError);
-        throw bidsError;
+        console.error('Erro ao buscar lances:', bidsError);
+        setPendingBids([]);
       }
 
-      console.log('✅ fetchPendingItems: Bids data:', bidsData);
-
-      // Buscar habilitações pendentes usando foreign key explícita
+      // Buscar registros pendentes com queries separadas
       const { data: registrationsData, error: registrationsError } = await supabase
         .from('auction_registrations')
-        .select(`
-          id,
-          created_at,
-          auction:auctions!auction_registrations_auction_id_fkey(name),
-          user_profile:profiles!auction_registrations_user_id_fkey(name)
-        `)
+        .select('id, created_at, auction_id, user_id')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (registrationsError) {
-        console.error('❌ fetchPendingItems: Registrations error:', registrationsError);
-        throw registrationsError;
+        console.error('Erro ao buscar registros:', registrationsError);
+        setPendingRegistrations([]);
       }
-
-      console.log('✅ fetchPendingItems: Registrations data:', registrationsData);
 
       if (!mounted.current) return;
 
-      // Formatar dados dos lances
-      const formattedBids: PendingItem[] = (bidsData || []).map((bid: any) => ({
-        id: bid.id,
-        type: 'bid' as const,
-        auction_name: bid.auction?.name || 'Leilão desconhecido',
-        user_name: bid.user_profile?.name || 'Usuário desconhecido',
-        value: bid.bid_value,
-        created_at: bid.created_at
-      }));
+      // Buscar dados relacionados se necessário
+      let formattedBids: PendingItem[] = [];
+      let formattedRegistrations: PendingItem[] = [];
 
-      // Formatar dados das habilitações
-      const formattedRegistrations: PendingItem[] = (registrationsData || []).map((registration: any) => ({
-        id: registration.id,
-        type: 'registration' as const,
-        auction_name: registration.auction?.name || 'Leilão desconhecido',
-        user_name: registration.user_profile?.name || 'Usuário desconhecido',
-        created_at: registration.created_at
-      }));
+      if (bidsData && bidsData.length > 0) {
+        const auctionIds = [...new Set(bidsData.map(bid => bid.auction_id))];
+        const userIds = [...new Set(bidsData.map(bid => bid.user_id))];
 
-      console.log('✅ fetchPendingItems: Formatted bids:', formattedBids.length);
-      console.log('✅ fetchPendingItems: Formatted registrations:', formattedRegistrations.length);
+        const [auctionsResponse, profilesResponse] = await Promise.all([
+          supabase.from('auctions').select('id, name').in('id', auctionIds),
+          supabase.from('profiles').select('id, name').in('id', userIds)
+        ]);
+
+        const auctionsMap = new Map(auctionsResponse.data?.map(a => [a.id, a.name]) || []);
+        const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p.name]) || []);
+
+        formattedBids = bidsData.map((bid: any) => ({
+          id: bid.id,
+          type: 'bid' as const,
+          auction_name: auctionsMap.get(bid.auction_id) || 'Leilão desconhecido',
+          user_name: profilesMap.get(bid.user_id) || 'Usuário desconhecido',
+          value: bid.bid_value,
+          created_at: bid.created_at
+        }));
+      }
+
+      if (registrationsData && registrationsData.length > 0) {
+        const auctionIds = [...new Set(registrationsData.map(reg => reg.auction_id))];
+        const userIds = [...new Set(registrationsData.map(reg => reg.user_id))];
+
+        const [auctionsResponse, profilesResponse] = await Promise.all([
+          supabase.from('auctions').select('id, name').in('id', auctionIds),
+          supabase.from('profiles').select('id, name').in('id', userIds)
+        ]);
+
+        const auctionsMap = new Map(auctionsResponse.data?.map(a => [a.id, a.name]) || []);
+        const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p.name]) || []);
+
+        formattedRegistrations = registrationsData.map((registration: any) => ({
+          id: registration.id,
+          type: 'registration' as const,
+          auction_name: auctionsMap.get(registration.auction_id) || 'Leilão desconhecido',
+          user_name: profilesMap.get(registration.user_id) || 'Usuário desconhecido',
+          created_at: registration.created_at
+        }));
+      }
 
       setPendingBids(formattedBids);
       setPendingRegistrations(formattedRegistrations);
     } catch (error) {
-      console.error('❌ fetchPendingItems: Final error:', error);
+      console.error('Erro geral ao buscar dados pendentes:', error);
+      setPendingBids([]);
+      setPendingRegistrations([]);
     } finally {
       if (mounted.current) {
         setLoading(false);
@@ -107,65 +114,39 @@ export const usePendingNotifications = () => {
     mounted.current = true;
     fetchPendingItems();
 
-    const channelKey = `pending-notifications-${user.id}`;
-    
-    // Check if channels already exist
-    if (activeNotificationChannels.has(channelKey)) {
-      console.log('🔄 usePendingNotifications: Channels already exist for user:', user.id);
-      return;
-    }
-
-    console.log('🔄 usePendingNotifications: Creating new channels for user:', user.id);
-
-    // Create stable callback to avoid dependency issues
+    // Simplified real-time subscription
     const handlePendingChange = () => {
-      console.log('🔄 usePendingNotifications: Realtime change detected for user:', user.id);
       if (mounted.current) {
         fetchPendingItems();
       }
     };
 
-    // Create channels with unique IDs
     const bidsChannel = supabase
-      .channel(`pending-bids-${user.id}-${Date.now()}-${Math.random()}`)
+      .channel(`pending-bids-${Date.now()}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'bids',
         filter: 'status=eq.pending'
-      }, handlePendingChange);
+      }, handlePendingChange)
+      .subscribe();
 
     const registrationsChannel = supabase
-      .channel(`pending-registrations-${user.id}-${Date.now()}-${Math.random()}`)
+      .channel(`pending-registrations-${Date.now()}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'auction_registrations',
         filter: 'status=eq.pending'
-      }, handlePendingChange);
-
-    // Store channels in registry
-    activeNotificationChannels.set(channelKey, { bidsChannel, registrationsChannel });
-    
-    // Subscribe to channels
-    bidsChannel.subscribe();
-    registrationsChannel.subscribe();
-    console.log('✅ usePendingNotifications: Channels subscribed for user:', user.id);
+      }, handlePendingChange)
+      .subscribe();
 
     return () => {
-      console.log('🧹 usePendingNotifications: Cleaning up channels for user:', user.id);
       mounted.current = false;
-      
-      // Clean up channels
-      const storedChannels = activeNotificationChannels.get(channelKey);
-      if (storedChannels) {
-        activeNotificationChannels.delete(channelKey);
-        supabase.removeChannel(storedChannels.bidsChannel);
-        supabase.removeChannel(storedChannels.registrationsChannel);
-        console.log('✅ usePendingNotifications: Channels cleaned up for user:', user.id);
-      }
+      supabase.removeChannel(bidsChannel);
+      supabase.removeChannel(registrationsChannel);
     };
-  }, [user]);
+  }, [user, fetchPendingItems]);
 
   const totalPending = pendingBids.length + pendingRegistrations.length;
 

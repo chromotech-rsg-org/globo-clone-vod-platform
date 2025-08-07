@@ -19,8 +19,6 @@ interface Bid {
   user_name?: string;
 }
 
-// Global registry to track active auction channels
-const activeAuctionChannels = new Map<string, any>();
 
 export const useAuctionBids = (auctionId: string) => {
   const [bids, setBids] = useState<Bid[]>([]);
@@ -35,36 +33,41 @@ export const useAuctionBids = (auctionId: string) => {
     if (!auctionId || !mounted.current) return;
 
     try {
-      console.log('🔄 fetchBids: Starting bid fetch for auction:', auctionId);
-      
-      // Fetch bids with user profile information using explicit foreign key reference
-      const { data, error } = await supabase
+      // Buscar lances com query simples
+      const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
-        .select(`
-          *,
-          user_profile:profiles!bids_user_id_fkey(name)
-        `)
+        .select('*')
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ fetchBids: Supabase error:', error);
-        throw error;
+      if (bidsError) {
+        console.error('Erro ao buscar lances:', bidsError);
+        setBids([]);
+        setLoading(false);
+        return;
       }
-
-      console.log('✅ fetchBids: Raw data received:', data);
 
       if (!mounted.current) return;
 
-      const formattedBids = (data || []).map((bid: any) => {
-        console.log('🔄 fetchBids: Processing bid:', bid);
-        return {
-          ...bid,
-          user_name: bid.user_profile?.name || 'Usuário desconhecido'
-        };
-      });
+      // Buscar nomes dos usuários se houver lances
+      let formattedBids: Bid[] = [];
+      
+      if (bidsData && bidsData.length > 0) {
+        const userIds = [...new Set(bidsData.map(bid => bid.user_id))];
+        
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', userIds);
 
-      console.log('✅ fetchBids: Formatted bids:', formattedBids);
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p.name]) || []);
+
+        formattedBids = bidsData.map((bid: any) => ({
+          ...bid,
+          user_name: profilesMap.get(bid.user_id) || 'Usuário desconhecido'
+        }));
+      }
+
       setBids(formattedBids);
 
       // Verificar se existe lance pendente do usuário atual
@@ -72,12 +75,12 @@ export const useAuctionBids = (auctionId: string) => {
         const userHasPendingBid = formattedBids.some((bid: Bid) => 
           bid.user_id === user.id && bid.status === 'pending'
         );
-        console.log('🔄 fetchBids: User has pending bid:', userHasPendingBid);
         setPendingBidExists(userHasPendingBid);
       }
 
     } catch (error) {
-      console.error('❌ fetchBids: Final error:', error);
+      console.error('Erro geral ao buscar lances:', error);
+      setBids([]);
       if (mounted.current) {
         toast({
           title: "Erro",
@@ -200,27 +203,15 @@ export const useAuctionBids = (auctionId: string) => {
     mounted.current = true;
     fetchBids();
 
-    const channelKey = `auction-bids-${auctionId}`;
-    
-    // Check if channel already exists
-    if (activeAuctionChannels.has(channelKey)) {
-      console.log('🔄 useAuctionBids: Channel already exists for auction:', auctionId);
-      return;
-    }
-
-    console.log('🔄 useAuctionBids: Creating new channel for auction:', auctionId);
-
-    // Create stable callback to avoid dependency issues
+    // Simplified real-time subscription
     const handleBidsChange = () => {
-      console.log('🔄 useAuctionBids: Realtime change detected for auction:', auctionId);
       if (mounted.current) {
         fetchBids();
       }
     };
 
-    // Create channel with unique ID
     const channel = supabase
-      .channel(`auction-bids-${auctionId}-${Date.now()}-${Math.random()}`)
+      .channel(`auction-bids-${Date.now()}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -232,28 +223,14 @@ export const useAuctionBids = (auctionId: string) => {
         schema: 'public',
         table: 'auctions',
         filter: `id=eq.${auctionId}`
-      }, handleBidsChange);
-
-    // Store channel in registry
-    activeAuctionChannels.set(channelKey, channel);
-    
-    // Subscribe
-    channel.subscribe();
-    console.log('✅ useAuctionBids: Channel subscribed for auction:', auctionId);
+      }, handleBidsChange)
+      .subscribe();
 
     return () => {
-      console.log('🧹 useAuctionBids: Cleaning up channel for auction:', auctionId);
       mounted.current = false;
-      
-      // Remove from registry and unsubscribe
-      const storedChannel = activeAuctionChannels.get(channelKey);
-      if (storedChannel) {
-        activeAuctionChannels.delete(channelKey);
-        supabase.removeChannel(storedChannel);
-        console.log('✅ useAuctionBids: Channel cleaned up for auction:', auctionId);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [auctionId]);
+  }, [auctionId, fetchBids]);
 
   const userPendingBid = bids.find(bid => bid.user_id === user?.id && bid.status === 'pending');
 
