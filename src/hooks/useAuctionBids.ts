@@ -35,12 +35,12 @@ export const useAuctionBids = (auctionId: string) => {
     if (!auctionId || !mounted.current) return;
 
     try {
-      // Fetch bids with user profile information
+      // Fetch bids with user profile information using correct relationship syntax
       const { data, error } = await supabase
         .from('bids')
         .select(`
           *,
-          user_profile:profiles!bids_user_id_fkey(name)
+          profiles(name)
         `)
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
@@ -51,7 +51,7 @@ export const useAuctionBids = (auctionId: string) => {
 
       const formattedBids = (data || []).map((bid: any) => ({
         ...bid,
-        user_name: bid.user_profile?.name || 'Usuário desconhecido'
+        user_name: bid.profiles?.name || 'Usuário desconhecido'
       }));
 
       setBids(formattedBids);
