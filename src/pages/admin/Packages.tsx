@@ -200,21 +200,17 @@ const AdminPackages = () => {
     pkg.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="p-6">
-          <div className="text-white">Carregando...</div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
   return (
     <AdminLayout>
-      <header className="bg-gray-800 border-b border-gray-700">
+      {loading ? (
+        <div className="p-6">
+          <div className="text-admin-table-text">Carregando...</div>
+        </div>
+      ) : (
+        <>
+      <header className="bg-admin-header border-b border-admin-border">
         <div className="px-6 py-4">
-          <h1 className="text-xl font-bold text-white">Gerenciar Pacotes</h1>
+          <h1 className="text-xl font-bold text-admin-sidebar-text">Gerenciar Pacotes</h1>
         </div>
       </header>
 
@@ -227,7 +223,7 @@ const AdminPackages = () => {
               placeholder="Buscar pacotes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-700 border-gray-600 text-white"
+              className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
             />
           </div>
           
@@ -238,25 +234,25 @@ const AdminPackages = () => {
         </div>
 
         {/* Packages Table */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-admin-card border-admin-border">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-300">Nome</TableHead>
-                  <TableHead className="text-gray-300">Código</TableHead>
-                  <TableHead className="text-gray-300">Vendor ID</TableHead>
-                  <TableHead className="text-gray-300">Status</TableHead>
-                  <TableHead className="text-gray-300">Suspensão</TableHead>
-                  <TableHead className="text-gray-300">Ações</TableHead>
+                <TableRow className="border-admin-border">
+                  <TableHead className="text-admin-muted-foreground">Nome</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Código</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Vendor ID</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Status</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Suspensão</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPackages.map((pkg) => (
-                  <TableRow key={pkg.id} className="border-gray-700">
-                    <TableCell className="text-white">{pkg.name}</TableCell>
-                    <TableCell className="text-white">{pkg.code}</TableCell>
-                    <TableCell className="text-white">{pkg.vendor_id || '-'}</TableCell>
+                  <TableRow key={pkg.id} className="border-admin-border">
+                    <TableCell className="text-admin-table-text">{pkg.name}</TableCell>
+                    <TableCell className="text-admin-table-text">{pkg.code}</TableCell>
+                    <TableCell className="text-admin-table-text">{pkg.vendor_id || '-'}</TableCell>
                     <TableCell>
                       <Badge variant={pkg.active ? 'admin-success' : 'admin-muted'}>
                         {pkg.active ? 'Ativo' : 'Inativo'}
@@ -265,7 +261,7 @@ const AdminPackages = () => {
                     <TableCell>
                       <Badge 
                         variant={pkg.suspension_package ? 'admin-danger' : 'outline'}
-                        className={!pkg.suspension_package ? 'text-white' : ''}
+                        className={!pkg.suspension_package ? 'text-admin-table-text' : ''}
                       >
                         {pkg.suspension_package ? 'Sim' : 'Não'}
                       </Badge>
@@ -276,7 +272,7 @@ const AdminPackages = () => {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(pkg)}
-                          className="text-gray-400 hover:text-white"
+                          className="text-admin-muted-foreground hover:text-admin-table-text"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -298,9 +294,9 @@ const AdminPackages = () => {
         </Card>
 
         {filteredPackages.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700 mt-6">
+          <Card className="bg-admin-card border-admin-border mt-6">
             <CardContent className="p-12 text-center">
-              <p className="text-gray-400">Nenhum pacote encontrado</p>
+              <p className="text-admin-muted-foreground">Nenhum pacote encontrado</p>
             </CardContent>
           </Card>
         )}
@@ -308,43 +304,43 @@ const AdminPackages = () => {
 
       {/* Edit/Create Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+        <DialogContent className="bg-admin-content-bg border-admin-border text-admin-table-text">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-admin-sidebar-text">
               {editingItem ? 'Editar Pacote' : 'Novo Pacote'}
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-gray-300">Nome</Label>
+              <Label htmlFor="name" className="text-admin-table-text">Nome</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-admin-content-bg border-admin-border text-admin-table-text"
                 placeholder="Nome do pacote"
               />
             </div>
 
             <div>
-              <Label htmlFor="code" className="text-gray-300">Código</Label>
+              <Label htmlFor="code" className="text-admin-table-text">Código</Label>
               <Input
                 id="code"
                 value={formData.code}
                 onChange={(e) => setFormData({...formData, code: e.target.value})}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-admin-content-bg border-admin-border text-admin-table-text"
                 placeholder="Código único do pacote"
               />
             </div>
 
             <div>
-              <Label htmlFor="vendor_id" className="text-gray-300">Vendor ID</Label>
+              <Label htmlFor="vendor_id" className="text-admin-table-text">Vendor ID</Label>
               <Input
                 id="vendor_id"
                 value={formData.vendor_id}
                 onChange={(e) => setFormData({...formData, vendor_id: e.target.value})}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-admin-content-bg border-admin-border text-admin-table-text"
                 placeholder="ID do fornecedor (opcional)"
               />
             </div>
@@ -355,7 +351,7 @@ const AdminPackages = () => {
                 checked={formData.active}
                 onCheckedChange={(checked) => setFormData({...formData, active: checked})}
               />
-              <Label htmlFor="active" className="text-gray-300">Ativo</Label>
+              <Label htmlFor="active" className="text-admin-table-text">Ativo</Label>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -364,7 +360,7 @@ const AdminPackages = () => {
                 checked={formData.suspension_package}
                 onCheckedChange={(checked) => setFormData({...formData, suspension_package: checked})}
               />
-              <Label htmlFor="suspension_package" className="text-gray-300">Pacote de Suspensão</Label>
+              <Label htmlFor="suspension_package" className="text-admin-table-text">Pacote de Suspensão</Label>
             </div>
 
             <div className="flex space-x-2 pt-4">
@@ -372,7 +368,7 @@ const AdminPackages = () => {
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>
-              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-gray-300">
+              <Button onClick={resetForm} variant="outline" className="border-admin-border text-admin-table-text">
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
@@ -380,6 +376,8 @@ const AdminPackages = () => {
           </div>
         </DialogContent>
       </Dialog>
+      </>
+      )}
     </AdminLayout>
   );
 };

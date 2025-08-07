@@ -288,18 +288,14 @@ const AdminSubscriptions = () => {
       .reduce((sum, s) => sum + (s.plans?.price || 0), 0)
   };
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="p-6">
-          <div className="text-white">Carregando...</div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
   return (
     <AdminLayout>
+      {loading ? (
+        <div className="p-6">
+          <div className="text-admin-table-text">Carregando...</div>
+        </div>
+      ) : (
+        <>
       <header className="bg-admin-header border-b border-admin-border">
         <div className="px-6 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-admin-sidebar-text">Gerenciar Assinaturas</h1>
@@ -520,6 +516,8 @@ const AdminSubscriptions = () => {
           </form>
         </DialogContent>
       </Dialog>
+      </>
+      )}
     </AdminLayout>
   );
 };

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/auth';
+import { performDomainHealthCheck, logDomainInfo, isCustomDomain } from '@/utils/domainHealth';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -27,6 +28,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+
+  // Debug info for domain-specific issues
+  useEffect(() => {
+    logDomainInfo();
+    
+    // Perform comprehensive health check
+    performDomainHealthCheck().then(healthCheck => {
+      console.log(`🏥 Domain health check results:`, healthCheck);
+      
+      if (healthCheck.errors.length > 0) {
+        console.warn(`⚠️ Health check found issues:`, healthCheck.errors);
+      }
+      
+      if (isCustomDomain() && !healthCheck.supabaseConnectivity) {
+        console.error(`🚨 Custom domain ${healthCheck.domain} has connectivity issues!`);
+      }
+    });
+  }, []);
 
   const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
@@ -119,30 +138,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       try {
+        const currentDomain = window.location.hostname;
+        console.log(`🔄 Initializing auth on ${currentDomain}...`);
         setIsLoading(true);
         
-        // Get initial session
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        // Add retry logic for custom domains
+        let retries = currentDomain.includes('agromercado.tv.br') ? 3 : 1;
+        let lastError = null;
         
-        if (!mounted) return;
-        
-        setSession(initialSession);
-        
-        if (initialSession?.user) {
-          const profile = await fetchProfile(initialSession.user.id);
-          if (mounted) {
-            setUser(profile);
+        while (retries > 0) {
+          try {
+            // Get initial session
+            const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+            
+            if (sessionError) {
+              lastError = sessionError;
+              console.warn(`⚠️ Session error on ${currentDomain} (${retries} retries left):`, sessionError);
+              retries--;
+              if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                continue;
+              }
+              throw sessionError;
+            }
+            
+            if (!mounted) return;
+            
+            console.log(`✅ Session retrieved on ${currentDomain}:`, initialSession ? 'authenticated' : 'not authenticated');
+            setSession(initialSession);
+            
+            if (initialSession?.user) {
+              const profile = await fetchProfile(initialSession.user.id);
+              if (mounted) {
+                setUser(profile);
+                console.log(`✅ User profile loaded on ${currentDomain}:`, profile?.email);
+              }
+            } else {
+              setUser(null);
+            }
+            
+            if (mounted) {
+              setIsLoading(false);
+              setInitialized(true);
+            }
+            
+            break; // Success, exit retry loop
+            
+          } catch (error) {
+            lastError = error;
+            retries--;
+            if (retries > 0) {
+              console.log(`🔄 Retrying auth initialization on ${currentDomain}... (${retries} left)`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
           }
-        } else {
-          setUser(null);
         }
         
-        if (mounted) {
-          setIsLoading(false);
-          setInitialized(true);
+        if (retries === 0 && lastError) {
+          throw lastError;
         }
+        
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        const currentDomain = window.location.hostname;
+        console.error(`❌ Auth initialization failed on ${currentDomain}:`, error);
         if (mounted) {
           setIsLoading(false);
           setInitialized(true);

@@ -55,21 +55,27 @@ export const useCustomizations = (page: string) => {
     mounted.current = true;
     fetchCustomizations();
     
-    // Check if channel already exists
-    if (activeChannels.has(channelKey)) {
-      console.log('Channel already exists for', channelKey);
-      return;
+    // Check if channel already exists and clean it up first
+    const existingChannel = activeChannels.get(channelKey);
+    if (existingChannel) {
+      console.log('🧹 Cleaning up existing channel for', channelKey);
+      activeChannels.delete(channelKey);
+      supabase.removeChannel(existingChannel);
     }
 
-    // Create unique channel
+    // Create unique channel with better naming
+    const uniqueChannelName = `${channelKey}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`📡 Creating new channel: ${uniqueChannelName}`);
+    
     const channel = supabase
-      .channel(`${channelKey}-${Date.now()}-${Math.random()}`)
+      .channel(uniqueChannelName)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'customizations',
         filter: `page=eq.${page}`
-      }, () => {
+      }, (payload) => {
+        console.log(`🔔 Customization change detected for ${page}:`, payload);
         if (mounted.current) {
           fetchCustomizations();
         }
@@ -78,11 +84,21 @@ export const useCustomizations = (page: string) => {
     // Store channel in registry
     activeChannels.set(channelKey, channel);
     
-    // Subscribe
-    channel.subscribe();
+    // Subscribe with error handling
+    channel.subscribe((status) => {
+      console.log(`📡 Channel subscription status for ${channelKey}:`, status);
+      if (status === 'SUBSCRIBED') {
+        console.log(`✅ Successfully subscribed to ${uniqueChannelName}`);
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error(`❌ Channel error for ${uniqueChannelName}`);
+      } else if (status === 'TIMED_OUT') {
+        console.error(`⏰ Channel timeout for ${uniqueChannelName}`);
+      }
+    });
 
     return () => {
       mounted.current = false;
+      console.log(`🧹 Cleaning up channel: ${uniqueChannelName}`);
       
       // Remove from registry and unsubscribe
       const storedChannel = activeChannels.get(channelKey);
@@ -91,7 +107,7 @@ export const useCustomizations = (page: string) => {
         supabase.removeChannel(storedChannel);
       }
     };
-  }, [page, channelKey, fetchCustomizations]);
+  }, [page, fetchCustomizations]); // Remove channelKey from dependencies to prevent recreation
 
   const getCustomization = useCallback((section: string, key: string, defaultValue: any = '') => {
     const customKey = `${section}_${key}`;
