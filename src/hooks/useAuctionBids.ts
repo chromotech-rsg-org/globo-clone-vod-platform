@@ -32,54 +32,69 @@ export const useAuctionBids = (auctionId: string) => {
   const fetchBids = useCallback(async () => {
     if (!auctionId || !mounted.current) return;
 
+    console.log('🔄 useAuctionBids: Iniciando busca de lances para:', auctionId);
+    
     try {
-      // Buscar lances com query simples
+      // Query específica para lances
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
-        .select('*')
+        .select('id, user_id, auction_id, auction_item_id, bid_value, status, is_winner, created_at, updated_at')
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
 
       if (bidsError) {
-        console.error('Erro ao buscar lances:', bidsError);
+        console.error('❌ useAuctionBids: Erro ao buscar lances:', bidsError);
         setBids([]);
         setLoading(false);
         return;
       }
 
+      console.log('✅ useAuctionBids: Lances encontrados:', bidsData?.length || 0);
+
       if (!mounted.current) return;
 
-      // Buscar nomes dos usuários se houver lances
+      // Processar lances
       let formattedBids: Bid[] = [];
       
       if (bidsData && bidsData.length > 0) {
+        // Buscar nomes dos usuários separadamente
         const userIds = [...new Set(bidsData.map(bid => bid.user_id))];
+        console.log('👥 useAuctionBids: Buscando perfis para:', userIds.length, 'usuários');
         
-        const { data: profilesData } = await supabase
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, name')
           .in('id', userIds);
+
+        if (profilesError) {
+          console.warn('⚠️ useAuctionBids: Erro ao buscar perfis:', profilesError);
+        }
+
+        console.log('👤 useAuctionBids: Perfis encontrados:', profilesData?.length || 0);
 
         const profilesMap = new Map(profilesData?.map(p => [p.id, p.name]) || []);
 
         formattedBids = bidsData.map((bid: any) => ({
           ...bid,
-          user_name: profilesMap.get(bid.user_id) || 'Usuário desconhecido'
+          user_name: profilesMap.get(bid.user_id) || `Usuário ${bid.user_id.slice(-4)}`
         }));
+
+        console.log('📋 useAuctionBids: Lances formatados:', formattedBids.length);
       }
 
       setBids(formattedBids);
 
-      // Verificar se existe lance pendente do usuário atual
+      // Verificar lance pendente do usuário
       if (user?.id) {
         const userHasPendingBid = formattedBids.some((bid: Bid) => 
           bid.user_id === user.id && bid.status === 'pending'
         );
         setPendingBidExists(userHasPendingBid);
+        console.log('🔍 useAuctionBids: Usuário tem lance pendente?', userHasPendingBid);
       }
 
     } catch (error) {
-      console.error('Erro geral ao buscar lances:', error);
+      console.error('💥 useAuctionBids: Erro geral:', error);
       setBids([]);
       if (mounted.current) {
         toast({
@@ -91,6 +106,7 @@ export const useAuctionBids = (auctionId: string) => {
     } finally {
       if (mounted.current) {
         setLoading(false);
+        console.log('✨ useAuctionBids: Busca finalizada');
       }
     }
   }, [auctionId, user, toast]);

@@ -21,8 +21,10 @@ export const usePendingNotifications = () => {
   const fetchPendingItems = useCallback(async () => {
     if (!user || !mounted.current) return;
 
+    console.log('🔄 usePendingNotifications: Iniciando busca para usuário:', user.id);
+    
     try {
-      // Buscar lances pendentes com queries separadas
+      // Buscar lances pendentes apenas
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
         .select('id, bid_value, created_at, auction_id, user_id')
@@ -30,11 +32,13 @@ export const usePendingNotifications = () => {
         .order('created_at', { ascending: false });
 
       if (bidsError) {
-        console.error('Erro ao buscar lances:', bidsError);
+        console.error('❌ usePendingNotifications: Erro ao buscar lances:', bidsError);
         setPendingBids([]);
+      } else {
+        console.log('✅ usePendingNotifications: Lances pendentes encontrados:', bidsData?.length || 0);
       }
 
-      // Buscar registros pendentes com queries separadas
+      // Buscar registros pendentes apenas
       const { data: registrationsData, error: registrationsError } = await supabase
         .from('auction_registrations')
         .select('id, created_at, auction_id, user_id')
@@ -42,68 +46,92 @@ export const usePendingNotifications = () => {
         .order('created_at', { ascending: false });
 
       if (registrationsError) {
-        console.error('Erro ao buscar registros:', registrationsError);
+        console.error('❌ usePendingNotifications: Erro ao buscar registros:', registrationsError);
         setPendingRegistrations([]);
+      } else {
+        console.log('✅ usePendingNotifications: Registros pendentes encontrados:', registrationsData?.length || 0);
       }
 
       if (!mounted.current) return;
 
-      // Buscar dados relacionados se necessário
+      // Processar lances se existirem
       let formattedBids: PendingItem[] = [];
-      let formattedRegistrations: PendingItem[] = [];
-
       if (bidsData && bidsData.length > 0) {
-        const auctionIds = [...new Set(bidsData.map(bid => bid.auction_id))];
-        const userIds = [...new Set(bidsData.map(bid => bid.user_id))];
+        try {
+          const auctionIds = [...new Set(bidsData.map(bid => bid.auction_id))];
+          const userIds = [...new Set(bidsData.map(bid => bid.user_id))];
 
-        const [auctionsResponse, profilesResponse] = await Promise.all([
-          supabase.from('auctions').select('id, name').in('id', auctionIds),
-          supabase.from('profiles').select('id, name').in('id', userIds)
-        ]);
+          console.log('🔍 usePendingNotifications: Buscando dados relacionados para lances');
 
-        const auctionsMap = new Map(auctionsResponse.data?.map(a => [a.id, a.name]) || []);
-        const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p.name]) || []);
+          const [auctionsResponse, profilesResponse] = await Promise.all([
+            supabase.from('auctions').select('id, name').in('id', auctionIds),
+            supabase.from('profiles').select('id, name').in('id', userIds)
+          ]);
 
-        formattedBids = bidsData.map((bid: any) => ({
-          id: bid.id,
-          type: 'bid' as const,
-          auction_name: auctionsMap.get(bid.auction_id) || 'Leilão desconhecido',
-          user_name: profilesMap.get(bid.user_id) || 'Usuário desconhecido',
-          value: bid.bid_value,
-          created_at: bid.created_at
-        }));
+          const auctionsMap = new Map(auctionsResponse.data?.map(a => [a.id, a.name]) || []);
+          const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p.name]) || []);
+
+          formattedBids = bidsData.map((bid: any) => ({
+            id: bid.id,
+            type: 'bid' as const,
+            auction_name: auctionsMap.get(bid.auction_id) || `Leilão ${bid.auction_id.slice(-4)}`,
+            user_name: profilesMap.get(bid.user_id) || `Usuário ${bid.user_id.slice(-4)}`,
+            value: bid.bid_value,
+            created_at: bid.created_at
+          }));
+        } catch (error) {
+          console.error('⚠️ usePendingNotifications: Erro ao processar lances:', error);
+          formattedBids = [];
+        }
       }
 
+      // Processar registros se existirem
+      let formattedRegistrations: PendingItem[] = [];
       if (registrationsData && registrationsData.length > 0) {
-        const auctionIds = [...new Set(registrationsData.map(reg => reg.auction_id))];
-        const userIds = [...new Set(registrationsData.map(reg => reg.user_id))];
+        try {
+          const auctionIds = [...new Set(registrationsData.map(reg => reg.auction_id))];
+          const userIds = [...new Set(registrationsData.map(reg => reg.user_id))];
 
-        const [auctionsResponse, profilesResponse] = await Promise.all([
-          supabase.from('auctions').select('id, name').in('id', auctionIds),
-          supabase.from('profiles').select('id, name').in('id', userIds)
-        ]);
+          console.log('🔍 usePendingNotifications: Buscando dados relacionados para registros');
 
-        const auctionsMap = new Map(auctionsResponse.data?.map(a => [a.id, a.name]) || []);
-        const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p.name]) || []);
+          const [auctionsResponse, profilesResponse] = await Promise.all([
+            supabase.from('auctions').select('id, name').in('id', auctionIds),
+            supabase.from('profiles').select('id, name').in('id', userIds)
+          ]);
 
-        formattedRegistrations = registrationsData.map((registration: any) => ({
-          id: registration.id,
-          type: 'registration' as const,
-          auction_name: auctionsMap.get(registration.auction_id) || 'Leilão desconhecido',
-          user_name: profilesMap.get(registration.user_id) || 'Usuário desconhecido',
-          created_at: registration.created_at
-        }));
+          const auctionsMap = new Map(auctionsResponse.data?.map(a => [a.id, a.name]) || []);
+          const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p.name]) || []);
+
+          formattedRegistrations = registrationsData.map((registration: any) => ({
+            id: registration.id,
+            type: 'registration' as const,
+            auction_name: auctionsMap.get(registration.auction_id) || `Leilão ${registration.auction_id.slice(-4)}`,
+            user_name: profilesMap.get(registration.user_id) || `Usuário ${registration.user_id.slice(-4)}`,
+            created_at: registration.created_at
+          }));
+        } catch (error) {
+          console.error('⚠️ usePendingNotifications: Erro ao processar registros:', error);
+          formattedRegistrations = [];
+        }
       }
 
       setPendingBids(formattedBids);
       setPendingRegistrations(formattedRegistrations);
+      
+      console.log('✅ usePendingNotifications: Processamento concluído:', {
+        lances: formattedBids.length,
+        registros: formattedRegistrations.length,
+        total: formattedBids.length + formattedRegistrations.length
+      });
+
     } catch (error) {
-      console.error('Erro geral ao buscar dados pendentes:', error);
+      console.error('💥 usePendingNotifications: Erro geral:', error);
       setPendingBids([]);
       setPendingRegistrations([]);
     } finally {
       if (mounted.current) {
         setLoading(false);
+        console.log('✨ usePendingNotifications: Busca finalizada');
       }
     }
   }, [user]);
