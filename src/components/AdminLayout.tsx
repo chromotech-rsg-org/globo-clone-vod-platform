@@ -32,29 +32,21 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const contentBgColor = getCustomization('admin_content_bg', '#111827');
 
   return (
-    <ErrorBoundary>
-      <div className="admin-layout-container flex min-h-screen bg-admin-content-bg">
-        <ErrorBoundary>
-          <AdminSidebar 
-            isCollapsed={sidebarCollapsed}
-            onToggle={handleToggle}
-          />
-        </ErrorBoundary>
-        <div 
-          className="admin-content-main flex-1 min-h-screen bg-admin-content-bg"
-          style={{ 
-            marginLeft: sidebarCollapsed ? '64px' : '256px',
-            background: 'linear-gradient(135deg, hsl(var(--admin-content-bg)) 0%, hsl(var(--admin-muted)) 100%)'
-          }}
-        >
-          <div className="p-6 space-y-6">
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-          </div>
-        </div>
+    <div className="admin-layout-container flex min-h-screen bg-admin-content-bg">
+      <AdminSidebar 
+        isCollapsed={sidebarCollapsed}
+        onToggle={handleToggle}
+      />
+      <div 
+        className="admin-content-main flex-1 min-h-screen bg-admin-content-bg"
+        style={{ 
+          marginLeft: sidebarCollapsed ? '64px' : '256px',
+          background: 'linear-gradient(135deg, hsl(var(--admin-content-bg)) 0%, hsl(var(--admin-muted)) 100%)'
+        }}
+      >
+        {children}
       </div>
-    </ErrorBoundary>
+    </div>
   );
 };
 

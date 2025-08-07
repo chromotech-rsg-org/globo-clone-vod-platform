@@ -399,8 +399,7 @@ const AdminUsers = () => {
   }
 
   return (
-    <ErrorBoundary>
-      <AdminLayout>
+    <AdminLayout>
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
@@ -717,8 +716,7 @@ const AdminUsers = () => {
         newRole={roleChangeConfirmation.newRole}
         userName={roleChangeConfirmation.userName}
       />
-      </AdminLayout>
-    </ErrorBoundary>
+    </AdminLayout>
   );
 };
 

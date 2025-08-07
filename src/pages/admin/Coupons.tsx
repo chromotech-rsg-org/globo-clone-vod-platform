@@ -247,8 +247,7 @@ const AdminCoupons = () => {
   }
 
   return (
-    <ErrorBoundary>
-      <AdminLayout>
+    <AdminLayout>
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Cupons</h1>
@@ -419,8 +418,7 @@ const AdminCoupons = () => {
           </div>
         </DialogContent>
       </Dialog>
-      </AdminLayout>
-    </ErrorBoundary>
+    </AdminLayout>
   );
 };
 
