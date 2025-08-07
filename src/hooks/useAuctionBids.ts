@@ -31,11 +31,12 @@ export const useAuctionBids = (auctionId: string) => {
     if (!auctionId) return;
 
     try {
+      // Fetch bids with user profile information
       const { data, error } = await supabase
         .from('bids')
         .select(`
           *,
-          profiles(name)
+          user_profile:profiles!bids_user_id_fkey(name)
         `)
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
@@ -44,7 +45,7 @@ export const useAuctionBids = (auctionId: string) => {
 
       const formattedBids = (data || []).map((bid: any) => ({
         ...bid,
-        user_name: bid.profiles?.name || 'Usuário desconhecido'
+        user_name: bid.user_profile?.name || 'Usuário desconhecido'
       }));
 
       setBids(formattedBids);
@@ -182,6 +183,14 @@ export const useAuctionBids = (auctionId: string) => {
         schema: 'public',
         table: 'bids',
         filter: `auction_id=eq.${auctionId}`
+      }, () => {
+        fetchBids();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'auctions',
+        filter: `id=eq.${auctionId}`
       }, () => {
         fetchBids();
       })

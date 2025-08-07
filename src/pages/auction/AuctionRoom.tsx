@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatCurrency } from '@/utils/formatters';
 import { BidUserState } from '@/types/auction';
-import { Play, Square, User, AlertCircle, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
+import { Play, Square, User, AlertCircle, CheckCircle, Clock, ArrowLeft, Trophy } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
 import BidHistory from '@/components/auction/BidHistory';
 import { useToast } from '@/components/ui/use-toast';
@@ -21,7 +21,7 @@ const AuctionRoom = () => {
   const { user } = useAuth();
   const { auction, loading: auctionLoading } = useAuctionDetails(id!);
   const { registration, loading: registrationLoading, requestRegistration } = useAuctionRegistration(id!);
-  const { bids, submitBid, submittingBid, pendingBidExists, userPendingBid } = useAuctionBids(id!);
+  const { bids, submitBid, submittingBid, pendingBidExists, userPendingBid, loading: bidsLoading } = useAuctionBids(id!);
   const [userState, setUserState] = useState<BidUserState>('need_registration');
   const [showBidDialog, setShowBidDialog] = useState(false);
   const [nextBidValue, setNextBidValue] = useState(0);
@@ -54,6 +54,19 @@ const AuctionRoom = () => {
       setNextBidValue(auction.current_bid_value + auction.bid_increment);
     }
   }, [auction]);
+
+  // Update next bid value when current bid changes via real-time
+  useEffect(() => {
+    if (auction && bids.length > 0) {
+      const approvedBids = bids.filter(bid => bid.status === 'approved');
+      if (approvedBids.length > 0) {
+        const highestBid = Math.max(...approvedBids.map(bid => bid.bid_value));
+        if (highestBid > auction.current_bid_value) {
+          setNextBidValue(highestBid + auction.bid_increment);
+        }
+      }
+    }
+  }, [bids, auction]);
 
   const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return '';
@@ -98,16 +111,17 @@ const AuctionRoom = () => {
           disabled: false
         };
       case 'can_bid':
+        const anyPendingBid = bids.some(bid => bid.status === 'pending');
         return {
           title: 'Habilitado para Lançar',
-          description: pendingBidExists && !userPendingBid 
+          description: anyPendingBid && !userPendingBid 
             ? 'Há um lance em análise. Aguarde para fazer seu lance.' 
             : 'Você está habilitado a participar do leilão.',
-          action: 'Fazer Lance',
+          action: anyPendingBid && !userPendingBid ? 'Aguarde lance em análise' : 'Fazer Lance',
           variant: 'default' as const,
           icon: CheckCircle,
-          onClick: () => setShowBidDialog(true),
-          disabled: pendingBidExists
+          onClick: anyPendingBid && !userPendingBid ? null : () => setShowBidDialog(true),
+          disabled: anyPendingBid && !userPendingBid
         };
       case 'bid_pending':
         return {
@@ -228,7 +242,14 @@ const AuctionRoom = () => {
                     Lance Atual
                   </p>
                   <p className="text-2xl font-bold text-primary">
-                    {formatCurrency(auction.current_bid_value)}
+                    {(() => {
+                      const approvedBids = bids.filter(bid => bid.status === 'approved');
+                      if (approvedBids.length > 0) {
+                        const highestBid = Math.max(...approvedBids.map(bid => bid.bid_value));
+                        return formatCurrency(Math.max(highestBid, auction.current_bid_value));
+                      }
+                      return formatCurrency(auction.current_bid_value);
+                    })()}
                   </p>
                 </div>
                 <div>
@@ -265,27 +286,60 @@ const AuctionRoom = () => {
                       {stateInfo.description}
                     </AlertDescription>
                   </Alert>
-                  
-                   {stateInfo.action && stateInfo.onClick && (
-                     <Button 
-                       onClick={stateInfo.onClick}
-                       className="w-full"
-                       variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
-                       disabled={stateInfo.disabled || submittingBid}
-                     >
-                       {submittingBid ? 'Enviando lance...' : stateInfo.action}
-                     </Button>
-                   )}
+                   
+                    {stateInfo.action && (
+                      <Button 
+                        onClick={stateInfo.onClick}
+                        className="w-full"
+                        variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
+                        disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick}
+                      >
+                        {submittingBid ? 'Enviando lance...' : stateInfo.action}
+                      </Button>
+                    )}
+
+                    {/* Status do lance do usuário */}
+                    {userPendingBid && (
+                      <Alert className="mt-4">
+                        <Clock className="h-4 w-4" />
+                        <AlertDescription>
+                          <div className="flex justify-between items-center">
+                            <span>Seu lance: {formatCurrency(userPendingBid.bid_value)}</span>
+                            <Badge variant="secondary">Em análise</Badge>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Mostrar se o usuário tem lance vencedor */}
+                    {(() => {
+                      const userWinningBid = bids.find(bid => 
+                        bid.user_id === user?.id && bid.is_winner && bid.status === 'approved'
+                      );
+                      if (userWinningBid) {
+                        return (
+                          <Alert className="mt-4 border-green-500 bg-green-50">
+                            <Trophy className="h-4 w-4 text-green-600" />
+                            <AlertDescription className="text-green-800">
+                              <div className="text-center">
+                                <p className="font-bold">🎉 Parabéns! Você é o vencedor!</p>
+                                <p>Lance vencedor: {formatCurrency(userWinningBid.bid_value)}</p>
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        );
+                      }
+                    })()}
                 </CardContent>
               </Card>
              )}
 
-             {/* Histórico de Lances */}
-             <BidHistory 
-               bids={bids} 
-               loading={false} 
-               currentUserId={user?.id} 
-             />
+              {/* Histórico de Lances */}
+              <BidHistory 
+                bids={bids} 
+                loading={bidsLoading} 
+                currentUserId={user?.id} 
+              />
            </div>
          </div>
        </div>
