@@ -25,38 +25,46 @@ export const usePendingNotifications = () => {
     if (!user || !mounted.current) return;
 
     try {
-      // Buscar lances pendentes
+      console.log('🔄 fetchPendingItems: Starting fetch for user:', user.id);
+
+      // Buscar lances pendentes usando foreign key explícita
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
         .select(`
           id,
           bid_value,
           created_at,
-          auction_id,
-          user_id,
-          auctions(name),
-          profiles(name)
+          auction:auctions!bids_auction_id_fkey(name),
+          user_profile:profiles!bids_user_id_fkey(name)
         `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (bidsError) throw bidsError;
+      if (bidsError) {
+        console.error('❌ fetchPendingItems: Bids error:', bidsError);
+        throw bidsError;
+      }
 
-      // Buscar habilitações pendentes
+      console.log('✅ fetchPendingItems: Bids data:', bidsData);
+
+      // Buscar habilitações pendentes usando foreign key explícita
       const { data: registrationsData, error: registrationsError } = await supabase
         .from('auction_registrations')
         .select(`
           id,
           created_at,
-          auction_id,
-          user_id,
-          auctions(name),
-          profiles(name)
+          auction:auctions!auction_registrations_auction_id_fkey(name),
+          user_profile:profiles!auction_registrations_user_id_fkey(name)
         `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (registrationsError) throw registrationsError;
+      if (registrationsError) {
+        console.error('❌ fetchPendingItems: Registrations error:', registrationsError);
+        throw registrationsError;
+      }
+
+      console.log('✅ fetchPendingItems: Registrations data:', registrationsData);
 
       if (!mounted.current) return;
 
@@ -64,8 +72,8 @@ export const usePendingNotifications = () => {
       const formattedBids: PendingItem[] = (bidsData || []).map((bid: any) => ({
         id: bid.id,
         type: 'bid' as const,
-        auction_name: bid.auctions?.name || 'Leilão desconhecido',
-        user_name: bid.profiles?.name || 'Usuário desconhecido',
+        auction_name: bid.auction?.name || 'Leilão desconhecido',
+        user_name: bid.user_profile?.name || 'Usuário desconhecido',
         value: bid.bid_value,
         created_at: bid.created_at
       }));
@@ -74,15 +82,18 @@ export const usePendingNotifications = () => {
       const formattedRegistrations: PendingItem[] = (registrationsData || []).map((registration: any) => ({
         id: registration.id,
         type: 'registration' as const,
-        auction_name: registration.auctions?.name || 'Leilão desconhecido',
-        user_name: registration.profiles?.name || 'Usuário desconhecido',
+        auction_name: registration.auction?.name || 'Leilão desconhecido',
+        user_name: registration.user_profile?.name || 'Usuário desconhecido',
         created_at: registration.created_at
       }));
+
+      console.log('✅ fetchPendingItems: Formatted bids:', formattedBids.length);
+      console.log('✅ fetchPendingItems: Formatted registrations:', formattedRegistrations.length);
 
       setPendingBids(formattedBids);
       setPendingRegistrations(formattedRegistrations);
     } catch (error) {
-      console.error('Error fetching pending notifications:', error);
+      console.error('❌ fetchPendingItems: Final error:', error);
     } finally {
       if (mounted.current) {
         setLoading(false);
@@ -100,9 +111,19 @@ export const usePendingNotifications = () => {
     
     // Check if channels already exist
     if (activeNotificationChannels.has(channelKey)) {
-      console.log('Notification channels already exist for user', user.id);
+      console.log('🔄 usePendingNotifications: Channels already exist for user:', user.id);
       return;
     }
+
+    console.log('🔄 usePendingNotifications: Creating new channels for user:', user.id);
+
+    // Create stable callback to avoid dependency issues
+    const handlePendingChange = () => {
+      console.log('🔄 usePendingNotifications: Realtime change detected for user:', user.id);
+      if (mounted.current) {
+        fetchPendingItems();
+      }
+    };
 
     // Create channels with unique IDs
     const bidsChannel = supabase
@@ -112,11 +133,7 @@ export const usePendingNotifications = () => {
         schema: 'public',
         table: 'bids',
         filter: 'status=eq.pending'
-      }, () => {
-        if (mounted.current) {
-          fetchPendingItems();
-        }
-      });
+      }, handlePendingChange);
 
     const registrationsChannel = supabase
       .channel(`pending-registrations-${user.id}-${Date.now()}-${Math.random()}`)
@@ -125,11 +142,7 @@ export const usePendingNotifications = () => {
         schema: 'public',
         table: 'auction_registrations',
         filter: 'status=eq.pending'
-      }, () => {
-        if (mounted.current) {
-          fetchPendingItems();
-        }
-      });
+      }, handlePendingChange);
 
     // Store channels in registry
     activeNotificationChannels.set(channelKey, { bidsChannel, registrationsChannel });
@@ -137,8 +150,10 @@ export const usePendingNotifications = () => {
     // Subscribe to channels
     bidsChannel.subscribe();
     registrationsChannel.subscribe();
+    console.log('✅ usePendingNotifications: Channels subscribed for user:', user.id);
 
     return () => {
+      console.log('🧹 usePendingNotifications: Cleaning up channels for user:', user.id);
       mounted.current = false;
       
       // Clean up channels
@@ -147,9 +162,10 @@ export const usePendingNotifications = () => {
         activeNotificationChannels.delete(channelKey);
         supabase.removeChannel(storedChannels.bidsChannel);
         supabase.removeChannel(storedChannels.registrationsChannel);
+        console.log('✅ usePendingNotifications: Channels cleaned up for user:', user.id);
       }
     };
-  }, [user, fetchPendingItems]);
+  }, [user]);
 
   const totalPending = pendingBids.length + pendingRegistrations.length;
 
