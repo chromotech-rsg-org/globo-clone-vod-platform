@@ -1,7 +1,6 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Customization {
   id: string;
@@ -16,38 +15,25 @@ interface Customization {
 export const useCustomizations = (page: string) => {
   const [customizations, setCustomizations] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     fetchCustomizations();
     
-    // Clean up existing subscription first
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-    
-    // Create new subscription only if none exists
-    if (!channelRef.current) {
-      const channelId = `customizations-${page}-${Date.now()}`;
-      channelRef.current = supabase
-        .channel(channelId)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'customizations',
-          filter: `page=eq.${page}`
-        }, () => {
-          fetchCustomizations();
-        })
-        .subscribe();
-    }
+    // Create channel with unique ID
+    const channel = supabase
+      .channel(`customizations-${page}-${Date.now()}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'customizations',
+        filter: `page=eq.${page}`
+      }, () => {
+        fetchCustomizations();
+      })
+      .subscribe();
 
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      supabase.removeChannel(channel);
     };
   }, [page]);
 

@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface PendingItem {
   id: string;
@@ -17,8 +16,6 @@ export const usePendingNotifications = () => {
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const bidsChannelRef = useRef<RealtimeChannel | null>(null);
-  const registrationsChannelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchPendingItems = async () => {
     if (!user) return;
@@ -86,58 +83,38 @@ export const usePendingNotifications = () => {
   };
 
   useEffect(() => {
+    if (!user) return;
+
     fetchPendingItems();
 
-    // Clean up existing channels first
-    if (bidsChannelRef.current) {
-      supabase.removeChannel(bidsChannelRef.current);
-      bidsChannelRef.current = null;
-    }
-    if (registrationsChannelRef.current) {
-      supabase.removeChannel(registrationsChannelRef.current);
-      registrationsChannelRef.current = null;
-    }
+    // Create channels with unique IDs
+    const bidsChannel = supabase
+      .channel(`pending-bids-${user.id}-${Date.now()}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'bids',
+        filter: 'status=eq.pending'
+      }, () => {
+        fetchPendingItems();
+      })
+      .subscribe();
 
-    // Only create channels if user exists and channels don't exist
-    if (user && !bidsChannelRef.current) {
-      const bidsChannelId = `pending-bids-${user.id}-${Date.now()}`;
-      bidsChannelRef.current = supabase
-        .channel(bidsChannelId)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'bids',
-          filter: 'status=eq.pending'
-        }, () => {
-          fetchPendingItems();
-        })
-        .subscribe();
-    }
-
-    if (user && !registrationsChannelRef.current) {
-      const registrationsChannelId = `pending-registrations-${user.id}-${Date.now()}`;
-      registrationsChannelRef.current = supabase
-        .channel(registrationsChannelId)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'auction_registrations',
-          filter: 'status=eq.pending'
-        }, () => {
-          fetchPendingItems();
-        })
-        .subscribe();
-    }
+    const registrationsChannel = supabase
+      .channel(`pending-registrations-${user.id}-${Date.now()}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'auction_registrations',
+        filter: 'status=eq.pending'
+      }, () => {
+        fetchPendingItems();
+      })
+      .subscribe();
 
     return () => {
-      if (bidsChannelRef.current) {
-        supabase.removeChannel(bidsChannelRef.current);
-        bidsChannelRef.current = null;
-      }
-      if (registrationsChannelRef.current) {
-        supabase.removeChannel(registrationsChannelRef.current);
-        registrationsChannelRef.current = null;
-      }
+      supabase.removeChannel(bidsChannel);
+      supabase.removeChannel(registrationsChannel);
     };
   }, [user]);
 
