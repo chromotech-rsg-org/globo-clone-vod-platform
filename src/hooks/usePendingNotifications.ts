@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -11,14 +11,18 @@ interface PendingItem {
   created_at: string;
 }
 
+// Global registry to track active channels
+const activeNotificationChannels = new Map<string, any>();
+
 export const usePendingNotifications = () => {
   const [pendingBids, setPendingBids] = useState<PendingItem[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const mounted = useRef(true);
 
-  const fetchPendingItems = async () => {
-    if (!user) return;
+  const fetchPendingItems = useCallback(async () => {
+    if (!user || !mounted.current) return;
 
     try {
       // Buscar lances pendentes
@@ -54,6 +58,8 @@ export const usePendingNotifications = () => {
 
       if (registrationsError) throw registrationsError;
 
+      if (!mounted.current) return;
+
       // Formatar dados dos lances
       const formattedBids: PendingItem[] = (bidsData || []).map((bid: any) => ({
         id: bid.id,
@@ -78,45 +84,72 @@ export const usePendingNotifications = () => {
     } catch (error) {
       console.error('Error fetching pending notifications:', error);
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
-
+    
+    mounted.current = true;
     fetchPendingItems();
+
+    const channelKey = `pending-notifications-${user.id}`;
+    
+    // Check if channels already exist
+    if (activeNotificationChannels.has(channelKey)) {
+      console.log('Notification channels already exist for user', user.id);
+      return;
+    }
 
     // Create channels with unique IDs
     const bidsChannel = supabase
-      .channel(`pending-bids-${user.id}-${Date.now()}`)
+      .channel(`pending-bids-${user.id}-${Date.now()}-${Math.random()}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'bids',
         filter: 'status=eq.pending'
       }, () => {
-        fetchPendingItems();
-      })
-      .subscribe();
+        if (mounted.current) {
+          fetchPendingItems();
+        }
+      });
 
     const registrationsChannel = supabase
-      .channel(`pending-registrations-${user.id}-${Date.now()}`)
+      .channel(`pending-registrations-${user.id}-${Date.now()}-${Math.random()}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'auction_registrations',
         filter: 'status=eq.pending'
       }, () => {
-        fetchPendingItems();
-      })
-      .subscribe();
+        if (mounted.current) {
+          fetchPendingItems();
+        }
+      });
+
+    // Store channels in registry
+    activeNotificationChannels.set(channelKey, { bidsChannel, registrationsChannel });
+    
+    // Subscribe to channels
+    bidsChannel.subscribe();
+    registrationsChannel.subscribe();
 
     return () => {
-      supabase.removeChannel(bidsChannel);
-      supabase.removeChannel(registrationsChannel);
+      mounted.current = false;
+      
+      // Clean up channels
+      const storedChannels = activeNotificationChannels.get(channelKey);
+      if (storedChannels) {
+        activeNotificationChannels.delete(channelKey);
+        supabase.removeChannel(storedChannels.bidsChannel);
+        supabase.removeChannel(storedChannels.registrationsChannel);
+      }
     };
-  }, [user]);
+  }, [user, fetchPendingItems]);
 
   const totalPending = pendingBids.length + pendingRegistrations.length;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,6 +19,9 @@ interface Bid {
   user_name?: string;
 }
 
+// Global registry to track active auction channels
+const activeAuctionChannels = new Map<string, any>();
+
 export const useAuctionBids = (auctionId: string) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,9 +29,10 @@ export const useAuctionBids = (auctionId: string) => {
   const [pendingBidExists, setPendingBidExists] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const mounted = useRef(true);
 
-  const fetchBids = async () => {
-    if (!auctionId) return;
+  const fetchBids = useCallback(async () => {
+    if (!auctionId || !mounted.current) return;
 
     try {
       // Fetch bids with user profile information
@@ -42,6 +46,8 @@ export const useAuctionBids = (auctionId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      if (!mounted.current) return;
 
       const formattedBids = (data || []).map((bid: any) => ({
         ...bid,
@@ -60,15 +66,19 @@ export const useAuctionBids = (auctionId: string) => {
 
     } catch (error) {
       console.error('Error fetching bids:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os lances",
-        variant: "destructive"
-      });
+      if (mounted.current) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os lances",
+          variant: "destructive"
+        });
+      }
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, [auctionId, user, toast]);
 
   const submitBid = async (bidValue: number) => {
     if (!user || !auctionId) {
@@ -174,19 +184,30 @@ export const useAuctionBids = (auctionId: string) => {
 
   useEffect(() => {
     if (!auctionId) return;
-
+    
+    mounted.current = true;
     fetchBids();
+
+    const channelKey = `auction-bids-${auctionId}`;
+    
+    // Check if channel already exists
+    if (activeAuctionChannels.has(channelKey)) {
+      console.log('Auction channel already exists for', auctionId);
+      return;
+    }
 
     // Create channel with unique ID
     const channel = supabase
-      .channel(`auction-bids-${auctionId}-${Date.now()}`)
+      .channel(`auction-bids-${auctionId}-${Date.now()}-${Math.random()}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'bids',
         filter: `auction_id=eq.${auctionId}`
       }, () => {
-        fetchBids();
+        if (mounted.current) {
+          fetchBids();
+        }
       })
       .on('postgres_changes', {
         event: '*',
@@ -194,14 +215,28 @@ export const useAuctionBids = (auctionId: string) => {
         table: 'auctions',
         filter: `id=eq.${auctionId}`
       }, () => {
-        fetchBids();
-      })
-      .subscribe();
+        if (mounted.current) {
+          fetchBids();
+        }
+      });
+
+    // Store channel in registry
+    activeAuctionChannels.set(channelKey, channel);
+    
+    // Subscribe
+    channel.subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      mounted.current = false;
+      
+      // Remove from registry and unsubscribe
+      const storedChannel = activeAuctionChannels.get(channelKey);
+      if (storedChannel) {
+        activeAuctionChannels.delete(channelKey);
+        supabase.removeChannel(storedChannel);
+      }
     };
-  }, [auctionId]);
+  }, [auctionId, fetchBids]);
 
   const userPendingBid = bids.find(bid => bid.user_id === user?.id && bid.status === 'pending');
 
