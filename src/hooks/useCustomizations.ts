@@ -21,15 +21,15 @@ export const useCustomizations = (page: string) => {
   useEffect(() => {
     fetchCustomizations();
     
-    // Clean up any existing subscription
+    // Clean up existing subscription first
     if (channelRef.current) {
-      channelRef.current.unsubscribe();
+      supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
     
     // Create new subscription only if none exists
     if (!channelRef.current) {
-      const channelId = `customizations-${page}-${Math.random().toString(36).substr(2, 9)}`;
+      const channelId = `customizations-${page}-${Date.now()}`;
       channelRef.current = supabase
         .channel(channelId)
         .on('postgres_changes', {
@@ -45,7 +45,7 @@ export const useCustomizations = (page: string) => {
 
     return () => {
       if (channelRef.current) {
-        channelRef.current.unsubscribe();
+        supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };

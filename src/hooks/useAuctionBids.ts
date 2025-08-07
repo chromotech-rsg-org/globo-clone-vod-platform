@@ -177,15 +177,15 @@ export const useAuctionBids = (auctionId: string) => {
   useEffect(() => {
     fetchBids();
 
-    // Clean up existing channel
+    // Clean up existing channel first
     if (channelRef.current) {
-      channelRef.current.unsubscribe();
+      supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
-    // Create new channel only if none exists
-    if (!channelRef.current && auctionId) {
-      const channelId = `auction-bids-${auctionId}-${Math.random().toString(36).substr(2, 9)}`;
+    // Only create channel if auctionId exists and channel doesn't exist
+    if (auctionId && !channelRef.current) {
+      const channelId = `auction-bids-${auctionId}-${Date.now()}`;
       channelRef.current = supabase
         .channel(channelId)
         .on('postgres_changes', {
@@ -209,7 +209,7 @@ export const useAuctionBids = (auctionId: string) => {
 
     return () => {
       if (channelRef.current) {
-        channelRef.current.unsubscribe();
+        supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
