@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { validateEmail, sanitizeInput } from '@/utils/validators';
+import { validateEmailSecurity, globalRateLimiter, securityConfig, sanitizeInputSecure } from '@/utils/validators';
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => Promise<void>;
@@ -21,17 +21,32 @@ const LoginForm = ({ onSubmit, isSubmitting }: LoginFormProps) => {
     // Clear previous errors
     setErrors({});
     
-    // Validate inputs
+    // Rate limiting check
+    const rateLimitKey = `login_${email}`;
+    if (!globalRateLimiter.isAllowed(rateLimitKey, securityConfig.rateLimits.loginAttempts, securityConfig.rateLimits.timeWindow)) {
+      const remainingTime = Math.ceil(globalRateLimiter.getRemainingTime(rateLimitKey, securityConfig.rateLimits.timeWindow) / 60000);
+      setErrors({ 
+        general: `Muitas tentativas de login. Tente novamente em ${remainingTime} minutos.` 
+      });
+      return;
+    }
+    
+    // Enhanced validation
     const validationErrors: Record<string, string> = {};
     
     if (!email.trim()) {
-      validationErrors.email = 'Email is required';
-    } else if (!validateEmail(email)) {
-      validationErrors.email = 'Please enter a valid email address';
+      validationErrors.email = 'Email é obrigatório';
+    } else {
+      const emailValidation = validateEmailSecurity(email);
+      if (!emailValidation.isValid) {
+        validationErrors.email = emailValidation.errors[0];
+      }
     }
     
     if (!password.trim()) {
-      validationErrors.password = 'Password is required';
+      validationErrors.password = 'Senha é obrigatória';
+    } else if (password.length > 128) {
+      validationErrors.password = 'Senha muito longa';
     }
     
     if (Object.keys(validationErrors).length > 0) {
@@ -40,11 +55,17 @@ const LoginForm = ({ onSubmit, isSubmitting }: LoginFormProps) => {
     }
     
     // Sanitize and submit
-    await onSubmit(sanitizeInput(email.toLowerCase().trim()), password);
+    await onSubmit(sanitizeInputSecure(email.toLowerCase().trim()), password);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {errors.general && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+          <p className="text-red-400 text-sm">{errors.general}</p>
+        </div>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="login-email" className="text-gray-300">Email</Label>
         <Input
@@ -57,6 +78,7 @@ const LoginForm = ({ onSubmit, isSubmitting }: LoginFormProps) => {
           }}
           className={`bg-gray-700 border-gray-600 text-white ${errors.email ? 'border-red-500' : ''}`}
           placeholder="seu@email.com"
+          autoComplete="email"
           required
         />
         {errors.email && <p className="text-red-400 text-sm">{errors.email}</p>}
@@ -74,6 +96,7 @@ const LoginForm = ({ onSubmit, isSubmitting }: LoginFormProps) => {
           }}
           className={`bg-gray-700 border-gray-600 text-white ${errors.password ? 'border-red-500' : ''}`}
           placeholder="••••••••"
+          autoComplete="current-password"
           required
         />
         {errors.password && <p className="text-red-400 text-sm">{errors.password}</p>}

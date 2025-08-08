@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { validatePassword, sanitizeInput, validateEmail, validateCPF, validatePhone } from '@/utils/validators';
+import { validatePassword, validateEmailSecurity, validateCpfSecurity, validatePhoneSecurity, sanitizeInputSecure } from '@/utils/validators';
 import { RegisterData } from '@/types/auth';
 
 interface RegisterFormProps {
@@ -33,8 +33,10 @@ const RegisterForm = ({ onSubmit, isSubmitting }: RegisterFormProps) => {
       errors.name = 'Name is required';
     }
     
-    if (!validateEmail(formData.email)) {
-      errors.email = 'Please enter a valid email address';
+    // Enhanced email validation
+    const emailValidation = validateEmailSecurity(formData.email);
+    if (!emailValidation.isValid) {
+      errors.email = emailValidation.errors[0];
     }
     
     const passwordCheck = validatePassword(formData.password);
@@ -42,12 +44,20 @@ const RegisterForm = ({ onSubmit, isSubmitting }: RegisterFormProps) => {
       errors.password = passwordCheck.errors[0];
     }
     
-    if (formData.cpf && !validateCPF(formData.cpf)) {
-      errors.cpf = 'Please enter a valid CPF';
+    // Enhanced CPF validation
+    if (formData.cpf) {
+      const cpfValidation = validateCpfSecurity(formData.cpf);
+      if (!cpfValidation.isValid) {
+        errors.cpf = cpfValidation.errors[0];
+      }
     }
     
-    if (formData.phone && !validatePhone(formData.phone)) {
-      errors.phone = 'Please enter a valid phone number';
+    // Enhanced phone validation
+    if (formData.phone) {
+      const phoneValidation = validatePhoneSecurity(formData.phone);
+      if (!phoneValidation.isValid) {
+        errors.phone = phoneValidation.errors[0];
+      }
     }
     
     if (Object.keys(errors).length > 0) {
@@ -58,10 +68,10 @@ const RegisterForm = ({ onSubmit, isSubmitting }: RegisterFormProps) => {
     // Sanitize inputs before submission
     const sanitizedData = {
       ...formData,
-      name: sanitizeInput(formData.name),
+      name: sanitizeInputSecure(formData.name),
       email: formData.email.toLowerCase().trim(),
-      cpf: formData.cpf ? sanitizeInput(formData.cpf) : '',
-      phone: formData.phone ? sanitizeInput(formData.phone) : ''
+      cpf: formData.cpf ? sanitizeInputSecure(formData.cpf) : '',
+      phone: formData.phone ? sanitizeInputSecure(formData.phone) : ''
     };
     
     await onSubmit(sanitizedData);

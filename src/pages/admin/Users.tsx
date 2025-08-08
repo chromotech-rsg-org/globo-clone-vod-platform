@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
 import RoleChangeConfirmation from '@/components/auth/RoleChangeConfirmation';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { sanitizeInput, validateEmail, validateCPF, validatePhone } from '@/utils/validators';
+import { sanitizeInputSecure, validateEmailSecurity, validateCpfSecurity, validatePhoneSecurity, validateEmail, validateCPF, validatePhone } from '@/utils/validators';
 
 interface UserProfile {
   id: string;
@@ -148,16 +148,23 @@ const AdminUsers = () => {
       errors.push('Name is required');
     }
     
-    if (!validateEmail(formData.email)) {
-      errors.push('Please enter a valid email address');
+    const emailValidation = validateEmailSecurity(formData.email);
+    if (!emailValidation.isValid) {
+      errors.push(...emailValidation.errors);
     }
     
-    if (formData.cpf && !validateCPF(formData.cpf)) {
-      errors.push('Please enter a valid CPF');
+    if (formData.cpf) {
+      const cpfValidation = validateCpfSecurity(formData.cpf);
+      if (!cpfValidation.isValid) {
+        errors.push(...cpfValidation.errors);
+      }
     }
     
-    if (formData.phone && !validatePhone(formData.phone)) {
-      errors.push('Please enter a valid phone number');
+    if (formData.phone) {
+      const phoneValidation = validatePhoneSecurity(formData.phone);
+      if (!phoneValidation.isValid) {
+        errors.push(...phoneValidation.errors);
+      }
     }
     
     if (errors.length > 0) {
@@ -172,10 +179,10 @@ const AdminUsers = () => {
     try {
       // Sanitize inputs
       const sanitizedData = {
-        name: sanitizeInput(formData.name),
+        name: sanitizeInputSecure(formData.name),
         email: formData.email.toLowerCase().trim(),
-        cpf: formData.cpf ? sanitizeInput(formData.cpf) : '',
-        phone: formData.phone ? sanitizeInput(formData.phone) : '',
+        cpf: formData.cpf ? sanitizeInputSecure(formData.cpf) : '',
+        phone: formData.phone ? sanitizeInputSecure(formData.phone) : '',
         role: formData.role
       };
 
@@ -277,10 +284,10 @@ const AdminUsers = () => {
     try {
       // Sanitize inputs
       const sanitizedData = {
-        name: sanitizeInput(formData.name),
+        name: sanitizeInputSecure(formData.name),
         email: formData.email.toLowerCase().trim(),
-        cpf: formData.cpf ? sanitizeInput(formData.cpf) : '',
-        phone: formData.phone ? sanitizeInput(formData.phone) : '',
+        cpf: formData.cpf ? sanitizeInputSecure(formData.cpf) : '',
+        phone: formData.phone ? sanitizeInputSecure(formData.phone) : '',
         role: formData.role
       };
 

@@ -500,6 +500,36 @@ export type Database = {
           },
         ]
       }
+      profile_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          modified_by: string
+          new_values: Json | null
+          old_values: Json | null
+          profile_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          modified_by: string
+          new_values?: Json | null
+          old_values?: Json | null
+          profile_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          modified_by?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          profile_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           cpf: string | null
@@ -583,18 +613,23 @@ export type Database = {
       }
     }
     Views: {
-      admin_dashboard_cache: {
-        Row: {
-          admin_count: number | null
-          last_updated: string | null
-          table_name: string | null
-          total_count: number | null
-          user_count: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      check_role_change_rate_limit: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      get_admin_dashboard_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          total_count: number
+          admin_count: number
+          user_count: number
+          last_updated: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
