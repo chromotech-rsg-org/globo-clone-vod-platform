@@ -583,7 +583,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_dashboard_cache: {
+        Row: {
+          admin_count: number | null
+          last_updated: string | null
+          table_name: string | null
+          total_count: number | null
+          user_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_current_user_role: {
@@ -599,6 +608,10 @@ export type Database = {
           start_date: string
           end_date: string
         }[]
+      }
+      health_check: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       user_has_active_subscription: {
         Args: { user_uuid: string }
