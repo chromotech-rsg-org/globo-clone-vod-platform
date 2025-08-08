@@ -142,25 +142,23 @@ export const usePendingNotifications = () => {
     mounted.current = true;
     fetchPendingItems();
 
-    // Simplified real-time subscription
+    // Create unique channel with user ID to prevent duplicates
+    const channelName = `pending-notifications-${user.id}`;
+    
     const handlePendingChange = () => {
       if (mounted.current) {
         fetchPendingItems();
       }
     };
 
-    const bidsChannel = supabase
-      .channel(`pending-bids-${Date.now()}`)
+    const channel = supabase
+      .channel(channelName)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'bids',
         filter: 'status=eq.pending'
       }, handlePendingChange)
-      .subscribe();
-
-    const registrationsChannel = supabase
-      .channel(`pending-registrations-${Date.now()}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -171,10 +169,9 @@ export const usePendingNotifications = () => {
 
     return () => {
       mounted.current = false;
-      supabase.removeChannel(bidsChannel);
-      supabase.removeChannel(registrationsChannel);
+      supabase.removeChannel(channel);
     };
-  }, [user, fetchPendingItems]);
+  }, [user?.id, fetchPendingItems]);
 
   const totalPending = pendingBids.length + pendingRegistrations.length;
 
