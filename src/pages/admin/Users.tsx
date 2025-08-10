@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Edit, Eye, Save, X, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import AdminLayout from '@/components/AdminLayout';
+
 import RoleChangeConfirmation from '@/components/auth/RoleChangeConfirmation';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { sanitizeInputSecure, validateEmailSecurity, validateCpfSecurity, validatePhoneSecurity, validateEmail, validateCPF, validatePhone } from '@/utils/validators';
@@ -397,16 +397,14 @@ const AdminUsers = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="p-6">
-          <div className="text-white">Carregando...</div>
-        </div>
-      </AdminLayout>
+      <div className="p-6">
+        <div className="text-white">Carregando...</div>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
@@ -723,7 +721,7 @@ const AdminUsers = () => {
         newRole={roleChangeConfirmation.newRole}
         userName={roleChangeConfirmation.userName}
       />
-    </AdminLayout>
+    </>
   );
 };
 

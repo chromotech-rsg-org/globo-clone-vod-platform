@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import ImageUpload from '@/components/ui/image-upload';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import AdminLayout from '@/components/AdminLayout';
+
 
 interface StorageImage {
   url: string;
@@ -224,16 +224,14 @@ const Images = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
         <div className="p-6">
           <div className="text-white">Carregando...</div>
         </div>
-      </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gestão de Imagens</h1>
@@ -433,7 +431,7 @@ const Images = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 };
 

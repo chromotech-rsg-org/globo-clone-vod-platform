@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Home, LogIn, Settings, Image, Palette, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import AdminLayout from '@/components/AdminLayout';
+
 import { useCustomizations } from '@/hooks/useCustomizations';
 import { useAdminLoginCustomizations } from '@/hooks/useAdminLoginCustomizations';
 import { supabase } from '@/integrations/supabase/client';
@@ -691,16 +691,14 @@ const AdminCustomization = () => {
 
   if (isLoading) {
     return (
-      <AdminLayout>
         <div className="p-6">
           <div className="text-admin-foreground">Carregando personalizações...</div>
         </div>
-      </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <header className="bg-admin-header border-b border-admin-border">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-admin-foreground">Central de Personalização</h1>
@@ -799,7 +797,7 @@ const AdminCustomization = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

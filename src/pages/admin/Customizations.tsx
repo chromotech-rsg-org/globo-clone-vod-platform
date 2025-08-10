@@ -263,16 +263,14 @@ const AdminCustomizations = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
         <div className="p-6">
           <div className="text-white">Carregando...</div>
         </div>
-      </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-white">Personalização Visual</h1>
@@ -398,7 +396,7 @@ const AdminCustomizations = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

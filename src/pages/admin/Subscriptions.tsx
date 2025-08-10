@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Edit, Plus, Trash2, Users, DollarSign, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import AdminLayout from '@/components/AdminLayout';
+
 import { formatDate } from '@/utils/formatters';
 
 interface Subscription {
@@ -289,7 +289,7 @@ const AdminSubscriptions = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       {loading ? (
         <div className="p-6">
           <div className="text-admin-table-text">Carregando...</div>
@@ -518,7 +518,7 @@ const AdminSubscriptions = () => {
       </Dialog>
       </>
       )}
-    </AdminLayout>
+    </>
   );
 };
 

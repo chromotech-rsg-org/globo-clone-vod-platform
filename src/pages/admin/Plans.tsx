@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import AdminLayout from '@/components/AdminLayout';
+
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { formatBillingCycle } from '@/utils/formatters';
 
@@ -266,16 +266,14 @@ const AdminPlans = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="p-6">
-          <div className="text-white">Carregando...</div>
-        </div>
-      </AdminLayout>
+      <div className="p-6">
+        <div className="text-white">Carregando...</div>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Planos</h1>
@@ -520,7 +518,7 @@ const AdminPlans = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 };
 

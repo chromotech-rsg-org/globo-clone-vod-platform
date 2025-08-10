@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import AdminLayout from '@/components/AdminLayout';
+
 
 interface Package {
   id: string;
@@ -201,7 +201,7 @@ const AdminPackages = () => {
   );
 
   return (
-    <AdminLayout>
+    <>
       {loading ? (
         <div className="p-6">
           <div className="text-admin-table-text">Carregando...</div>
@@ -378,7 +378,7 @@ const AdminPackages = () => {
       </Dialog>
       </>
       )}
-    </AdminLayout>
+    </>
   );
 };
 
