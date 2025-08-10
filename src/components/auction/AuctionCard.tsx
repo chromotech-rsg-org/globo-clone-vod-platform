@@ -2,14 +2,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Auction } from '@/types/auction';
 import { formatCurrency } from '@/utils/formatters';
-import { Play, Square } from 'lucide-react';
+import { Play, Square, Trophy, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuctionStats } from '@/hooks/useAuctionStats';
 
 interface AuctionCardProps {
   auction: Auction;
 }
 
 const AuctionCard = ({ auction }: AuctionCardProps) => {
+  const { stats, loading } = useAuctionStats(auction.id);
+
   return (
     <Link to={`/auctions/${auction.id}`}>
       <Card className="hover:shadow-lg transition-shadow cursor-pointer">
@@ -36,24 +39,42 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
               <Badge variant="outline">
                 {auction.auction_type === 'rural' ? 'Rural' : 'Judicial'}
               </Badge>
+              {stats?.hasWinner && (
+                <Badge className="bg-green-500 text-white flex items-center gap-1">
+                  <Trophy size={12} />
+                  Finalizado
+                </Badge>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                Lance Atual
+              <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <Target size={10} />
+                Lance Inicial
               </p>
-              <p className="text-lg font-bold text-primary">
-                {formatCurrency(auction.current_bid_value)}
+              <p className="text-sm font-medium text-muted-foreground">
+                {formatCurrency(auction.initial_bid_value)}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                Incremento
+                {stats?.hasWinner ? 'Arrematado' : 'Lance Atual'}
+              </p>
+              <p className={`text-lg font-bold ${stats?.hasWinner ? 'text-green-600' : 'text-primary'}`}>
+                {stats?.hasWinner && stats?.winnerBidValue 
+                  ? formatCurrency(stats.winnerBidValue)
+                  : formatCurrency(auction.current_bid_value)
+                }
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                Total de Lances
               </p>
               <p className="text-sm font-medium">
-                {formatCurrency(auction.bid_increment)}
+                {loading ? '...' : (stats?.totalBids || 0)}
               </p>
             </div>
           </div>

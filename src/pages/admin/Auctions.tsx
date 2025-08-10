@@ -14,6 +14,7 @@ import { Auction } from '@/types/auction';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { useToast } from '@/components/ui/use-toast';
 import CurrencyInput from '@/components/ui/currency-input';
+import FilterControls from '@/components/admin/FilterControls';
 import { Plus, Edit, Trash2, Play, Square, Copy } from 'lucide-react';
 
 const Auctions = () => {
@@ -21,6 +22,10 @@ const Auctions = () => {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [liveFilter, setLiveFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -49,6 +54,22 @@ const Auctions = () => {
 
       if (error) throw error;
       setAuctions(data as Auction[] || []);
+      
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('auctions-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'auctions'
+        }, () => {
+          fetchAuctions();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     } catch (error) {
       console.error('Error fetching auctions:', error);
       toast({
@@ -211,6 +232,26 @@ const Auctions = () => {
       is_live: false
     });
   };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setLiveFilter('all');
+    setTypeFilter('all');
+  };
+
+  const filteredAuctions = auctions.filter(auction => {
+    const matchesSearch = searchTerm === '' || 
+      auction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      auction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      auction.auction_type.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || auction.status === statusFilter;
+    const matchesLive = liveFilter === 'all' || auction.is_live.toString() === liveFilter;
+    const matchesType = typeFilter === 'all' || auction.auction_type === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesLive && matchesType;
+  });
 
   useEffect(() => {
     fetchAuctions();
@@ -407,7 +448,55 @@ const Auctions = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Leilões</CardTitle>
+          <CardTitle>Lista de Leilões ({filteredAuctions.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FilterControls
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            filters={[
+              {
+                key: 'status',
+                label: 'Status',
+                value: statusFilter,
+                options: [
+                  { value: 'all', label: 'Todos' },
+                  { value: 'active', label: 'Ativo' },
+                  { value: 'inactive', label: 'Inativo' }
+                ],
+                onChange: setStatusFilter
+              },
+              {
+                key: 'live',
+                label: 'Transmissão',
+                value: liveFilter,
+                options: [
+                  { value: 'all', label: 'Todas' },
+                  { value: 'true', label: 'Ao Vivo' },
+                  { value: 'false', label: 'Gravado' }
+                ],
+                onChange: setLiveFilter
+              },
+              {
+                key: 'type',
+                label: 'Tipo',
+                value: typeFilter,
+                options: [
+                  { value: 'all', label: 'Todos' },
+                  { value: 'rural', label: 'Rural' },
+                  { value: 'judicial', label: 'Judicial' }
+                ],
+                onChange: setTypeFilter
+              }
+            ]}
+            onClearFilters={clearFilters}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Leilões Filtrados</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -428,7 +517,7 @@ const Auctions = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {auctions.map((auction) => (
+                {filteredAuctions.map((auction) => (
                   <TableRow key={auction.id}>
                     <TableCell className="font-medium">{auction.name}</TableCell>
                     <TableCell>

@@ -126,7 +126,9 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                     </p>
                     <Badge 
                       variant={getStatusVariant(bid.status, bid.is_winner)}
-                      className="flex items-center gap-1 w-fit ml-auto"
+                      className={`flex items-center gap-1 w-fit ml-auto ${
+                        bid.is_winner ? 'bg-green-500 text-white hover:bg-green-600' : ''
+                      }`}
                     >
                       {getStatusIcon(bid.status, bid.is_winner)}
                       {getStatusText(bid.status, bid.is_winner)}

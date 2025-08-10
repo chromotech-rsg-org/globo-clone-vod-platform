@@ -31,6 +31,22 @@ export const useAuctions = () => {
 
   useEffect(() => {
     fetchAuctions();
+    
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel(`auctions-list-${Math.random().toString(36).substring(7)}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'auctions'
+      }, () => {
+        fetchAuctions();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
   return { auctions, loading, refetch: fetchAuctions };

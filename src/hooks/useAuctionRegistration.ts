@@ -149,6 +149,28 @@ export const useAuctionRegistration = (auctionId: string) => {
   useEffect(() => {
     if (auctionId && user?.id) {
       fetchRegistration();
+      
+      // Set up real-time subscription to monitor registration status changes
+      const subscription = supabase
+        .channel(`registration-${auctionId}-${Math.random().toString(36).substring(7)}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'auction_registrations',
+            filter: `auction_id=eq.${auctionId}`
+          },
+          (payload) => {
+            console.info('🔄 Registration status updated:', payload);
+            fetchRegistration();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     }
   }, [auctionId, user?.id]);
 

@@ -55,17 +55,8 @@ export const useCustomizations = (page: string) => {
     mounted.current = true;
     fetchCustomizations();
     
-    // Check if channel already exists and clean it up first
-    const existingChannel = activeChannels.get(channelKey);
-    if (existingChannel) {
-      console.log('🧹 Cleaning up existing channel for', channelKey);
-      activeChannels.delete(channelKey);
-      supabase.removeChannel(existingChannel);
-    }
-
-    // Create unique channel with better naming
-    const uniqueChannelName = `${channelKey}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    console.log(`📡 Creating new channel: ${uniqueChannelName}`);
+    // Simple subscription without complex cleanup to prevent timeout errors
+    const uniqueChannelName = `${channelKey}-${Math.random().toString(36).substr(2, 9)}`;
     
     const channel = supabase
       .channel(uniqueChannelName)
@@ -79,33 +70,12 @@ export const useCustomizations = (page: string) => {
         if (mounted.current) {
           fetchCustomizations();
         }
-      });
-
-    // Store channel in registry
-    activeChannels.set(channelKey, channel);
-    
-    // Subscribe with error handling
-    channel.subscribe((status) => {
-      console.log(`📡 Channel subscription status for ${channelKey}:`, status);
-      if (status === 'SUBSCRIBED') {
-        console.log(`✅ Successfully subscribed to ${uniqueChannelName}`);
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error(`❌ Channel error for ${uniqueChannelName}`);
-      } else if (status === 'TIMED_OUT') {
-        console.error(`⏰ Channel timeout for ${uniqueChannelName}`);
-      }
-    });
+      })
+      .subscribe();
 
     return () => {
       mounted.current = false;
-      console.log(`🧹 Cleaning up channel: ${uniqueChannelName}`);
-      
-      // Remove from registry and unsubscribe
-      const storedChannel = activeChannels.get(channelKey);
-      if (storedChannel) {
-        activeChannels.delete(channelKey);
-        supabase.removeChannel(storedChannel);
-      }
+      supabase.removeChannel(channel);
     };
   }, [page, fetchCustomizations]); // Remove channelKey from dependencies to prevent recreation
 

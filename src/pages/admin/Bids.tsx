@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Bid } from '@/types/auction';
+import FilterControls from '@/components/admin/FilterControls';
 import { Check, X, Eye, Clock, Trophy, AlertCircle } from 'lucide-react';
 import { formatDateTime, formatCurrency } from '@/utils/formatters';
 
@@ -19,6 +20,7 @@ interface BidWithDetails extends Bid {
   auction_item_name?: string;
   user_name?: string;
   user_email?: string;
+  auction_is_live?: boolean;
 }
 
 const Bids = () => {
@@ -26,8 +28,11 @@ const Bids = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBid, setSelectedBid] = useState<BidWithDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [auctionFilter, setAuctionFilter] = useState<string>('all');
+  const [liveFilter, setLiveFilter] = useState<string>('all');
+  const [winnerFilter, setWinnerFilter] = useState<string>('all');
   const [auctions, setAuctions] = useState<any[]>([]);
   const [internalNotes, setInternalNotes] = useState('');
   const [clientNotes, setClientNotes] = useState('');
@@ -41,7 +46,7 @@ const Bids = () => {
         .from('bids')
         .select(`
           *,
-          auctions!inner(name),
+          auctions!inner(name, is_live),
           auction_items!inner(name),
           profiles!bids_user_id_fkey(name, email)
         `)
@@ -52,12 +57,29 @@ const Bids = () => {
       const formattedData = data.map(item => ({
         ...item,
         auction_name: item.auctions?.name,
+        auction_is_live: item.auctions?.is_live,
         auction_item_name: item.auction_items?.name,
         user_name: item.profiles?.name,
         user_email: item.profiles?.email
       })) as BidWithDetails[];
 
       setBids(formattedData);
+      
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('bids-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'bids'
+        }, () => {
+          fetchBids();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     } catch (error) {
       console.error('Error fetching bids:', error);
       toast({
@@ -153,12 +175,12 @@ const Bids = () => {
 
   const getStatusBadge = (status: string, isWinner: boolean) => {
     if (isWinner) {
-      return <Badge className="bg-yellow-500 text-white"><Trophy className="h-3 w-3 mr-1" />Vencedor</Badge>;
+      return <Badge className="bg-green-500 text-white"><Trophy className="h-3 w-3 mr-1" />Vencedor</Badge>;
     }
     
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-500 text-white"><Check className="h-3 w-3 mr-1" />Aprovado</Badge>;
+        return <Badge className="bg-blue-500 text-white"><Check className="h-3 w-3 mr-1" />Aprovado</Badge>;
       case 'rejected':
         return <Badge variant="destructive"><X className="h-3 w-3 mr-1" />Rejeitado</Badge>;
       case 'pending':
@@ -170,10 +192,27 @@ const Bids = () => {
     }
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setAuctionFilter('all');
+    setLiveFilter('all');
+    setWinnerFilter('all');
+  };
+
   const filteredBids = bids.filter(bid => {
-    if (statusFilter !== 'all' && bid.status !== statusFilter) return false;
-    if (auctionFilter !== 'all' && bid.auction_id !== auctionFilter) return false;
-    return true;
+    const matchesSearch = searchTerm === '' ||
+      bid.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bid.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bid.auction_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bid.auction_item_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || bid.status === statusFilter;
+    const matchesAuction = auctionFilter === 'all' || bid.auction_id === auctionFilter;
+    const matchesLive = liveFilter === 'all' || bid.auction_is_live?.toString() === liveFilter;
+    const matchesWinner = winnerFilter === 'all' || bid.is_winner.toString() === winnerFilter;
+    
+    return matchesSearch && matchesStatus && matchesAuction && matchesLive && matchesWinner;
   });
 
   useEffect(() => {
@@ -200,41 +239,70 @@ const Bids = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Lista de Lances</CardTitle>
-              <CardDescription>
-                {filteredBids.length} lance(s) encontrado(s)
-              </CardDescription>
-            </div>
-            <div className="flex space-x-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="approved">Aprovado</SelectItem>
-                  <SelectItem value="rejected">Rejeitado</SelectItem>
-                  <SelectItem value="superseded">Superado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={auctionFilter} onValueChange={setAuctionFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filtrar por leilão" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os leilões</SelectItem>
-                  {auctions.map(auction => (
-                    <SelectItem key={auction.id} value={auction.id}>
-                      {auction.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <CardTitle>Lista de Lances ({filteredBids.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FilterControls
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            filters={[
+              {
+                key: 'status',
+                label: 'Status',
+                value: statusFilter,
+                options: [
+                  { value: 'all', label: 'Todos' },
+                  { value: 'pending', label: 'Pendente' },
+                  { value: 'approved', label: 'Aprovado' },
+                  { value: 'rejected', label: 'Rejeitado' },
+                  { value: 'superseded', label: 'Superado' }
+                ],
+                onChange: setStatusFilter
+              },
+              {
+                key: 'auction',
+                label: 'Leilão',
+                value: auctionFilter,
+                options: [
+                  { value: 'all', label: 'Todos' },
+                  ...auctions.map(auction => ({
+                    value: auction.id,
+                    label: auction.name
+                  }))
+                ],
+                onChange: setAuctionFilter
+              },
+              {
+                key: 'live',
+                label: 'Transmissão',
+                value: liveFilter,
+                options: [
+                  { value: 'all', label: 'Todas' },
+                  { value: 'true', label: 'Ao Vivo' },
+                  { value: 'false', label: 'Gravado' }
+                ],
+                onChange: setLiveFilter
+              },
+              {
+                key: 'winner',
+                label: 'Vencedor',
+                value: winnerFilter,
+                options: [
+                  { value: 'all', label: 'Todos' },
+                  { value: 'true', label: 'Vencedores' },
+                  { value: 'false', label: 'Não Vencedores' }
+                ],
+                onChange: setWinnerFilter
+              }
+            ]}
+            onClearFilters={clearFilters}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Lances Filtrados</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

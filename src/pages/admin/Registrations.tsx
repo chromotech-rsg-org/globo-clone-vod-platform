@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AuctionRegistration } from '@/types/auction';
+import FilterControls from '@/components/admin/FilterControls';
 import { Check, X, Eye, Clock, AlertCircle } from 'lucide-react';
 import { formatDateTime } from '@/utils/formatters';
 
@@ -18,14 +19,19 @@ interface RegistrationWithDetails extends AuctionRegistration {
   auction_name?: string;
   user_name?: string;
   user_email?: string;
+  auction_is_live?: boolean;
 }
 
 const Registrations = () => {
   const [registrations, setRegistrations] = useState<RegistrationWithDetails[]>([]);
+  const [auctions, setAuctions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRegistration, setSelectedRegistration] = useState<RegistrationWithDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [auctionFilter, setAuctionFilter] = useState<string>('all');
+  const [liveFilter, setLiveFilter] = useState<string>('all');
   const [internalNotes, setInternalNotes] = useState('');
   const [clientNotes, setClientNotes] = useState('');
   const [nextRegistrationMinutes, setNextRegistrationMinutes] = useState('');
@@ -39,7 +45,7 @@ const Registrations = () => {
         .from('auction_registrations')
         .select(`
           *,
-          auctions!inner(name),
+          auctions!inner(name, is_live),
           profiles!auction_registrations_user_id_fkey(name, email)
         `)
         .order('created_at', { ascending: false });
@@ -49,11 +55,28 @@ const Registrations = () => {
       const formattedData = data.map(item => ({
         ...item,
         auction_name: item.auctions?.name,
+        auction_is_live: item.auctions?.is_live,
         user_name: item.profiles?.name,
         user_email: item.profiles?.email
       })) as RegistrationWithDetails[];
 
       setRegistrations(formattedData);
+      
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('registrations-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'auction_registrations'
+        }, () => {
+          fetchRegistrations();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     } catch (error) {
       console.error('Error fetching registrations:', error);
       toast({
@@ -63,6 +86,20 @@ const Registrations = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAuctions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('auctions')
+        .select('id, name')
+        .order('name');
+
+      if (error) throw error;
+      setAuctions(data || []);
+    } catch (error) {
+      console.error('Error fetching auctions:', error);
     }
   };
 
@@ -129,13 +166,29 @@ const Registrations = () => {
     }
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setAuctionFilter('all');
+    setLiveFilter('all');
+  };
+
   const filteredRegistrations = registrations.filter(reg => {
-    if (statusFilter === 'all') return true;
-    return reg.status === statusFilter;
+    const matchesSearch = searchTerm === '' || 
+      reg.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      reg.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      reg.auction_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || reg.status === statusFilter;
+    const matchesAuction = auctionFilter === 'all' || reg.auction_id === auctionFilter;
+    const matchesLive = liveFilter === 'all' || reg.auction_is_live?.toString() === liveFilter;
+    
+    return matchesSearch && matchesStatus && matchesAuction && matchesLive;
   });
 
   useEffect(() => {
     fetchRegistrations();
+    fetchAuctions();
   }, []);
 
   if (loading) {
@@ -157,25 +210,58 @@ const Registrations = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Lista de Habilitações</CardTitle>
-              <CardDescription>
-                {filteredRegistrations.length} habilitação(ões) encontrada(s)
-              </CardDescription>
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="approved">Aprovado</SelectItem>
-                <SelectItem value="rejected">Rejeitado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <CardTitle>Lista de Habilitações ({filteredRegistrations.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FilterControls
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            filters={[
+              {
+                key: 'status',
+                label: 'Status',
+                value: statusFilter,
+                options: [
+                  { value: 'all', label: 'Todos' },
+                  { value: 'pending', label: 'Pendente' },
+                  { value: 'approved', label: 'Aprovado' },
+                  { value: 'rejected', label: 'Rejeitado' }
+                ],
+                onChange: setStatusFilter
+              },
+              {
+                key: 'auction',
+                label: 'Leilão',
+                value: auctionFilter,
+                options: [
+                  { value: 'all', label: 'Todos' },
+                  ...auctions.map(auction => ({
+                    value: auction.id,
+                    label: auction.name
+                  }))
+                ],
+                onChange: setAuctionFilter
+              },
+              {
+                key: 'live',
+                label: 'Transmissão',
+                value: liveFilter,
+                options: [
+                  { value: 'all', label: 'Todas' },
+                  { value: 'true', label: 'Ao Vivo' },
+                  { value: 'false', label: 'Gravado' }
+                ],
+                onChange: setLiveFilter
+              }
+            ]}
+            onClearFilters={clearFilters}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Habilitações Filtradas</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

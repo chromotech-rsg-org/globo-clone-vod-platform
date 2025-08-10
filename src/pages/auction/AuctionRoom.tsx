@@ -112,6 +112,21 @@ const AuctionRoom = () => {
         };
       case 'can_bid':
         const anyPendingBid = bids.some(bid => bid.status === 'pending');
+        const hasWinner = bids.some(bid => bid.is_winner);
+        const isAuctionFinished = hasWinner;
+        
+        if (isAuctionFinished) {
+          return {
+            title: 'Leilão Finalizado',
+            description: 'Este leilão já foi finalizado e possui um vencedor.',
+            action: null,
+            variant: 'default' as const,
+            icon: CheckCircle,
+            onClick: null,
+            disabled: true
+          };
+        }
+        
         return {
           title: 'Habilitado para Lançar',
           description: anyPendingBid && !userPendingBid 
@@ -254,18 +269,28 @@ const AuctionRoom = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                    Próximo Lance
+                    Lance Inicial
                   </p>
-                  <p className="text-xl font-semibold text-foreground">
-                    {formatCurrency(nextBidValue)}
+                  <p className="text-lg font-medium text-muted-foreground">
+                    {formatCurrency(auction.initial_bid_value)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                    Incremento
+                    {(() => {
+                      const hasWinner = bids.some(bid => bid.is_winner);
+                      return hasWinner ? 'Valor Arrematado' : 'Próximo Lance';
+                    })()}
                   </p>
-                  <p className="text-lg font-medium">
-                    {formatCurrency(auction.bid_increment)}
+                  <p className="text-xl font-semibold text-foreground">
+                    {(() => {
+                      const hasWinner = bids.some(bid => bid.is_winner);
+                      if (hasWinner) {
+                        const winningBid = bids.find(bid => bid.is_winner);
+                        return formatCurrency(winningBid?.bid_value || auction.current_bid_value);
+                      }
+                      return formatCurrency(nextBidValue);
+                    })()}
                   </p>
                 </div>
               </CardContent>
@@ -324,6 +349,23 @@ const AuctionRoom = () => {
                               <div className="text-center">
                                 <p className="font-bold">🎉 Parabéns! Você é o vencedor!</p>
                                 <p>Lance vencedor: {formatCurrency(userWinningBid.bid_value)}</p>
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        );
+                      }
+                      
+                      // Verificar se há algum vencedor no leilão
+                      const anyWinner = bids.find(bid => bid.is_winner);
+                      if (anyWinner && anyWinner.user_id !== user?.id) {
+                        return (
+                          <Alert className="mt-4 border-orange-500 bg-orange-50">
+                            <Trophy className="h-4 w-4 text-orange-600" />
+                            <AlertDescription className="text-orange-800">
+                              <div className="text-center">
+                                <p className="font-bold">Leilão Finalizado</p>
+                                <p>Lance vencedor: {formatCurrency(anyWinner.bid_value)}</p>
+                                <p className="text-sm">Vencedor: {anyWinner.user_name || 'Usuário'}</p>
                               </div>
                             </AlertDescription>
                           </Alert>

@@ -227,7 +227,7 @@ export const useAuctionBids = (auctionId: string) => {
     };
 
     const channel = supabase
-      .channel(`auction-bids-${Date.now()}`)
+      .channel(`auction-bids-${auctionId}-${Math.random().toString(36).substring(7)}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
