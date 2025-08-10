@@ -110,10 +110,10 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                   <div className="flex items-center gap-3">
                     <div>
                       <p className="font-medium">
-                        {bid.user_name || 'Usuário'}
-                        {bid.user_id === currentUserId && (
-                          <span className="text-xs text-primary ml-2">(Você)</span>
-                        )}
+                        {bid.user_id === currentUserId 
+                          ? `${bid.user_name || 'Você'} (Você)`
+                          : 'Usuário'
+                        }
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {formatDate(bid.created_at)}

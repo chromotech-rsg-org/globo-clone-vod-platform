@@ -150,8 +150,9 @@ export const useAuctionBids = (auctionId: string) => {
         return false;
       }
 
-      // Buscar o auction_item correto para este leilão
-      const { data: auctionItem, error: itemError } = await supabase
+      // Buscar ou criar auction_item para este leilão
+      let auctionItem;
+      const { data: existingItem, error: itemError } = await supabase
         .from('auction_items')
         .select('id')
         .eq('auction_id', auctionId)
@@ -163,8 +164,39 @@ export const useAuctionBids = (auctionId: string) => {
         throw new Error('Não foi possível encontrar o item do leilão');
       }
 
-      if (!auctionItem) {
-        throw new Error('Nenhum item ativo encontrado para este leilão');
+      if (!existingItem) {
+        // Criar um item padrão se não existir
+        const { data: auctionData } = await supabase
+          .from('auctions')
+          .select('name, description, initial_bid_value, current_bid_value')
+          .eq('id', auctionId)
+          .single();
+
+        if (auctionData) {
+          const { data: newItem, error: createError } = await supabase
+            .from('auction_items')
+            .insert({
+              auction_id: auctionId,
+              name: auctionData.name,
+              description: auctionData.description || 'Item principal do leilão',
+              initial_value: auctionData.initial_bid_value,
+              current_value: auctionData.current_bid_value,
+              is_current: true,
+              order_index: 0
+            })
+            .select('id')
+            .single();
+
+          if (createError) {
+            console.error('Error creating auction item:', createError);
+            throw new Error('Não foi possível criar o item do leilão');
+          }
+          auctionItem = newItem;
+        } else {
+          throw new Error('Leilão não encontrado');
+        }
+      } else {
+        auctionItem = existingItem;
       }
 
       const { data, error } = await supabase
