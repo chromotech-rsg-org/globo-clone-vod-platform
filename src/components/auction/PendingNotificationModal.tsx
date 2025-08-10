@@ -32,12 +32,21 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   const navigate = useNavigate();
 
   const handleGoToBids = () => {
-    navigate('/admin/bids');
+    navigate('/admin/bids?status=pending');
     onOpenChange(false);
   };
 
   const handleGoToRegistrations = () => {
-    navigate('/admin/registrations');
+    navigate('/admin/registrations?status=pending');
+    onOpenChange(false);
+  };
+
+  const handleItemClick = (item: PendingItem) => {
+    if (item.type === 'bid') {
+      navigate(`/admin/bids?status=pending&bid=${item.id}`);
+    } else {
+      navigate(`/admin/registrations?status=pending&registration=${item.id}`);
+    }
     onOpenChange(false);
   };
 
@@ -75,7 +84,11 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {pendingBids.slice(0, 5).map((bid) => (
-                  <Card key={bid.id} className="p-3">
+                  <Card 
+                    key={bid.id} 
+                    className="p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleItemClick(bid)}
+                  >
                     <CardContent className="p-0">
                       <div className="flex items-center justify-between">
                         <div>
@@ -126,7 +139,11 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {pendingRegistrations.slice(0, 5).map((registration) => (
-                  <Card key={registration.id} className="p-3">
+                  <Card 
+                    key={registration.id} 
+                    className="p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleItemClick(registration)}
+                  >
                     <CardContent className="p-0">
                       <div className="flex items-center justify-between">
                         <div>

@@ -131,10 +131,12 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           
           {/* Notification Badge - Apenas para admins */}
           {isAdmin && (
-            <NotificationBadge 
-              count={totalPending} 
-              onClick={() => setShowNotificationModal(true)} 
-            />
+            <div className="ml-auto">
+              <NotificationBadge 
+                count={totalPending} 
+                onClick={() => setShowNotificationModal(true)} 
+              />
+            </div>
           )}
         </div>
       </div>

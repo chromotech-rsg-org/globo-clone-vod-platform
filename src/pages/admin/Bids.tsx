@@ -36,6 +36,8 @@ const Bids = () => {
   const [auctions, setAuctions] = useState<any[]>([]);
   const [internalNotes, setInternalNotes] = useState('');
   const [clientNotes, setClientNotes] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const { toast } = useToast();
 
   const fetchBids = async () => {
@@ -198,6 +200,8 @@ const Bids = () => {
     setAuctionFilter('all');
     setLiveFilter('all');
     setWinnerFilter('all');
+    setDateFrom('');
+    setDateTo('');
   };
 
   const filteredBids = bids.filter(bid => {
@@ -212,13 +216,45 @@ const Bids = () => {
     const matchesLive = liveFilter === 'all' || bid.auction_is_live?.toString() === liveFilter;
     const matchesWinner = winnerFilter === 'all' || bid.is_winner.toString() === winnerFilter;
     
-    return matchesSearch && matchesStatus && matchesAuction && matchesLive && matchesWinner;
+    const bidDate = new Date(bid.created_at).toISOString().split('T')[0];
+    const matchesDateFrom = !dateFrom || bidDate >= dateFrom;
+    const matchesDateTo = !dateTo || bidDate <= dateTo;
+    
+    return matchesSearch && matchesStatus && matchesAuction && matchesLive && matchesWinner && matchesDateFrom && matchesDateTo;
   });
 
   useEffect(() => {
     fetchBids();
     fetchAuctions();
+    
+    // Check URL params for filtering
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('status')) {
+      setStatusFilter(urlParams.get('status') || 'all');
+    }
+    if (urlParams.get('bid')) {
+      const bidId = urlParams.get('bid');
+      // Find and open the bid when loaded
+      setTimeout(() => {
+        const bid = bids.find(b => b.id === bidId);
+        if (bid) {
+          openDialog(bid);
+        }
+      }, 1000);
+    }
   }, []);
+
+  useEffect(() => {
+    // Open bid dialog if bid ID in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const bidId = urlParams.get('bid');
+    if (bidId && bids.length > 0) {
+      const bid = bids.find(b => b.id === bidId);
+      if (bid) {
+        openDialog(bid);
+      }
+    }
+  }, [bids]);
 
   if (loading) {
     return (
@@ -245,6 +281,12 @@ const Bids = () => {
           <FilterControls
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            dateRange={{
+              from: dateFrom,
+              to: dateTo,
+              onFromChange: setDateFrom,
+              onToChange: setDateTo
+            }}
             filters={[
               {
                 key: 'status',

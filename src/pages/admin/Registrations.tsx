@@ -35,6 +35,8 @@ const Registrations = () => {
   const [internalNotes, setInternalNotes] = useState('');
   const [clientNotes, setClientNotes] = useState('');
   const [nextRegistrationMinutes, setNextRegistrationMinutes] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const { toast } = useToast();
 
   const fetchRegistrations = async () => {
@@ -171,6 +173,8 @@ const Registrations = () => {
     setStatusFilter('all');
     setAuctionFilter('all');
     setLiveFilter('all');
+    setDateFrom('');
+    setDateTo('');
   };
 
   const filteredRegistrations = registrations.filter(reg => {
@@ -183,13 +187,45 @@ const Registrations = () => {
     const matchesAuction = auctionFilter === 'all' || reg.auction_id === auctionFilter;
     const matchesLive = liveFilter === 'all' || reg.auction_is_live?.toString() === liveFilter;
     
-    return matchesSearch && matchesStatus && matchesAuction && matchesLive;
+    const regDate = new Date(reg.created_at).toISOString().split('T')[0];
+    const matchesDateFrom = !dateFrom || regDate >= dateFrom;
+    const matchesDateTo = !dateTo || regDate <= dateTo;
+    
+    return matchesSearch && matchesStatus && matchesAuction && matchesLive && matchesDateFrom && matchesDateTo;
   });
 
   useEffect(() => {
     fetchRegistrations();
     fetchAuctions();
+    
+    // Check URL params for filtering
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('status')) {
+      setStatusFilter(urlParams.get('status') || 'all');
+    }
+    if (urlParams.get('registration')) {
+      const registrationId = urlParams.get('registration');
+      // Find and open the registration when loaded
+      setTimeout(() => {
+        const registration = registrations.find(r => r.id === registrationId);
+        if (registration) {
+          openDialog(registration);
+        }
+      }, 1000);
+    }
   }, []);
+
+  useEffect(() => {
+    // Open registration dialog if registration ID in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const registrationId = urlParams.get('registration');
+    if (registrationId && registrations.length > 0) {
+      const registration = registrations.find(r => r.id === registrationId);
+      if (registration) {
+        openDialog(registration);
+      }
+    }
+  }, [registrations]);
 
   if (loading) {
     return (
@@ -216,6 +252,12 @@ const Registrations = () => {
           <FilterControls
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            dateRange={{
+              from: dateFrom,
+              to: dateTo,
+              onFromChange: setDateFrom,
+              onToChange: setDateTo
+            }}
             filters={[
               {
                 key: 'status',

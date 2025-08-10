@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, Calendar } from 'lucide-react';
 
 interface FilterOption {
   value: string;
@@ -20,10 +20,17 @@ interface FilterControlsProps {
     onChange: (value: string) => void;
   }[];
   onClearFilters: () => void;
+  dateRange?: {
+    from: string;
+    to: string;
+    onFromChange: (value: string) => void;
+    onToChange: (value: string) => void;
+  };
 }
 
-const FilterControls = ({ searchTerm, onSearchChange, filters, onClearFilters }: FilterControlsProps) => {
-  const hasActiveFilters = searchTerm || filters.some(filter => filter.value !== 'all');
+const FilterControls = ({ searchTerm, onSearchChange, filters, onClearFilters, dateRange }: FilterControlsProps) => {
+  const hasActiveFilters = searchTerm || filters.some(filter => filter.value !== 'all') || 
+    (dateRange && (dateRange.from || dateRange.to));
 
   return (
     <div className="space-y-4 mb-6">
@@ -37,6 +44,34 @@ const FilterControls = ({ searchTerm, onSearchChange, filters, onClearFilters }:
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
+        
+        {/* Date Range Filters */}
+        {dateRange && (
+          <>
+            <div className="min-w-40">
+              <Label htmlFor="date-from">Data Início</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="date-from"
+                  type="date"
+                  value={dateRange.from}
+                  onChange={(e) => dateRange.onFromChange(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="min-w-40">
+              <Label htmlFor="date-to">Data Fim</Label>
+              <Input
+                id="date-to"
+                type="date"
+                value={dateRange.to}
+                onChange={(e) => dateRange.onToChange(e.target.value)}
+              />
+            </div>
+          </>
+        )}
         
         {filters.map((filter) => (
           <div key={filter.key} className="min-w-48">

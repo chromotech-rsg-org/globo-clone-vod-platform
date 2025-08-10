@@ -13,6 +13,7 @@ import { BidUserState } from '@/types/auction';
 import { Play, Square, User, AlertCircle, CheckCircle, Clock, ArrowLeft, Trophy } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
 import BidHistory from '@/components/auction/BidHistory';
+import ClientNotifications from '@/components/auction/ClientNotifications';
 import { useToast } from '@/components/ui/use-toast';
 
 const AuctionRoom = () => {
@@ -398,9 +399,12 @@ const AuctionRoom = () => {
              setShowBidDialog(false);
            }
          }}
-       />
-    </div>
-  );
-};
+        />
+
+        {/* Client Notifications */}
+        <ClientNotifications auctionId={id} />
+      </div>
+    );
+  };
 
 export default AuctionRoom;

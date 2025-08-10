@@ -81,13 +81,20 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
 
           {(auction.start_date || auction.end_date) && (
             <div className="mt-4 pt-4 border-t border-border">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                {auction.start_date && (
-                  <span>Início: {new Date(auction.start_date).toLocaleDateString()}</span>
-                )}
-                {auction.end_date && (
-                  <span>Fim: {new Date(auction.end_date).toLocaleDateString()}</span>
-                )}
+              <div className="text-center text-xs text-muted-foreground space-y-1">
+                {auction.start_date && auction.end_date ? (
+                  <>
+                    <div>{new Date(auction.start_date).toLocaleDateString()}</div>
+                    <div className="flex justify-between">
+                      <span>Início: {new Date(auction.start_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span>Fim: {new Date(auction.end_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </>
+                ) : auction.start_date ? (
+                  <div>Início: {new Date(auction.start_date).toLocaleString('pt-BR')}</div>
+                ) : auction.end_date ? (
+                  <div>Fim: {new Date(auction.end_date).toLocaleString('pt-BR')}</div>
+                ) : null}
               </div>
             </div>
           )}
