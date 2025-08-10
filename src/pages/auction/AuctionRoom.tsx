@@ -80,8 +80,25 @@ const AuctionRoom = () => {
   };
 
   const getUserStateInfo = () => {
+    const hasWinner = bids.some(bid => bid.is_winner);
+    const isAuctionFinished = hasWinner || auction?.status === 'inactive';
+    
     switch (userState) {
       case 'need_registration':
+        if (isAuctionFinished) {
+          return {
+            title: hasWinner ? 'Leilão Finalizado' : 'Leilão Encerrado',
+            description: hasWinner 
+              ? 'Este leilão já foi finalizado e possui um vencedor.' 
+              : 'Este leilão foi encerrado.',
+            action: null,
+            variant: 'default' as const,
+            icon: CheckCircle,
+            onClick: null,
+            disabled: true
+          };
+        }
+        
         return {
           title: 'Habilitação Necessária',
           description: 'Você precisa se habilitar para participar deste leilão.',
@@ -113,13 +130,13 @@ const AuctionRoom = () => {
         };
       case 'can_bid':
         const anyPendingBid = bids.some(bid => bid.status === 'pending');
-        const hasWinner = bids.some(bid => bid.is_winner);
-        const isAuctionFinished = hasWinner;
         
         if (isAuctionFinished) {
           return {
-            title: 'Leilão Finalizado',
-            description: 'Este leilão já foi finalizado e possui um vencedor.',
+            title: hasWinner ? 'Leilão Finalizado' : 'Leilão Encerrado',
+            description: hasWinner 
+              ? 'Este leilão já foi finalizado e possui um vencedor.' 
+              : 'Este leilão foi encerrado.',
             action: null,
             variant: 'default' as const,
             icon: CheckCircle,
@@ -401,8 +418,10 @@ const AuctionRoom = () => {
          }}
         />
 
-        {/* Client Notifications */}
-        <ClientNotifications auctionId={id} />
+        {/* Client Notifications - Fixed position */}
+        <div className="fixed top-20 right-4 z-40">
+          <ClientNotifications auctionId={id} />
+        </div>
       </div>
     );
   };

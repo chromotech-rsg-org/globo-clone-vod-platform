@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import CurrencyInput from '@/components/ui/currency-input';
 import FilterControls from '@/components/admin/FilterControls';
 import { Plus, Edit, Trash2, Play, Square, Copy } from 'lucide-react';
+import AuctionBanner from '@/components/admin/AuctionBanner';
 
 const Auctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -259,6 +260,8 @@ const Auctions = () => {
 
   return (
     <div className="p-6 space-y-6">
+      <AuctionBanner />
+      
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Gerenciar Leilões</h1>

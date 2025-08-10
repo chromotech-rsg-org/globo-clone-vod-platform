@@ -98,8 +98,9 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
             Nenhum lance foi feito ainda
           </div>
         ) : (
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {bids.map((bid) => (
+          <div className="space-y-3 max-h-80 overflow-hidden">
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+              {bids.map((bid) => (
               <div 
                 key={bid.id} 
                 className={`p-3 border rounded-lg ${
@@ -136,7 +137,8 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                   </div>
                 </div>
               </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

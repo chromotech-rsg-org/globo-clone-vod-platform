@@ -26,6 +26,7 @@ import AdminRegistrations from "./pages/admin/Registrations";
 import AdminBids from "./pages/admin/Bids";
 import AuctionHome from "./pages/auction/AuctionHome";
 import AuctionRoom from "./pages/auction/AuctionRoom";
+import AuctionDashboard from "./pages/auction/AuctionDashboard";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import AdminLayout from "./components/AdminLayout";
@@ -133,6 +134,11 @@ function AppContent() {
       <Route path="/auctions/:id" element={
         <ProtectedRoute>
           <AuctionRoom />
+        </ProtectedRoute>
+      } />
+      <Route path="/auction-dashboard/:id" element={
+        <ProtectedRoute requiredRole="admin">
+          <AuctionDashboard />
         </ProtectedRoute>
       } />
       

@@ -81,14 +81,49 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
 
           {(auction.start_date || auction.end_date) && (
             <div className="mt-4 pt-4 border-t border-border">
-              <div className="text-center text-xs text-muted-foreground space-y-1">
+              <div className="text-xs text-muted-foreground space-y-2">
                 {auction.start_date && auction.end_date ? (
                   <>
-                    <div>{new Date(auction.start_date).toLocaleDateString()}</div>
-                    <div className="flex justify-between">
-                      <span>Início: {new Date(auction.start_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span>Fim: {new Date(auction.end_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">
+                        {new Date(auction.start_date).toLocaleDateString('pt-BR')}
+                      </span>
+                      <div className="text-right">
+                        <div className="text-xs">
+                          {new Date(auction.start_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {new Date(auction.end_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
                     </div>
+                    
+                    {/* Barra de Progresso da Duração */}
+                    {(() => {
+                      const now = new Date().getTime();
+                      const start = new Date(auction.start_date).getTime();
+                      const end = new Date(auction.end_date).getTime();
+                      const totalDuration = end - start;
+                      const elapsed = Math.max(0, now - start);
+                      const progress = Math.min(100, (elapsed / totalDuration) * 100);
+                      
+                      return (
+                        <div className="space-y-1">
+                          <div className="w-full bg-secondary rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                now < start ? 'bg-blue-500' : 
+                                now > end ? 'bg-gray-500' : 
+                                'bg-primary'
+                              }`}
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <div className="text-center text-xs">
+                            {now < start ? 'Não iniciado' :
+                             now > end ? 'Finalizado' :
+                             `${Math.round(progress)}% concluído`}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </>
                 ) : auction.start_date ? (
                   <div>Início: {new Date(auction.start_date).toLocaleString('pt-BR')}</div>

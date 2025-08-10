@@ -1,48 +1,127 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { Users, CreditCard, Package, DollarSign, Settings, LogOut } from 'lucide-react';
+import { Users, CreditCard, Package, DollarSign, Settings, LogOut, Gavel, UserCheck } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import AuctionBanner from '@/components/admin/AuctionBanner';
 
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalSubscriptions: 0,
+    totalAuctions: 0,
+    totalBids: 0,
+    totalRegistrations: 0,
+    activeAuctions: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    if (!user || user.role === 'user') {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Buscar estatísticas em paralelo
+      const [
+        { count: usersCount },
+        { count: subscriptionsCount },
+        { count: auctionsCount },
+        { count: bidsCount },
+        { count: registrationsCount },
+        { count: activeAuctionsCount }
+      ] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('subscriptions').select('*', { count: 'exact', head: true }),
+        supabase.from('auctions').select('*', { count: 'exact', head: true }),
+        supabase.from('bids').select('*', { count: 'exact', head: true }),
+        supabase.from('auction_registrations').select('*', { count: 'exact', head: true }),
+        supabase.from('auctions').select('*', { count: 'exact', head: true }).eq('status', 'active')
+      ]);
+
+      setStats({
+        totalUsers: usersCount || 0,
+        totalSubscriptions: subscriptionsCount || 0,
+        totalAuctions: auctionsCount || 0,
+        totalBids: bidsCount || 0,
+        totalRegistrations: registrationsCount || 0,
+        activeAuctions: activeAuctionsCount || 0
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, [user]);
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Carregando...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Carregando...</div>
       </div>
     );
   }
 
-  const stats = [
+  const dashboardStats = user.role === 'user' ? [
+    {
+      title: 'Suas Habilitações',
+      value: '1',
+      icon: UserCheck,
+      description: 'Habilitações solicitadas'
+    },
+    {
+      title: 'Seus Lances',
+      value: '0',
+      icon: Gavel,
+      description: 'Lances realizados'
+    },
+    {
+      title: 'Leilões Ativos',
+      value: loading ? '...' : stats.activeAuctions.toString(),
+      icon: Package,
+      description: 'Leilões em andamento'
+    },
+    {
+      title: 'Sua Assinatura',
+      value: 'Ativa',
+      icon: CreditCard,
+      description: 'Status da conta'
+    }
+  ] : [
     {
       title: 'Total de Usuários',
-      value: user.role === 'user' ? '1' : '1,234',
+      value: loading ? '...' : stats.totalUsers.toString(),
       icon: Users,
-      description: user.role === 'user' ? 'Sua conta' : 'Usuários cadastrados'
+      description: 'Usuários cadastrados'
     },
     {
-      title: 'Clientes Ativos',
-      value: user.role === 'user' ? '1' : '987',
-      icon: CreditCard,
-      description: user.role === 'user' ? 'Sua assinatura' : 'Assinaturas ativas'
+      title: 'Total de Leilões',
+      value: loading ? '...' : stats.totalAuctions.toString(),
+      icon: Gavel,
+      description: `${stats.activeAuctions} ativos`
     },
     {
-      title: 'Total de Assinaturas',
-      value: user.role === 'user' ? '1' : '1,567',
-      icon: Package,
-      description: user.role === 'user' ? 'Plano ativo' : 'Assinaturas totais'
-    },
-    {
-      title: 'Valor Total',
-      value: user.role === 'user' ? 'R$ 442,80' : 'R$ 45,678',
+      title: 'Total de Lances',
+      value: loading ? '...' : stats.totalBids.toString(),
       icon: DollarSign,
-      description: user.role === 'user' ? 'Valor anual' : 'Receita total'
+      description: 'Lances realizados'
+    },
+    {
+      title: 'Habilitações',
+      value: loading ? '...' : stats.totalRegistrations.toString(),
+      icon: UserCheck,
+      description: 'Habilitações solicitadas'
     }
   ];
 
@@ -99,7 +178,7 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
+          {dashboardStats.map((stat, index) => (
             <Card key={index} className="bg-gray-800 border-gray-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">

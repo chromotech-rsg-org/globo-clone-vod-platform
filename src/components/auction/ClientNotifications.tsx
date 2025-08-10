@@ -170,19 +170,23 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
     }
   };
 
-  if (!user || unreadCount === 0) return null;
+  if (!user) return null;
 
   return (
     <>
       <div className="fixed top-4 right-4 z-50">
         <Button
-          variant="outline"
+          variant={unreadCount > 0 ? "destructive" : "outline"}
           size="sm"
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 animate-pulse"
+          className={`flex items-center gap-2 ${unreadCount > 0 ? 'animate-pulse' : ''}`}
         >
           <Bell className="h-4 w-4" />
-          {unreadCount} nova{unreadCount > 1 ? 's' : ''} notificação{unreadCount > 1 ? 'ões' : ''}
+          {unreadCount > 0 ? (
+            `${unreadCount} nova${unreadCount > 1 ? 's' : ''} notificação${unreadCount > 1 ? 'ões' : ''}`
+          ) : (
+            '0'
+          )}
         </Button>
       </div>
 
