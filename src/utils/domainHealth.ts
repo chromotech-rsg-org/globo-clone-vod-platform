@@ -89,19 +89,53 @@ export const isCustomDomain = () => {
   return window.location.hostname.includes('agromercado.tv.br');
 };
 
+export const isProductionCustomDomain = () => {
+  return window.location.hostname === 'minhaconta.agromercado.tv.br';
+};
+
+export const getRealtimeConfig = () => {
+  const isCustom = isCustomDomain();
+  const isProd = isProductionCustomDomain();
+  
+  // Custom config for production custom domain
+  if (isProd) {
+    return {
+      heartbeatIntervalMs: 30000,
+      reconnectAfterMs: (tries: number) => [1000, 2000, 5000, 10000][tries - 1] || 10000,
+      rejoinAfterMs: (tries: number) => [1000, 2000, 5000][tries - 1] || 5000,
+      transport: 'websocket' as const,
+      timeout: 10000,
+      longpollerTimeout: 20000,
+      logger: (kind: string, msg: string, data?: any) => {
+        console.log(`🔌 Realtime [${kind}]:`, msg, data);
+      }
+    };
+  }
+  
+  // Default config for other domains
+  return {
+    heartbeatIntervalMs: 15000,
+    reconnectAfterMs: (tries: number) => [1000, 2000, 5000][tries - 1] || 5000,
+    rejoinAfterMs: (tries: number) => [1000, 2000][tries - 1] || 2000
+  };
+};
+
 export const logDomainInfo = () => {
   const domain = window.location.hostname;
   const isDev = isDevelopmentMode();
   const isCustom = isCustomDomain();
+  const isProd = isProductionCustomDomain();
   
   console.log(`🌐 Domain Information:`, {
     domain,
     isDevelopment: isDev,
     isCustomDomain: isCustom,
+    isProductionCustomDomain: isProd,
     protocol: window.location.protocol,
     port: window.location.port,
-    fullUrl: window.location.href
+    fullUrl: window.location.href,
+    realtimeConfig: getRealtimeConfig()
   });
   
-  return { domain, isDev, isCustom };
+  return { domain, isDev, isCustom, isProd };
 };

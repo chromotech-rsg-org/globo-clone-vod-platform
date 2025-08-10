@@ -55,29 +55,67 @@ export const useCustomizations = (page: string) => {
     mounted.current = true;
     fetchCustomizations();
     
-    // Simple subscription without complex cleanup to prevent timeout errors
-    const uniqueChannelName = `${channelKey}-${Math.random().toString(36).substr(2, 9)}`;
+    let retryCount = 0;
+    const maxRetries = 3;
+    let cleanupFn: (() => void) | null = null;
     
-    const channel = supabase
-      .channel(uniqueChannelName)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'customizations',
-        filter: `page=eq.${page}`
-      }, (payload) => {
-        console.log(`🔔 Customization change detected for ${page}:`, payload);
-        if (mounted.current) {
-          fetchCustomizations();
-        }
-      })
-      .subscribe();
+    const setupSubscription = () => {
+      try {
+        const uniqueChannelName = `${channelKey}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        const channel = supabase
+          .channel(uniqueChannelName)
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'customizations',
+            filter: `page=eq.${page}`
+          }, (payload) => {
+            console.log(`🔔 Customization change detected for ${page}:`, payload);
+            if (mounted.current) {
+              fetchCustomizations();
+            }
+          })
+          .subscribe((status) => {
+            console.log(`📡 Subscription status for ${page}:`, status);
+            
+            // Retry logic for failed subscriptions on custom domains
+            if (status === 'CHANNEL_ERROR' && retryCount < maxRetries && window.location.hostname.includes('agromercado.tv.br')) {
+              retryCount++;
+              console.log(`🔄 Retrying subscription for ${page} (attempt ${retryCount}/${maxRetries})`);
+              setTimeout(setupSubscription, 2000 * retryCount);
+            }
+          });
 
-    return () => {
-      mounted.current = false;
-      supabase.removeChannel(channel);
+        cleanupFn = () => {
+          mounted.current = false;
+          supabase.removeChannel(channel);
+        };
+      } catch (error) {
+        console.error(`❌ Failed to setup subscription for ${page}:`, error);
+        
+        // Fallback to polling for custom domains
+        if (window.location.hostname.includes('agromercado.tv.br')) {
+          console.log(`🔄 Falling back to polling for ${page}`);
+          const pollInterval = setInterval(() => {
+            if (mounted.current) {
+              fetchCustomizations();
+            }
+          }, 5000);
+          
+          cleanupFn = () => {
+            clearInterval(pollInterval);
+          };
+        }
+      }
     };
-  }, [page, fetchCustomizations]); // Remove channelKey from dependencies to prevent recreation
+
+    setupSubscription();
+    
+    return () => {
+      cleanupFn?.();
+    };
+  }, [page, fetchCustomizations]);
 
   const getCustomization = useCallback((section: string, key: string, defaultValue: any = '') => {
     const customKey = `${section}_${key}`;

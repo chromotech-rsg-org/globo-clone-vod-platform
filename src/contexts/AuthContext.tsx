@@ -142,12 +142,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log(`🔄 Initializing auth on ${currentDomain}...`);
         setIsLoading(true);
         
-        // Add retry logic for custom domains
-        let retries = currentDomain.includes('agromercado.tv.br') ? 3 : 1;
+        // Add retry logic for custom domains with exponential backoff
+        let retries = currentDomain.includes('agromercado.tv.br') ? 5 : 1;
         let lastError = null;
+        let baseDelay = 1000;
         
         while (retries > 0) {
           try {
+            // Add delay between retries for custom domains
+            if (retries < 5 && currentDomain.includes('agromercado.tv.br')) {
+              const delay = baseDelay * (6 - retries);
+              console.log(`⏱️ Waiting ${delay}ms before retry on ${currentDomain}`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+            
             // Get initial session
             const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
             
