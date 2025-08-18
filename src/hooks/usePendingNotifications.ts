@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { getUniqueChannelId, clearNotificationCache } from '@/utils/notificationCache';
 
 interface PendingItem {
   id: string;
@@ -17,6 +18,8 @@ export const usePendingNotifications = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const mounted = useRef(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
   const fetchPendingItems = useCallback(async () => {
     if (!user || !mounted.current) return;
@@ -24,7 +27,11 @@ export const usePendingNotifications = () => {
     console.log('🔄 usePendingNotifications: Iniciando busca para usuário:', user.id);
     
     try {
-      // Buscar lances pendentes apenas
+      // Cache-busting: Adicionar timestamp para evitar cache
+      const timestamp = Date.now();
+      console.log('⏰ usePendingNotifications: Cache-busting timestamp:', timestamp);
+
+      // Buscar lances pendentes com cache-busting header
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
         .select('id, bid_value, created_at, auction_id, user_id')
@@ -33,12 +40,21 @@ export const usePendingNotifications = () => {
 
       if (bidsError) {
         console.error('❌ usePendingNotifications: Erro ao buscar lances:', bidsError);
+        if (retryCount < maxRetries) {
+          console.log(`🔄 usePendingNotifications: Tentativa ${retryCount + 1} de ${maxRetries}`);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            fetchPendingItems();
+          }, 1000 * (retryCount + 1));
+          return;
+        }
         setPendingBids([]);
       } else {
+        setRetryCount(0); // Reset retry count on success
         console.log('✅ usePendingNotifications: Lances pendentes encontrados:', bidsData?.length || 0);
       }
 
-      // Buscar registros pendentes apenas
+      // Buscar registros pendentes com cache-busting
       const { data: registrationsData, error: registrationsError } = await supabase
         .from('auction_registrations')
         .select('id, created_at, auction_id, user_id')
@@ -47,6 +63,14 @@ export const usePendingNotifications = () => {
 
       if (registrationsError) {
         console.error('❌ usePendingNotifications: Erro ao buscar registros:', registrationsError);
+        if (retryCount < maxRetries) {
+          console.log(`🔄 usePendingNotifications: Tentativa ${retryCount + 1} de ${maxRetries} para registros`);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            fetchPendingItems();
+          }, 1000 * (retryCount + 1));
+          return;
+        }
         setPendingRegistrations([]);
       } else {
         console.log('✅ usePendingNotifications: Registros pendentes encontrados:', registrationsData?.length || 0);
@@ -134,20 +158,30 @@ export const usePendingNotifications = () => {
         console.log('✨ usePendingNotifications: Busca finalizada');
       }
     }
-  }, [user]);
+  }, [user, retryCount]);
 
   useEffect(() => {
     if (!user) return;
     
     mounted.current = true;
+    
+    // Clear cache before fetching to ensure fresh data
+    clearNotificationCache();
+    
     fetchPendingItems();
 
-    // Create unique channel with user ID to prevent duplicates
-    const channelName = `pending-notifications-${user.id}`;
+    // Create persistent unique channel to prevent duplicates
+    const channelName = getUniqueChannelId(user.id);
     
-    const handlePendingChange = () => {
+    const handlePendingChange = (payload: any) => {
       if (mounted.current) {
-        fetchPendingItems();
+        console.log('🔔 usePendingNotifications: Real-time change detected:', payload);
+        // Clear cache before refetching
+        clearNotificationCache();
+        // Small delay to ensure database consistency
+        setTimeout(() => {
+          fetchPendingItems();
+        }, 500);
       }
     };
 

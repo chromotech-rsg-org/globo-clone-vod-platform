@@ -35,7 +35,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { getCustomization } = useAdminCustomizations();
-  const { pendingBids, pendingRegistrations, totalPending } = usePendingNotifications();
+  const { pendingBids, pendingRegistrations, totalPending, loading } = usePendingNotifications();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   // Listen for customization updates
@@ -130,12 +130,16 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           </button>
           
           {/* Notification Badge - Apenas para admins */}
-          {isAdmin && (
+          {isAdmin && !isCollapsed && (
             <div className="ml-auto">
-              <NotificationBadge 
-                count={totalPending} 
-                onClick={() => setShowNotificationModal(true)} 
-              />
+              {loading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-admin-primary"></div>
+              ) : (
+                <NotificationBadge 
+                  count={totalPending} 
+                  onClick={() => setShowNotificationModal(true)} 
+                />
+              )}
             </div>
           )}
         </div>
