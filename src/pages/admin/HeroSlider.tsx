@@ -1,19 +1,20 @@
-import React from 'react';
 
+import React from 'react';
 import HeroSliderEditor from '@/components/admin/HeroSliderEditor';
 
 const AdminHeroSlider = () => {
   return (
-      <header className="bg-gray-800 border-b border-gray-700">
+    <>
+      <header className="bg-admin-header border-b border-admin-border">
         <div className="px-6 py-4">
-          <h1 className="text-xl font-bold text-white">Slider Hero</h1>
-          <p className="text-gray-400">Configure as imagens e conteúdo do banner principal</p>
+          <h1 className="text-xl font-bold text-admin-sidebar-text">Gerenciar Hero Slider</h1>
         </div>
       </header>
-
+      
       <div className="p-6">
         <HeroSliderEditor />
       </div>
+    </>
   );
 };
 
