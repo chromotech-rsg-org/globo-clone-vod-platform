@@ -30,6 +30,13 @@ interface AdminSidebarProps {
   onToggle: () => void;
 }
 
+interface MenuItem {
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  pendingCount?: number;
+}
+
 const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,7 +92,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
   const isClient = user?.role === 'user';
 
-  const adminMenuItems = [
+  const adminMenuItems: MenuItem[] = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/admin/usuarios', icon: Users, label: 'Usuários' },
     { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
@@ -108,7 +115,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
   ];
 
-  const clientMenuItems = [
+  const clientMenuItems: MenuItem[] = [
     { path: '/profile', icon: User, label: 'Meu Perfil' },
     { path: '/subscription', icon: CreditCard, label: 'Minha Assinatura' },
   ];
