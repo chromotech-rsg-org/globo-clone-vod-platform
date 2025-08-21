@@ -1,7 +1,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { isProductionCustomDomain, clearVercelCache } from '@/utils/vercelOptimizations';
+import { isProductionCustomDomain } from '@/utils/domainHealth';
+import { clearVercelCache } from '@/utils/vercelOptimizations';
 
 interface Customization {
   id: string;

@@ -2,6 +2,9 @@
 // Vercel-specific optimizations for custom domains
 import { isProductionCustomDomain } from './domainHealth';
 
+// Re-export the function so other files can import it
+export { isProductionCustomDomain };
+
 export const clearVercelCache = () => {
   // Force cache invalidation on custom domains
   if (isProductionCustomDomain()) {
@@ -102,13 +105,13 @@ export const initializeVercelOptimizations = () => {
     document.head.appendChild(jsLink);
     
     // Set up periodic cache clearing for long sessions
-    const clearInterval = setInterval(() => {
+    const clearIntervalId = setInterval(() => {
       clearVercelCache();
     }, 5 * 60 * 1000); // Every 5 minutes
     
     // Clear interval on page unload
     window.addEventListener('beforeunload', () => {
-      clearInterval(clearInterval);
+      clearInterval(clearIntervalId);
     });
   }
 };

@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUniqueChannelId, clearNotificationCache } from '@/utils/notificationCache';
-import { isProductionCustomDomain, clearVercelCache } from '@/utils/vercelOptimizations';
+import { isProductionCustomDomain } from '@/utils/domainHealth';
+import { clearVercelCache } from '@/utils/vercelOptimizations';
 
 interface PendingItem {
   id: string;
