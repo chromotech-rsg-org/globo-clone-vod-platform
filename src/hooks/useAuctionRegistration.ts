@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuctionRegistration } from '@/types/auction';
@@ -156,13 +157,34 @@ export const useAuctionRegistration = (auctionId: string) => {
         .on(
           'postgres_changes',
           {
-            event: '*',
+            event: 'UPDATE',
             schema: 'public',
             table: 'auction_registrations',
-            filter: `auction_id=eq.${auctionId}`
+            filter: `user_id=eq.${user.id}`
           },
           (payload) => {
             console.info('🔄 Registration status updated:', payload);
+            
+            // Show toast for status changes
+            if (payload.new.status === 'approved') {
+              toast({
+                title: "Habilitação Aprovada",
+                description: "Sua habilitação foi aprovada! Agora você pode participar do leilão.",
+              });
+            } else if (payload.new.status === 'rejected') {
+              toast({
+                title: "Habilitação Rejeitada",
+                description: payload.new.client_notes || "Sua habilitação foi rejeitada.",
+                variant: "destructive"
+              });
+            } else if (payload.new.status === 'canceled') {
+              toast({
+                title: "Habilitação Cancelada",
+                description: "Sua habilitação foi cancelada.",
+                variant: "destructive"
+              });
+            }
+            
             fetchRegistration();
           }
         )
@@ -172,7 +194,7 @@ export const useAuctionRegistration = (auctionId: string) => {
         supabase.removeChannel(subscription);
       };
     }
-  }, [auctionId, user?.id]);
+  }, [auctionId, user?.id, toast]);
 
   return { 
     registration, 

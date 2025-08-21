@@ -31,7 +31,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       '/subscription'
     ];
     
-    if (!adminPaths.includes(location.pathname)) {
+    // Check if current path starts with any admin path (to handle query params)
+    const isValidPath = adminPaths.some(path => location.pathname === path);
+    
+    if (!isValidPath) {
       console.log('⚠️ Invalid admin route detected:', location.pathname);
       navigate('/dashboard', { replace: true });
     }

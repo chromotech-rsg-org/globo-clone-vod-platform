@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,12 +13,15 @@ interface PendingItem {
   user_name: string;
   value?: number;
   created_at: string;
+  isNew?: boolean;
 }
 
 export const usePendingNotifications = () => {
   const [pendingBids, setPendingBids] = useState<PendingItem[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
+  const [lastTotalCount, setLastTotalCount] = useState(0);
   const { user } = useAuth();
   const mounted = useRef(true);
   const [retryCount, setRetryCount] = useState(0);
@@ -29,7 +33,6 @@ export const usePendingNotifications = () => {
     console.log('🔄 usePendingNotifications: Iniciando busca para usuário:', user.id);
     
     try {
-      // Enhanced cache-busting for production domain
       if (isProductionCustomDomain()) {
         clearVercelCache();
         clearNotificationCache();
@@ -57,7 +60,7 @@ export const usePendingNotifications = () => {
         }
         setPendingBids([]);
       } else {
-        setRetryCount(0); // Reset retry count on success
+        setRetryCount(0);
         console.log('✅ usePendingNotifications: Lances pendentes encontrados:', bidsData?.length || 0);
       }
 
@@ -108,7 +111,8 @@ export const usePendingNotifications = () => {
             auction_name: auctionsMap.get(bid.auction_id) || `Leilão ${bid.auction_id.slice(-4)}`,
             user_name: profilesMap.get(bid.user_id) || `Usuário ${bid.user_id.slice(-4)}`,
             value: bid.bid_value,
-            created_at: bid.created_at
+            created_at: bid.created_at,
+            isNew: false // Will be set by real-time updates
           }));
         } catch (error) {
           console.error('⚠️ usePendingNotifications: Erro ao processar lances:', error);
@@ -138,13 +142,23 @@ export const usePendingNotifications = () => {
             type: 'registration' as const,
             auction_name: auctionsMap.get(registration.auction_id) || `Leilão ${registration.auction_id.slice(-4)}`,
             user_name: profilesMap.get(registration.user_id) || `Usuário ${registration.user_id.slice(-4)}`,
-            created_at: registration.created_at
+            created_at: registration.created_at,
+            isNew: false // Will be set by real-time updates
           }));
         } catch (error) {
           console.error('⚠️ usePendingNotifications: Erro ao processar registros:', error);
           formattedRegistrations = [];
         }
       }
+
+      // Check for new notifications
+      const currentTotal = formattedBids.length + formattedRegistrations.length;
+      if (lastTotalCount > 0 && currentTotal > lastTotalCount) {
+        setHasNewNotifications(true);
+        // Reset after 5 seconds
+        setTimeout(() => setHasNewNotifications(false), 5000);
+      }
+      setLastTotalCount(currentTotal);
 
       setPendingBids(formattedBids);
       setPendingRegistrations(formattedRegistrations);
@@ -165,14 +179,13 @@ export const usePendingNotifications = () => {
         console.log('✨ usePendingNotifications: Busca finalizada');
       }
     }
-  }, [user, retryCount, maxRetries]);
+  }, [user, retryCount, maxRetries, lastTotalCount]);
 
   useEffect(() => {
     if (!user) return;
     
     mounted.current = true;
     
-    // Enhanced cache clearing for production domain
     if (isProductionCustomDomain()) {
       clearVercelCache();
     }
@@ -180,18 +193,22 @@ export const usePendingNotifications = () => {
     
     fetchPendingItems();
 
-    // Create persistent unique channel to prevent duplicates
     const channelName = getUniqueChannelId(user.id);
     
     const handlePendingChange = (payload: any) => {
       if (mounted.current) {
         console.log('🔔 usePendingNotifications: Real-time change detected:', payload);
-        // Clear cache before refetching
         if (isProductionCustomDomain()) {
           clearVercelCache();
         }
         clearNotificationCache();
-        // Small delay to ensure database consistency
+        
+        // Mark as new notification if it's an INSERT
+        if (payload.eventType === 'INSERT') {
+          setHasNewNotifications(true);
+          setTimeout(() => setHasNewNotifications(false), 5000);
+        }
+        
         setTimeout(() => {
           fetchPendingItems();
         }, 500);
@@ -219,14 +236,13 @@ export const usePendingNotifications = () => {
     } catch (error) {
       console.error('❌ Failed to setup notification subscription:', error);
       
-      // Fallback to polling for production domain
       if (isProductionCustomDomain()) {
         console.log('🔄 Falling back to polling for notifications on production domain');
         const pollInterval = setInterval(() => {
           if (mounted.current) {
             fetchPendingItems();
           }
-        }, 15000); // Poll every 15 seconds
+        }, 15000);
         
         return () => {
           clearInterval(pollInterval);
@@ -250,6 +266,7 @@ export const usePendingNotifications = () => {
     pendingRegistrations,
     totalPending,
     loading,
+    hasNewNotifications,
     refetch: fetchPendingItems
   };
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +20,6 @@ interface Bid {
   user_name?: string;
 }
 
-
 export const useAuctionBids = (auctionId: string) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export const useAuctionBids = (auctionId: string) => {
       // Query específica para lances
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
-        .select('id, user_id, auction_id, auction_item_id, bid_value, status, is_winner, created_at, updated_at')
+        .select('id, user_id, auction_id, auction_item_id, bid_value, status, is_winner, created_at, updated_at, client_notes')
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
 
@@ -251,9 +251,27 @@ export const useAuctionBids = (auctionId: string) => {
     mounted.current = true;
     fetchBids();
 
-    // Simplified real-time subscription
-    const handleBidsChange = () => {
+    // Real-time subscription for bid updates
+    const handleBidsChange = (payload: any) => {
       if (mounted.current) {
+        // Show toast for user's bid status changes
+        if (payload.new && payload.new.user_id === user?.id && payload.eventType === 'UPDATE') {
+          if (payload.new.status === 'approved') {
+            toast({
+              title: "Lance Aprovado",
+              description: payload.new.is_winner ? 
+                "Parabéns! Seu lance foi aprovado e você é o vencedor!" :
+                "Seu lance foi aprovado!",
+            });
+          } else if (payload.new.status === 'rejected') {
+            toast({
+              title: "Lance Rejeitado",
+              description: payload.new.client_notes || "Seu lance foi rejeitado.",
+              variant: "destructive"
+            });
+          }
+        }
+        
         fetchBids();
       }
     };
@@ -278,7 +296,7 @@ export const useAuctionBids = (auctionId: string) => {
       mounted.current = false;
       supabase.removeChannel(channel);
     };
-  }, [auctionId, fetchBids]);
+  }, [auctionId, fetchBids, user?.id, toast]);
 
   const userPendingBid = bids.find(bid => bid.user_id === user?.id && bid.status === 'pending');
 

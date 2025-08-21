@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Bid } from '@/types/auction';
 import FilterControls from '@/components/admin/FilterControls';
-import { Check, X, Eye, Clock, Trophy, AlertCircle } from 'lucide-react';
+import { Check, X, Eye, Clock, Trophy, AlertCircle, Sparkles } from 'lucide-react';
 import { formatDateTime, formatCurrency } from '@/utils/formatters';
 
 interface BidWithDetails extends Bid {
@@ -21,6 +21,7 @@ interface BidWithDetails extends Bid {
   user_name?: string;
   user_email?: string;
   auction_is_live?: boolean;
+  isNew?: boolean;
 }
 
 const Bids = () => {
@@ -38,6 +39,7 @@ const Bids = () => {
   const [clientNotes, setClientNotes] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [newBidIds, setNewBidIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const fetchBids = async () => {
@@ -62,7 +64,8 @@ const Bids = () => {
         auction_is_live: item.auctions?.is_live,
         auction_item_name: item.auction_items?.name,
         user_name: item.profiles?.name,
-        user_email: item.profiles?.email
+        user_email: item.profiles?.email,
+        isNew: newBidIds.has(item.id)
       })) as BidWithDetails[];
 
       setBids(formattedData);
@@ -71,7 +74,32 @@ const Bids = () => {
       const subscription = supabase
         .channel('bids-changes')
         .on('postgres_changes', {
-          event: '*',
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bids'
+        }, (payload) => {
+          console.log('🆕 Novo lance inserido:', payload);
+          setNewBidIds(prev => new Set([...prev, payload.new.id]));
+          fetchBids();
+          
+          // Remove highlight after 10 seconds
+          setTimeout(() => {
+            setNewBidIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(payload.new.id);
+              return newSet;
+            });
+          }, 10000);
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bids'
+        }, () => {
+          fetchBids();
+        })
+        .on('postgres_changes', {
+          event: 'DELETE',
           schema: 'public',
           table: 'bids'
         }, () => {
@@ -361,11 +389,17 @@ const Bids = () => {
             </TableHeader>
             <TableBody>
               {filteredBids.map((bid) => (
-                <TableRow key={bid.id}>
+                <TableRow 
+                  key={bid.id}
+                  className={`${bid.isNew ? 'bg-green-50 border-l-4 border-l-green-500 animate-pulse' : ''}`}
+                >
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{bid.user_name}</div>
-                      <div className="text-sm text-muted-foreground">{bid.user_email}</div>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <div className="font-medium">{bid.user_name}</div>
+                        <div className="text-sm text-muted-foreground">{bid.user_email}</div>
+                      </div>
+                      {bid.isNew && <Sparkles className="h-4 w-4 text-green-500" />}
                     </div>
                   </TableCell>
                   <TableCell>{bid.auction_name}</TableCell>

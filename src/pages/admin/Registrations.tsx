@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AuctionRegistration } from '@/types/auction';
 import FilterControls from '@/components/admin/FilterControls';
-import { Check, X, Eye, Clock, AlertCircle } from 'lucide-react';
+import { Check, X, Eye, Clock, AlertCircle, Sparkles, Ban } from 'lucide-react';
 import { formatDateTime } from '@/utils/formatters';
 
 interface RegistrationWithDetails extends AuctionRegistration {
@@ -20,6 +21,7 @@ interface RegistrationWithDetails extends AuctionRegistration {
   user_name?: string;
   user_email?: string;
   auction_is_live?: boolean;
+  isNew?: boolean;
 }
 
 const Registrations = () => {
@@ -37,6 +39,7 @@ const Registrations = () => {
   const [nextRegistrationMinutes, setNextRegistrationMinutes] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [newRegistrationIds, setNewRegistrationIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const fetchRegistrations = async () => {
@@ -59,7 +62,8 @@ const Registrations = () => {
         auction_name: item.auctions?.name,
         auction_is_live: item.auctions?.is_live,
         user_name: item.profiles?.name,
-        user_email: item.profiles?.email
+        user_email: item.profiles?.email,
+        isNew: newRegistrationIds.has(item.id)
       })) as RegistrationWithDetails[];
 
       setRegistrations(formattedData);
@@ -68,7 +72,32 @@ const Registrations = () => {
       const subscription = supabase
         .channel('registrations-changes')
         .on('postgres_changes', {
-          event: '*',
+          event: 'INSERT',
+          schema: 'public',
+          table: 'auction_registrations'
+        }, (payload) => {
+          console.log('🆕 Nova habilitação inserida:', payload);
+          setNewRegistrationIds(prev => new Set([...prev, payload.new.id]));
+          fetchRegistrations();
+          
+          // Remove highlight after 10 seconds
+          setTimeout(() => {
+            setNewRegistrationIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(payload.new.id);
+              return newSet;
+            });
+          }, 10000);
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'auction_registrations'
+        }, () => {
+          fetchRegistrations();
+        })
+        .on('postgres_changes', {
+          event: 'DELETE',
           schema: 'public',
           table: 'auction_registrations'
         }, () => {
@@ -105,7 +134,7 @@ const Registrations = () => {
     }
   };
 
-  const handleStatusUpdate = async (registrationId: string, status: 'approved' | 'rejected') => {
+  const handleStatusUpdate = async (registrationId: string, status: 'approved' | 'rejected' | 'canceled') => {
     try {
       const updateData: any = {
         status,
@@ -126,9 +155,12 @@ const Registrations = () => {
 
       if (error) throw error;
 
+      const statusMessage = status === 'approved' ? 'aprovada' : 
+                           status === 'rejected' ? 'rejeitada' : 'cancelada';
+
       toast({
         title: "Sucesso",
-        description: `Habilitação ${status === 'approved' ? 'aprovada' : 'rejeitada'} com sucesso`,
+        description: `Habilitação ${statusMessage} com sucesso`,
       });
 
       setDialogOpen(false);
@@ -161,6 +193,8 @@ const Registrations = () => {
         return <Badge className="bg-green-500 text-white"><Check className="h-3 w-3 mr-1" />Aprovado</Badge>;
       case 'rejected':
         return <Badge variant="destructive"><X className="h-3 w-3 mr-1" />Rejeitado</Badge>;
+      case 'canceled':
+        return <Badge variant="destructive"><Ban className="h-3 w-3 mr-1" />Cancelado</Badge>;
       case 'pending':
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
       default:
@@ -267,7 +301,8 @@ const Registrations = () => {
                   { value: 'all', label: 'Todos' },
                   { value: 'pending', label: 'Pendente' },
                   { value: 'approved', label: 'Aprovado' },
-                  { value: 'rejected', label: 'Rejeitado' }
+                  { value: 'rejected', label: 'Rejeitado' },
+                  { value: 'canceled', label: 'Cancelado' }
                 ],
                 onChange: setStatusFilter
               },
@@ -318,25 +353,43 @@ const Registrations = () => {
             </TableHeader>
             <TableBody>
               {filteredRegistrations.map((registration) => (
-                <TableRow key={registration.id}>
+                <TableRow 
+                  key={registration.id}
+                  className={`${registration.isNew ? 'bg-green-50 border-l-4 border-l-green-500 animate-pulse' : ''}`}
+                >
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{registration.user_name}</div>
-                      <div className="text-sm text-muted-foreground">{registration.user_email}</div>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <div className="font-medium">{registration.user_name}</div>
+                        <div className="text-sm text-muted-foreground">{registration.user_email}</div>
+                      </div>
+                      {registration.isNew && <Sparkles className="h-4 w-4 text-green-500" />}
                     </div>
                   </TableCell>
                   <TableCell>{registration.auction_name}</TableCell>
                   <TableCell>{getStatusBadge(registration.status)}</TableCell>
                   <TableCell>{formatDateTime(registration.created_at)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openDialog(registration)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Gerenciar
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDialog(registration)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Gerenciar
+                      </Button>
+                      {registration.status === 'approved' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleStatusUpdate(registration.id, 'canceled')}
+                        >
+                          <Ban className="h-4 w-4 mr-2" />
+                          Cancelar
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -350,7 +403,7 @@ const Registrations = () => {
           <DialogHeader>
             <DialogTitle>Gerenciar Habilitação</DialogTitle>
             <DialogDescription>
-              Aprove ou rejeite a solicitação de habilitação
+              Aprove, rejeite ou cancele a solicitação de habilitação
             </DialogDescription>
           </DialogHeader>
           
@@ -433,6 +486,15 @@ const Registrations = () => {
                   Aprovar
                 </Button>
               </>
+            )}
+            {selectedRegistration?.status === 'approved' && (
+              <Button
+                variant="destructive"
+                onClick={() => handleStatusUpdate(selectedRegistration.id, 'canceled')}
+              >
+                <Ban className="h-4 w-4 mr-2" />
+                Cancelar Habilitação
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>

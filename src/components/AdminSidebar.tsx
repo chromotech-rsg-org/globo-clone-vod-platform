@@ -14,13 +14,16 @@ import {
   User,
   Gavel,
   UserCheck,
-  HandHeart
+  HandHeart,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
 import { usePendingNotifications } from '@/hooks/usePendingNotifications';
 import NotificationBadge from '@/components/auction/NotificationBadge';
 import PendingNotificationModal from '@/components/auction/PendingNotificationModal';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -32,13 +35,25 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { getCustomization } = useAdminCustomizations();
-  const { pendingBids, pendingRegistrations, totalPending, loading } = usePendingNotifications();
+  const { pendingBids, pendingRegistrations, totalPending, loading, hasNewNotifications } = usePendingNotifications();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const { toast } = useToast();
+
+  // Show toast for new notifications
+  useEffect(() => {
+    if (hasNewNotifications && totalPending > 0) {
+      toast({
+        title: "Nova Solicitação",
+        description: "Você recebeu uma nova solicitação",
+        duration: 5000,
+      });
+    }
+  }, [hasNewNotifications, totalPending, toast]);
 
   // Stable navigation handler to prevent session timeouts
   const handleNavigation = useCallback((path: string) => {
-    if (isNavigating) return; // Prevent double navigation
+    if (isNavigating) return;
     
     setIsNavigating(true);
     console.log('🔗 Navegando para:', path);
@@ -46,7 +61,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     try {
       navigate(path);
       
-      // Reset navigation state after a short delay
       setTimeout(() => {
         setIsNavigating(false);
       }, 500);
@@ -56,7 +70,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     }
   }, [navigate, isNavigating]);
 
-  // Listen for customization updates
   useEffect(() => {
     const handleCustomizationUpdate = () => {
       // The colors are applied via CSS variables, no need for manual updates
@@ -80,8 +93,18 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/leiloes', icon: Gavel, label: 'Leilões' },
-    { path: '/admin/habilitacoes', icon: UserCheck, label: 'Habilitações' },
-    { path: '/admin/lances', icon: HandHeart, label: 'Lances' },
+    { 
+      path: '/admin/habilitacoes', 
+      icon: UserCheck, 
+      label: 'Habilitações',
+      pendingCount: pendingRegistrations.length
+    },
+    { 
+      path: '/admin/lances', 
+      icon: HandHeart, 
+      label: 'Lances',
+      pendingCount: pendingBids.length
+    },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
   ];
 
@@ -149,14 +172,19 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           
           {/* Notification Badge - Apenas para admins */}
           {isAdmin && !isCollapsed && (
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
               {loading ? (
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-admin-primary"></div>
               ) : (
-                <NotificationBadge 
-                  count={totalPending} 
-                  onClick={() => setShowNotificationModal(true)} 
-                />
+                <>
+                  <NotificationBadge 
+                    count={totalPending} 
+                    onClick={() => setShowNotificationModal(true)} 
+                  />
+                  {hasNewNotifications && (
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -168,28 +196,39 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
+          const hasPending = item.pendingCount && item.pendingCount > 0;
           
           return (
             <button
               key={item.path}
               onClick={() => handleNavigation(item.path)}
               disabled={isNavigating}
-              className={`group flex items-center w-full px-3 py-3 rounded-lg transition-all duration-200 ${
+              className={`group flex items-center justify-between w-full px-3 py-3 rounded-lg transition-all duration-200 ${
                 isActive 
                   ? 'bg-admin-primary text-admin-primary-foreground shadow-md scale-105' 
                   : 'text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text hover:scale-102'
               } ${isNavigating ? 'opacity-50 cursor-not-allowed' : ''}`}
               title={isCollapsed ? item.label : undefined}
             >
-              <Icon className={`h-5 w-5 min-w-[20px] transition-transform duration-200 ${
-                isActive ? 'scale-110' : 'group-hover:scale-105'
-              }`} />
-              {!isCollapsed && (
-                <span className="ml-3 font-medium">{item.label}</span>
-              )}
-              {isActive && !isCollapsed && (
-                <div className="ml-auto w-2 h-2 bg-admin-primary-foreground rounded-full animate-pulse"></div>
-              )}
+              <div className="flex items-center">
+                <Icon className={`h-5 w-5 min-w-[20px] transition-transform duration-200 ${
+                  isActive ? 'scale-110' : 'group-hover:scale-105'
+                }`} />
+                {!isCollapsed && (
+                  <span className="ml-3 font-medium">{item.label}</span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {hasPending && !isCollapsed && (
+                  <Badge variant="destructive" className="text-xs">
+                    {item.pendingCount}
+                  </Badge>
+                )}
+                {isActive && !isCollapsed && (
+                  <div className="w-2 h-2 bg-admin-primary-foreground rounded-full animate-pulse"></div>
+                )}
+              </div>
             </button>
           );
         })}
