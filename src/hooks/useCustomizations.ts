@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { isProductionCustomDomain, clearVercelCache } from '@/utils/vercelOptimizations';
 
 interface Customization {
   id: string;
@@ -20,11 +21,17 @@ export const useCustomizations = (page: string) => {
   const [loading, setLoading] = useState(true);
   const channelKey = `customizations-${page}`;
   const mounted = useRef(true);
+  const isProdCustom = isProductionCustomDomain();
 
   const fetchCustomizations = useCallback(async () => {
     if (!mounted.current) return;
     
     try {
+      // Clear Vercel cache for production domain
+      if (isProdCustom) {
+        clearVercelCache();
+      }
+
       const { data, error } = await supabase
         .from('customizations')
         .select('*')
@@ -41,22 +48,33 @@ export const useCustomizations = (page: string) => {
 
       if (mounted.current) {
         setCustomizations(customizationsMap);
+        console.log(`✅ Customizations loaded for ${page}:`, Object.keys(customizationsMap).length, 'items');
       }
     } catch (error) {
-      console.error('Erro ao buscar personalizações:', error);
+      console.error('❌ Erro ao buscar personalizações:', error);
+      
+      // Fallback strategy for production domain
+      if (isProdCustom && mounted.current) {
+        console.log('🔄 Retrying customizations fetch for production domain...');
+        setTimeout(() => {
+          if (mounted.current) {
+            fetchCustomizations();
+          }
+        }, 2000);
+      }
     } finally {
       if (mounted.current) {
         setLoading(false);
       }
     }
-  }, [page]);
+  }, [page, isProdCustom]);
 
   useEffect(() => {
     mounted.current = true;
     fetchCustomizations();
     
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = isProdCustom ? 5 : 3;
     let cleanupFn: (() => void) | null = null;
     
     const setupSubscription = () => {
@@ -73,14 +91,18 @@ export const useCustomizations = (page: string) => {
           }, (payload) => {
             console.log(`🔔 Customization change detected for ${page}:`, payload);
             if (mounted.current) {
+              // Clear cache before refetching
+              if (isProdCustom) {
+                clearVercelCache();
+              }
               fetchCustomizations();
             }
           })
           .subscribe((status) => {
             console.log(`📡 Subscription status for ${page}:`, status);
             
-            // Retry logic for failed subscriptions on custom domains
-            if (status === 'CHANNEL_ERROR' && retryCount < maxRetries && window.location.hostname.includes('agromercado.tv.br')) {
+            // Enhanced retry logic for production domain
+            if (status === 'CHANNEL_ERROR' && retryCount < maxRetries && isProdCustom) {
               retryCount++;
               console.log(`🔄 Retrying subscription for ${page} (attempt ${retryCount}/${maxRetries})`);
               setTimeout(setupSubscription, 2000 * retryCount);
@@ -94,17 +116,18 @@ export const useCustomizations = (page: string) => {
       } catch (error) {
         console.error(`❌ Failed to setup subscription for ${page}:`, error);
         
-        // Fallback to polling for custom domains
-        if (window.location.hostname.includes('agromercado.tv.br')) {
-          console.log(`🔄 Falling back to polling for ${page}`);
+        // Enhanced fallback to polling for production domain
+        if (isProdCustom) {
+          console.log(`🔄 Falling back to polling for ${page} on production domain`);
           const pollInterval = setInterval(() => {
             if (mounted.current) {
               fetchCustomizations();
             }
-          }, 5000);
+          }, 10000); // Poll every 10 seconds for production
           
           cleanupFn = () => {
             clearInterval(pollInterval);
+            mounted.current = false;
           };
         }
       }
@@ -115,12 +138,18 @@ export const useCustomizations = (page: string) => {
     return () => {
       cleanupFn?.();
     };
-  }, [page, fetchCustomizations]);
+  }, [page, fetchCustomizations, isProdCustom]);
 
   const getCustomization = useCallback((section: string, key: string, defaultValue: any = '') => {
     const customKey = `${section}_${key}`;
-    return customizations[customKey] || defaultValue;
-  }, [customizations]);
+    const value = customizations[customKey] || defaultValue;
+    
+    if (isProdCustom && !customizations[customKey] && defaultValue !== value) {
+      console.log(`🔍 Customization not found for ${customKey}, using default:`, defaultValue);
+    }
+    
+    return value;
+  }, [customizations, isProdCustom]);
 
   return { customizations, getCustomization, loading, refetch: fetchCustomizations };
 };

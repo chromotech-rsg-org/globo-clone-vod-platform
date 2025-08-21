@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
-import ErrorBoundary from './ErrorBoundary';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
 
 interface AdminLayoutProps {
@@ -11,13 +11,37 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { getCustomization } = useAdminCustomizations();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Ensure we're in an admin route, if not redirect to dashboard
+  useEffect(() => {
+    const adminPaths = [
+      '/dashboard',
+      '/admin/usuarios', 
+      '/admin/pacotes',
+      '/admin/planos',
+      '/admin/assinaturas',
+      '/admin/cupons',
+      '/admin/leiloes',
+      '/admin/habilitacoes',
+      '/admin/lances',
+      '/admin/personalizacao',
+      '/profile',
+      '/subscription'
+    ];
+    
+    if (!adminPaths.includes(location.pathname)) {
+      console.log('⚠️ Invalid admin route detected:', location.pathname);
+      navigate('/dashboard', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   const handleToggle = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
   useEffect(() => {
-    // Listen for customization updates
     const handleCustomizationUpdate = () => {
       // The hook already applies the changes, no need to do anything here
     };
@@ -29,8 +53,6 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     };
   }, []);
 
-  const contentBgColor = getCustomization('admin_content_bg', '#111827');
-
   return (
     <div className="admin-layout-container flex min-h-screen bg-admin-content-bg">
       <AdminSidebar 
@@ -38,13 +60,15 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         onToggle={handleToggle}
       />
       <div 
-        className="admin-content-main flex-1 min-h-screen bg-admin-content-bg"
+        className="admin-content-main flex-1 min-h-screen bg-admin-content-bg overflow-hidden"
         style={{ 
           marginLeft: sidebarCollapsed ? '64px' : '256px',
           background: 'linear-gradient(135deg, hsl(var(--admin-content-bg)) 0%, hsl(var(--admin-muted)) 100%)'
         }}
       >
-        {children}
+        <div className="h-full overflow-y-auto p-6">
+          {children}
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUniqueChannelId, clearNotificationCache } from '@/utils/notificationCache';
+import { isProductionCustomDomain, clearVercelCache } from '@/utils/vercelOptimizations';
 
 interface PendingItem {
   id: string;
@@ -19,7 +21,7 @@ export const usePendingNotifications = () => {
   const { user } = useAuth();
   const mounted = useRef(true);
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
+  const maxRetries = isProductionCustomDomain() ? 5 : 3;
 
   const fetchPendingItems = useCallback(async () => {
     if (!user || !mounted.current) return;
@@ -27,11 +29,16 @@ export const usePendingNotifications = () => {
     console.log('🔄 usePendingNotifications: Iniciando busca para usuário:', user.id);
     
     try {
-      // Cache-busting: Adicionar timestamp para evitar cache
+      // Enhanced cache-busting for production domain
+      if (isProductionCustomDomain()) {
+        clearVercelCache();
+        clearNotificationCache();
+      }
+      
       const timestamp = Date.now();
       console.log('⏰ usePendingNotifications: Cache-busting timestamp:', timestamp);
 
-      // Buscar lances pendentes com cache-busting header
+      // Buscar lances pendentes
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
         .select('id, bid_value, created_at, auction_id, user_id')
@@ -54,7 +61,7 @@ export const usePendingNotifications = () => {
         console.log('✅ usePendingNotifications: Lances pendentes encontrados:', bidsData?.length || 0);
       }
 
-      // Buscar registros pendentes com cache-busting
+      // Buscar registros pendentes
       const { data: registrationsData, error: registrationsError } = await supabase
         .from('auction_registrations')
         .select('id, created_at, auction_id, user_id')
@@ -158,14 +165,17 @@ export const usePendingNotifications = () => {
         console.log('✨ usePendingNotifications: Busca finalizada');
       }
     }
-  }, [user, retryCount]);
+  }, [user, retryCount, maxRetries]);
 
   useEffect(() => {
     if (!user) return;
     
     mounted.current = true;
     
-    // Clear cache before fetching to ensure fresh data
+    // Enhanced cache clearing for production domain
+    if (isProductionCustomDomain()) {
+      clearVercelCache();
+    }
     clearNotificationCache();
     
     fetchPendingItems();
@@ -177,6 +187,9 @@ export const usePendingNotifications = () => {
       if (mounted.current) {
         console.log('🔔 usePendingNotifications: Real-time change detected:', payload);
         // Clear cache before refetching
+        if (isProductionCustomDomain()) {
+          clearVercelCache();
+        }
         clearNotificationCache();
         // Small delay to ensure database consistency
         setTimeout(() => {
@@ -185,25 +198,48 @@ export const usePendingNotifications = () => {
       }
     };
 
-    const channel = supabase
-      .channel(channelName)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'bids',
-        filter: 'status=eq.pending'
-      }, handlePendingChange)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'auction_registrations',
-        filter: 'status=eq.pending'
-      }, handlePendingChange)
-      .subscribe();
+    let subscription: any;
+    
+    try {
+      subscription = supabase
+        .channel(channelName)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'bids',
+          filter: 'status=eq.pending'
+        }, handlePendingChange)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'auction_registrations',
+          filter: 'status=eq.pending'
+        }, handlePendingChange)
+        .subscribe();
+    } catch (error) {
+      console.error('❌ Failed to setup notification subscription:', error);
+      
+      // Fallback to polling for production domain
+      if (isProductionCustomDomain()) {
+        console.log('🔄 Falling back to polling for notifications on production domain');
+        const pollInterval = setInterval(() => {
+          if (mounted.current) {
+            fetchPendingItems();
+          }
+        }, 15000); // Poll every 15 seconds
+        
+        return () => {
+          clearInterval(pollInterval);
+          mounted.current = false;
+        };
+      }
+    }
 
     return () => {
       mounted.current = false;
-      supabase.removeChannel(channel);
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
     };
   }, [user?.id, fetchPendingItems]);
 

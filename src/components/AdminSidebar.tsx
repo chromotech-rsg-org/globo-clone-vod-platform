@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -11,9 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Images,
-  FileText,
-  Presentation,
   User,
   Gavel,
   UserCheck,
@@ -37,6 +34,27 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const { getCustomization } = useAdminCustomizations();
   const { pendingBids, pendingRegistrations, totalPending, loading } = usePendingNotifications();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Stable navigation handler to prevent session timeouts
+  const handleNavigation = useCallback((path: string) => {
+    if (isNavigating) return; // Prevent double navigation
+    
+    setIsNavigating(true);
+    console.log('🔗 Navegando para:', path);
+    
+    try {
+      navigate(path);
+      
+      // Reset navigation state after a short delay
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 500);
+    } catch (error) {
+      console.error('❌ Navigation error:', error);
+      setIsNavigating(false);
+    }
+  }, [navigate, isNavigating]);
 
   // Listen for customization updates
   useEffect(() => {
@@ -107,7 +125,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       <div className="p-6 border-b border-admin-border/50">
         <div className="flex items-center justify-between">
           <button 
-            onClick={() => navigate('/')} 
+            onClick={() => handleNavigation('/')} 
             className="flex items-center space-x-3 hover:opacity-80 transition-all duration-200 group"
           >
             {adminLogo ? (
@@ -154,15 +172,13 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           return (
             <button
               key={item.path}
-              onClick={() => {
-                console.log('🔗 Navegando para:', item.path);
-                navigate(item.path);
-              }}
+              onClick={() => handleNavigation(item.path)}
+              disabled={isNavigating}
               className={`group flex items-center w-full px-3 py-3 rounded-lg transition-all duration-200 ${
                 isActive 
                   ? 'bg-admin-primary text-admin-primary-foreground shadow-md scale-105' 
                   : 'text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text hover:scale-102'
-              }`}
+              } ${isNavigating ? 'opacity-50 cursor-not-allowed' : ''}`}
               title={isCollapsed ? item.label : undefined}
             >
               <Icon className={`h-5 w-5 min-w-[20px] transition-transform duration-200 ${
