@@ -427,7 +427,7 @@ const AdminSubscriptions = () => {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="border-admin-border text-admin-table-text hover:bg-admin-muted">
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="border-admin-border text-admin-table-text hover:bg-admin-muted text-slate-950">
                 Cancelar
               </Button>
               <Button type="submit" className="bg-admin-primary hover:bg-admin-button-hover text-admin-primary-foreground">
