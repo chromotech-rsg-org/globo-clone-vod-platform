@@ -1,7 +1,11 @@
 
-# PHP files
+# PHP files - completely ignore
 *.php
 **/*.php
+/api/**/*.php
+php.ini
+composer.json
+composer.lock
 
 # Development files
 .env.local
@@ -50,3 +54,7 @@ storybook-static/
 # Local Supabase
 supabase/.branches
 supabase/.temp
+
+# Git files
+.git/
+.gitignore
