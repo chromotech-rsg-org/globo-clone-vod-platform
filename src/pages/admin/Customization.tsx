@@ -621,7 +621,7 @@ const AdminCustomization = () => {
   const isLoading = Object.keys(customizations).length === 0;
   if (isLoading) {
     return <div className="p-6">
-          <div className="text-admin-foreground">Carregando personalizações...</div>
+          <div className="text-admin-foreground text-slate-50">Carregando personalizações...</div>
         </div>;
   }
   return <>
