@@ -1,0 +1,52 @@
+
+# PHP files
+*.php
+**/*.php
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+
+# Build artifacts
+.vite
+.turbo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Lock files (keep only one)
+yarn.lock
+pnpm-lock.yaml
+
+# Test coverage
+coverage/
+
+# Storybook
+storybook-static/
+
+# Local Supabase
+supabase/.branches
+supabase/.temp
