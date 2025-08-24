@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -7,6 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatCpf, formatPhone } from '@/utils/formatters';
+import { 
+  sanitizeInputSecure, 
+  validateEmailSecurity, 
+  validateCpfSecurity, 
+  validatePhoneSecurity,
+  globalRateLimiter,
+  securityConfig
+} from '@/utils/validators';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -18,37 +27,104 @@ const Profile = () => {
     cpf: '',
     phone: ''
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
+        name: sanitizeInputSecure(user.name || '', securityConfig.maxLengths.name),
         email: user.email || '',
-        cpf: user.cpf || '',
-        phone: user.phone || ''
+        cpf: sanitizeInputSecure(user.cpf || '', securityConfig.maxLengths.cpf),
+        phone: sanitizeInputSecure(user.phone || '', securityConfig.maxLengths.phone)
       });
     }
   }, [user]);
+
+  const validateForm = () => {
+    const errors: Record<string, string[]> = {};
+    
+    // Validate name
+    const sanitizedName = sanitizeInputSecure(formData.name, securityConfig.maxLengths.name);
+    if (!sanitizedName.trim()) {
+      errors.name = ['Nome é obrigatório'];
+    } else if (sanitizedName.length < 2) {
+      errors.name = ['Nome deve ter pelo menos 2 caracteres'];
+    }
+
+    // Validate CPF
+    if (formData.cpf) {
+      const cpfValidation = validateCpfSecurity(formData.cpf);
+      if (!cpfValidation.isValid) {
+        errors.cpf = cpfValidation.errors;
+      }
+    }
+
+    // Validate phone
+    if (formData.phone) {
+      const phoneValidation = validatePhoneSecurity(formData.phone);
+      if (!phoneValidation.isValid) {
+        errors.phone = phoneValidation.errors;
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let formattedValue = value;
 
-    if (name === 'cpf') {
-      formattedValue = formatCpf(value);
+    // Apply formatting and sanitization
+    if (name === 'name') {
+      formattedValue = sanitizeInputSecure(value, securityConfig.maxLengths.name);
+    } else if (name === 'cpf') {
+      formattedValue = formatCpf(sanitizeInputSecure(value, securityConfig.maxLengths.cpf));
     } else if (name === 'phone') {
-      formattedValue = formatPhone(value);
+      formattedValue = formatPhone(sanitizeInputSecure(value, securityConfig.maxLengths.phone));
     }
 
     setFormData(prev => ({
       ...prev,
       [name]: formattedValue
     }));
+
+    // Clear validation errors for this field
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
+
+    // Rate limiting check
+    const rateLimitKey = `profile-update-${user.id}`;
+    if (!globalRateLimiter.isAllowed(rateLimitKey, 3, securityConfig.rateLimits.timeWindow)) {
+      const remainingTime = globalRateLimiter.getRemainingTime(rateLimitKey, securityConfig.rateLimits.timeWindow);
+      const minutes = Math.ceil(remainingTime / (1000 * 60));
+      
+      toast({
+        title: "Muitas tentativas",
+        description: `Aguarde ${minutes} minutos antes de tentar novamente`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!validateForm()) {
+      toast({
+        title: "Dados inválidos",
+        description: "Corrija os erros antes de continuar",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setLoading(true);
 
@@ -56,9 +132,9 @@ const Profile = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          name: formData.name,
-          cpf: formData.cpf,
-          phone: formData.phone
+          name: sanitizeInputSecure(formData.name, securityConfig.maxLengths.name),
+          cpf: formData.cpf || null,
+          phone: formData.phone || null
         })
         .eq('id', user.id);
 
@@ -69,6 +145,7 @@ const Profile = () => {
         description: "Seus dados foram atualizados com sucesso."
       });
     } catch (error) {
+      console.error('Profile update error:', error);
       toast({
         title: "Erro",
         description: "Erro ao atualizar perfil. Tente novamente.",
@@ -106,7 +183,16 @@ const Profile = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="Seu nome completo"
+                  maxLength={securityConfig.maxLengths.name}
+                  className={validationErrors.name ? "border-red-500" : ""}
                 />
+                {validationErrors.name && (
+                  <div className="text-sm text-red-600">
+                    {validationErrors.name.map((error, index) => (
+                      <p key={index}>{error}</p>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -133,8 +219,16 @@ const Profile = () => {
                   value={formData.cpf}
                   onChange={handleInputChange}
                   placeholder="000.000.000-00"
-                  maxLength={14}
+                  maxLength={securityConfig.maxLengths.cpf}
+                  className={validationErrors.cpf ? "border-red-500" : ""}
                 />
+                {validationErrors.cpf && (
+                  <div className="text-sm text-red-600">
+                    {validationErrors.cpf.map((error, index) => (
+                      <p key={index}>{error}</p>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -146,8 +240,16 @@ const Profile = () => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="(00) 00000-0000"
-                  maxLength={15}
+                  maxLength={securityConfig.maxLengths.phone}
+                  className={validationErrors.phone ? "border-red-500" : ""}
                 />
+                {validationErrors.phone && (
+                  <div className="text-sm text-red-600">
+                    {validationErrors.phone.map((error, index) => (
+                      <p key={index}>{error}</p>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Button 

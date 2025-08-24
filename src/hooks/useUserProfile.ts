@@ -1,10 +1,24 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/auth';
+import { sanitizeInputSecure } from '@/utils/validators';
 
 export const useUserProfile = () => {
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
+      // Validate and sanitize userId
+      if (!userId || typeof userId !== 'string') {
+        console.error('Invalid user ID provided');
+        return null;
+      }
+
+      // Basic UUID validation
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(userId)) {
+        console.error('Invalid UUID format for user ID');
+        return null;
+      }
+
       console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
@@ -19,14 +33,26 @@ export const useUserProfile = () => {
 
       console.log('Profile data received:', data);
 
-      // Type-safe role conversion
+      // Sanitize and validate profile data
+      if (!data) return null;
+
+      // Type-safe role conversion with validation
       const validRoles: ('user' | 'admin' | 'desenvolvedor')[] = ['user', 'admin', 'desenvolvedor'];
       const role = validRoles.includes(data.role as any) ? data.role as 'user' | 'admin' | 'desenvolvedor' : 'user';
 
-      return {
-        ...data,
-        role
-      } as UserProfile;
+      // Sanitize all text fields
+      const sanitizedProfile: UserProfile = {
+        id: data.id,
+        email: sanitizeInputSecure(data.email || '', 254),
+        name: sanitizeInputSecure(data.name || '', 100),
+        cpf: data.cpf ? sanitizeInputSecure(data.cpf, 14) : null,
+        phone: data.phone ? sanitizeInputSecure(data.phone, 15) : null,
+        role,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+
+      return sanitizedProfile;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;

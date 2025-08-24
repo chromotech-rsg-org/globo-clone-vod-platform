@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   AlertDialog,
@@ -28,48 +29,85 @@ const RoleChangeConfirmation = ({
   userName
 }: RoleChangeConfirmationProps) => {
   const isPrivilegeEscalation = newRole === 'admin' || newRole === 'desenvolvedor';
+  const isPrivilegeReduction = (currentRole === 'admin' || currentRole === 'desenvolvedor') && newRole === 'user';
+  
+  const handleConfirm = () => {
+    // Log security-critical role changes for audit trail
+    if (isPrivilegeEscalation || isPrivilegeReduction) {
+      console.warn('🚨 SECURITY ALERT: Role change initiated', {
+        targetUser: userName,
+        fromRole: currentRole,
+        toRole: newRole,
+        timestamp: new Date().toISOString(),
+        action: isPrivilegeEscalation ? 'PRIVILEGE_ESCALATION' : 'PRIVILEGE_REDUCTION'
+      });
+    }
+    
+    onConfirm();
+  };
   
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-red-600">
-            {isPrivilegeEscalation ? 'Critical Security Action' : 'Confirm Role Change'}
+          <AlertDialogTitle className={isPrivilegeEscalation ? "text-red-600" : "text-orange-600"}>
+            {isPrivilegeEscalation && '🔒 Alteração Crítica de Segurança'}
+            {isPrivilegeReduction && '⚠️ Redução de Privilégios'}
+            {!isPrivilegeEscalation && !isPrivilegeReduction && 'Confirmar Alteração de Perfil'}
           </AlertDialogTitle>
-          <AlertDialogDescription className="space-y-2">
+          <AlertDialogDescription className="space-y-3">
             <p>
-              You are about to change the role of <strong>{userName}</strong> from{' '}
-              <span className="font-semibold">{currentRole}</span> to{' '}
-              <span className="font-semibold">{newRole}</span>.
+              Você está prestes a alterar o perfil de <strong>{userName}</strong> de{' '}
+              <span className="font-semibold text-blue-600">{currentRole}</span> para{' '}
+              <span className="font-semibold text-green-600">{newRole}</span>.
             </p>
             
             {isPrivilegeEscalation && (
-              <div className="bg-red-50 border border-red-200 rounded p-3 mt-3">
-                <p className="text-red-800 font-semibold">⚠️ WARNING: Privilege Escalation</p>
-                <p className="text-red-700 text-sm mt-1">
-                  This action will grant administrative privileges to this user. They will be able to:
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+                <p className="text-red-800 font-semibold text-sm">⚠️ ATENÇÃO: Elevação de Privilégios</p>
+                <p className="text-red-700 text-xs mt-1">
+                  Esta ação concederá privilégios administrativos ao usuário:
                 </p>
-                <ul className="text-red-700 text-sm mt-1 list-disc list-inside">
-                  <li>Access all user data</li>
-                  <li>Modify system settings</li>
-                  <li>Change other users' roles</li>
-                  <li>Access sensitive administrative functions</li>
+                <ul className="text-red-700 text-xs mt-1 list-disc list-inside ml-2">
+                  <li>Acesso a dados de todos os usuários</li>
+                  <li>Modificação de configurações do sistema</li>
+                  <li>Alteração de perfis de outros usuários</li>
+                  <li>Acesso a funções administrativas sensíveis</li>
                 </ul>
               </div>
             )}
+
+            {isPrivilegeReduction && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-3">
+                <p className="text-orange-800 font-semibold text-sm">📉 Redução de Privilégios</p>
+                <p className="text-orange-700 text-xs mt-1">
+                  O usuário perderá acesso a funções administrativas.
+                </p>
+              </div>
+            )}
             
-            <p className="text-sm text-gray-600 mt-3">
-              This action will be logged for security auditing purposes.
+            <p className="text-xs text-gray-600 mt-3 bg-gray-50 p-2 rounded">
+              🛡️ Esta ação será registrada nos logs de auditoria para fins de segurança.
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+        <AlertDialogFooter className="gap-2">
+          <AlertDialogCancel onClick={onClose} className="flex-1">
+            Cancelar
+          </AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onConfirm}
-            className={isPrivilegeEscalation ? 'bg-red-600 hover:bg-red-700' : ''}
+            onClick={handleConfirm}
+            className={`flex-1 ${
+              isPrivilegeEscalation 
+                ? 'bg-red-600 hover:bg-red-700 text-white' 
+                : isPrivilegeReduction 
+                ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
           >
-            {isPrivilegeEscalation ? 'Grant Admin Access' : 'Change Role'}
+            {isPrivilegeEscalation && '🔓 Conceder Acesso Admin'}
+            {isPrivilegeReduction && '📉 Reduzir Privilégios'}
+            {!isPrivilegeEscalation && !isPrivilegeReduction && 'Alterar Perfil'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
