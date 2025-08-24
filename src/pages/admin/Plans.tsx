@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,10 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { formatBillingCycle } from '@/utils/formatters';
-
 interface Plan {
   id: string;
   name: string;
@@ -31,15 +28,15 @@ interface Plan {
   package_id: string | null;
   priority: number | null;
 }
-
 const AdminPlans = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingItem, setEditingItem] = useState<Plan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     active: true,
@@ -52,24 +49,26 @@ const AdminPlans = () => {
     benefits: '',
     priority: 0
   });
-
   useEffect(() => {
     fetchPlans();
   }, []);
-
   const fetchPlans = async () => {
     try {
       setLoading(true);
-      
+
       // Verificar autenticação antes de fazer a query
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Usuário não autenticado');
       }
-
-      const { data, error } = await supabase
-        .from('plans')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('plans').select(`
           id,
           name,
           active,
@@ -82,18 +81,16 @@ const AdminPlans = () => {
           benefits,
           package_id,
           priority
-        `)
-        .order('priority', { ascending: true });
-
+        `).order('priority', {
+        ascending: true
+      });
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
-      
       setPlans(data || []);
     } catch (error: any) {
       console.error('Erro ao buscar planos:', error);
-      
       let errorMessage = "Não foi possível carregar os planos";
       if (error.message === 'Usuário não autenticado') {
         errorMessage = "Você precisa estar logado para acessar esta página";
@@ -102,7 +99,6 @@ const AdminPlans = () => {
       } else if (error.code === 'PGRST116') {
         errorMessage = "Nenhum plano encontrado";
       }
-      
       toast({
         title: "Erro",
         description: errorMessage,
@@ -112,12 +108,14 @@ const AdminPlans = () => {
       setLoading(false);
     }
   };
-
   const handleSave = async () => {
     try {
       // Verificar autenticação
-      const { data: { session } } = await supabase.auth.getSession();
-
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Usuário não autenticado');
       }
@@ -129,9 +127,7 @@ const AdminPlans = () => {
       if (!formData.price || formData.price < 0) {
         throw new Error('Preço deve ser maior que zero');
       }
-
       const benefitsArray = formData.benefits.split('\n').filter(b => b.trim());
-      
       const planData = {
         name: formData.name.trim(),
         active: formData.active,
@@ -144,34 +140,27 @@ const AdminPlans = () => {
         benefits: benefitsArray.length > 0 ? benefitsArray : null,
         priority: Number(formData.priority) || 0
       };
-      
       if (editingItem) {
         // Update existing
-        const { error } = await supabase
-          .from('plans')
-          .update(planData)
-          .eq('id', editingItem.id);
-
+        const {
+          error
+        } = await supabase.from('plans').update(planData).eq('id', editingItem.id);
         if (error) throw error;
-        
         toast({
           title: "Sucesso",
           description: "Plano atualizado com sucesso"
         });
       } else {
         // Create new
-        const { error } = await supabase
-          .from('plans')
-          .insert([planData]);
-
+        const {
+          error
+        } = await supabase.from('plans').insert([planData]);
         if (error) throw error;
-        
         toast({
           title: "Sucesso",
           description: "Plano criado com sucesso"
         });
       }
-
       await fetchPlans();
       resetForm();
     } catch (error: any) {
@@ -185,7 +174,6 @@ const AdminPlans = () => {
       } else if (error.code === '42501') {
         errorMessage = "Você não tem permissão para realizar esta ação";
       }
-      
       toast({
         title: "Erro",
         description: errorMessage,
@@ -193,18 +181,13 @@ const AdminPlans = () => {
       });
     }
   };
-
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este plano?')) return;
-
     try {
-      const { error } = await supabase
-        .from('plans')
-        .delete()
-        .eq('id', id);
-
+      const {
+        error
+      } = await supabase.from('plans').delete().eq('id', id);
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Plano excluído com sucesso"
@@ -219,7 +202,6 @@ const AdminPlans = () => {
       });
     }
   };
-
   const handleEdit = (item: Plan) => {
     setEditingItem(item);
     setFormData({
@@ -236,13 +218,11 @@ const AdminPlans = () => {
     });
     setIsDialogOpen(true);
   };
-
   const handleCreate = () => {
     setEditingItem(null);
     resetForm();
     setIsDialogOpen(true);
   };
-
   const resetForm = () => {
     setEditingItem(null);
     setIsDialogOpen(false);
@@ -259,21 +239,13 @@ const AdminPlans = () => {
       priority: 0
     });
   };
-
-  const filteredPlans = plans.filter(plan =>
-    plan.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  const filteredPlans = plans.filter(plan => plan.name.toLowerCase().includes(searchTerm.toLowerCase()));
   if (loading) {
-    return (
-      <div className="p-6">
+    return <div className="p-6">
         <div className="text-white">Carregando...</div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <>
+  return <>
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Planos</h1>
@@ -285,12 +257,7 @@ const AdminPlans = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar planos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-700 border-gray-600 text-white"
-            />
+            <Input placeholder="Buscar planos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-gray-700 border-gray-600 text-white" />
           </div>
           
           <Button onClick={handleCreate} variant="admin">
@@ -315,8 +282,7 @@ const AdminPlans = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPlans.map((plan) => (
-                  <TableRow key={plan.id} className="border-gray-700">
+                {filteredPlans.map(plan => <TableRow key={plan.id} className="border-gray-700">
                     <TableCell className="text-white">{plan.priority}</TableCell>
                     <TableCell className="text-white">{plan.name}</TableCell>
                     <TableCell className="text-white">R$ {plan.price.toFixed(2)}</TableCell>
@@ -333,38 +299,25 @@ const AdminPlans = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(plan)}
-                          className="text-gray-400 hover:text-white"
-                        >
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(plan)} className="text-gray-400 hover:text-white">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(plan.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(plan.id)} className="text-red-400 hover:text-red-300">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {filteredPlans.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700 mt-6">
+        {filteredPlans.length === 0 && <Card className="bg-gray-800 border-gray-700 mt-6">
             <CardContent className="p-12 text-center">
               <p className="text-gray-400">Nenhum plano encontrado</p>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </div>
 
       {/* Edit/Create Dialog */}
@@ -380,59 +333,46 @@ const AdminPlans = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="name" className="text-gray-300">Nome</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="Nome do plano"
-                />
+                <Input id="name" value={formData.name} onChange={e => setFormData({
+                ...formData,
+                name: e.target.value
+              })} className="bg-gray-700 border-gray-600 text-white" placeholder="Nome do plano" />
               </div>
 
               <div>
                 <Label htmlFor="priority" className="text-gray-300">Prioridade</Label>
-                <Input
-                  id="priority"
-                  type="number"
-                  value={formData.priority}
-                  onChange={(e) => setFormData({...formData, priority: parseInt(e.target.value) || 0})}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="0"
-                />
+                <Input id="priority" type="number" value={formData.priority} onChange={e => setFormData({
+                ...formData,
+                priority: parseInt(e.target.value) || 0
+              })} className="bg-gray-700 border-gray-600 text-white" placeholder="0" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="price" className="text-gray-300">Preço (R$)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="0.00"
-                />
+                <Input id="price" type="number" step="0.01" value={formData.price} onChange={e => setFormData({
+                ...formData,
+                price: parseFloat(e.target.value) || 0
+              })} className="bg-gray-700 border-gray-600 text-white" placeholder="0.00" />
               </div>
 
               <div>
                 <Label htmlFor="free_days" className="text-gray-300">Dias Grátis</Label>
-                <Input
-                  id="free_days"
-                  type="number"
-                  value={formData.free_days}
-                  onChange={(e) => setFormData({...formData, free_days: parseInt(e.target.value) || 0})}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="0"
-                />
+                <Input id="free_days" type="number" value={formData.free_days} onChange={e => setFormData({
+                ...formData,
+                free_days: parseInt(e.target.value) || 0
+              })} className="bg-gray-700 border-gray-600 text-white" placeholder="0" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="billing_cycle" className="text-gray-300">Ciclo de Cobrança</Label>
-                <Select value={formData.billing_cycle} onValueChange={(value) => setFormData({...formData, billing_cycle: value})}>
+                <Select value={formData.billing_cycle} onValueChange={value => setFormData({
+                ...formData,
+                billing_cycle: value
+              })}>
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -448,7 +388,10 @@ const AdminPlans = () => {
 
               <div>
                 <Label htmlFor="payment_type" className="text-gray-300">Tipo de Pagamento</Label>
-                <Select value={formData.payment_type} onValueChange={(value) => setFormData({...formData, payment_type: value})}>
+                <Select value={formData.payment_type} onValueChange={value => setFormData({
+                ...formData,
+                payment_type: value
+              })}>
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -463,44 +406,34 @@ const AdminPlans = () => {
 
             <div>
               <Label htmlFor="description" className="text-gray-300">Descrição</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Descrição do plano"
-                rows={3}
-              />
+              <Textarea id="description" value={formData.description} onChange={e => setFormData({
+              ...formData,
+              description: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Descrição do plano" rows={3} />
             </div>
 
             <div>
               <Label htmlFor="benefits" className="text-gray-300">Benefícios (um por linha)</Label>
-              <Textarea
-                id="benefits"
-                value={formData.benefits}
-                onChange={(e) => setFormData({...formData, benefits: e.target.value})}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Globoplay completo&#10;Canais ao vivo&#10;Download para offline"
-                rows={4}
-              />
+              <Textarea id="benefits" value={formData.benefits} onChange={e => setFormData({
+              ...formData,
+              benefits: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Globoplay completo&#10;Canais ao vivo&#10;Download para offline" rows={4} />
             </div>
 
             <div className="flex space-x-6">
               <div className="flex items-center space-x-2">
-                <Switch
-                  id="active"
-                  checked={formData.active}
-                  onCheckedChange={(checked) => setFormData({...formData, active: checked})}
-                />
+                <Switch id="active" checked={formData.active} onCheckedChange={checked => setFormData({
+                ...formData,
+                active: checked
+              })} />
                 <Label htmlFor="active" className="text-gray-300">Ativo</Label>
               </div>
 
               <div className="flex items-center space-x-2">
-                <Switch
-                  id="best_seller"
-                  checked={formData.best_seller}
-                  onCheckedChange={(checked) => setFormData({...formData, best_seller: checked})}
-                />
+                <Switch id="best_seller" checked={formData.best_seller} onCheckedChange={checked => setFormData({
+                ...formData,
+                best_seller: checked
+              })} />
                 <Label htmlFor="best_seller" className="text-gray-300">Best Seller</Label>
               </div>
             </div>
@@ -510,7 +443,7 @@ const AdminPlans = () => {
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>
-              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-gray-300">
+              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-zinc-950">
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
@@ -518,8 +451,6 @@ const AdminPlans = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 };
-
 export default AdminPlans;
