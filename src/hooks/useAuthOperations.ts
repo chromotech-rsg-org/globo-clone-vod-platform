@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { RegisterData } from '@/types/auth';
 import { 
   validateEmailSecurity, 
-  validatePasswordSecurity, 
+  validatePassword, 
   sanitizeInputSecure, 
   validateCpfSecurity, 
   validatePhoneSecurity,
@@ -39,7 +39,7 @@ export const useAuthOperations = () => {
       };
     }
 
-    const passwordValidation = validatePasswordSecurity(password);
+    const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
       return { 
         error: { 
@@ -86,7 +86,7 @@ export const useAuthOperations = () => {
         };
       }
 
-      const passwordValidation = validatePasswordSecurity(userData.password);
+      const passwordValidation = validatePassword(userData.password);
       if (!passwordValidation.isValid) {
         return { 
           error: { 
