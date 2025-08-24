@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,9 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
 import ErrorBoundary from '@/components/ErrorBoundary';
-
 interface Coupon {
   id: string;
   name: string;
@@ -25,15 +22,15 @@ interface Coupon {
   created_at: string | null;
   updated_at: string | null;
 }
-
 const AdminCoupons = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingItem, setEditingItem] = useState<Coupon | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -41,24 +38,26 @@ const AdminCoupons = () => {
     active: true,
     notes: ''
   });
-
   useEffect(() => {
     fetchCoupons();
   }, []);
-
   const fetchCoupons = async () => {
     try {
       setLoading(true);
-      
+
       // Verificar autenticação antes de fazer a query
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Usuário não autenticado');
       }
-
-      const { data, error } = await supabase
-        .from('coupons')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('coupons').select(`
           id,
           name,
           code,
@@ -67,18 +66,16 @@ const AdminCoupons = () => {
           notes,
           created_at,
           updated_at
-        `)
-        .order('name', { ascending: true });
-
+        `).order('name', {
+        ascending: true
+      });
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
-      
       setCoupons(data || []);
     } catch (error: any) {
       console.error('Erro ao buscar cupons:', error);
-      
       let errorMessage = "Não foi possível carregar os cupons";
       if (error.message === 'Usuário não autenticado') {
         errorMessage = "Você precisa estar logado para acessar esta página";
@@ -87,7 +84,6 @@ const AdminCoupons = () => {
       } else if (error.code === 'PGRST116') {
         errorMessage = "Nenhum cupom encontrado";
       }
-      
       toast({
         title: "Erro",
         description: errorMessage,
@@ -97,12 +93,14 @@ const AdminCoupons = () => {
       setLoading(false);
     }
   };
-
   const handleSave = async () => {
     try {
       // Verificar autenticação
-      const { data: { session } } = await supabase.auth.getSession();
-
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Usuário não autenticado');
       }
@@ -117,7 +115,6 @@ const AdminCoupons = () => {
       if (!formData.discount_percentage || formData.discount_percentage <= 0 || formData.discount_percentage > 100) {
         throw new Error('Desconto deve ser entre 1% e 100%');
       }
-
       const couponData = {
         name: formData.name.trim(),
         code: formData.code.trim().toUpperCase(),
@@ -125,34 +122,27 @@ const AdminCoupons = () => {
         active: formData.active,
         notes: formData.notes.trim() || null
       };
-
       if (editingItem) {
         // Update existing
-        const { error } = await supabase
-          .from('coupons')
-          .update(couponData)
-          .eq('id', editingItem.id);
-
+        const {
+          error
+        } = await supabase.from('coupons').update(couponData).eq('id', editingItem.id);
         if (error) throw error;
-        
         toast({
           title: "Sucesso",
           description: "Cupom atualizado com sucesso"
         });
       } else {
         // Create new
-        const { error } = await supabase
-          .from('coupons')
-          .insert([couponData]);
-
+        const {
+          error
+        } = await supabase.from('coupons').insert([couponData]);
         if (error) throw error;
-        
         toast({
           title: "Sucesso",
           description: "Cupom criado com sucesso"
         });
       }
-
       await fetchCoupons();
       resetForm();
     } catch (error: any) {
@@ -166,7 +156,6 @@ const AdminCoupons = () => {
       } else if (error.code === '42501') {
         errorMessage = "Você não tem permissão para realizar esta ação";
       }
-      
       toast({
         title: "Erro",
         description: errorMessage,
@@ -174,18 +163,13 @@ const AdminCoupons = () => {
       });
     }
   };
-
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este cupom?')) return;
-
     try {
-      const { error } = await supabase
-        .from('coupons')
-        .delete()
-        .eq('id', id);
-
+      const {
+        error
+      } = await supabase.from('coupons').delete().eq('id', id);
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Cupom excluído com sucesso"
@@ -200,7 +184,6 @@ const AdminCoupons = () => {
       });
     }
   };
-
   const handleEdit = (item: Coupon) => {
     setEditingItem(item);
     setFormData({
@@ -212,13 +195,11 @@ const AdminCoupons = () => {
     });
     setIsDialogOpen(true);
   };
-
   const handleCreate = () => {
     setEditingItem(null);
     resetForm();
     setIsDialogOpen(true);
   };
-
   const resetForm = () => {
     setEditingItem(null);
     setIsDialogOpen(false);
@@ -230,22 +211,13 @@ const AdminCoupons = () => {
       notes: ''
     });
   };
-
-  const filteredCoupons = coupons.filter(coupon =>
-    coupon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    coupon.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  const filteredCoupons = coupons.filter(coupon => coupon.name.toLowerCase().includes(searchTerm.toLowerCase()) || coupon.code.toLowerCase().includes(searchTerm.toLowerCase()));
   if (loading) {
-    return (
-        <div className="p-6">
+    return <div className="p-6">
           <div className="text-white">Carregando...</div>
-        </div>
-    );
+        </div>;
   }
-
-  return (
-    <>
+  return <>
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Cupons</h1>
@@ -257,12 +229,7 @@ const AdminCoupons = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar cupons..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-700 border-gray-600 text-white"
-            />
+            <Input placeholder="Buscar cupons..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-gray-700 border-gray-600 text-white" />
           </div>
           
           <Button onClick={handleCreate} className="bg-red-600 hover:bg-red-700">
@@ -286,8 +253,7 @@ const AdminCoupons = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCoupons.map((coupon) => (
-                  <TableRow key={coupon.id} className="border-gray-700">
+                {filteredCoupons.map(coupon => <TableRow key={coupon.id} className="border-gray-700">
                     <TableCell className="text-white">{coupon.name}</TableCell>
                     <TableCell className="text-white font-mono">{coupon.code}</TableCell>
                     <TableCell className="text-white">{coupon.discount_percentage}%</TableCell>
@@ -301,38 +267,25 @@ const AdminCoupons = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(coupon)}
-                          className="text-gray-400 hover:text-white"
-                        >
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(coupon)} className="text-gray-400 hover:text-white">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(coupon.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(coupon.id)} className="text-red-400 hover:text-red-300">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {filteredCoupons.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700 mt-6">
+        {filteredCoupons.length === 0 && <Card className="bg-gray-800 border-gray-700 mt-6">
             <CardContent className="p-12 text-center">
               <p className="text-gray-400">Nenhum cupom encontrado</p>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </div>
 
       {/* Edit/Create Dialog */}
@@ -347,59 +300,41 @@ const AdminCoupons = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="name" className="text-gray-300">Nome</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Nome do cupom"
-              />
+              <Input id="name" value={formData.name} onChange={e => setFormData({
+              ...formData,
+              name: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Nome do cupom" />
             </div>
 
             <div>
               <Label htmlFor="code" className="text-gray-300">Código</Label>
-              <Input
-                id="code"
-                value={formData.code}
-                onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                className="bg-gray-700 border-gray-600 text-white font-mono"
-                placeholder="DESCONTO10"
-              />
+              <Input id="code" value={formData.code} onChange={e => setFormData({
+              ...formData,
+              code: e.target.value.toUpperCase()
+            })} className="bg-gray-700 border-gray-600 text-white font-mono" placeholder="DESCONTO10" />
             </div>
 
             <div>
               <Label htmlFor="discount_percentage" className="text-gray-300">Desconto (%)</Label>
-              <Input
-                id="discount_percentage"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={formData.discount_percentage}
-                onChange={(e) => setFormData({...formData, discount_percentage: parseFloat(e.target.value) || 0})}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="10.00"
-              />
+              <Input id="discount_percentage" type="number" min="0" max="100" step="0.01" value={formData.discount_percentage} onChange={e => setFormData({
+              ...formData,
+              discount_percentage: parseFloat(e.target.value) || 0
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="10.00" />
             </div>
 
             <div>
               <Label htmlFor="notes" className="text-gray-300">Observações</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Observações sobre o cupom (opcional)"
-                rows={3}
-              />
+              <Textarea id="notes" value={formData.notes} onChange={e => setFormData({
+              ...formData,
+              notes: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Observações sobre o cupom (opcional)" rows={3} />
             </div>
 
             <div className="flex items-center space-x-2">
-              <Switch
-                id="active"
-                checked={formData.active}
-                onCheckedChange={(checked) => setFormData({...formData, active: checked})}
-              />
+              <Switch id="active" checked={formData.active} onCheckedChange={checked => setFormData({
+              ...formData,
+              active: checked
+            })} />
               <Label htmlFor="active" className="text-gray-300">Ativo</Label>
             </div>
 
@@ -408,7 +343,7 @@ const AdminCoupons = () => {
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>
-              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-gray-300">
+              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-gray-950">
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
@@ -416,8 +351,6 @@ const AdminCoupons = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 };
-
 export default AdminCoupons;
