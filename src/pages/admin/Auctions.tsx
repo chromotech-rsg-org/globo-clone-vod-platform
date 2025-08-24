@@ -17,7 +17,6 @@ import CurrencyInput from '@/components/ui/currency-input';
 import FilterControls from '@/components/admin/FilterControls';
 import { Plus, Edit, Trash2, Play, Square, Copy } from 'lucide-react';
 import AuctionBanner from '@/components/admin/AuctionBanner';
-
 const Auctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,8 +26,9 @@ const Auctions = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [liveFilter, setLiveFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -45,29 +45,25 @@ const Auctions = () => {
     auction_type: 'rural' as 'rural' | 'judicial',
     is_live: false
   });
-
   const fetchAuctions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('auctions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('auctions').select('*').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
       setAuctions(data as Auction[] || []);
-      
-      // Set up real-time subscription
-      const subscription = supabase
-        .channel('auctions-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'auctions'
-        }, () => {
-          fetchAuctions();
-        })
-        .subscribe();
 
+      // Set up real-time subscription
+      const subscription = supabase.channel('auctions-changes').on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'auctions'
+      }, () => {
+        fetchAuctions();
+      }).subscribe();
       return () => {
         supabase.removeChannel(subscription);
       };
@@ -82,20 +78,12 @@ const Auctions = () => {
       setLoading(false);
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
       // Construir datas completas se fornecidas
-      const startDateTime = formData.auction_date && formData.start_time 
-        ? `${formData.auction_date}T${formData.start_time}:00`
-        : null;
-      
-      const endDateTime = formData.auction_date && formData.end_time
-        ? `${formData.auction_date}T${formData.end_time}:00`
-        : null;
-
+      const startDateTime = formData.auction_date && formData.start_time ? `${formData.auction_date}T${formData.start_time}:00` : null;
+      const endDateTime = formData.auction_date && formData.end_time ? `${formData.auction_date}T${formData.end_time}:00` : null;
       const dataToSave = {
         ...formData,
         start_date: startDateTime,
@@ -106,32 +94,25 @@ const Auctions = () => {
       delete dataToSave.auction_date;
       delete dataToSave.start_time;
       delete dataToSave.end_time;
-
       if (editingAuction) {
-        const { error } = await supabase
-          .from('auctions')
-          .update(dataToSave)
-          .eq('id', editingAuction.id);
-        
+        const {
+          error
+        } = await supabase.from('auctions').update(dataToSave).eq('id', editingAuction.id);
         if (error) throw error;
-        
         toast({
           title: "Sucesso",
           description: "Leilão atualizado com sucesso"
         });
       } else {
-        const { error } = await supabase
-          .from('auctions')
-          .insert([dataToSave]);
-        
+        const {
+          error
+        } = await supabase.from('auctions').insert([dataToSave]);
         if (error) throw error;
-        
         toast({
           title: "Sucesso",
           description: "Leilão criado com sucesso"
         });
       }
-      
       setShowDialog(false);
       resetForm();
       fetchAuctions();
@@ -144,7 +125,6 @@ const Auctions = () => {
       });
     }
   };
-
   const handleEdit = (auction: Auction) => {
     setEditingAuction(auction);
     setFormData({
@@ -165,7 +145,6 @@ const Auctions = () => {
     });
     setShowDialog(true);
   };
-
   const handleDuplicate = (auction: Auction) => {
     setEditingAuction(null); // Não é edição, é duplicação
     setFormData({
@@ -173,36 +152,32 @@ const Auctions = () => {
       description: auction.description || '',
       youtube_url: auction.youtube_url || '',
       initial_bid_value: auction.initial_bid_value,
-      current_bid_value: auction.initial_bid_value, // Reset para valor inicial
+      current_bid_value: auction.initial_bid_value,
+      // Reset para valor inicial
       bid_increment: auction.bid_increment,
       registration_wait_value: auction.registration_wait_value || 5,
       registration_wait_unit: auction.registration_wait_unit || 'minutes',
       auction_date: '',
       start_time: '',
       end_time: '',
-      status: 'inactive' as const, // Sempre inativo para cópias
+      status: 'inactive' as const,
+      // Sempre inativo para cópias
       auction_type: auction.auction_type,
       is_live: false // Sempre falso para cópias
     });
     setShowDialog(true);
   };
-
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este leilão?')) return;
-    
     try {
-      const { error } = await supabase
-        .from('auctions')
-        .delete()
-        .eq('id', id);
-      
+      const {
+        error
+      } = await supabase.from('auctions').delete().eq('id', id);
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Leilão excluído com sucesso"
       });
-      
       fetchAuctions();
     } catch (error) {
       console.error('Error deleting auction:', error);
@@ -213,7 +188,6 @@ const Auctions = () => {
       });
     }
   };
-
   const resetForm = () => {
     setEditingAuction(null);
     setFormData({
@@ -233,38 +207,28 @@ const Auctions = () => {
       is_live: false
     });
   };
-
   const clearFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
     setLiveFilter('all');
     setTypeFilter('all');
   };
-
   const filteredAuctions = auctions.filter(auction => {
-    const matchesSearch = searchTerm === '' || 
-      auction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      auction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      auction.auction_type.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch = searchTerm === '' || auction.name.toLowerCase().includes(searchTerm.toLowerCase()) || auction.description?.toLowerCase().includes(searchTerm.toLowerCase()) || auction.auction_type.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || auction.status === statusFilter;
     const matchesLive = liveFilter === 'all' || auction.is_live.toString() === liveFilter;
     const matchesType = typeFilter === 'all' || auction.auction_type === typeFilter;
-    
     return matchesSearch && matchesStatus && matchesLive && matchesType;
   });
-
   useEffect(() => {
     fetchAuctions();
   }, []);
-
-  return (
-    <div className="p-6 space-y-6">
+  return <div className="p-6 space-y-6">
       <AuctionBanner />
       
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Gerenciar Leilões</h1>
+          <h1 className="text-3xl font-bold text-slate-50">Gerenciar Leilões</h1>
           <p className="text-muted-foreground">Crie e gerencie leilões do sistema</p>
         </div>
         
@@ -286,17 +250,18 @@ const Auctions = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome do Leilão</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+                  <Input id="name" value={formData.name} onChange={e => setFormData({
+                  ...formData,
+                  name: e.target.value
+                })} required />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="auction_type">Tipo de Leilão</Label>
-                  <Select value={formData.auction_type} onValueChange={(value: 'rural' | 'judicial') => setFormData({ ...formData, auction_type: value })}>
+                  <Select value={formData.auction_type} onValueChange={(value: 'rural' | 'judicial') => setFormData({
+                  ...formData,
+                  auction_type: value
+                })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -310,68 +275,61 @@ const Auctions = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
+                <Textarea id="description" value={formData.description} onChange={e => setFormData({
+                ...formData,
+                description: e.target.value
+              })} rows={3} />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="youtube_url">URL do YouTube</Label>
-                <Input
-                  id="youtube_url"
-                  value={formData.youtube_url}
-                  onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                />
+                <Input id="youtube_url" value={formData.youtube_url} onChange={e => setFormData({
+                ...formData,
+                youtube_url: e.target.value
+              })} placeholder="https://www.youtube.com/watch?v=..." />
               </div>
               
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="initial_bid_value">Lance Inicial</Label>
-                  <CurrencyInput
-                    value={formData.initial_bid_value}
-                    onChange={(value) => setFormData({ ...formData, initial_bid_value: value })}
-                    placeholder="R$ 0,00"
-                  />
+                  <CurrencyInput value={formData.initial_bid_value} onChange={value => setFormData({
+                  ...formData,
+                  initial_bid_value: value
+                })} placeholder="R$ 0,00" />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="current_bid_value">Lance Atual</Label>
-                  <CurrencyInput
-                    value={formData.current_bid_value}
-                    onChange={(value) => setFormData({ ...formData, current_bid_value: value })}
-                    placeholder="R$ 0,00"
-                  />
+                  <CurrencyInput value={formData.current_bid_value} onChange={value => setFormData({
+                  ...formData,
+                  current_bid_value: value
+                })} placeholder="R$ 0,00" />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="bid_increment">Incremento</Label>
-                  <CurrencyInput
-                    value={formData.bid_increment}
-                    onChange={(value) => setFormData({ ...formData, bid_increment: value })}
-                    placeholder="R$ 100,00"
-                  />
+                  <CurrencyInput value={formData.bid_increment} onChange={value => setFormData({
+                  ...formData,
+                  bid_increment: value
+                })} placeholder="R$ 100,00" />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="registration_wait_value">Tempo Espera Habilitação</Label>
-                  <Input
-                    id="registration_wait_value"
-                    type="number"
-                    min="1"
-                    value={formData.registration_wait_value}
-                    onChange={(e) => setFormData({ ...formData, registration_wait_value: parseInt(e.target.value) || 1 })}
-                  />
+                  <Input id="registration_wait_value" type="number" min="1" value={formData.registration_wait_value} onChange={e => setFormData({
+                  ...formData,
+                  registration_wait_value: parseInt(e.target.value) || 1
+                })} />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="registration_wait_unit">Unidade</Label>
-                  <Select value={formData.registration_wait_unit} onValueChange={(value: 'minutes' | 'hours' | 'days') => setFormData({ ...formData, registration_wait_unit: value })}>
+                  <Select value={formData.registration_wait_unit} onValueChange={(value: 'minutes' | 'hours' | 'days') => setFormData({
+                  ...formData,
+                  registration_wait_unit: value
+                })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -387,51 +345,43 @@ const Auctions = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="auction_date">Data do Leilão</Label>
-                  <Input
-                    id="auction_date"
-                    type="date"
-                    value={formData.auction_date}
-                    onChange={(e) => setFormData({ ...formData, auction_date: e.target.value })}
-                  />
+                  <Input id="auction_date" type="date" value={formData.auction_date} onChange={e => setFormData({
+                  ...formData,
+                  auction_date: e.target.value
+                })} />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="start_time">Hora de Início</Label>
-                  <Input
-                    id="start_time"
-                    type="time"
-                    value={formData.start_time}
-                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                  />
+                  <Input id="start_time" type="time" value={formData.start_time} onChange={e => setFormData({
+                  ...formData,
+                  start_time: e.target.value
+                })} />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="end_time">Hora de Fim</Label>
-                  <Input
-                    id="end_time"
-                    type="time"
-                    value={formData.end_time}
-                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                  />
+                  <Input id="end_time" type="time" value={formData.end_time} onChange={e => setFormData({
+                  ...formData,
+                  end_time: e.target.value
+                })} />
                 </div>
               </div>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="status"
-                    checked={formData.status === 'active'}
-                    onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? 'active' : 'inactive' })}
-                  />
+                  <Switch id="status" checked={formData.status === 'active'} onCheckedChange={checked => setFormData({
+                  ...formData,
+                  status: checked ? 'active' : 'inactive'
+                })} />
                   <Label htmlFor="status">Leilão Ativo</Label>
                 </div>
                 
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_live"
-                    checked={formData.is_live}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_live: checked })}
-                  />
+                  <Switch id="is_live" checked={formData.is_live} onCheckedChange={checked => setFormData({
+                  ...formData,
+                  is_live: checked
+                })} />
                   <Label htmlFor="is_live">Transmissão ao Vivo</Label>
                 </div>
               </div>
@@ -454,46 +404,52 @@ const Auctions = () => {
           <CardTitle>Lista de Leilões ({filteredAuctions.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <FilterControls
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            filters={[
-              {
-                key: 'status',
-                label: 'Status',
-                value: statusFilter,
-                options: [
-                  { value: 'all', label: 'Todos' },
-                  { value: 'active', label: 'Ativo' },
-                  { value: 'inactive', label: 'Inativo' }
-                ],
-                onChange: setStatusFilter
-              },
-              {
-                key: 'live',
-                label: 'Transmissão',
-                value: liveFilter,
-                options: [
-                  { value: 'all', label: 'Todas' },
-                  { value: 'true', label: 'Ao Vivo' },
-                  { value: 'false', label: 'Gravado' }
-                ],
-                onChange: setLiveFilter
-              },
-              {
-                key: 'type',
-                label: 'Tipo',
-                value: typeFilter,
-                options: [
-                  { value: 'all', label: 'Todos' },
-                  { value: 'rural', label: 'Rural' },
-                  { value: 'judicial', label: 'Judicial' }
-                ],
-                onChange: setTypeFilter
-              }
-            ]}
-            onClearFilters={clearFilters}
-          />
+          <FilterControls searchTerm={searchTerm} onSearchChange={setSearchTerm} filters={[{
+          key: 'status',
+          label: 'Status',
+          value: statusFilter,
+          options: [{
+            value: 'all',
+            label: 'Todos'
+          }, {
+            value: 'active',
+            label: 'Ativo'
+          }, {
+            value: 'inactive',
+            label: 'Inativo'
+          }],
+          onChange: setStatusFilter
+        }, {
+          key: 'live',
+          label: 'Transmissão',
+          value: liveFilter,
+          options: [{
+            value: 'all',
+            label: 'Todas'
+          }, {
+            value: 'true',
+            label: 'Ao Vivo'
+          }, {
+            value: 'false',
+            label: 'Gravado'
+          }],
+          onChange: setLiveFilter
+        }, {
+          key: 'type',
+          label: 'Tipo',
+          value: typeFilter,
+          options: [{
+            value: 'all',
+            label: 'Todos'
+          }, {
+            value: 'rural',
+            label: 'Rural'
+          }, {
+            value: 'judicial',
+            label: 'Judicial'
+          }],
+          onChange: setTypeFilter
+        }]} onClearFilters={clearFilters} />
         </CardContent>
       </Card>
 
@@ -502,12 +458,9 @@ const Auctions = () => {
           <CardTitle>Leilões Filtrados</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="text-center py-8">
+          {loading ? <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            </div>
-          ) : (
-            <Table>
+            </div> : <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
@@ -520,8 +473,7 @@ const Auctions = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAuctions.map((auction) => (
-                  <TableRow key={auction.id}>
+                {filteredAuctions.map(auction => <TableRow key={auction.id}>
                     <TableCell className="font-medium">{auction.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
@@ -535,63 +487,37 @@ const Auctions = () => {
                     </TableCell>
                     <TableCell>{formatCurrency(auction.current_bid_value)}</TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={auction.is_live ? "default" : "secondary"}
-                        className="flex items-center gap-1 w-fit"
-                      >
+                      <Badge variant={auction.is_live ? "default" : "secondary"} className="flex items-center gap-1 w-fit">
                         {auction.is_live ? <Play size={12} /> : <Square size={12} />}
                         {auction.is_live ? 'Ao Vivo' : 'Gravado'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {auction.start_date && auction.end_date ? (
-                        <div className="text-sm">
+                      {auction.start_date && auction.end_date ? <div className="text-sm">
                           <div>{formatDate(auction.start_date).split(' ')[0]}</div>
                           <div className="text-muted-foreground">
                             {auction.start_date.split('T')[1]?.slice(0, 5)} - {auction.end_date.split('T')[1]?.slice(0, 5)}
                           </div>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">Não definida</span>
-                      )}
+                        </div> : <span className="text-muted-foreground">Não definida</span>}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(auction)}
-                          title="Editar leilão"
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(auction)} title="Editar leilão">
                           <Edit size={14} />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDuplicate(auction)}
-                          title="Duplicar leilão"
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleDuplicate(auction)} title="Duplicar leilão">
                           <Copy size={14} />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(auction.id)}
-                          title="Excluir leilão"
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleDelete(auction.id)} title="Excluir leilão">
                           <Trash2 size={14} />
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
-            </Table>
-          )}
+            </Table>}
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default Auctions;
