@@ -500,7 +500,7 @@ const AdminUsers = () => {
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>
-              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-gray-300">
+              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-zinc-950">
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
