@@ -229,7 +229,7 @@ const Auctions = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-50">Gerenciar Leilões</h1>
-          <p className="text-muted-foreground">Crie e gerencie leilões do sistema</p>
+          <p className="text-slate-300">Crie e gerencie leilões do sistema</p>
         </div>
         
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
