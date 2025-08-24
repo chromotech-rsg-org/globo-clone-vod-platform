@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -32,20 +33,20 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   const navigate = useNavigate();
 
   const handleGoToBids = () => {
-    navigate('/admin/bids?status=pending');
+    navigate('/admin/lances');
     onOpenChange(false);
   };
 
   const handleGoToRegistrations = () => {
-    navigate('/admin/registrations?status=pending');
+    navigate('/admin/habilitacoes');
     onOpenChange(false);
   };
 
   const handleItemClick = (item: PendingItem) => {
     if (item.type === 'bid') {
-      navigate(`/admin/bids?status=pending&bid=${item.id}`);
+      navigate('/admin/lances');
     } else {
-      navigate(`/admin/registrations?status=pending&registration=${item.id}`);
+      navigate('/admin/habilitacoes');
     }
     onOpenChange(false);
   };
