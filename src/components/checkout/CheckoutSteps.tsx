@@ -20,29 +20,13 @@ interface CheckoutStepsProps {
   isLoading: boolean;
 }
 
-// Create proper interfaces for the step components
-interface CheckoutPersonalStepProps {
-  data: any;
-  onDataChange: (stepData: any) => void;
-}
-
-interface CheckoutCredentialsStepProps {
-  data: any;
-  onDataChange: (stepData: any) => void;
-}
-
-interface CheckoutCouponStepProps {
-  data: any;
-  onDataChange: (stepData: any) => void;
-  planPrice: number;
-}
-
 const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     cpf: '',
     phone: '',
     coupon: null,
@@ -70,6 +54,25 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
 
   const handleStepData = (stepData: any) => {
     setFormData(prev => ({ ...prev, ...stepData }));
+  };
+
+  const handlePersonalStepSubmit = (data: any) => {
+    handleStepData(data);
+    handleNext();
+  };
+
+  const handleCredentialsStepSubmit = (data: any) => {
+    handleStepData(data);
+    handleNext();
+  };
+
+  const handleCouponApplied = (coupon: any) => {
+    handleStepData({ coupon });
+    handleNext();
+  };
+
+  const handleCouponSkip = () => {
+    handleNext();
   };
 
   const handleSubmit = async () => {
@@ -131,33 +134,45 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
 
         {/* Conteúdo do Passo */}
         <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">
-              Passo {currentStep}: {steps[currentStep - 1].title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {currentStep === 1 && (
               <CheckoutPersonalStep
-                data={formData}
-                onDataChange={handleStepData}
+                initialData={{
+                  name: formData.name,
+                  cpf: formData.cpf,
+                  phone: formData.phone
+                }}
+                onSubmit={handlePersonalStepSubmit}
               />
             )}
             {currentStep === 2 && (
               <CheckoutCredentialsStep
-                data={formData}
-                onDataChange={handleStepData}
+                initialData={{
+                  email: formData.email,
+                  password: formData.password,
+                  confirmPassword: formData.confirmPassword
+                }}
+                onSubmit={handleCredentialsStepSubmit}
+                isLoading={false}
               />
             )}
             {currentStep === 3 && (
               <CheckoutCouponStep
-                data={formData}
-                onDataChange={handleStepData}
-                planPrice={plan.price}
+                onCouponApplied={handleCouponApplied}
+                onSkip={handleCouponSkip}
               />
             )}
             {currentStep === 4 && (
               <div className="space-y-6">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-white mb-4">
+                    Revisar e Finalizar
+                  </h2>
+                  <p className="text-gray-400">
+                    Confirme suas informações antes de finalizar
+                  </p>
+                </div>
+
                 <div className="bg-gray-700 rounded-lg p-4">
                   <h3 className="text-white font-medium mb-4">Revisar Informações</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -212,40 +227,35 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
                     </p>
                   )}
                 </div>
+
+                <div className="pt-4">
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!canProceed() || isLoading}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                  >
+                    {isLoading ? 'Criando conta...' : 'Finalizar Compra'}
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Botões de Navegação */}
-        <div className="flex justify-between mt-6">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            className="text-white border-gray-600 hover:bg-gray-700"
-          >
-            Anterior
-          </Button>
-          
-          {currentStep < steps.length ? (
+        {/* Botões de Navegação - Only show for steps 1-3 */}
+        {currentStep < 4 && (
+          <div className="flex justify-between mt-6">
             <Button
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="bg-blue-600 hover:bg-blue-700"
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              className="text-white border-gray-600 hover:bg-gray-700"
             >
-              Próximo
+              Anterior
             </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={!canProceed() || isLoading}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isLoading ? 'Criando conta...' : 'Finalizar Compra'}
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Resumo do Plano */}
