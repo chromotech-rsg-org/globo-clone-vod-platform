@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -75,11 +74,20 @@ const AuctionForm = ({ auction, onSuccess }: AuctionFormProps) => {
     setLoading(true);
     try {
       const auctionData = {
-        ...data,
+        name: data.name,
+        description: data.description,
+        youtube_url: data.youtube_url || null,
+        initial_bid_value: data.initial_bid_value,
         current_bid_value: data.initial_bid_value,
-        // Only include custom bid fields if mode is custom
+        bid_increment: data.bid_increment,
+        increment_mode: data.increment_mode,
         min_custom_bid: data.increment_mode === 'custom' ? data.min_custom_bid : null,
         max_custom_bid: data.increment_mode === 'custom' ? data.max_custom_bid : null,
+        registration_wait_value: data.registration_wait_value,
+        registration_wait_unit: data.registration_wait_unit,
+        auction_type: data.auction_type,
+        status: data.status,
+        is_live: data.is_live
       };
 
       if (auction?.id) {
