@@ -29,7 +29,7 @@ const PlanSelector = ({
         <p className="text-gray-400 text-sm">Selecione o plano que melhor se adapta às suas necessidades</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 bg-gray-800">
         {plans.map(plan => <Card key={plan.id} className={`relative cursor-pointer transition-all duration-200 ${selectedPlan?.id === plan.id ? 'ring-2 ring-primary bg-primary/5' : 'hover:ring-1 hover:ring-primary/50'} ${plan.best_seller ? 'border-primary' : 'border-gray-700'}`} onClick={() => onSelectPlan(plan)}>
             {plan.best_seller && <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
                 <Badge className="bg-primary text-primary-foreground">
