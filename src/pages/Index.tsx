@@ -1,12 +1,73 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSiteTitle } from '@/hooks/useSiteTitle';
+import { useSiteCustomizations } from '@/hooks/useSiteCustomizations';
+import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
+import Header from '@/components/Header';
+import HeroBanner from '@/components/HeroBanner';
+import HeroSlider from '@/components/HeroSlider';
+import PlansSection from '@/components/PlansSection';
+import ContentCarousel from '@/components/ContentCarousel';
+import Footer from '@/components/Footer';
+import UserHeader from '@/components/UserHeader';
+import SubscriptionRequiredModal from '@/components/SubscriptionRequiredModal';
+import { Navigate } from 'react-router-dom';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+  const { user } = useAuth();
+  const { siteName, streamingUrl, loading: siteLoading } = useSiteCustomizations();
+  const { hasActiveSubscription, loading: subscriptionLoading } = useSubscriptionCheck();
+  
+  // Use the site title hook to update document title
+  useSiteTitle();
+
+  // If user is authenticated and has active subscription, show the streaming content
+  if (user && hasActiveSubscription && streamingUrl) {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <UserHeader />
+        <div className="container mx-auto px-4 py-8">
+          <div className="aspect-video bg-black rounded-lg overflow-hidden">
+            <iframe
+              src={streamingUrl}
+              className="w-full h-full"
+              allowFullScreen
+              title={`${siteName} - Streaming`}
+            />
+          </div>
+        </div>
       </div>
+    );
+  }
+
+  // If user is authenticated but doesn't have subscription, redirect to dashboard
+  if (user && !subscriptionLoading && hasActiveSubscription === false) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Public homepage for non-authenticated users or during loading
+  return (
+    <div className="min-h-screen bg-background">
+      {user && <UserHeader />}
+      <Header />
+      
+      {/* Hero Section */}
+      <HeroSlider />
+      <HeroBanner />
+      
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8 space-y-12">
+        <PlansSection />
+        <ContentCarousel />
+      </main>
+      
+      <Footer />
+      
+      {/* Subscription Required Modal for authenticated users without subscription */}
+      {user && hasActiveSubscription === false && (
+        <SubscriptionRequiredModal />
+      )}
     </div>
   );
 };
