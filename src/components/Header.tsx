@@ -135,6 +135,19 @@ const Header = () => {
             {plansText}
           </Link>
 
+          <Link 
+            to="/leiloes" 
+            className="hover:scale-105 transition-all duration-200"
+            style={{ 
+              color: textColor,
+              '--hover-color': hoverColor
+            } as React.CSSProperties}
+            onMouseEnter={(e) => e.currentTarget.style.color = hoverColor}
+            onMouseLeave={(e) => e.currentTarget.style.color = textColor}
+          >
+            Leilões
+          </Link>
+
           {/* Botão de streaming configurável */}
           {streamingLink && (
             <a
