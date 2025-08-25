@@ -176,9 +176,9 @@ const Login = () => {
           <div className="text-center space-y-4">
             <div className="flex justify-center">
               <div 
-                className="px-4 py-2 rounded-lg font-bold text-2xl cursor-pointer"
+                className="px-4 py-2 rounded-lg font-bold text-2xl cursor-pointer flex items-center justify-center"
                 style={{ 
-                  backgroundColor: logoBackgroundColor,
+                  backgroundColor: mainLogoImage ? 'transparent' : logoBackgroundColor,
                   color: logoTextColor 
                 }}
                 onClick={handleLogoClick}
