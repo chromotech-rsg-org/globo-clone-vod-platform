@@ -1,9 +1,10 @@
 
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSiteTitle } from '@/hooks/useSiteTitle';
 import { useSiteCustomizations } from '@/hooks/useSiteCustomizations';
 import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
+import { useContentSections } from '@/hooks/useContentSections';
 import Header from '@/components/Header';
 import HeroBanner from '@/components/HeroBanner';
 import HeroSlider from '@/components/HeroSlider';
@@ -18,6 +19,8 @@ const Index = () => {
   const { user } = useAuth();
   const { siteName, streamingUrl, loading: siteLoading } = useSiteCustomizations();
   const { hasActiveSubscription, loading: subscriptionLoading } = useSubscriptionCheck();
+  const { sections, loading: contentLoading } = useContentSections('homepage');
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   
   // Use the site title hook to update document title
   useSiteTitle();
@@ -59,14 +62,33 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 space-y-12">
         <PlansSection />
-        <ContentCarousel />
+        
+        {/* Content Sections */}
+        {!contentLoading && sections.map((section) => (
+          <ContentCarousel
+            key={section.id}
+            title={section.title}
+            items={section.items.map(item => ({
+              id: item.id,
+              title: item.title,
+              image: item.image_url || '/placeholder.svg',
+              category: item.category || 'Geral',
+              rating: item.rating || 'L',
+              age_rating_background_color: item.age_rating_background_color || '#fbbf24'
+            }))}
+            type={section.type}
+          />
+        ))}
       </main>
       
       <Footer />
       
       {/* Subscription Required Modal for authenticated users without subscription */}
       {user && hasActiveSubscription === false && (
-        <SubscriptionRequiredModal />
+        <SubscriptionRequiredModal 
+          open={subscriptionModalOpen}
+          onClose={() => setSubscriptionModalOpen(false)}
+        />
       )}
     </div>
   );
