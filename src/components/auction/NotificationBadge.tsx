@@ -1,29 +1,46 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { usePendingNotifications } from '@/hooks/usePendingNotifications';
+import PendingNotificationModal from './PendingNotificationModal';
 
-interface NotificationBadgeProps {
-  count: number;
-  onClick: () => void;
-}
+const NotificationBadge = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { pendingBids, pendingRegistrations, totalPending, loading, hasNewNotifications, refetch } = usePendingNotifications();
 
-const NotificationBadge: React.FC<NotificationBadgeProps> = ({ count, onClick }) => {
-  if (count === 0) return null;
+  if (loading || totalPending === 0) {
+    return null;
+  }
 
   return (
-    <div 
-      className="relative cursor-pointer animate-pulse" 
-      onClick={onClick}
-    >
-      <Bell className="h-6 w-6 text-white hover:text-primary transition-colors" />
-      <Badge 
-        variant="destructive" 
-        className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs animate-bounce"
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsModalOpen(true)}
+        className="relative"
       >
-        {count > 99 ? '99+' : count}
-      </Badge>
-    </div>
+        <Bell className={`h-4 w-4 ${hasNewNotifications ? 'animate-bounce' : ''}`} />
+        {totalPending > 0 && (
+          <Badge 
+            variant="destructive" 
+            className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+          >
+            {totalPending > 99 ? '99+' : totalPending}
+          </Badge>
+        )}
+      </Button>
+
+      <PendingNotificationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        pendingBids={pendingBids}
+        pendingRegistrations={pendingRegistrations}
+        onRefetch={refetch}
+      />
+    </>
   );
 };
 

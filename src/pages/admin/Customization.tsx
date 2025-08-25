@@ -336,6 +336,15 @@ const AdminCustomization = () => {
     description: 'Cor secundária do tema',
     defaultValue: '#1f2937'
   }, {
+    key: 'streaming_link',
+    label: 'Link para Streaming',
+    type: 'text',
+    section: 'global',
+    page: 'home',
+    placeholder: 'https://streaming.exemplo.com',
+    description: 'URL do serviço de streaming',
+    defaultValue: ''
+  }, {
     key: 'admin_logo_image',
     label: 'Logo do Painel Administrativo',
     type: 'image',
@@ -399,6 +408,94 @@ const AdminCustomization = () => {
     page: 'home',
     description: 'Cor de fundo dos cards no admin',
     defaultValue: '#374151'
+  },
+  // Novas configurações de modal, datatables e cards
+  {
+    key: 'modal_background_color',
+    label: 'Cor de Fundo dos Modais',
+    type: 'color',
+    section: 'global',
+    page: 'home',
+    description: 'Cor de fundo dos modais/dialogs',
+    defaultValue: '#1f2937'
+  }, {
+    key: 'modal_border_color',
+    label: 'Cor da Borda dos Modais',
+    type: 'color',
+    section: 'global',
+    page: 'home',
+    description: 'Cor da borda dos modais',
+    defaultValue: '#374151'
+  }, {
+    key: 'datatable_header_bg',
+    label: 'Cor de Fundo do Cabeçalho da Tabela',
+    type: 'color',
+    section: 'global',
+    page: 'home',
+    description: 'Cor de fundo do cabeçalho das datatables',
+    defaultValue: '#374151'
+  }, {
+    key: 'datatable_row_bg',
+    label: 'Cor de Fundo das Linhas da Tabela',
+    type: 'color',
+    section: 'global',
+    page: 'home',
+    description: 'Cor de fundo das linhas das datatables',
+    defaultValue: '#1f2937'
+  }, {
+    key: 'datatable_hover_bg',
+    label: 'Cor de Hover das Linhas da Tabela',
+    type: 'color',
+    section: 'global',
+    page: 'home',
+    description: 'Cor de fundo ao passar o mouse nas linhas',
+    defaultValue: '#374151'
+  }, {
+    key: 'dashboard_card_bg',
+    label: 'Cor de Fundo dos Cards do Dashboard',
+    type: 'color',
+    section: 'global',
+    page: 'home',
+    description: 'Cor de fundo dos cards no dashboard',
+    defaultValue: '#1f2937'
+  }, {
+    key: 'dashboard_card_border',
+    label: 'Cor da Borda dos Cards do Dashboard',
+    type: 'color',
+    section: 'global',
+    page: 'home',
+    description: 'Cor da borda dos cards no dashboard',
+    defaultValue: '#374151'
+  },
+  
+  // TERMS PAGE (nova seção)
+  {
+    key: 'terms_title',
+    label: 'Título da Página',
+    type: 'text',
+    section: 'terms',
+    page: 'terms',
+    placeholder: 'Termos e Condições',
+    description: 'Título principal da página de termos',
+    defaultValue: 'Termos e Condições'
+  }, {
+    key: 'terms_content',
+    label: 'Conteúdo dos Termos',
+    type: 'textarea',
+    section: 'terms',
+    page: 'terms',
+    placeholder: 'Digite o conteúdo dos termos...',
+    description: 'Conteúdo HTML dos termos e condições',
+    defaultValue: ''
+  }, {
+    key: 'terms_last_updated',
+    label: 'Data da Última Atualização',
+    type: 'text',
+    section: 'terms',
+    page: 'terms',
+    placeholder: 'dd/mm/aaaa',
+    description: 'Data da última atualização dos termos',
+    defaultValue: new Date().toLocaleDateString('pt-BR')
   },
   // LOGIN PAGE
   {
@@ -636,7 +733,7 @@ const AdminCustomization = () => {
 
       <div className="p-6">
         <Tabs defaultValue="home" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-admin-muted">
+          <TabsList className="grid w-full grid-cols-5 bg-admin-muted">
             <TabsTrigger value="home" className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
               <Home className="h-4 w-4 mr-2" />
               Página Inicial
@@ -648,6 +745,10 @@ const AdminCustomization = () => {
             <TabsTrigger value="login" className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
               <LogIn className="h-4 w-4 mr-2" />
               Login
+            </TabsTrigger>
+            <TabsTrigger value="terms" className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
+              <Settings className="h-4 w-4 mr-2" />
+              Termos
             </TabsTrigger>
             <TabsTrigger value="global" className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
               <Settings className="h-4 w-4 mr-2" />
@@ -681,6 +782,10 @@ const AdminCustomization = () => {
             {renderSection('login', 'branding', 'Logo e Marca', 'Configure os textos dos logos')}
             {renderSection('login', 'background', 'Fundo da Página', 'Configure a cor e imagem de fundo')}
             {renderSection('login', 'theme', 'Cores do Tema', 'Configure as cores dos elementos')}
+          </TabsContent>
+
+          <TabsContent value="terms" className="space-y-6">
+            {renderSection('terms', 'terms', 'Termos e Condições', 'Configure o conteúdo da página de termos')}
           </TabsContent>
 
           <TabsContent value="global" className="space-y-6">
