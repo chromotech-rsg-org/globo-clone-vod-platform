@@ -1,4 +1,3 @@
-
 /**
  * Utility functions to handle notification cache and ensure consistency across devices
  */

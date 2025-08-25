@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSiteCustomizations } from '@/hooks/useSiteCustomizations';
 
 interface Plan {
   name: string;
@@ -13,17 +12,10 @@ interface PlanSummaryProps {
 }
 
 const PlanSummary = ({ plan }: PlanSummaryProps) => {
-  const { siteName, siteLogo } = useSiteCustomizations();
-
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          {siteLogo && (
-            <img src={siteLogo} alt={siteName} className="h-6 w-auto" />
-          )}
-          Plano Selecionado - {siteName}
-        </CardTitle>
+        <CardTitle className="text-white">Plano Selecionado</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="border border-gray-600 rounded-lg p-4">
@@ -45,7 +37,7 @@ const PlanSummary = ({ plan }: PlanSummaryProps) => {
         <div className="space-y-2">
           <h4 className="text-white font-medium">Benefícios inclusos:</h4>
           <ul className="text-gray-300 text-sm space-y-1">
-            <li>• {siteName} completo</li>
+            <li>• Globoplay completo</li>
             <li>• Canais ao vivo</li>
             <li>• Download para offline</li>
             <li>• Sem anúncios nos conteúdos premium</li>

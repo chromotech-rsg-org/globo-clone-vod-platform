@@ -1,10 +1,9 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: ('user' | 'admin' | 'desenvolvedor')[];
+  requiredRole?: 'user' | 'admin' | 'desenvolvedor';
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
@@ -33,7 +32,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && requiredRole.length > 0 && !requiredRole.includes(user.role) && user.role !== 'desenvolvedor') {
+  if (requiredRole && user.role !== requiredRole && user.role !== 'desenvolvedor') {
     console.log('🚫 Access denied. User role:', user.role, 'Required:', requiredRole);
     return <Navigate to="/dashboard" replace />;
   }

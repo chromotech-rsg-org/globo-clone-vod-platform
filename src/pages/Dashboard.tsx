@@ -1,187 +1,233 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
-import { useSiteCustomizations } from '@/hooks/useSiteCustomizations';
-import AdminLayout from '@/components/AdminLayout';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  CreditCard, 
-  Package, 
-  TrendingUp,
-  Gavel,
-  UserCheck,
-  HandHeart
-} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Users, CreditCard, Package, DollarSign, Settings, LogOut, Gavel, UserCheck } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import AuctionBanner from '@/components/admin/AuctionBanner';
+
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const { hasActiveSubscription, loading } = useSubscriptionCheck();
-  const { siteName } = useSiteCustomizations();
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalSubscriptions: 0,
+    totalAuctions: 0,
+    totalBids: 0,
+    totalRegistrations: 0,
+    activeAuctions: 0
+  });
+  const [loading, setLoading] = useState(true);
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
+  const fetchStats = async () => {
+    if (!user || user.role === 'user') {
+      setLoading(false);
+      return;
+    }
 
-  if (loading) {
+    try {
+      // Buscar estatísticas em paralelo
+      const [
+        { count: usersCount },
+        { count: subscriptionsCount },
+        { count: auctionsCount },
+        { count: bidsCount },
+        { count: registrationsCount },
+        { count: activeAuctionsCount }
+      ] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('subscriptions').select('*', { count: 'exact', head: true }),
+        supabase.from('auctions').select('*', { count: 'exact', head: true }),
+        supabase.from('bids').select('*', { count: 'exact', head: true }),
+        supabase.from('auction_registrations').select('*', { count: 'exact', head: true }),
+        supabase.from('auctions').select('*', { count: 'exact', head: true }).eq('status', 'active')
+      ]);
+
+      setStats({
+        totalUsers: usersCount || 0,
+        totalSubscriptions: subscriptionsCount || 0,
+        totalAuctions: auctionsCount || 0,
+        totalBids: bidsCount || 0,
+        totalRegistrations: registrationsCount || 0,
+        activeAuctions: activeAuctionsCount || 0
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, [user]);
+
+  if (!user) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </AdminLayout>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Carregando...</div>
+      </div>
     );
   }
 
+  const dashboardStats = user.role === 'user' ? [
+    {
+      title: 'Suas Habilitações',
+      value: '1',
+      icon: UserCheck,
+      description: 'Habilitações solicitadas'
+    },
+    {
+      title: 'Seus Lances',
+      value: '0',
+      icon: Gavel,
+      description: 'Lances realizados'
+    },
+    {
+      title: 'Leilões Ativos',
+      value: loading ? '...' : stats.activeAuctions.toString(),
+      icon: Package,
+      description: 'Leilões em andamento'
+    },
+    {
+      title: 'Sua Assinatura',
+      value: 'Ativa',
+      icon: CreditCard,
+      description: 'Status da conta'
+    }
+  ] : [
+    {
+      title: 'Total de Usuários',
+      value: loading ? '...' : stats.totalUsers.toString(),
+      icon: Users,
+      description: 'Usuários cadastrados'
+    },
+    {
+      title: 'Total de Leilões',
+      value: loading ? '...' : stats.totalAuctions.toString(),
+      icon: Gavel,
+      description: `${stats.activeAuctions} ativos`
+    },
+    {
+      title: 'Total de Lances',
+      value: loading ? '...' : stats.totalBids.toString(),
+      icon: DollarSign,
+      description: 'Lances realizados'
+    },
+    {
+      title: 'Habilitações',
+      value: loading ? '...' : stats.totalRegistrations.toString(),
+      icon: UserCheck,
+      description: 'Habilitações solicitadas'
+    }
+  ];
+
+  const adminMenuItems = [
+    { title: 'Gerenciar Usuários', href: '/admin/usuarios', description: 'Visualizar e editar usuários' },
+    { title: 'Cadastrar Pacotes', href: '/admin/pacotes', description: 'Gerenciar pacotes de conteúdo' },
+    { title: 'Cadastrar Planos', href: '/admin/planos', description: 'Configurar planos de assinatura' },
+    { title: 'Cupons de Desconto', href: '/admin/cupons', description: 'Criar e gerenciar cupons' },
+    { title: 'Personalização', href: '/admin/personalizacao', description: 'Personalizar aparência do sistema' }
+  ];
+
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-foreground">
-            Bem-vindo ao {siteName}
+    <>
+      {/* Header */}
+      <header className="bg-gray-800 border-b border-gray-700">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-xl font-bold text-white">
+                Dashboard {user.role === 'user' ? 'Pessoal' : 'Administrativo'}
+              </h1>
+              <Badge variant="secondary">{user.role}</Badge>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-300">Olá, {user.name}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={logout}
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Dashboard {user.role === 'user' ? 'Pessoal' : 'Administrativo'}
           </h1>
-          <p className="text-muted-foreground">
-            {isAdmin ? 'Painel administrativo do sistema' : 'Sua área pessoal'}
+          <p className="text-gray-400">
+            {user.role === 'user' 
+              ? 'Visualize informações da sua conta e assinatura'
+              : 'Gerencie usuários, planos e assinaturas da plataforma'
+            }
           </p>
         </div>
 
-        {/* User Info Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Informações do Usuário
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Email:</span>
-              <span className="text-sm text-muted-foreground">{user?.email}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Nome:</span>
-              <span className="text-sm text-muted-foreground">{user?.name}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Perfil:</span>
-              <Badge variant={isAdmin ? "default" : "secondary"}>
-                {user?.role === 'admin' ? 'Administrador' : 
-                 user?.role === 'desenvolvedor' ? 'Desenvolvedor' : 'Usuário'}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Status da Assinatura:</span>
-              <Badge variant={hasActiveSubscription ? "default" : "destructive"}>
-                {hasActiveSubscription ? 'Ativa' : 'Inativa'}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {isAdmin && (
-            <>
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/admin/usuarios')}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Usuários</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Gerenciar usuários do sistema</CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/admin/assinaturas')}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Assinaturas</CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Gerenciar assinaturas ativas</CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/admin/leiloes')}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Leilões</CardTitle>
-                  <Gavel className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Gerenciar leilões do sistema</CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/admin/habilitacoes')}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Habilitações</CardTitle>
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Aprovar habilitações pendentes</CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/admin/lances')}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Lances</CardTitle>
-                  <HandHeart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Gerenciar lances dos leilões</CardDescription>
-                </CardContent>
-              </Card>
-            </>
-          )}
-
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/profile')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Meu Perfil</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <CardDescription>Atualizar informações pessoais</CardDescription>
-            </CardContent>
-          </Card>
-
-          {!hasActiveSubscription && (
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/checkout')}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Assinar</CardTitle>
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <CardDescription>Escolher plano e assinar</CardDescription>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {dashboardStats.map((stat, index) => (
+            <Card key={index} className="bg-gray-800 border-gray-700">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      {stat.title}
+                    </p>
+                    <p className="text-2xl font-bold text-white">
+                      {stat.value}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {stat.description}
+                    </p>
+                  </div>
+                  <stat.icon className="h-8 w-8 text-blue-500" />
+                </div>
               </CardContent>
             </Card>
-          )}
+          ))}
         </div>
 
-        {/* Call to Action for Non-Subscribers */}
-        {!hasActiveSubscription && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-primary">
-                <TrendingUp className="h-5 w-5" />
-                Ative sua assinatura
-              </CardTitle>
-              <CardDescription>
-                Para acessar todos os recursos do {siteName}, você precisa de uma assinatura ativa.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate('/checkout')}>
-                Escolher Plano
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Admin Menu */}
+        {(user.role === 'admin' || user.role === 'desenvolvedor') && (
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6">Área Administrativa</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {adminMenuItems.map((item, index) => (
+                <Card key={index} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
+                  <CardHeader>
+                    <CardTitle className="text-white">{item.title}</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      {item.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Link to={item.href}>
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Acessar
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

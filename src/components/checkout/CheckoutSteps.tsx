@@ -1,17 +1,12 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import CheckoutPlanStep from './CheckoutPlanStep';
 import CheckoutPersonalStep from './CheckoutPersonalStep';
 import CheckoutCouponStep from './CheckoutCouponStep';
 import CheckoutCredentialsStep from './CheckoutCredentialsStep';
-import { useTermsAcceptance } from '@/hooks/useTermsAcceptance';
 
 interface Plan {
   id: string;
@@ -28,11 +23,8 @@ interface CheckoutStepsProps {
   isLoading: boolean;
 }
 
-const CheckoutSteps = ({ plan: initialPlan, onSubmit, isLoading }: CheckoutStepsProps) => {
+const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedPlan, setSelectedPlan] = useState(initialPlan);
-  const [availablePlans, setAvailablePlans] = useState<Plan[]>([]);
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
@@ -42,27 +34,6 @@ const CheckoutSteps = ({ plan: initialPlan, onSubmit, isLoading }: CheckoutSteps
     confirmPassword: '',
     coupon: null
   });
-
-  const { acceptTerms, loading: acceptingTerms } = useTermsAcceptance();
-
-  useEffect(() => {
-    fetchPlans();
-  }, []);
-
-  const fetchPlans = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('plans')
-        .select('*')
-        .eq('active', true)
-        .order('priority', { ascending: true });
-
-      if (error) throw error;
-      setAvailablePlans(data || []);
-    } catch (error) {
-      console.error('Error fetching plans:', error);
-    }
-  };
 
   const steps = [
     { number: 1, title: 'Plano', completed: currentStep > 1 },
@@ -85,27 +56,11 @@ const CheckoutSteps = ({ plan: initialPlan, onSubmit, isLoading }: CheckoutSteps
     }
   };
 
-  const handleStepSubmit = async (stepData: any) => {
+  const handleStepSubmit = (stepData: any) => {
     setFormData({ ...formData, ...stepData });
     
     if (currentStep === 4) {
-      if (!termsAccepted) {
-        return; // Terms must be accepted
-      }
-
-      // Accept terms first
-      const termsResult = await acceptTerms({ termsVersion: '1.0' });
-      if (!termsResult.success) {
-        console.error('Failed to accept terms');
-        return;
-      }
-
-      onSubmit({ 
-        ...formData, 
-        ...stepData, 
-        selectedPlan,
-        termsAccepted: true 
-      });
+      onSubmit({ ...formData, ...stepData });
     } else {
       handleNext();
     }
@@ -124,80 +79,13 @@ const CheckoutSteps = ({ plan: initialPlan, onSubmit, isLoading }: CheckoutSteps
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-6">
-            <CheckoutPlanStep plan={selectedPlan} onNext={handleNext} />
-            
-            {availablePlans.length > 1 && (
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-medium text-white mb-4">Outros planos disponíveis:</h3>
-                <div className="grid gap-4">
-                  {availablePlans
-                    .filter(p => p.id !== selectedPlan.id)
-                    .map((plan) => (
-                    <Card 
-                      key={plan.id} 
-                      className="cursor-pointer border-gray-600 hover:border-blue-500 transition-colors"
-                      onClick={() => setSelectedPlan(plan)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="text-white font-medium">{plan.name}</h4>
-                            <p className="text-gray-400 text-sm">{plan.description}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white font-bold">
-                              R$ {plan.price.toFixed(2)}
-                            </p>
-                            <p className="text-gray-400 text-sm">
-                              /{plan.billing_cycle === 'annually' ? 'ano' : 'mês'}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        );
+        return <CheckoutPlanStep plan={plan} onNext={handleNext} />;
       case 2:
         return <CheckoutPersonalStep initialData={formData} onSubmit={handleStepSubmit} />;
       case 3:
         return <CheckoutCouponStep onCouponApplied={handleCouponApplied} onSkip={handleSkipCoupon} />;
       case 4:
-        return (
-          <div className="space-y-6">
-            <CheckoutCredentialsStep 
-              initialData={formData} 
-              onSubmit={handleStepSubmit} 
-              isLoading={isLoading || acceptingTerms} 
-            />
-            
-            <div className="border-t pt-6">
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="terms"
-                  checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                />
-                <label htmlFor="terms" className="text-sm text-gray-300">
-                  Eu aceito os{' '}
-                  <Link 
-                    to="/termos-e-condicoes" 
-                    target="_blank" 
-                    className="text-blue-400 hover:underline"
-                  >
-                    Termos e Condições de Uso
-                  </Link>
-                  {' '}e confirmo que li e entendi todas as cláusulas.
-                </label>
-              </div>
-            </div>
-          </div>
-        );
+        return <CheckoutCredentialsStep initialData={formData} onSubmit={handleStepSubmit} isLoading={isLoading} />;
       default:
         return null;
     }
@@ -255,7 +143,7 @@ const CheckoutSteps = ({ plan: initialPlan, onSubmit, isLoading }: CheckoutSteps
             onClick={handlePrevious}
             className="flex items-center space-x-2"
           >
-            <ChevronLeft className="w-4 w-4" />
+            <ChevronLeft className="w-4 h-4" />
             <span>Voltar</span>
           </Button>
         </div>

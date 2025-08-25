@@ -1,102 +1,256 @@
 
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/contexts/AuthContext';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import PublicRoute from '@/components/PublicRoute';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Checkout from "./pages/Checkout";
+import Dashboard from "./pages/Dashboard";
+import AdminUsers from "./pages/admin/Users";
+import AdminPackages from "./pages/admin/Packages";
+import AdminPlans from "./pages/admin/Plans";
+import AdminSubscriptions from "./pages/admin/Subscriptions";
+import AdminCoupons from "./pages/admin/Coupons";
+import AdminCustomization from "./pages/admin/Customization";
+import AdminHeroSlider from "./pages/admin/HeroSlider";
+import AdminContent from "./pages/admin/Content";
+import AdminImages from "./pages/admin/Images";
+import AdminAuctions from "./pages/admin/Auctions";
+import AdminRegistrations from "./pages/admin/Registrations";
+import AdminBids from "./pages/admin/Bids";
+import AuctionHome from "./pages/auction/AuctionHome";
+import AuctionRoom from "./pages/auction/AuctionRoom";
+import AuctionDashboard from "./pages/auction/AuctionDashboard";
+import Profile from "./pages/Profile";
+import Subscription from "./pages/Subscription";
+import AdminLayout from "./components/AdminLayout";
+import NotFound from "./pages/NotFound";
+import { useSiteTitle } from "./hooks/useSiteTitle";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-// Page imports
-import Index from '@/pages/Index';
-import Login from '@/pages/Login';
-import Dashboard from '@/pages/Dashboard';
-import Profile from '@/pages/Profile';
-import Checkout from '@/pages/Checkout';
-import Subscription from '@/pages/Subscription';
-import NotFound from '@/pages/NotFound';
-import TermsAndConditions from '@/pages/TermsAndConditions';
+const queryClient = new QueryClient();
 
-// Admin pages
-import AdminUsers from '@/pages/admin/Users';
-import AdminPlans from '@/pages/admin/Plans';
-import AdminPackages from '@/pages/admin/Packages';
-import AdminSubscriptions from '@/pages/admin/Subscriptions';
-import AdminCoupons from '@/pages/admin/Coupons';
-import AdminCustomizations from '@/pages/admin/Customizations';
-import AdminContent from '@/pages/admin/Content';
-import AdminHeroSlider from '@/pages/admin/HeroSlider';
-import AdminImages from '@/pages/admin/Images';
-import AdminAuctions from '@/pages/admin/Auctions';
-import AdminBids from '@/pages/admin/Bids';
-import AdminRegistrations from '@/pages/admin/Registrations';
+function AppContent() {
+  useSiteTitle();
 
-// Auction pages
-import AuctionHome from '@/pages/auction/AuctionHome';
-import AuctionRoom from '@/pages/auction/AuctionRoom';
-import AuctionDashboard from '@/pages/auction/AuctionDashboard';
+  // Apply favicon from customizations globally
+  useEffect(() => {
+    // Remove default favicon immediately to prevent showing Lovable logo
+    const removeDefaultFavicons = () => {
+      const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
+      existingFavicons.forEach(link => link.remove());
+    };
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+    const applyFavicon = async () => {
+      try {
+        removeDefaultFavicons(); // Always remove first
 
-function App() {
+        const { data } = await supabase
+          .from('customizations')
+          .select('element_value')
+          .eq('element_key', 'favicon_image')
+          .eq('active', true)
+          .maybeSingle();
+
+        if (data?.element_value) {
+          // Add custom favicon
+          const link = document.createElement('link');
+          link.rel = 'icon';
+          link.type = 'image/png';
+          link.href = data.element_value;
+          document.head.appendChild(link);
+          
+          console.log('Custom favicon applied:', data.element_value);
+        }
+      } catch (error) {
+        console.log('No custom favicon found');
+      }
+    };
+
+    // Remove default favicon immediately
+    removeDefaultFavicons();
+    
+    // Then apply custom favicon
+    applyFavicon();
+    
+    // Re-apply favicon on route changes
+    const handleRouteChange = () => {
+      setTimeout(applyFavicon, 100);
+    };
+    
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <AuthProvider>
-          <Router>
-            <div className="min-h-screen bg-background">
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/termos-e-condicoes" element={<TermsAndConditions />} />
-                
-                {/* Auth routes */}
-                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-                
-                {/* Protected user routes */}
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-                <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
-                
-                {/* Auction routes */}
-                <Route path="/leiloes" element={<ProtectedRoute><AuctionHome /></ProtectedRoute>} />
-                <Route path="/leilao/:id" element={<ProtectedRoute><AuctionRoom /></ProtectedRoute>} />
-                <Route path="/leilao/:id/dashboard" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AuctionDashboard /></ProtectedRoute>} />
-                
-                {/* Admin routes */}
-                <Route path="/admin/usuarios" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminUsers /></ProtectedRoute>} />
-                <Route path="/admin/planos" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminPlans /></ProtectedRoute>} />
-                <Route path="/admin/pacotes" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminPackages /></ProtectedRoute>} />
-                <Route path="/admin/assinaturas" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminSubscriptions /></ProtectedRoute>} />
-                <Route path="/admin/cupons" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminCoupons /></ProtectedRoute>} />
-                <Route path="/admin/personalizacao" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminCustomizations /></ProtectedRoute>} />
-                <Route path="/admin/conteudo" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminContent /></ProtectedRoute>} />
-                <Route path="/admin/slider" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminHeroSlider /></ProtectedRoute>} />
-                <Route path="/admin/imagens" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminImages /></ProtectedRoute>} />
-                <Route path="/admin/leiloes" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminAuctions /></ProtectedRoute>} />
-                <Route path="/admin/lances" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminBids /></ProtectedRoute>} />
-                <Route path="/admin/habilitacoes" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminRegistrations /></ProtectedRoute>} />
-                
-                {/* 404 */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              
-              <Toaster />
-            </div>
-          </Router>
-        </AuthProvider>
-      </ErrorBoundary>
-    </QueryClientProvider>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      } />
+      <Route path="/checkout" element={
+        <PublicRoute>
+          <Checkout />
+        </PublicRoute>
+      } />
+      
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <AdminLayout>
+            <Dashboard />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <AdminLayout>
+            <Profile />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/subscription" element={
+        <ProtectedRoute>
+          <AdminLayout>
+            <Subscription />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/auctions" element={
+        <ProtectedRoute>
+          <AuctionHome />
+        </ProtectedRoute>
+      } />
+      <Route path="/auctions/:id" element={
+        <ProtectedRoute>
+          <AuctionRoom />
+        </ProtectedRoute>
+      } />
+      <Route path="/auction-dashboard/:id" element={
+        <ProtectedRoute requiredRole="admin">
+          <AuctionDashboard />
+        </ProtectedRoute>
+      } />
+      
+      {/* Admin Routes */}
+      <Route path="/admin/usuarios" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminUsers />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/pacotes" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminPackages />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/planos" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminPlans />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/assinaturas" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminSubscriptions />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/cupons" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminCoupons />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/personalizacao" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminCustomization />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/hero-slider" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminHeroSlider />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/conteudo" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminContent />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/imagens" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminImages />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/leiloes" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminAuctions />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/habilitacoes" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminRegistrations />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/lances" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminBids />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
+
+const App = () => (
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ErrorBoundary>
+            <AuthProvider>
+              <ErrorBoundary>
+                <AppContent />
+              </ErrorBoundary>
+            </AuthProvider>
+          </ErrorBoundary>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
+);
 
 export default App;

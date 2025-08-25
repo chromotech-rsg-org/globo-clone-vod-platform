@@ -1,30 +1,28 @@
-
 import React from 'react';
 import { Bell } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface NotificationBadgeProps {
   count: number;
   onClick: () => void;
 }
 
-const NotificationBadge = ({ count, onClick }: NotificationBadgeProps) => {
+const NotificationBadge: React.FC<NotificationBadgeProps> = ({ count, onClick }) => {
   if (count === 0) return null;
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
+    <div 
+      className="relative cursor-pointer animate-pulse" 
       onClick={onClick}
-      className="relative p-2 hover:bg-admin-muted"
     >
-      <Bell className="h-5 w-5 text-white" />
-      {count > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          {count > 99 ? '99+' : count}
-        </span>
-      )}
-    </Button>
+      <Bell className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
+      <Badge 
+        variant="destructive" 
+        className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs animate-bounce"
+      >
+        {count > 99 ? '99+' : count}
+      </Badge>
+    </div>
   );
 };
 
