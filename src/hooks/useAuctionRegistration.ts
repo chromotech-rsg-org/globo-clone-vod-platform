@@ -1,9 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuctionRegistration } from '@/types/auction';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { getUniqueChannelId, clearNotificationCache } from '@/utils/notificationCache';
+import { isProductionCustomDomain } from '@/utils/domainHealth';
+import { clearVercelCache } from '@/utils/vercelOptimizations';
 
 export const useAuctionRegistration = (auctionId: string) => {
   const [registration, setRegistration] = useState<AuctionRegistration | null>(null);
@@ -18,6 +20,13 @@ export const useAuctionRegistration = (auctionId: string) => {
     }
 
     try {
+      console.log('🔄 useAuctionRegistration: Buscando habilitação para:', user.id, 'leilão:', auctionId);
+      
+      if (isProductionCustomDomain()) {
+        clearVercelCache();
+        clearNotificationCache();
+      }
+
       const { data, error } = await supabase
         .from('auction_registrations')
         .select('*')
@@ -29,9 +38,10 @@ export const useAuctionRegistration = (auctionId: string) => {
         throw error;
       }
       
+      console.log('✅ useAuctionRegistration: Habilitação encontrada:', data);
       setRegistration(data as AuctionRegistration || null);
     } catch (error) {
-      console.error('Error fetching registration:', error);
+      console.error('❌ useAuctionRegistration: Erro ao buscar habilitação:', error);
     } finally {
       setLoading(false);
     }
@@ -61,11 +71,10 @@ export const useAuctionRegistration = (auctionId: string) => {
     if (!user?.id) return;
 
     try {
-      // Verificar se já existe uma habilitação
+      console.log('📝 useAuctionRegistration: Solicitando habilitação');
+
       if (registration) {
-        // Se existe e está rejeitada, verificar se pode solicitar novamente
         if (registration.status === 'rejected') {
-          // Buscar dados do leilão para calcular próxima habilitação
           const { data: auctionData } = await supabase
             .from('auctions')
             .select('registration_wait_value, registration_wait_unit')
@@ -74,7 +83,6 @@ export const useAuctionRegistration = (auctionId: string) => {
 
           const nextAllowedAt = calculateNextAllowedRegistration(auctionData, registration.updated_at);
           
-          // Verificar se ainda está no período de espera
           if (new Date() < new Date(nextAllowedAt)) {
             const timeLeft = new Date(nextAllowedAt).getTime() - new Date().getTime();
             const minutesLeft = Math.ceil(timeLeft / (1000 * 60));
@@ -87,7 +95,6 @@ export const useAuctionRegistration = (auctionId: string) => {
             return;
           }
 
-          // Atualizar status para pending se passou do tempo de espera
           const { error } = await supabase
             .from('auction_registrations')
             .update({
@@ -113,7 +120,6 @@ export const useAuctionRegistration = (auctionId: string) => {
           return;
         }
       } else {
-        // Criar nova habilitação
         const { error } = await supabase
           .from('auction_registrations')
           .insert({
@@ -130,9 +136,13 @@ export const useAuctionRegistration = (auctionId: string) => {
         description: "Sua solicitação de habilitação foi enviada para análise",
       });
 
-      fetchRegistration();
+      // Imediata atualização após envio
+      setTimeout(() => {
+        fetchRegistration();
+      }, 500);
+
     } catch (error: any) {
-      console.error('Error requesting registration:', error);
+      console.error('❌ useAuctionRegistration: Erro ao solicitar habilitação:', error);
       
       let errorMessage = "Não foi possível enviar a solicitação";
       if (error?.message?.includes('duplicate key')) {
@@ -148,52 +158,103 @@ export const useAuctionRegistration = (auctionId: string) => {
   };
 
   useEffect(() => {
-    if (auctionId && user?.id) {
-      fetchRegistration();
-      
-      // Set up real-time subscription to monitor registration status changes
-      const subscription = supabase
-        .channel(`registration-${auctionId}-${Math.random().toString(36).substring(7)}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'auction_registrations',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.info('🔄 Registration status updated:', payload);
-            
-            // Show toast for status changes
-            if (payload.new.status === 'approved') {
-              toast({
-                title: "Habilitação Aprovada",
-                description: "Sua habilitação foi aprovada! Agora você pode participar do leilão.",
-              });
-            } else if (payload.new.status === 'rejected') {
-              toast({
-                title: "Habilitação Rejeitada",
-                description: payload.new.client_notes || "Sua habilitação foi rejeitada.",
-                variant: "destructive"
-              });
-            } else if (payload.new.status === 'canceled') {
-              toast({
-                title: "Habilitação Cancelada",
-                description: "Sua habilitação foi cancelada.",
-                variant: "destructive"
-              });
-            }
-            
-            fetchRegistration();
-          }
-        )
-        .subscribe();
+    if (!auctionId || !user?.id) return;
 
-      return () => {
-        supabase.removeChannel(subscription);
-      };
+    console.log('🎯 useAuctionRegistration: Inicializando para leilão:', auctionId);
+    
+    if (isProductionCustomDomain()) {
+      clearVercelCache();
     }
+    clearNotificationCache();
+    
+    fetchRegistration();
+    
+    // Setup real-time subscription com ID único
+    const channelName = getUniqueChannelId(`registration-${auctionId}-${user.id}`);
+    
+    const handleRegistrationChange = (payload: any) => {
+      console.log('🔔 useAuctionRegistration: Mudança detectada:', payload);
+      
+      if (isProductionCustomDomain()) {
+        clearVercelCache();
+      }
+      clearNotificationCache();
+      
+      // Para atualizações de status, mostrar toast e atualizar imediatamente
+      if (payload.eventType === 'UPDATE' && payload.new?.user_id === user.id) {
+        const newStatus = payload.new.status;
+        const oldStatus = payload.old?.status;
+        
+        if (newStatus !== oldStatus) {
+          console.log('✨ useAuctionRegistration: Mudança de status detectada:', oldStatus, '->', newStatus);
+          
+          // Mostrar toast apropriado
+          if (newStatus === 'approved') {
+            toast({
+              title: "Habilitação Aprovada! ✅",
+              description: "Sua habilitação foi aprovada! Agora você pode participar do leilão.",
+            });
+          } else if (newStatus === 'rejected') {
+            toast({
+              title: "Habilitação Rejeitada ❌",
+              description: payload.new.client_notes || "Sua habilitação foi rejeitada.",
+              variant: "destructive"
+            });
+          }
+          
+          // Atualização imediata para mudanças de status
+          fetchRegistration();
+        }
+      } else if (payload.eventType === 'INSERT' && payload.new?.user_id === user.id) {
+        console.log('📝 useAuctionRegistration: Nova habilitação criada');
+        setTimeout(() => {
+          fetchRegistration();
+        }, 300);
+      } else {
+        // Para outros eventos, atualizar com delay
+        setTimeout(() => {
+          fetchRegistration();
+        }, 1000);
+      }
+    };
+
+    let subscription: any;
+    
+    try {
+      subscription = supabase
+        .channel(channelName)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'auction_registrations',
+          filter: `user_id=eq.${user.id}`
+        }, handleRegistrationChange)
+        .subscribe((status) => {
+          console.log('📡 useAuctionRegistration: Subscription status:', status);
+        });
+        
+    } catch (error) {
+      console.error('❌ useAuctionRegistration: Erro ao configurar subscription:', error);
+      
+      // Fallback para polling em caso de erro
+      if (isProductionCustomDomain()) {
+        console.log('🔄 useAuctionRegistration: Fallback para polling');
+        const pollInterval = setInterval(() => {
+          fetchRegistration();
+        }, 10000); // Poll a cada 10 segundos
+        
+        return () => {
+          clearInterval(pollInterval);
+        };
+      }
+    }
+
+    return () => {
+      if (subscription) {
+        console.log('🔌 useAuctionRegistration: Removendo subscription');
+        supabase.removeChannel(subscription);
+      }
+    };
   }, [auctionId, user?.id, toast]);
 
   return { 
