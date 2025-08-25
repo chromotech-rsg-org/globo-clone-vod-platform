@@ -203,15 +203,21 @@ export const usePendingNotifications = () => {
         }
         clearNotificationCache();
         
-        // Mark as new notification if it's an INSERT
-        if (payload.eventType === 'INSERT') {
+        // Mark as new notification and trigger immediate refresh for status changes
+        if (payload.eventType === 'UPDATE' && 
+            (payload.new?.status === 'approved' || payload.new?.status === 'rejected')) {
           setHasNewNotifications(true);
           setTimeout(() => setHasNewNotifications(false), 5000);
-        }
-        
-        setTimeout(() => {
+          // Immediate refresh for approvals/rejections
           fetchPendingItems();
-        }, 500);
+        } else if (payload.eventType === 'INSERT') {
+          setHasNewNotifications(true);
+          setTimeout(() => setHasNewNotifications(false), 5000);
+          // Small delay for inserts to ensure data consistency
+          setTimeout(() => {
+            fetchPendingItems();
+          }, 500);
+        }
       }
     };
 
@@ -223,14 +229,12 @@ export const usePendingNotifications = () => {
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
-          table: 'bids',
-          filter: 'status=eq.pending'
+          table: 'bids'
         }, handlePendingChange)
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
-          table: 'auction_registrations',
-          filter: 'status=eq.pending'
+          table: 'auction_registrations'
         }, handlePendingChange)
         .subscribe();
     } catch (error) {

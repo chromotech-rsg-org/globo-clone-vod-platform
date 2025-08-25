@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import { RegisterData } from '@/types/auth';
+import { useCustomizations } from '@/hooks/useCustomizations';
 
 interface AuthCardProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -14,12 +15,23 @@ interface AuthCardProps {
 }
 
 const AuthCard = ({ onLogin, onRegister, isSubmitting }: AuthCardProps) => {
+  const { getCustomization } = useCustomizations('global');
+  
+  const siteName = getCustomization('global_site_name', 'Globoplay');
+  const logoUrl = getCustomization('global_logo_url', '');
+
   return (
     <div className="max-w-md w-full">
       <div className="text-center mb-8">
         <Link to="/" className="inline-flex items-center space-x-2">
-          <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">G</div>
-          <span className="text-white font-bold text-2xl">Globoplay</span>
+          {logoUrl ? (
+            <img src={logoUrl} alt={siteName} className="h-8 w-auto" />
+          ) : (
+            <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">
+              {siteName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span className="text-white font-bold text-2xl">{siteName}</span>
         </Link>
       </div>
 
@@ -27,7 +39,7 @@ const AuthCard = ({ onLogin, onRegister, isSubmitting }: AuthCardProps) => {
         <CardHeader>
           <CardTitle className="text-white text-2xl text-center">Acesse sua conta</CardTitle>
           <CardDescription className="text-gray-400 text-center">
-            Entre ou cadastre-se no Globoplay
+            Entre ou cadastre-se no {siteName}
           </CardDescription>
         </CardHeader>
         <CardContent>

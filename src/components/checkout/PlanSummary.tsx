@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCustomizations } from '@/hooks/useCustomizations';
 
 interface Plan {
   name: string;
@@ -12,6 +13,9 @@ interface PlanSummaryProps {
 }
 
 const PlanSummary = ({ plan }: PlanSummaryProps) => {
+  const { getCustomization } = useCustomizations('global');
+  const siteName = getCustomization('global_site_name', 'Globoplay');
+
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
@@ -37,7 +41,7 @@ const PlanSummary = ({ plan }: PlanSummaryProps) => {
         <div className="space-y-2">
           <h4 className="text-white font-medium">Benefícios inclusos:</h4>
           <ul className="text-gray-300 text-sm space-y-1">
-            <li>• Globoplay completo</li>
+            <li>• {siteName} completo</li>
             <li>• Canais ao vivo</li>
             <li>• Download para offline</li>
             <li>• Sem anúncios nos conteúdos premium</li>
