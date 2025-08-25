@@ -1,12 +1,23 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { useCustomizations } from '@/hooks/useCustomizations';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getCustomization, loading } = useCustomizations('home');
+  const { user, logout } = useAuth();
+  const location = useLocation();
 
   // Don't show default values while loading
   if (loading) {
@@ -47,6 +58,19 @@ const Header = () => {
     setIsMenuOpen(false);
   };
 
+  const handleHomeClick = () => {
+    if (location.pathname === '/') {
+      scrollToSection('hero');
+    } else {
+      window.location.href = '/';
+    }
+    setIsMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
   // Custom button configurations
   const customButtonText = getCustomization('header', 'custom_button_text', '');
   const customButtonBgColor = getCustomization('header', 'custom_button_bg_color', '#3b82f6');
@@ -80,7 +104,7 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <button 
-              onClick={() => scrollToSection('hero')}
+              onClick={handleHomeClick}
               className="hover:transition-colors" 
               style={{ 
                 color: headerTextColor,
@@ -142,17 +166,51 @@ const Header = () => {
                 )}
               </button>
             )}
-            <Link 
-              to="/login" 
-              className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
-              style={{ 
-                backgroundColor: headerHoverColor,
-                color: '#ffffff'
-              }}
-            >
-              <User className="h-4 w-4 mr-2" />
-              {menuLogin}
-            </Link>
+            
+            {/* User Authentication Section */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2"
+                    style={{ 
+                      borderColor: headerTextColor,
+                      color: headerTextColor,
+                      backgroundColor: 'transparent'
+                    }}
+                  >
+                    <User className="h-4 w-4" />
+                    <span>{user.name || user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="w-full">
+                      <User className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link 
+                to="/login" 
+                className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
+                style={{ 
+                  backgroundColor: headerHoverColor,
+                  color: '#ffffff'
+                }}
+              >
+                <User className="h-4 w-4 mr-2" />
+                {menuLogin}
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -170,7 +228,7 @@ const Header = () => {
           <div className="md:hidden border-t" style={{ backgroundColor: headerBgColor === 'transparent' ? 'rgba(0,0,0,0.9)' : headerBgColor, borderColor: 'rgba(255,255,255,0.1)' }}>
             <div className="px-2 pt-2 pb-3 space-y-1">
               <button 
-                onClick={() => scrollToSection('hero')}
+                onClick={handleHomeClick}
                 className="block w-full text-left px-3 py-2 rounded-md transition-colors"
                 style={{ 
                   color: headerTextColor,
@@ -236,18 +294,54 @@ const Header = () => {
                   )}
                 </button>
               )}
-              <Link 
-                to="/login" 
-                className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4 flex items-center"
-                style={{ 
-                  backgroundColor: headerHoverColor,
-                  color: '#ffffff'
-                }}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <User className="h-4 w-4 mr-2" />
-                {menuLogin}
-              </Link>
+              
+              {/* Mobile User Section */}
+              {user ? (
+                <div className="border-t border-gray-600 pt-4 mt-4">
+                  <div className="px-3 py-2 text-sm" style={{ color: headerTextColor }}>
+                    Logado como: <span className="font-medium">{user.name || user.email}</span>
+                  </div>
+                  <Link 
+                    to="/dashboard" 
+                    className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
+                    style={{ 
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      color: headerTextColor
+                    }}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full text-left hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center mt-2"
+                    style={{ 
+                      backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                      color: '#ffffff'
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </button>
+                </div>
+              ) : (
+                <Link 
+                  to="/login" 
+                  className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4 flex items-center"
+                  style={{ 
+                    backgroundColor: headerHoverColor,
+                    color: '#ffffff'
+                  }}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  {menuLogin}
+                </Link>
+              )}
             </div>
           </div>
         )}
