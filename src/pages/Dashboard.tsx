@@ -1,551 +1,325 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import { Link } from 'react-router-dom';
-import { Users, CreditCard, Package, DollarSign, Settings, LogOut, Gavel, UserCheck, TrendingUp, Calendar, Filter } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Filter } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import AuctionBanner from '@/components/admin/AuctionBanner';
-import { useSiteCustomizations } from '@/hooks/useSiteCustomizations';
-import { addDays, subDays, format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatCurrency } from '@/utils/formatters';
+
+interface DateRange {
+  from: Date;
+  to?: Date;
+}
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
-  const { siteName, streamingUrl } = useSiteCustomizations();
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalSubscriptions: 0,
-    totalAuctions: 0,
-    totalBids: 0,
-    totalRegistrations: 0,
-    activeAuctions: 0,
-    totalRevenue: 0,
-    monthlyRevenue: 0
-  });
-  const [chartData, setChartData] = useState({
-    userGrowth: [],
-    revenueData: [],
-    auctionStats: [],
-    bidDistribution: []
-  });
-  const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState({
-    from: subDays(new Date(), 30),
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
     to: new Date()
   });
   const [filterType, setFilterType] = useState('all');
 
-  const fetchStats = async () => {
-    if (!user || user.role === 'user') {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Fetch basic stats
-      const [
-        { count: usersCount },
-        { count: subscriptionsCount },
-        { count: auctionsCount },
-        { count: bidsCount },
-        { count: registrationsCount },
-        { count: activeAuctionsCount }
-      ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('subscriptions').select('*', { count: 'exact', head: true }),
-        supabase.from('auctions').select('*', { count: 'exact', head: true }),
-        supabase.from('bids').select('*', { count: 'exact', head: true }),
-        supabase.from('auction_registrations').select('*', { count: 'exact', head: true }),
-        supabase.from('auctions').select('*', { count: 'exact', head: true }).eq('status', 'active')
-      ]);
-
-      // Fetch revenue data
-      const { data: plansData } = await supabase
-        .from('plans')
-        .select('price, billing_cycle')
-        .eq('active', true);
-
-      const { data: subscriptionsData } = await supabase
-        .from('subscriptions')
-        .select('plan_id, created_at, plans(price)')
-        .eq('status', 'active')
-        .not('plans', 'is', null);
-
-      const totalRevenue = subscriptionsData?.reduce((sum, sub: any) => 
-        sum + (sub.plans?.price || 0), 0) || 0;
-
-      const currentMonth = format(new Date(), 'yyyy-MM');
-      const monthlyRevenue = subscriptionsData
-        ?.filter((sub: any) => sub.created_at?.startsWith(currentMonth))
-        ?.reduce((sum, sub: any) => sum + (sub.plans?.price || 0), 0) || 0;
-
-      setStats({
-        totalUsers: usersCount || 0,
-        totalSubscriptions: subscriptionsCount || 0,
-        totalAuctions: auctionsCount || 0,
-        totalBids: bidsCount || 0,
-        totalRegistrations: registrationsCount || 0,
-        activeAuctions: activeAuctionsCount || 0,
-        totalRevenue,
-        monthlyRevenue
-      });
-
-      // Generate chart data
-      await generateChartData();
-      
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateChartData = async () => {
-    try {
-      // User growth data
-      const { data: usersData } = await supabase
-        .from('profiles')
-        .select('created_at')
-        .gte('created_at', format(dateRange.from, 'yyyy-MM-dd'))
-        .lte('created_at', format(dateRange.to, 'yyyy-MM-dd'))
-        .order('created_at', { ascending: true });
-
-      const userGrowthMap = new Map();
-      usersData?.forEach(user => {
-        const date = format(new Date(user.created_at), 'dd/MM', { locale: ptBR });
-        userGrowthMap.set(date, (userGrowthMap.get(date) || 0) + 1);
-      });
-
-      const userGrowth = Array.from(userGrowthMap.entries()).map(([date, count]) => ({
-        date,
-        usuarios: count
-      }));
-
-      // Revenue data
-      const { data: revenueData } = await supabase
-        .from('subscriptions')
-        .select('created_at, plans(price, name)')
-        .eq('status', 'active')
-        .gte('created_at', format(dateRange.from, 'yyyy-MM-dd'))
-        .lte('created_at', format(dateRange.to, 'yyyy-MM-dd'))
-        .not('plans', 'is', null);
-
-      const revenueMap = new Map();
-      revenueData?.forEach((sub: any) => {
-        const date = format(new Date(sub.created_at), 'dd/MM', { locale: ptBR });
-        revenueMap.set(date, (revenueMap.get(date) || 0) + (sub.plans?.price || 0));
-      });
-
-      const revenueChartData = Array.from(revenueMap.entries()).map(([date, revenue]) => ({
-        date,
-        receita: revenue
-      }));
-
-      // Auction stats
-      const { data: auctionData } = await supabase
-        .from('auctions')
-        .select('status, auction_type')
-        .gte('created_at', format(dateRange.from, 'yyyy-MM-dd'))
-        .lte('created_at', format(dateRange.to, 'yyyy-MM-dd'));
-
-      const auctionStats = [
-        { name: 'Rurais Ativos', value: auctionData?.filter(a => a.auction_type === 'rural' && a.status === 'active').length || 0 },
-        { name: 'Judiciais Ativos', value: auctionData?.filter(a => a.auction_type === 'judicial' && a.status === 'active').length || 0 },
-        { name: 'Inativos', value: auctionData?.filter(a => a.status === 'inactive').length || 0 }
-      ];
-
-      // Bid distribution
-      const { data: bidData } = await supabase
-        .from('bids')
-        .select('status, bid_value')
-        .gte('created_at', format(dateRange.from, 'yyyy-MM-dd'))
-        .lte('created_at', format(dateRange.to, 'yyyy-MM-dd'));
-
-      const bidDistribution = [
-        { name: 'Aprovados', value: bidData?.filter(b => b.status === 'approved').length || 0, color: '#22c55e' },
-        { name: 'Pendentes', value: bidData?.filter(b => b.status === 'pending').length || 0, color: '#f59e0b' },
-        { name: 'Rejeitados', value: bidData?.filter(b => b.status === 'rejected').length || 0, color: '#ef4444' }
-      ];
-
-      setChartData({
-        userGrowth,
-        revenueData: revenueChartData,
-        auctionStats,
-        bidDistribution
-      });
-
-    } catch (error) {
-      console.error('Error generating chart data:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, [user, dateRange]);
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Carregando...</div>
-      </div>
-    );
-  }
-
-  const dashboardStats = user.role === 'user' ? [
-    {
-      title: 'Suas Habilitações',
-      value: '1',
-      icon: UserCheck,
-      description: 'Habilitações solicitadas',
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Seus Lances',
-      value: '0',
-      icon: Gavel,
-      description: 'Lances realizados',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Leilões Ativos',
-      value: loading ? '...' : stats.activeAuctions.toString(),
-      icon: Package,
-      description: 'Leilões em andamento',
-      color: 'bg-yellow-500'
-    },
-    {
-      title: 'Sua Assinatura',
-      value: 'Ativa',
-      icon: CreditCard,
-      description: 'Status da conta',
-      color: 'bg-purple-500'
-    }
-  ] : [
-    {
-      title: 'Total de Usuários',
-      value: loading ? '...' : stats.totalUsers.toString(),
-      icon: Users,
-      description: 'Usuários cadastrados',
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Total de Leilões',
-      value: loading ? '...' : stats.totalAuctions.toString(),
-      icon: Gavel,
-      description: `${stats.activeAuctions} ativos`,
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Receita Total',
-      value: loading ? '...' : `R$ ${stats.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      icon: DollarSign,
-      description: `R$ ${stats.monthlyRevenue.toFixed(2)} este mês`,
-      color: 'bg-yellow-500'
-    },
-    {
-      title: 'Habilitações',
-      value: loading ? '...' : stats.totalRegistrations.toString(),
-      icon: UserCheck,
-      description: 'Habilitações solicitadas',
-      color: 'bg-purple-500'
-    }
+  // Mock data for charts - in a real app, this would come from your API
+  const revenueData = [
+    { month: 'Jan', revenue: 4000, subscriptions: 240 },
+    { month: 'Fev', revenue: 3000, subscriptions: 139 },
+    { month: 'Mar', revenue: 2000, subscriptions: 980 },
+    { month: 'Abr', revenue: 2780, subscriptions: 390 },
+    { month: 'Mai', revenue: 1890, subscriptions: 480 },
+    { month: 'Jun', revenue: 2390, subscriptions: 380 },
   ];
 
-  const adminMenuItems = [
-    { title: 'Gerenciar Usuários', href: '/admin/usuarios', description: 'Visualizar e editar usuários' },
-    { title: 'Cadastrar Pacotes', href: '/admin/pacotes', description: 'Gerenciar pacotes de conteúdo' },
-    { title: 'Cadastrar Planos', href: '/admin/planos', description: 'Configurar planos de assinatura' },
-    { title: 'Cupons de Desconto', href: '/admin/cupons', description: 'Criar e gerenciar cupons' },
-    { title: 'Personalização', href: '/admin/personalizacao', description: 'Personalizar aparência do sistema' }
+  const auctionData = [
+    { name: 'Rurais', value: 400, color: '#8884d8' },
+    { name: 'Judiciais', value: 300, color: '#82ca9d' },
+    { name: 'Especiais', value: 300, color: '#ffc658' },
+  ];
+
+  const bidStatusData = [
+    { status: 'Aprovados', count: 45, color: '#10b981' },
+    { status: 'Pendentes', count: 12, color: '#f59e0b' },
+    { status: 'Rejeitados', count: 8, color: '#ef4444' },
+  ];
+
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_admin_dashboard_stats');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    if (range) {
+      setDateRange(range);
+    }
+  };
+
+  const stats = [
+    {
+      title: "Receita Total",
+      value: "R$ 45.231,89",
+      change: "+20.1%",
+      icon: DollarSign,
+      color: "text-green-600"
+    },
+    {
+      title: "Usuários Ativos", 
+      value: dashboardStats?.[0]?.total_count || "1.234",
+      change: "+180.1%",
+      icon: Users,
+      color: "text-blue-600"
+    },
+    {
+      title: "Assinaturas",
+      value: "421",
+      change: "+19%",
+      icon: ShoppingCart,
+      color: "text-purple-600"
+    },
+    {
+      title: "Leilões Ativos",
+      value: "12",
+      change: "+201",
+      icon: TrendingUp,
+      color: "text-orange-600"
+    }
   ];
 
   return (
-    <>
-      {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-white">
-                Dashboard {user.role === 'user' ? 'Pessoal' : 'Administrativo'}
-              </h1>
-              <Badge variant="secondary">{user.role}</Badge>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-300">Olá, {user.name}</span>
-              
-              {/* Streaming Access Button */}
-              {streamingUrl && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(streamingUrl, '_blank')}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+    <div className="flex-1 space-y-6 p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <div className="flex items-center space-x-2">
+          <DateRangePicker
+            date={dateRange}
+            onDateChange={handleDateRangeChange}
+          />
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrar por..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="subscriptions">Assinaturas</SelectItem>
+              <SelectItem value="auctions">Leilões</SelectItem>
+              <SelectItem value="bids">Lances</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground">
+                <span className={stat.color}>{stat.change}</span> em relação ao mês anterior
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        {/* Revenue Chart */}
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Receita & Assinaturas</CardTitle>
+            <CardDescription>
+              Comparativo mensal de receita e novas assinaturas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value, name) => [
+                    name === 'revenue' ? formatCurrency(Number(value)) : value,
+                    name === 'revenue' ? 'Receita' : 'Assinaturas'
+                  ]}
+                />
+                <Bar dataKey="revenue" fill="#8884d8" />
+                <Bar dataKey="subscriptions" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Auction Types Pie Chart */}
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Tipos de Leilão</CardTitle>
+            <CardDescription>
+              Distribuição por categoria
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={auctionData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
                 >
-                  <Package className="h-4 w-4 mr-2" />
-                  {siteName}
-                </Button>
-              )}
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={logout}
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+                  {auctionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Dashboard {user.role === 'user' ? 'Pessoal' : 'Administrativo'}
-          </h1>
-          <p className="text-gray-400">
-            {user.role === 'user' 
-              ? 'Visualize informações da sua conta e assinatura'
-              : 'Gerencie usuários, planos e assinaturas da plataforma'
-            }
-          </p>
-        </div>
+        {/* Bid Status Chart */}
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Status dos Lances</CardTitle>
+            <CardDescription>
+              Situação atual dos lances
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={bidStatusData} layout="horizontal">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="status" type="category" width={80} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        {/* Filters for Admin */}
-        {(user.role === 'admin' || user.role === 'desenvolvedor') && (
-          <div className="mb-8 flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <DatePickerWithRange
-                date={dateRange}
-                onDateChange={setDateRange}
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filtrar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="revenue">Receita</SelectItem>
-                  <SelectItem value="users">Usuários</SelectItem>
-                  <SelectItem value="auctions">Leilões</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {dashboardStats.map((stat, index) => (
-            <Card key={index} className="bg-gray-800 border-gray-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+        {/* Recent Activity */}
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Atividades Recentes</CardTitle>
+            <CardDescription>
+              Últimas ações no sistema
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { action: "Novo usuário cadastrado", user: "João Silva", time: "2 min atrás" },
+                { action: "Lance aprovado", user: "Maria Santos", time: "5 min atrás" },
+                { action: "Leilão finalizado", user: "Admin", time: "10 min atrás" },
+                { action: "Assinatura renovada", user: "Carlos Oliveira", time: "15 min atrás" },
+                { action: "Nova habilitação", user: "Ana Costa", time: "20 min atrás" }
+              ].map((activity, index) => (
+                <div key={index} className="flex items-center justify-between border-b pb-2">
                   <div>
-                    <p className="text-sm font-medium text-gray-400">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold text-white">
-                      {stat.value}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {stat.description}
-                    </p>
+                    <p className="font-medium">{activity.action}</p>
+                    <p className="text-sm text-muted-foreground">{activity.user}</p>
                   </div>
-                  <div className={`p-3 rounded-full ${stat.color}`}>
-                    <stat.icon className="h-6 w-6 text-white" />
-                  </div>
+                  <span className="text-xs text-muted-foreground">{activity.time}</span>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Charts Section for Admin */}
-        {(user.role === 'admin' || user.role === 'desenvolvedor') && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* User Growth Chart */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Crescimento de Usuários
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={chartData.userGrowth}>
-                    <defs>
-                      <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="date" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '6px'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="usuarios" 
-                      stroke="#3b82f6" 
-                      fillOpacity={1} 
-                      fill="url(#colorUsers)" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Revenue Chart */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Receita por Período
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData.revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="date" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '6px'
-                      }}
-                      formatter={(value) => [`R$ ${value}`, 'Receita']}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="receita" 
-                      stroke="#10b981" 
-                      strokeWidth={2}
-                      dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Auction Stats */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Gavel className="h-5 w-5" />
-                  Status dos Leilões
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData.auctionStats}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="name" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '6px'
-                      }}
-                    />
-                    <Bar dataKey="value" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Bid Distribution */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Distribuição dos Lances
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={chartData.bidDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {chartData.bidDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '6px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Admin Menu */}
-        {(user.role === 'admin' || user.role === 'desenvolvedor') && (
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-6">Área Administrativa</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {adminMenuItems.map((item, index) => (
-                <Card key={index} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
-                  <CardHeader>
-                    <CardTitle className="text-white">{item.title}</CardTitle>
-                    <CardDescription className="text-gray-400">
-                      {item.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Link to={item.href}>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Acessar
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
               ))}
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
       </div>
-    </>
+
+      {/* Performance Metrics */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Métricas de Performance</CardTitle>
+            <CardDescription>
+              Indicadores chave de desempenho
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Taxa de Conversão</span>
+                <span className="font-bold text-green-600">3.2%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Ticket Médio</span>
+                <span className="font-bold">R$ 89,90</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Churn Rate</span>
+                <span className="font-bold text-red-600">2.1%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>LTV</span>
+                <span className="font-bold">R$ 430,50</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Metas do Mês</CardTitle>
+            <CardDescription>
+              Progresso em relação aos objetivos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span>Receita</span>
+                  <span className="text-sm">R$ 45.231 / R$ 50.000</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '90.5%' }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span>Novos Usuários</span>
+                  <span className="text-sm">421 / 500</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-green-600 h-2 rounded-full" style={{ width: '84.2%' }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span>Leilões</span>
+                  <span className="text-sm">12 / 15</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-purple-600 h-2 rounded-full" style={{ width: '80%' }}></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 

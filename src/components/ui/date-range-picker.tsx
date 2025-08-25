@@ -1,7 +1,6 @@
 
 import * as React from "react"
 import { addDays, format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
@@ -20,7 +19,7 @@ interface DatePickerWithRangeProps {
   onDateChange: (date: DateRange | undefined) => void
 }
 
-export function DatePickerWithRange({
+export function DateRangePicker({
   className,
   date,
   onDateChange,
@@ -41,14 +40,14 @@ export function DatePickerWithRange({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                  {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
+                  {format(date.from, "LLL dd, y")} -{" "}
+                  {format(date.to, "LLL dd, y")}
                 </>
               ) : (
-                format(date.from, "dd/MM/yyyy", { locale: ptBR })
+                format(date.from, "LLL dd, y")
               )
             ) : (
-              <span>Selecione um período</span>
+              <span>Pick a date</span>
             )}
           </Button>
         </PopoverTrigger>
@@ -60,10 +59,12 @@ export function DatePickerWithRange({
             selected={date}
             onSelect={onDateChange}
             numberOfMonths={2}
-            locale={ptBR}
+            className="p-3 pointer-events-auto"
           />
         </PopoverContent>
       </Popover>
     </div>
   )
 }
+
+export { DateRangePicker as DatePickerWithRange }

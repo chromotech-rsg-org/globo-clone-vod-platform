@@ -7,7 +7,7 @@ import PendingNotificationModal from './PendingNotificationModal';
 
 const NotificationBadge = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { pendingCount, loading } = usePendingNotifications();
+  const { totalPending, loading, pendingBids, pendingRegistrations } = usePendingNotifications();
 
   if (loading) return null;
 
@@ -21,9 +21,9 @@ const NotificationBadge = () => {
           className="relative p-2"
         >
           <Bell className="h-5 w-5 text-white" />
-          {pendingCount > 0 && (
+          {totalPending > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              {pendingCount > 9 ? '9+' : pendingCount}
+              {totalPending > 9 ? '9+' : totalPending}
             </span>
           )}
         </Button>
@@ -31,7 +31,9 @@ const NotificationBadge = () => {
 
       <PendingNotificationModal
         open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onOpenChange={setIsModalOpen}
+        pendingBids={pendingBids}
+        pendingRegistrations={pendingRegistrations}
       />
     </>
   );

@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const auctionSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -97,7 +97,7 @@ const AuctionForm = ({ auction, onSuccess }: AuctionFormProps) => {
       } else {
         const { error } = await supabase
           .from('auctions')
-          .insert([auctionData]);
+          .insert(auctionData);
 
         if (error) throw error;
 
