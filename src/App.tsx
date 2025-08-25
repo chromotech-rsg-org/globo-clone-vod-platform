@@ -78,7 +78,7 @@ function App() {
                 <Route path="/admin/pacotes" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminPackages /></ProtectedRoute>} />
                 <Route path="/admin/assinaturas" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminSubscriptions /></ProtectedRoute>} />
                 <Route path="/admin/cupons" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminCoupons /></ProtectedRoute>} />
-                <Route path="/admin/personalizacoes" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminCustomizations /></ProtectedRoute>} />
+                <Route path="/admin/personalizacao" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminCustomizations /></ProtectedRoute>} />
                 <Route path="/admin/conteudo" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminContent /></ProtectedRoute>} />
                 <Route path="/admin/slider" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminHeroSlider /></ProtectedRoute>} />
                 <Route path="/admin/imagens" element={<ProtectedRoute requiredRole={['admin', 'desenvolvedor']}><AdminImages /></ProtectedRoute>} />

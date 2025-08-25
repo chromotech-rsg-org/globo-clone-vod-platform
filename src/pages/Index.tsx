@@ -13,7 +13,6 @@ import ContentCarousel from '@/components/ContentCarousel';
 import Footer from '@/components/Footer';
 import UserHeader from '@/components/UserHeader';
 import SubscriptionRequiredModal from '@/components/SubscriptionRequiredModal';
-import { Navigate } from 'react-router-dom';
 
 const Index = () => {
   const { user } = useAuth();
@@ -44,16 +43,10 @@ const Index = () => {
     );
   }
 
-  // If user is authenticated but doesn't have subscription, redirect to dashboard
-  if (user && !subscriptionLoading && hasActiveSubscription === false) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Public homepage for non-authenticated users or during loading
+  // Public homepage for non-authenticated users or users without subscription
   return (
     <div className="min-h-screen bg-background">
-      {user && <UserHeader />}
-      <Header />
+      {user ? <UserHeader /> : <Header />}
       
       {/* Hero Section */}
       <HeroSlider />
