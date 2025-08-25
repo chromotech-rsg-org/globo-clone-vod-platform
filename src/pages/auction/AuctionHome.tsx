@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
 import { useAuth } from '@/contexts/AuthContext';
 import AuctionDashboard from './AuctionDashboard';
@@ -16,6 +16,19 @@ const AuctionHome = () => {
     hasActiveSubscription,
     loading
   });
+
+  // Move useEffect to top level - before any conditional returns
+  useEffect(() => {
+    // Only show modal if user doesn't have access and isn't admin/developer
+    const shouldShowModal = !loading && 
+      user?.role !== 'admin' && 
+      user?.role !== 'desenvolvedor' && 
+      !hasActiveSubscription;
+    
+    if (shouldShowModal) {
+      setShowSubscriptionModal(true);
+    }
+  }, [loading, user?.role, hasActiveSubscription]);
 
   if (loading) {
     return (
@@ -42,10 +55,6 @@ const AuctionHome = () => {
 
   // Usuários sem assinatura: mostrar modal
   console.log('❌ AuctionHome: Assinatura necessária');
-  
-  React.useEffect(() => {
-    setShowSubscriptionModal(true);
-  }, []);
 
   return (
     <>
