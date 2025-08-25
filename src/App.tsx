@@ -12,6 +12,7 @@ import Profile from './pages/Profile';
 import Admin from './pages/admin/Admin';
 import Checkout from './pages/Checkout';
 import Terms from './pages/Terms';
+import Plans from './pages/Plans';
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ function App() {
                 <Route path="/admin/*" element={<Admin />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/terms" element={<Terms />} />
+                <Route path="/plans" element={<Plans />} />
               </Routes>
               <Toaster />
             </div>
