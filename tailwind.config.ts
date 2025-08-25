@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -65,6 +66,13 @@ export default {
 				admin: {
 					primary: 'hsl(var(--admin-primary))',
 					'primary-foreground': 'hsl(var(--admin-primary-foreground))',
+					foreground: 'hsl(var(--admin-foreground))',
+					border: 'hsl(var(--admin-border))',
+					input: 'hsl(var(--admin-input))',
+					card: 'hsl(var(--admin-card))',
+					'card-foreground': 'hsl(var(--admin-card-foreground))',
+					accent: 'hsl(var(--admin-accent))',
+					'accent-foreground': 'hsl(var(--admin-accent-foreground))',
 					'button-bg': 'hsl(var(--admin-button-bg))',
 					'button-text': 'hsl(var(--admin-button-text))',
 					'button-hover': 'hsl(var(--admin-button-hover))',
@@ -72,9 +80,16 @@ export default {
 					'sidebar-text': 'hsl(var(--admin-sidebar-text))',
 					'content-bg': 'hsl(var(--admin-content-bg))',
 					'dashboard-text': 'hsl(var(--admin-dashboard-text))',
+					'dashboard-card': 'hsl(var(--admin-dashboard-card))',
+					'dashboard-card-text': 'hsl(var(--admin-dashboard-card-text))',
 					'table-header': 'hsl(var(--admin-table-header))',
 					'table-bg': 'hsl(var(--admin-table-bg))',
 					'table-text': 'hsl(var(--admin-table-text))',
+					'modal-bg': 'hsl(var(--admin-modal-bg))',
+					'modal-text': 'hsl(var(--admin-modal-text))',
+					'datatable-bg': 'hsl(var(--admin-datatable-bg))',
+					'datatable-text': 'hsl(var(--admin-datatable-text))',
+					'datatable-header': 'hsl(var(--admin-datatable-header))',
 					success: 'hsl(var(--admin-success))',
 					'success-foreground': 'hsl(var(--admin-success-foreground))',
 					danger: 'hsl(var(--admin-danger))',

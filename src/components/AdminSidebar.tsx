@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -57,6 +56,27 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       });
     }
   }, [hasNewNotifications, totalPending, toast]);
+
+  // Check for notification modal reopening flag
+  useEffect(() => {
+    const shouldReopenNotifications = sessionStorage.getItem('reopenPendingNotifications');
+    if (shouldReopenNotifications === '1') {
+      sessionStorage.removeItem('reopenPendingNotifications');
+      setShowNotificationModal(true);
+    }
+  }, [location.pathname]);
+
+  // Listen for custom event to open notifications modal
+  useEffect(() => {
+    const handleOpenNotifications = () => {
+      setShowNotificationModal(true);
+    };
+
+    window.addEventListener('openPendingNotifications', handleOpenNotifications);
+    return () => {
+      window.removeEventListener('openPendingNotifications', handleOpenNotifications);
+    };
+  }, []);
 
   // Stable navigation handler to prevent session timeouts
   const handleNavigation = useCallback((path: string) => {

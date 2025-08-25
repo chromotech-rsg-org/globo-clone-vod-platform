@@ -1,13 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Edit, Save, X, Upload, Eye, Image as ImageIcon } from 'lucide-react';
+import { Edit, Save, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
@@ -27,7 +25,6 @@ const AdminCustomizations = () => {
   const [customizations, setCustomizations] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState(false);
   const { toast } = useToast();
 
   const defaultCustomizations = {
@@ -53,7 +50,28 @@ const AdminCustomizations = () => {
     'login_title': 'Acesse sua conta',
     'login_subtitle': 'Entre ou cadastre-se no Globoplay',
     'login_background_color': '#111827',
-    'login_card_background': '#1f2937'
+    'login_card_background': '#1f2937',
+    
+    // Admin Theme Colors
+    'global_admin_content_bg_color': '#111827',
+    'global_admin_sidebar_bg_color': '#374151',
+    'global_admin_sidebar_text_color': '#ffffff',
+    'global_admin_primary_color': '#3b82f6',
+    'global_admin_table_bg_color': '#374151',
+    'global_admin_card_bg_color': '#374151',
+    'global_admin_modal_bg_color': '#374151',
+    'global_admin_modal_text_color': '#ffffff',
+    'global_admin_datatable_bg_color': '#374151',
+    'global_admin_datatable_text_color': '#ffffff',
+    'global_admin_datatable_header_color': '#1f2937',
+    'global_admin_dashboard_card_color': '#374151',
+    'global_admin_dashboard_card_text_color': '#ffffff',
+    'global_admin_border_color': '#4b5563',
+    'global_admin_accent_color': '#1f2937',
+    'global_admin_foreground_color': '#ffffff',
+    'global_site_name': 'Painel Administrativo',
+    'global_admin_logo_image': '',
+    'global_favicon_image': ''
   };
 
   useEffect(() => {
@@ -167,15 +185,15 @@ const AdminCustomizations = () => {
     const value = customizations[key] || '';
 
     return (
-      <Card className="bg-gray-800 border-gray-700 mb-4">
+      <Card className="bg-admin-card border-admin-border mb-4">
         <CardHeader>
-          <CardTitle className="text-white text-sm flex items-center justify-between">
+          <CardTitle className="text-admin-card-foreground text-sm flex items-center justify-between">
             {label}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setSelectedElement(selectedElement === key ? null : key)}
-              className="text-gray-400 hover:text-white"
+              className="text-admin-muted-foreground hover:text-admin-foreground"
             >
               <Edit className="h-4 w-4" />
             </Button>
@@ -187,7 +205,7 @@ const AdminCustomizations = () => {
               <Input
                 value={value}
                 onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-admin-input border-admin-border text-admin-foreground"
                 placeholder={label}
               />
             )}
@@ -196,7 +214,7 @@ const AdminCustomizations = () => {
               <Textarea
                 value={value}
                 onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-admin-input border-admin-border text-admin-foreground"
                 placeholder={label}
                 rows={3}
               />
@@ -208,12 +226,12 @@ const AdminCustomizations = () => {
                   type="color"
                   value={value}
                   onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
-                  className="w-16 h-10 bg-gray-700 border-gray-600"
+                  className="w-16 h-10 bg-admin-input border-admin-border"
                 />
                 <Input
                   value={value}
                   onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
-                  className="flex-1 bg-gray-700 border-gray-600 text-white"
+                  className="flex-1 bg-admin-input border-admin-border text-admin-foreground"
                   placeholder="#ffffff"
                 />
               </div>
@@ -224,11 +242,11 @@ const AdminCustomizations = () => {
                 <Input
                   value={value}
                   onChange={(e) => setCustomizations(prev => ({ ...prev, [key]: e.target.value }))}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-admin-input border-admin-border text-admin-foreground"
                   placeholder="URL da imagem"
                 />
                 
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-4">
+                <div className="border-2 border-dashed border-admin-border rounded-lg p-4">
                   <ImageUpload
                     onImageUploaded={(url) => handleImageUpload(key, url)}
                     folder="customizations"
@@ -238,8 +256,8 @@ const AdminCustomizations = () => {
                 
                 {value && (
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Preview:</Label>
-                    <img src={value} alt="Preview" className="w-full h-32 object-cover rounded border border-gray-600" />
+                    <Label className="text-admin-muted-foreground">Preview:</Label>
+                    <img src={value} alt="Preview" className="w-full h-32 object-cover rounded border border-admin-border" />
                   </div>
                 )}
               </div>
@@ -250,7 +268,7 @@ const AdminCustomizations = () => {
                 saveCustomization(key, value);
                 setSelectedElement(null);
               }}
-              className="bg-red-600 hover:bg-red-700 w-full"
+              className="bg-admin-primary hover:bg-admin-primary/90 w-full"
             >
               <Save className="h-4 w-4 mr-2" />
               Salvar
@@ -263,36 +281,37 @@ const AdminCustomizations = () => {
 
   if (loading) {
     return (
-        <div className="p-6">
-          <div className="text-white">Carregando...</div>
-        </div>
+      <AdminLayout>
+        <div className="text-admin-dashboard-text">Carregando...</div>
+      </AdminLayout>
     );
   }
 
   return (
-    <>
-      <header className="bg-gray-800 border-b border-gray-700">
+    <AdminLayout>
+      <header className="bg-admin-content-bg border-b border-admin-border">
         <div className="px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-white">Personalização Visual</h1>
+          <h1 className="text-xl font-bold text-admin-dashboard-text">Personalização Visual</h1>
           <Button
-            onClick={() => setPreviewMode(!previewMode)}
+            onClick={() => window.open('/', '_blank')}
             variant="outline"
-            className="border-gray-600 text-gray-300"
+            className="border-admin-border text-admin-foreground"
           >
             <Eye className="h-4 w-4 mr-2" />
-            {previewMode ? 'Sair do Preview' : 'Visualizar'}
+            Ver Site Completo
           </Button>
         </div>
       </header>
 
       <div className="flex h-screen">
         {/* Editor Panel */}
-        <div className="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto">
+        <div className="w-80 bg-admin-content-bg border-r border-admin-border overflow-y-auto">
           <div className="p-4">
             <Tabs defaultValue="home" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-700">
-                <TabsTrigger value="home" className="text-gray-300">Home</TabsTrigger>
-                <TabsTrigger value="login" className="text-gray-300">Login</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 bg-admin-muted">
+                <TabsTrigger value="home" className="text-admin-muted-foreground">Home</TabsTrigger>
+                <TabsTrigger value="login" className="text-admin-muted-foreground">Login</TabsTrigger>
+                <TabsTrigger value="admin" className="text-admin-muted-foreground">Admin</TabsTrigger>
               </TabsList>
               
               <TabsContent value="home" className="space-y-4 mt-4">
@@ -328,6 +347,47 @@ const AdminCustomizations = () => {
                   {renderElementEditor('login_subtitle', 'Subtítulo', 'text')}
                   {renderElementEditor('login_background_color', 'Cor de Fundo', 'color')}
                   {renderElementEditor('login_card_background', 'Cor do Card', 'color')}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="admin" className="space-y-4 mt-4">
+                <div>
+                  <h3 className="font-semibold mb-3 text-admin-primary">Configurações Gerais</h3>
+                  {renderElementEditor('global_site_name', 'Nome do Site', 'text')}
+                  {renderElementEditor('global_admin_logo_image', 'Logo do Admin', 'image')}
+                  {renderElementEditor('global_favicon_image', 'Favicon', 'image')}
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-3 text-admin-primary">Cores do Painel Admin</h3>
+                  {renderElementEditor('global_admin_content_bg_color', 'Fundo do Conteúdo', 'color')}
+                  {renderElementEditor('global_admin_sidebar_bg_color', 'Fundo da Sidebar', 'color')}
+                  {renderElementEditor('global_admin_sidebar_text_color', 'Texto da Sidebar', 'color')}
+                  {renderElementEditor('global_admin_primary_color', 'Cor Primária', 'color')}
+                  {renderElementEditor('global_admin_foreground_color', 'Cor do Texto Principal', 'color')}
+                  {renderElementEditor('global_admin_border_color', 'Cor das Bordas', 'color')}
+                  {renderElementEditor('global_admin_accent_color', 'Cor de Destaque', 'color')}
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-3 text-admin-primary">Cards e Dashboard</h3>
+                  {renderElementEditor('global_admin_card_bg_color', 'Fundo dos Cards', 'color')}
+                  {renderElementEditor('global_admin_dashboard_card_color', 'Cards do Dashboard', 'color')}
+                  {renderElementEditor('global_admin_dashboard_card_text_color', 'Texto dos Cards Dashboard', 'color')}
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-3 text-admin-primary">Tabelas e DataTables</h3>
+                  {renderElementEditor('global_admin_table_bg_color', 'Fundo das Tabelas', 'color')}
+                  {renderElementEditor('global_admin_datatable_bg_color', 'Fundo dos DataTables', 'color')}
+                  {renderElementEditor('global_admin_datatable_text_color', 'Texto dos DataTables', 'color')}
+                  {renderElementEditor('global_admin_datatable_header_color', 'Cabeçalho dos DataTables', 'color')}
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-3 text-admin-primary">Modais</h3>
+                  {renderElementEditor('global_admin_modal_bg_color', 'Fundo dos Modais', 'color')}
+                  {renderElementEditor('global_admin_modal_text_color', 'Texto dos Modais', 'color')}
                 </div>
               </TabsContent>
             </Tabs>
@@ -396,7 +456,7 @@ const AdminCustomizations = () => {
           </div>
         </div>
       </div>
-    </>
+    </AdminLayout>
   );
 };
 
