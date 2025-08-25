@@ -23,7 +23,7 @@ import { usePendingNotifications } from '@/hooks/usePendingNotifications';
 import NotificationBadge from '@/components/auction/NotificationBadge';
 import PendingNotificationModal from '@/components/auction/PendingNotificationModal';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -258,8 +258,8 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       {/* Modal de Notificações */}
       {isAdmin && (
         <PendingNotificationModal
-          isOpen={showNotificationModal}
-          onClose={() => setShowNotificationModal(false)}
+          open={showNotificationModal}
+          onOpenChange={setShowNotificationModal}
           pendingBids={pendingBids}
           pendingRegistrations={pendingRegistrations}
         />

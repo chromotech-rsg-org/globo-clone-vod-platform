@@ -1,15 +1,9 @@
 
-import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/auth';
 import { sanitizeInputSecure } from '@/utils/validators';
-import { useAuth } from '@/contexts/AuthContext';
 
 export const useUserProfile = () => {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       // Validate and sanitize userId
@@ -65,54 +59,5 @@ export const useUserProfile = () => {
     }
   };
 
-  const updateProfile = async (updates: { name?: string; email?: string }) => {
-    if (!user) throw new Error('User not authenticated');
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: updates.name ? sanitizeInputSecure(updates.name, 100) : undefined,
-          email: updates.email ? sanitizeInputSecure(updates.email, 254) : undefined,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Error updating profile:', error);
-        throw error;
-      }
-
-      // Refresh the profile data
-      const updatedProfile = await fetchUserProfile(user.id);
-      setProfile(updatedProfile);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load profile on mount and when user changes
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (user?.id) {
-        setLoading(true);
-        const profileData = await fetchUserProfile(user.id);
-        setProfile(profileData);
-        setLoading(false);
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    };
-
-    loadProfile();
-  }, [user?.id]);
-
-  return { 
-    profile, 
-    loading, 
-    fetchUserProfile, 
-    updateProfile 
-  };
+  return { fetchUserProfile };
 };

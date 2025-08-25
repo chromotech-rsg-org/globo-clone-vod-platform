@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -140,7 +139,7 @@ const CheckoutCredentialsStep = ({ initialData, onSubmit, isLoading }: CheckoutC
             size="lg"
             disabled={isLoading}
           >
-            {isLoading ? 'Criando conta...' : 'Continuar'}
+            {isLoading ? 'Criando conta...' : 'Finalizar Cadastro'}
           </Button>
         </div>
       </form>

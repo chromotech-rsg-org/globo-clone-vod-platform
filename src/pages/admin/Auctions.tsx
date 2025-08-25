@@ -1,131 +1,130 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { MoreVertical, Edit, Trash2 } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Auction } from '@/types/auction';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-interface DataTableProps {
-  data: any[]
-}
-
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import { useToast } from '@/components/ui/use-toast';
+import CurrencyInput from '@/components/ui/currency-input';
+import FilterControls from '@/components/admin/FilterControls';
+import { Plus, Edit, Trash2, Play, Square, Copy } from 'lucide-react';
+import AuctionBanner from '@/components/admin/AuctionBanner';
 const Auctions = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
   const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
-  const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('all');
-  const [typeFilter, setTypeFilter] = useState<'rural' | 'judicial' | 'all'>('all');
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [liveFilter, setLiveFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const {
+    toast
+  } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     youtube_url: '',
     initial_bid_value: 0,
+    current_bid_value: 0,
     bid_increment: 100,
-    increment_mode: 'fixed',
-    min_custom_bid: 0,
-    max_custom_bid: 0,
-    start_date: '',
-    end_date: '',
     registration_wait_value: 5,
     registration_wait_unit: 'minutes' as 'minutes' | 'hours' | 'days',
+    auction_date: '',
+    start_time: '',
+    end_time: '',
     status: 'inactive' as 'active' | 'inactive',
-    auction_type: 'rural' as 'rural' | 'judicial'
+    auction_type: 'rural' as 'rural' | 'judicial',
+    is_live: false
   });
-
-  const fetchAuctions = useCallback(async () => {
+  const fetchAuctions = async () => {
     try {
-      let query = supabase
-        .from('auctions')
-        .select('*')
-        .like('name', `%${search}%`);
+      const {
+        data,
+        error
+      } = await supabase.from('auctions').select('*').order('created_at', {
+        ascending: false
+      });
+      if (error) throw error;
+      setAuctions(data as Auction[] || []);
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
-
-      if (typeFilter !== 'all') {
-        query = query.eq('auction_type', typeFilter);
-      }
-
-      if (startDate) {
-        const formattedStartDate = format(startDate, 'yyyy-MM-dd', { locale: ptBR });
-        query = query.gte('start_date', formattedStartDate);
-      }
-
-      if (endDate) {
-        const formattedEndDate = format(endDate, 'yyyy-MM-dd', { locale: ptBR });
-        query = query.lte('end_date', formattedEndDate);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      setAuctions(data as Auction[]);
-    } catch (error: any) {
+      // Set up real-time subscription
+      const subscription = supabase.channel('auctions-changes').on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'auctions'
+      }, () => {
+        fetchAuctions();
+      }).subscribe();
+      return () => {
+        supabase.removeChannel(subscription);
+      };
+    } catch (error) {
+      console.error('Error fetching auctions:', error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao buscar leilões",
+        description: "Não foi possível carregar os leilões",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Construir datas completas se fornecidas
+      const startDateTime = formData.auction_date && formData.start_time ? `${formData.auction_date}T${formData.start_time}:00` : null;
+      const endDateTime = formData.auction_date && formData.end_time ? `${formData.auction_date}T${formData.end_time}:00` : null;
+      const dataToSave = {
+        ...formData,
+        start_date: startDateTime,
+        end_date: endDateTime
+      };
+
+      // Remove campos temporários
+      delete dataToSave.auction_date;
+      delete dataToSave.start_time;
+      delete dataToSave.end_time;
+      if (editingAuction) {
+        const {
+          error
+        } = await supabase.from('auctions').update(dataToSave).eq('id', editingAuction.id);
+        if (error) throw error;
+        toast({
+          title: "Sucesso",
+          description: "Leilão atualizado com sucesso"
+        });
+      } else {
+        const {
+          error
+        } = await supabase.from('auctions').insert([dataToSave]);
+        if (error) throw error;
+        toast({
+          title: "Sucesso",
+          description: "Leilão criado com sucesso"
+        });
+      }
+      setShowDialog(false);
+      resetForm();
+      fetchAuctions();
+    } catch (error) {
+      console.error('Error saving auction:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar o leilão",
         variant: "destructive"
       });
     }
-  }, [search, statusFilter, typeFilter, startDate, endDate]);
-
-  useEffect(() => {
-    fetchAuctions();
-  }, [fetchAuctions]);
-
+  };
   const handleEdit = (auction: Auction) => {
     setEditingAuction(auction);
     setFormData({
@@ -133,442 +132,205 @@ const Auctions = () => {
       description: auction.description || '',
       youtube_url: auction.youtube_url || '',
       initial_bid_value: auction.initial_bid_value,
+      current_bid_value: auction.current_bid_value,
       bid_increment: auction.bid_increment,
-      increment_mode: auction.increment_mode || 'fixed',
-      min_custom_bid: auction.min_custom_bid || 0,
-      max_custom_bid: auction.max_custom_bid || 0,
-      start_date: auction.start_date || '',
-      end_date: auction.end_date || '',
-      registration_wait_value: auction.registration_wait_value,
-      registration_wait_unit: auction.registration_wait_unit,
+      registration_wait_value: auction.registration_wait_value || 5,
+      registration_wait_unit: auction.registration_wait_unit || 'minutes',
+      auction_date: auction.start_date ? auction.start_date.split('T')[0] : '',
+      start_time: auction.start_date ? auction.start_date.split('T')[1]?.slice(0, 5) || '' : '',
+      end_time: auction.end_date ? auction.end_date.split('T')[1]?.slice(0, 5) || '' : '',
       status: auction.status,
-      auction_type: auction.auction_type
+      auction_type: auction.auction_type,
+      is_live: auction.is_live
     });
-    setIsModalOpen(true);
+    setShowDialog(true);
   };
-
+  const handleDuplicate = (auction: Auction) => {
+    setEditingAuction(null); // Não é edição, é duplicação
+    setFormData({
+      name: `${auction.name} (Cópia)`,
+      description: auction.description || '',
+      youtube_url: auction.youtube_url || '',
+      initial_bid_value: auction.initial_bid_value,
+      current_bid_value: auction.initial_bid_value,
+      // Reset para valor inicial
+      bid_increment: auction.bid_increment,
+      registration_wait_value: auction.registration_wait_value || 5,
+      registration_wait_unit: auction.registration_wait_unit || 'minutes',
+      auction_date: '',
+      start_time: '',
+      end_time: '',
+      status: 'inactive' as const,
+      // Sempre inativo para cópias
+      auction_type: auction.auction_type,
+      is_live: false // Sempre falso para cópias
+    });
+    setShowDialog(true);
+  };
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir este leilão?")) {
-      return;
-    }
-
+    if (!confirm('Tem certeza que deseja excluir este leilão?')) return;
     try {
-      const { error } = await supabase
-        .from('auctions')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-
+      const {
+        error
+      } = await supabase.from('auctions').delete().eq('id', id);
+      if (error) throw error;
       toast({
         title: "Sucesso",
-        description: "Leilão excluído com sucesso",
+        description: "Leilão excluído com sucesso"
       });
-
       fetchAuctions();
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Error deleting auction:', error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao excluir leilão",
+        description: "Não foi possível excluir o leilão",
         variant: "destructive"
       });
     }
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setSaving(true);
-
-    try {
-      const { name, description, youtube_url, initial_bid_value, bid_increment, increment_mode, min_custom_bid, max_custom_bid, start_date, end_date, registration_wait_value, registration_wait_unit, status, auction_type } = formData;
-
-      if (increment_mode === 'custom' && (min_custom_bid >= max_custom_bid)) {
-        toast({
-          title: "Erro",
-          description: "O lance mínimo deve ser menor que o lance máximo.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const payload = {
-        name,
-        description,
-        youtube_url,
-        initial_bid_value,
-        bid_increment,
-        increment_mode,
-        min_custom_bid,
-        max_custom_bid,
-        start_date,
-        end_date,
-        registration_wait_value,
-        registration_wait_unit,
-        status,
-        auction_type
-      };
-
-      let result;
-      if (editingAuction) {
-        const { error } = await supabase
-          .from('auctions')
-          .update(payload)
-          .eq('id', editingAuction.id);
-
-        if (error) throw error;
-        result = { success: true, message: 'Leilão atualizado com sucesso' };
-      } else {
-        const { error } = await supabase
-          .from('auctions')
-          .insert(payload);
-
-        if (error) throw error;
-        result = { success: true, message: 'Leilão criado com sucesso' };
-      }
-
-      toast({
-        title: "Sucesso",
-        description: result.message,
-      });
-
-      setIsModalOpen(false);
-      setEditingAuction(null);
-      setFormData({
-        name: '',
-        description: '',
-        youtube_url: '',
-        initial_bid_value: 0,
-        bid_increment: 100,
-        increment_mode: 'fixed',
-        min_custom_bid: 0,
-        max_custom_bid: 0,
-        start_date: '',
-        end_date: '',
-        registration_wait_value: 5,
-        registration_wait_unit: 'minutes',
-        status: 'inactive',
-        auction_type: 'rural'
-      });
-
-      fetchAuctions();
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao salvar leilão",
-        variant: "destructive"
-      });
-    } finally {
-      setSaving(false);
-    }
+  const resetForm = () => {
+    setEditingAuction(null);
+    setFormData({
+      name: '',
+      description: '',
+      youtube_url: '',
+      initial_bid_value: 0,
+      current_bid_value: 0,
+      bid_increment: 100,
+      registration_wait_value: 5,
+      registration_wait_unit: 'minutes',
+      auction_date: '',
+      start_time: '',
+      end_time: '',
+      status: 'inactive',
+      auction_type: 'rural',
+      is_live: false
+    });
   };
-
-  return (
-    <>
-      <header className="bg-admin-header border-b border-admin-border">
-        <div className="px-6 py-4">
-          <h1 className="text-xl font-bold text-admin-foreground text-slate-50">Gerenciar Leilões</h1>
-          <p className="text-admin-muted-foreground text-sm">
-            Crie, edite e gerencie os leilões da plataforma
-          </p>
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setLiveFilter('all');
+    setTypeFilter('all');
+  };
+  const filteredAuctions = auctions.filter(auction => {
+    const matchesSearch = searchTerm === '' || auction.name.toLowerCase().includes(searchTerm.toLowerCase()) || auction.description?.toLowerCase().includes(searchTerm.toLowerCase()) || auction.auction_type.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || auction.status === statusFilter;
+    const matchesLive = liveFilter === 'all' || auction.is_live.toString() === liveFilter;
+    const matchesType = typeFilter === 'all' || auction.auction_type === typeFilter;
+    return matchesSearch && matchesStatus && matchesLive && matchesType;
+  });
+  useEffect(() => {
+    fetchAuctions();
+  }, []);
+  return <div className="p-6 space-y-6">
+      <AuctionBanner />
+      
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-50">Gerenciar Leilões</h1>
+          <p className="text-slate-300">Crie e gerencie leilões do sistema</p>
         </div>
-      </header>
-
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <Input
-            type="search"
-            placeholder="Buscar leilão..."
-            className="max-w-md bg-admin-input border-admin-border text-admin-foreground"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          <div className="flex items-center space-x-4">
-            <Select onValueChange={(value) => setStatusFilter(value as 'active' | 'inactive' | 'all')}>
-              <SelectTrigger className="bg-admin-input border-admin-border text-admin-foreground">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="active">Ativos</SelectItem>
-                <SelectItem value="inactive">Inativos</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select onValueChange={(value) => setTypeFilter(value as 'rural' | 'judicial' | 'all')}>
-              <SelectTrigger className="bg-admin-input border-admin-border text-admin-foreground">
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="rural">Rural</SelectItem>
-                <SelectItem value="judicial">Judicial</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "justify-start text-left font-normal bg-admin-input border-admin-border text-admin-foreground",
-                    !startDate && !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate && endDate ? (
-                    <>
-                      {format(startDate, "dd/MM/yyyy")} - {format(endDate, "dd/MM/yyyy")}
-                    </>
-                  ) : (
-                    <span>Filtrar por data</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-admin-card border-admin-border">
-                <Calendar
-                  mode="range"
-                  defaultMonth={startDate ? startDate : new Date()}
-                  selected={{ from: startDate, to: endDate }}
-                  onSelect={(date) => {
-                    if (date?.from) {
-                      setStartDate(date.from);
-                    }
-                    if (date?.to) {
-                      setEndDate(date.to);
-                    }
-                  }}
-                  numberOfMonths={2}
-                  pagedNavigation
-                  className="border-none shadow-sm"
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
-            >
+        
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogTrigger asChild>
+            <Button onClick={resetForm}>
+              <Plus size={16} className="mr-2" />
               Novo Leilão
             </Button>
-          </div>
-        </div>
-
-        <Table className="bg-admin-table-bg">
-          <TableCaption className="text-admin-foreground">Lista de leilões cadastrados no sistema.</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[200px] text-admin-foreground">Nome</TableHead>
-              <TableHead className="text-admin-foreground">Status</TableHead>
-              <TableHead className="text-admin-foreground">Tipo</TableHead>
-              <TableHead className="text-admin-foreground">Data Início</TableHead>
-              <TableHead className="text-admin-foreground">Data Fim</TableHead>
-              <TableHead className="text-right text-admin-foreground">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {auctions.map((auction) => (
-              <TableRow key={auction.id}>
-                <TableCell className="font-medium text-admin-foreground">{auction.name}</TableCell>
-                <TableCell className="text-admin-foreground">{auction.status}</TableCell>
-                <TableCell className="text-admin-foreground">{auction.auction_type}</TableCell>
-                <TableCell className="text-admin-foreground">{auction.start_date}</TableCell>
-                <TableCell className="text-admin-foreground">{auction.end_date}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
-                        <MoreVertical className="h-4 w-4 text-admin-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleEdit(auction)}>
-                        <Edit className="mr-2 h-4 w-4" /> Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleDelete(auction.id)} className="text-red-500">
-                        <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-admin-card border-admin-border">
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="text-admin-foreground">
+              <DialogTitle>
                 {editingAuction ? 'Editar Leilão' : 'Novo Leilão'}
               </DialogTitle>
             </DialogHeader>
-
+            
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name" className="text-admin-foreground">Nome</Label>
-                <Input
-                  type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="bg-admin-input border-admin-border text-admin-foreground"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description" className="text-admin-foreground">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="bg-admin-input border-admin-border text-admin-foreground"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="youtube_url" className="text-admin-foreground">URL do Youtube</Label>
-                <Input
-                  type="url"
-                  id="youtube_url"
-                  value={formData.youtube_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, youtube_url: e.target.value }))}
-                  className="bg-admin-input border-admin-border text-admin-foreground"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="initial_bid_value" className="text-admin-foreground">Valor Inicial do Lance (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  id="initial_bid_value"
-                  value={formData.initial_bid_value}
-                  onChange={(e) => setFormData(prev => ({ ...prev, initial_bid_value: parseFloat(e.target.value) || 0 }))}
-                  className="bg-admin-input border-admin-border text-admin-foreground"
-                  required
-                />
-              </div>
-
-              {/* Configurações de Incremento */}
-              <div className="space-y-4 border rounded-lg p-4 bg-admin-muted">
-                <h4 className="font-medium text-admin-foreground">Configurações de Lance</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome do Leilão</Label>
+                  <Input id="name" value={formData.name} onChange={e => setFormData({
+                  ...formData,
+                  name: e.target.value
+                })} required />
+                </div>
                 
-                <div>
-                  <Label className="text-admin-foreground">Modo de Incremento</Label>
-                  <Select
-                    value={formData.increment_mode}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, increment_mode: value as 'fixed' | 'custom' }))}
-                  >
-                    <SelectTrigger className="bg-admin-input border-admin-border text-admin-foreground">
+                <div className="space-y-2">
+                  <Label htmlFor="auction_type">Tipo de Leilão</Label>
+                  <Select value={formData.auction_type} onValueChange={(value: 'rural' | 'judicial') => setFormData({
+                  ...formData,
+                  auction_type: value
+                })}>
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="fixed">Incremento Fixo</SelectItem>
-                      <SelectItem value="custom">Incremento Personalizado</SelectItem>
+                      <SelectItem value="rural">Rural</SelectItem>
+                      <SelectItem value="judicial">Judicial</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-admin-muted-foreground mt-1">
-                    {formData.increment_mode === 'fixed' 
-                      ? 'Lance deve ser exatamente o valor atual + incremento'
-                      : 'Lance pode ser qualquer valor dentro do intervalo definido'
-                    }
-                  </p>
-                </div>
-
-                {formData.increment_mode === 'fixed' ? (
-                  <div>
-                    <Label className="text-admin-foreground">Valor do Incremento (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.bid_increment}
-                      onChange={(e) => setFormData(prev => ({ ...prev, bid_increment: parseFloat(e.target.value) || 0 }))}
-                      className="bg-admin-input border-admin-border text-admin-foreground"
-                      placeholder="100.00"
-                      required
-                    />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-admin-foreground">Lance Mínimo (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.min_custom_bid}
-                        onChange={(e) => setFormData(prev => ({ ...prev, min_custom_bid: parseFloat(e.target.value) || 0 }))}
-                        className="bg-admin-input border-admin-border text-admin-foreground"
-                        placeholder="50.00"
-                        required={formData.increment_mode === 'custom'}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-admin-foreground">Lance Máximo (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.max_custom_bid}
-                        onChange={(e) => setFormData(prev => ({ ...prev, max_custom_bid: parseFloat(e.target.value) || 0 }))}
-                        className="bg-admin-input border-admin-border text-admin-foreground"
-                        placeholder="1000.00"
-                        required={formData.increment_mode === 'custom'}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-admin-foreground">Data de Início</Label>
-                  <Input
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className="bg-admin-input border-admin-border text-admin-foreground"
-                  />
-                </div>
-                <div>
-                  <Label className="text-admin-foreground">Data de Fim</Label>
-                  <Input
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                    className="bg-admin-input border-admin-border text-admin-foreground"
-                  />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-admin-foreground">Valor de Espera para Registro</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.registration_wait_value}
-                    onChange={(e) => setFormData(prev => ({ ...prev, registration_wait_value: parseInt(e.target.value) || 0 }))}
-                    className="bg-admin-input border-admin-border text-admin-foreground"
-                  />
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea id="description" value={formData.description} onChange={e => setFormData({
+                ...formData,
+                description: e.target.value
+              })} rows={3} />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="youtube_url">URL do YouTube</Label>
+                <Input id="youtube_url" value={formData.youtube_url} onChange={e => setFormData({
+                ...formData,
+                youtube_url: e.target.value
+              })} placeholder="https://www.youtube.com/watch?v=..." />
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="initial_bid_value">Lance Inicial</Label>
+                  <CurrencyInput value={formData.initial_bid_value} onChange={value => setFormData({
+                  ...formData,
+                  initial_bid_value: value
+                })} placeholder="R$ 0,00" />
                 </div>
-                <div>
-                  <Label className="text-admin-foreground">Unidade de Tempo para Registro</Label>
-                  <Select
-                    value={formData.registration_wait_unit}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, registration_wait_unit: value as 'minutes' | 'hours' | 'days' }))}
-                  >
-                    <SelectTrigger className="bg-admin-input border-admin-border text-admin-foreground">
+                
+                <div className="space-y-2">
+                  <Label htmlFor="current_bid_value">Lance Atual</Label>
+                  <CurrencyInput value={formData.current_bid_value} onChange={value => setFormData({
+                  ...formData,
+                  current_bid_value: value
+                })} placeholder="R$ 0,00" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bid_increment">Incremento</Label>
+                  <CurrencyInput value={formData.bid_increment} onChange={value => setFormData({
+                  ...formData,
+                  bid_increment: value
+                })} placeholder="R$ 100,00" />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="registration_wait_value">Tempo Espera Habilitação</Label>
+                  <Input id="registration_wait_value" type="number" min="1" value={formData.registration_wait_value} onChange={e => setFormData({
+                  ...formData,
+                  registration_wait_value: parseInt(e.target.value) || 1
+                })} />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="registration_wait_unit">Unidade</Label>
+                  <Select value={formData.registration_wait_unit} onValueChange={(value: 'minutes' | 'hours' | 'days') => setFormData({
+                  ...formData,
+                  registration_wait_unit: value
+                })}>
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -579,62 +341,183 @@ const Auctions = () => {
                   </Select>
                 </div>
               </div>
-
-              <div>
-                <Label className="text-admin-foreground">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as 'active' | 'inactive' }))}
-                >
-                  <SelectTrigger className="bg-admin-input border-admin-border text-admin-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Ativo</SelectItem>
-                    <SelectItem value="inactive">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="auction_date">Data do Leilão</Label>
+                  <Input id="auction_date" type="date" value={formData.auction_date} onChange={e => setFormData({
+                  ...formData,
+                  auction_date: e.target.value
+                })} />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="start_time">Hora de Início</Label>
+                  <Input id="start_time" type="time" value={formData.start_time} onChange={e => setFormData({
+                  ...formData,
+                  start_time: e.target.value
+                })} />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="end_time">Hora de Fim</Label>
+                  <Input id="end_time" type="time" value={formData.end_time} onChange={e => setFormData({
+                  ...formData,
+                  end_time: e.target.value
+                })} />
+                </div>
               </div>
-
-              <div>
-                <Label className="text-admin-foreground">Tipo de Leilão</Label>
-                <Select
-                  value={formData.auction_type}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, auction_type: value as 'rural' | 'judicial' }))}
-                >
-                  <SelectTrigger className="bg-admin-input border-admin-border text-admin-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rural">Rural</SelectItem>
-                    <SelectItem value="judicial">Judicial</SelectItem>
-                  </SelectContent>
-                </Select>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Switch id="status" checked={formData.status === 'active'} onCheckedChange={checked => setFormData({
+                  ...formData,
+                  status: checked ? 'active' : 'inactive'
+                })} />
+                  <Label htmlFor="status">Leilão Ativo</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch id="is_live" checked={formData.is_live} onCheckedChange={checked => setFormData({
+                  ...formData,
+                  is_live: checked
+                })} />
+                  <Label htmlFor="is_live">Transmissão ao Vivo</Label>
+                </div>
               </div>
-
+              
               <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                  className="border-admin-border text-admin-foreground hover:bg-admin-muted"
-                >
+                <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
                   Cancelar
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
-                >
-                  {saving ? 'Salvando...' : (editingAuction ? 'Atualizar' : 'Criar')}
+                <Button type="submit">
+                  {editingAuction ? 'Atualizar' : 'Criar'}
                 </Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
       </div>
-    </>
-  );
-};
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Leilões ({filteredAuctions.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FilterControls searchTerm={searchTerm} onSearchChange={setSearchTerm} filters={[{
+          key: 'status',
+          label: 'Status',
+          value: statusFilter,
+          options: [{
+            value: 'all',
+            label: 'Todos'
+          }, {
+            value: 'active',
+            label: 'Ativo'
+          }, {
+            value: 'inactive',
+            label: 'Inativo'
+          }],
+          onChange: setStatusFilter
+        }, {
+          key: 'live',
+          label: 'Transmissão',
+          value: liveFilter,
+          options: [{
+            value: 'all',
+            label: 'Todas'
+          }, {
+            value: 'true',
+            label: 'Ao Vivo'
+          }, {
+            value: 'false',
+            label: 'Gravado'
+          }],
+          onChange: setLiveFilter
+        }, {
+          key: 'type',
+          label: 'Tipo',
+          value: typeFilter,
+          options: [{
+            value: 'all',
+            label: 'Todos'
+          }, {
+            value: 'rural',
+            label: 'Rural'
+          }, {
+            value: 'judicial',
+            label: 'Judicial'
+          }],
+          onChange: setTypeFilter
+        }]} onClearFilters={clearFilters} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Leilões Filtrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            </div> : <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Lance Atual</TableHead>
+                  <TableHead>Transmissão</TableHead>
+                  <TableHead>Programação</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAuctions.map(auction => <TableRow key={auction.id}>
+                    <TableCell className="font-medium">{auction.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {auction.auction_type === 'rural' ? 'Rural' : 'Judicial'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={auction.status === 'active' ? 'default' : 'secondary'}>
+                        {auction.status === 'active' ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatCurrency(auction.current_bid_value)}</TableCell>
+                    <TableCell>
+                      <Badge variant={auction.is_live ? "default" : "secondary"} className="flex items-center gap-1 w-fit">
+                        {auction.is_live ? <Play size={12} /> : <Square size={12} />}
+                        {auction.is_live ? 'Ao Vivo' : 'Gravado'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {auction.start_date && auction.end_date ? <div className="text-sm">
+                          <div>{formatDate(auction.start_date).split(' ')[0]}</div>
+                          <div className="text-muted-foreground">
+                            {auction.start_date.split('T')[1]?.slice(0, 5)} - {auction.end_date.split('T')[1]?.slice(0, 5)}
+                          </div>
+                        </div> : <span className="text-muted-foreground">Não definida</span>}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(auction)} title="Editar leilão">
+                          <Edit size={14} />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDuplicate(auction)} title="Duplicar leilão">
+                          <Copy size={14} />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDelete(auction.id)} title="Excluir leilão">
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>)}
+              </TableBody>
+            </Table>}
+        </CardContent>
+      </Card>
+    </div>;
+};
 export default Auctions;

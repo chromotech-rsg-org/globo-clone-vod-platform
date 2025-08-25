@@ -1,146 +1,269 @@
 
-import React from 'react';
-import AdminLayout from '@/components/AdminLayout';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUserProfile } from '@/hooks/useUserProfile';
-import { useToast } from '@/hooks/use-toast';
-import { User, Mail, Shield, Calendar } from 'lucide-react';
+import { formatCpf, formatPhone } from '@/utils/formatters';
+import { 
+  sanitizeInputSecure, 
+  validateEmailSecurity, 
+  validateCpfSecurity, 
+  validatePhoneSecurity,
+  globalRateLimiter,
+  securityConfig
+} from '@/utils/validators';
 
 const Profile = () => {
   const { user } = useAuth();
-  const { profile, loading, updateProfile } = useUserProfile();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    cpf: '',
+    phone: ''
+  });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
 
-  const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: sanitizeInputSecure(user.name || '', securityConfig.maxLengths.name),
+        email: user.email || '',
+        cpf: sanitizeInputSecure(user.cpf || '', securityConfig.maxLengths.cpf),
+        phone: sanitizeInputSecure(user.phone || '', securityConfig.maxLengths.phone)
+      });
+    }
+  }, [user]);
+
+  const validateForm = () => {
+    const errors: Record<string, string[]> = {};
     
-    try {
-      await updateProfile({
-        name: formData.get('name') as string,
-        email: formData.get('email') as string,
-      });
-      
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao atualizar",
-        description: "Não foi possível atualizar suas informações.",
-        variant: "destructive",
+    // Validate name
+    const sanitizedName = sanitizeInputSecure(formData.name, securityConfig.maxLengths.name);
+    if (!sanitizedName.trim()) {
+      errors.name = ['Nome é obrigatório'];
+    } else if (sanitizedName.length < 2) {
+      errors.name = ['Nome deve ter pelo menos 2 caracteres'];
+    }
+
+    // Validate CPF
+    if (formData.cpf) {
+      const cpfValidation = validateCpfSecurity(formData.cpf);
+      if (!cpfValidation.isValid) {
+        errors.cpf = cpfValidation.errors;
+      }
+    }
+
+    // Validate phone
+    if (formData.phone) {
+      const phoneValidation = validatePhoneSecurity(formData.phone);
+      if (!phoneValidation.isValid) {
+        errors.phone = phoneValidation.errors;
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    // Apply formatting and sanitization
+    if (name === 'name') {
+      formattedValue = sanitizeInputSecure(value, securityConfig.maxLengths.name);
+    } else if (name === 'cpf') {
+      formattedValue = formatCpf(sanitizeInputSecure(value, securityConfig.maxLengths.cpf));
+    } else if (name === 'phone') {
+      formattedValue = formatPhone(sanitizeInputSecure(value, securityConfig.maxLengths.phone));
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: formattedValue
+    }));
+
+    // Clear validation errors for this field
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
       });
     }
   };
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-admin-primary"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id) return;
+
+    // Rate limiting check
+    const rateLimitKey = `profile-update-${user.id}`;
+    if (!globalRateLimiter.isAllowed(rateLimitKey, 3, securityConfig.rateLimits.timeWindow)) {
+      const remainingTime = globalRateLimiter.getRemainingTime(rateLimitKey, securityConfig.rateLimits.timeWindow);
+      const minutes = Math.ceil(remainingTime / (1000 * 60));
+      
+      toast({
+        title: "Muitas tentativas",
+        description: `Aguarde ${minutes} minutos antes de tentar novamente`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!validateForm()) {
+      toast({
+        title: "Dados inválidos",
+        description: "Corrija os erros antes de continuar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: sanitizeInputSecure(formData.name, securityConfig.maxLengths.name),
+          cpf: formData.cpf || null,
+          phone: formData.phone || null
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Perfil atualizado",
+        description: "Seus dados foram atualizados com sucesso."
+      });
+    } catch (error) {
+      console.error('Profile update error:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar perfil. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <AdminLayout>
-      <div className="p-6 space-y-6">
+    <div className="p-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-admin-text mb-2">Meu Perfil</h1>
-          <p className="text-admin-muted-foreground">
-            Gerencie suas informações pessoais e configurações da conta.
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Meu Perfil
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gerencie suas informações pessoais
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Info Card */}
-          <Card className="bg-admin-card border-admin-border">
-            <CardHeader>
-              <CardTitle className="text-admin-text flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Informações da Conta
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-admin-muted rounded-lg">
-                <Mail className="h-4 w-4 text-admin-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-admin-text">{user?.email}</p>
-                  <p className="text-xs text-admin-muted-foreground">Email da conta</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 bg-admin-muted rounded-lg">
-                <Shield className="h-4 w-4 text-admin-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-admin-text capitalize">{user?.role || 'user'}</p>
-                  <p className="text-xs text-admin-muted-foreground">Tipo de conta</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-admin-muted rounded-lg">
-                <Calendar className="h-4 w-4 text-admin-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-admin-text">
-                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}
-                  </p>
-                  <p className="text-xs text-admin-muted-foreground">Membro desde</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Edit Profile Form */}
-          <div className="lg:col-span-2">
-            <Card className="bg-admin-card border-admin-border">
-              <CardHeader>
-                <CardTitle className="text-admin-text">Editar Perfil</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleUpdateProfile} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-admin-text">Nome Completo</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        defaultValue={profile?.name || ''}
-                        className="bg-admin-muted border-admin-border text-admin-text"
-                        placeholder="Digite seu nome completo"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-admin-text">Email</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        defaultValue={profile?.email || user?.email || ''}
-                        className="bg-admin-muted border-admin-border text-admin-text"
-                        placeholder="Digite seu email"
-                      />
-                    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Informações Pessoais</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Completo</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Seu nome completo"
+                  maxLength={securityConfig.maxLengths.name}
+                  className={validationErrors.name ? "border-red-500" : ""}
+                />
+                {validationErrors.name && (
+                  <div className="text-sm text-red-600">
+                    {validationErrors.name.map((error, index) => (
+                      <p key={index}>{error}</p>
+                    ))}
                   </div>
+                )}
+              </div>
 
-                  <div className="flex justify-end">
-                    <Button type="submit" className="bg-admin-primary hover:bg-admin-primary/90">
-                      Salvar Alterações
-                    </Button>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  disabled
+                  className="bg-gray-100 dark:bg-gray-800"
+                />
+                <p className="text-sm text-gray-500">
+                  O email não pode ser alterado
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cpf">CPF</Label>
+                <Input
+                  id="cpf"
+                  name="cpf"
+                  type="text"
+                  value={formData.cpf}
+                  onChange={handleInputChange}
+                  placeholder="000.000.000-00"
+                  maxLength={securityConfig.maxLengths.cpf}
+                  className={validationErrors.cpf ? "border-red-500" : ""}
+                />
+                {validationErrors.cpf && (
+                  <div className="text-sm text-red-600">
+                    {validationErrors.cpf.map((error, index) => (
+                      <p key={index}>{error}</p>
+                    ))}
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  placeholder="(00) 00000-0000"
+                  maxLength={securityConfig.maxLengths.phone}
+                  className={validationErrors.phone ? "border-red-500" : ""}
+                />
+                {validationErrors.phone && (
+                  <div className="text-sm text-red-600">
+                    {validationErrors.phone.map((error, index) => (
+                      <p key={index}>{error}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full"
+              >
+                {loading ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 
