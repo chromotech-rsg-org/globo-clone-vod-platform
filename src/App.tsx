@@ -13,6 +13,7 @@ import Admin from './pages/admin/Admin';
 import Checkout from './pages/Checkout';
 import Terms from './pages/Terms';
 import Plans from './pages/Plans';
+import Home from './pages/Home'; // Adicionado
 
 const queryClient = new QueryClient();
 
@@ -41,7 +42,8 @@ function App() {
           <ErrorBoundary fallbackRender={ErrorFallback}>
             <div className="min-h-screen bg-background text-foreground">
               <Routes>
-                <Route path="/" element={<AuctionHome />} />
+                <Route path="/" element={<Home />} /> {/* Agora a Home abre em "/" */}
+                <Route path="/leiloes" element={<AuctionHome />} /> {/* Leilões em rota própria */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
