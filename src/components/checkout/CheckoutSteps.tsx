@@ -20,6 +20,23 @@ interface CheckoutStepsProps {
   isLoading: boolean;
 }
 
+// Create proper interfaces for the step components
+interface CheckoutPersonalStepProps {
+  data: any;
+  onDataChange: (stepData: any) => void;
+}
+
+interface CheckoutCredentialsStepProps {
+  data: any;
+  onDataChange: (stepData: any) => void;
+}
+
+interface CheckoutCouponStepProps {
+  data: any;
+  onDataChange: (stepData: any) => void;
+  planPrice: number;
+}
+
 const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
