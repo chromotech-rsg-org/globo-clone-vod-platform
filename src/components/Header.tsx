@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,12 @@ const Header = () => {
       .slice(0, 2);
   };
 
+  const getUserDisplayName = () => {
+    if (user?.name) return user.name;
+    if (user?.email) return user.email;
+    return 'Usuário';
+  };
+
   return (
     <header 
       className="absolute top-0 left-0 right-0 z-50 px-6 py-4"
@@ -78,6 +85,14 @@ const Header = () => {
             </Link>
           )}
         </div>
+
+        {/* User Display - Show when logged in */}
+        {user && (
+          <div className="hidden md:flex items-center gap-2 text-sm" style={{ color: textColor }}>
+            <User className="h-4 w-4" />
+            <span>Olá, {getUserDisplayName()}</span>
+          </div>
+        )}
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
@@ -169,7 +184,7 @@ const Header = () => {
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback style={{ backgroundColor: customButtonBg, color: customButtonTextColor }}>
-                      {getUserInitials(user.user_metadata?.name || user.email || 'U')}
+                      {getUserInitials(getUserDisplayName())}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -178,7 +193,7 @@ const Header = () => {
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1 leading-none">
                     <p className="font-medium text-sm">
-                      {user.user_metadata?.name || user.email}
+                      {getUserDisplayName()}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {user.email}

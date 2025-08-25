@@ -6,11 +6,26 @@ import { Badge } from '@/components/ui/badge';
 import { usePendingNotifications } from '@/hooks/usePendingNotifications';
 import PendingNotificationModal from './PendingNotificationModal';
 
-const NotificationBadge = () => {
+interface NotificationBadgeProps {
+  count?: number;
+  onClick?: () => void;
+}
+
+const NotificationBadge = ({ count, onClick }: NotificationBadgeProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { pendingBids, pendingRegistrations, totalPending, loading, hasNewNotifications, refetch } = usePendingNotifications();
 
-  if (loading || totalPending === 0) {
+  const displayCount = count !== undefined ? count : totalPending;
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      setIsModalOpen(true);
+    }
+  };
+
+  if (loading || displayCount === 0) {
     return null;
   }
 
@@ -19,27 +34,29 @@ const NotificationBadge = () => {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setIsModalOpen(true)}
+        onClick={handleClick}
         className="relative"
       >
         <Bell className={`h-4 w-4 ${hasNewNotifications ? 'animate-bounce' : ''}`} />
-        {totalPending > 0 && (
+        {displayCount > 0 && (
           <Badge 
             variant="destructive" 
             className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
           >
-            {totalPending > 99 ? '99+' : totalPending}
+            {displayCount > 99 ? '99+' : displayCount}
           </Badge>
         )}
       </Button>
 
-      <PendingNotificationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        pendingBids={pendingBids}
-        pendingRegistrations={pendingRegistrations}
-        onRefetch={refetch}
-      />
+      {!onClick && (
+        <PendingNotificationModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          pendingBids={pendingBids}
+          pendingRegistrations={pendingRegistrations}
+          onRefetch={refetch}
+        />
+      )}
     </>
   );
 };

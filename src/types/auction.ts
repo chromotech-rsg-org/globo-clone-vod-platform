@@ -6,6 +6,9 @@ export interface Auction {
   initial_bid_value: number;
   current_bid_value: number;
   bid_increment: number;
+  increment_mode: 'fixed' | 'custom';
+  min_custom_bid?: number;
+  max_custom_bid?: number;
   start_date?: string;
   end_date?: string;
   registration_wait_value: number;

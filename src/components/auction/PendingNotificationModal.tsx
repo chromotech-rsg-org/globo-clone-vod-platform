@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Clock, Users } from 'lucide-react';
+import { Eye, Clock, Users, Bell } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,7 +23,7 @@ interface PendingNotificationModalProps {
   onClose: () => void;
   pendingBids: PendingItem[];
   pendingRegistrations: PendingItem[];
-  onRefetch: () => void;
+  onRefetch?: () => void;
 }
 
 const PendingNotificationModal = ({
@@ -44,10 +44,13 @@ const PendingNotificationModal = ({
   const handleIndividualModalClose = () => {
     setIsIndividualModalOpen(false);
     setSelectedItem(null);
+    onClose(); // Return to main notifications modal
   };
 
   const handleItemSaved = () => {
-    onRefetch();
+    if (onRefetch) {
+      onRefetch();
+    }
     handleIndividualModalClose();
   };
 
