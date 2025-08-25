@@ -10,48 +10,90 @@ export const useSubscriptionCheck = () => {
 
   const checkSubscription = async () => {
     if (!user?.id) {
+      console.log('🔒 useSubscriptionCheck: No user found');
       setHasActiveSubscription(false);
       setLoading(false);
       return;
     }
 
+    console.log('🔍 useSubscriptionCheck: Checking subscription for user:', user.email, 'Role:', user.role);
+
+    // Admin and developer bypass - they always have access
+    if (user.role === 'admin' || user.role === 'desenvolvedor') {
+      console.log('✅ useSubscriptionCheck: Admin/Developer bypass - access granted');
+      setHasActiveSubscription(true);
+      setLoading(false);
+      return;
+    }
+
     try {
-      // First try using the RPC function
+      // First try using the RPC function with better error handling
+      console.log('🔄 useSubscriptionCheck: Trying RPC function...');
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('user_has_active_subscription', { user_uuid: user.id });
 
-      if (!rpcError) {
+      if (!rpcError && rpcData !== null) {
+        console.log('✅ useSubscriptionCheck: RPC success, result:', rpcData);
         setHasActiveSubscription(rpcData);
         setLoading(false);
         return;
       }
 
-      // Fallback: direct query to subscriptions table
-      console.log('RPC failed, using fallback query:', rpcError);
+      // Enhanced fallback: direct query to subscriptions table
+      console.log('⚠️ useSubscriptionCheck: RPC failed, using fallback query. Error:', rpcError?.message);
       const { data: subscriptionData, error: queryError } = await supabase
         .from('subscriptions')
-        .select('id, status, end_date')
+        .select('id, status, end_date, start_date')
         .eq('user_id', user.id)
-        .eq('status', 'active')
-        .single();
+        .in('status', ['active', 'trial']) // Include trial status
+        .order('created_at', { ascending: false });
 
       if (queryError) {
-        if (queryError.code === 'PGRST116') {
-          // No rows returned - no active subscription
+        console.error('❌ useSubscriptionCheck: Query error:', queryError);
+        setHasActiveSubscription(false);
+      } else {
+        console.log('📋 useSubscriptionCheck: Found subscriptions:', subscriptionData?.length || 0);
+        
+        if (!subscriptionData || subscriptionData.length === 0) {
+          console.log('❌ useSubscriptionCheck: No active subscriptions found');
           setHasActiveSubscription(false);
         } else {
-          throw queryError;
+          // Check if any subscription is valid
+          const now = new Date();
+          const validSubscription = subscriptionData.find(sub => {
+            // Check if subscription is active/trial
+            if (!['active', 'trial'].includes(sub.status)) {
+              console.log(`❌ Subscription ${sub.id}: Invalid status ${sub.status}`);
+              return false;
+            }
+            
+            // Check end date (null means no expiration)
+            if (sub.end_date) {
+              const endDate = new Date(sub.end_date);
+              const isExpired = endDate <= now;
+              console.log(`📅 Subscription ${sub.id}: End date ${sub.end_date}, expired: ${isExpired}`);
+              return !isExpired;
+            }
+            
+            console.log(`✅ Subscription ${sub.id}: Valid (no end date)`);
+            return true;
+          });
+
+          if (validSubscription) {
+            console.log('✅ useSubscriptionCheck: Valid subscription found:', validSubscription.id);
+            setHasActiveSubscription(true);
+          } else {
+            console.log('❌ useSubscriptionCheck: No valid subscriptions found');
+            setHasActiveSubscription(false);
+          }
         }
-      } else {
-        // Check if subscription is still valid
-        const isValid = !subscriptionData.end_date || new Date(subscriptionData.end_date) > new Date();
-        setHasActiveSubscription(isValid);
       }
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      console.error('💥 useSubscriptionCheck: Unexpected error:', error);
       setHasActiveSubscription(false);
     } finally {
       setLoading(false);
+      console.log('🏁 useSubscriptionCheck: Check completed');
     }
   };
 
@@ -60,6 +102,8 @@ export const useSubscriptionCheck = () => {
 
     // Set up real-time subscription for subscription changes
     if (user?.id) {
+      console.log('📡 useSubscriptionCheck: Setting up real-time subscription monitoring');
+      
       const channel = supabase
         .channel(`subscription-changes-${user.id}`)
         .on('postgres_changes', {
@@ -67,13 +111,19 @@ export const useSubscriptionCheck = () => {
           schema: 'public',
           table: 'subscriptions',
           filter: `user_id=eq.${user.id}`
-        }, () => {
-          console.log('Subscription changed, rechecking...');
-          checkSubscription();
+        }, (payload) => {
+          console.log('🔔 useSubscriptionCheck: Subscription change detected:', payload);
+          // Small delay to ensure database consistency
+          setTimeout(() => {
+            checkSubscription();
+          }, 500);
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 useSubscriptionCheck: Realtime subscription status:', status);
+        });
 
       return () => {
+        console.log('🔌 useSubscriptionCheck: Cleaning up subscription monitoring');
         supabase.removeChannel(channel);
       };
     }

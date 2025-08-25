@@ -203,12 +203,13 @@ export const usePendingNotifications = () => {
         }
         clearNotificationCache();
         
-        // Mark as new notification and trigger immediate refresh for status changes
+        // For approvals/rejections, trigger immediate refresh with visual notification
         if (payload.eventType === 'UPDATE' && 
             (payload.new?.status === 'approved' || payload.new?.status === 'rejected')) {
+          console.log('🎯 usePendingNotifications: Status change detected, refreshing immediately');
           setHasNewNotifications(true);
           setTimeout(() => setHasNewNotifications(false), 5000);
-          // Immediate refresh for approvals/rejections
+          // Immediate refresh for status changes - this ensures real-time updates
           fetchPendingItems();
         } else if (payload.eventType === 'INSERT') {
           setHasNewNotifications(true);
@@ -217,6 +218,11 @@ export const usePendingNotifications = () => {
           setTimeout(() => {
             fetchPendingItems();
           }, 500);
+        } else {
+          // For other events, still refresh but without immediate notification
+          setTimeout(() => {
+            fetchPendingItems();
+          }, 1000);
         }
       }
     };
@@ -236,7 +242,9 @@ export const usePendingNotifications = () => {
           schema: 'public',
           table: 'auction_registrations'
         }, handlePendingChange)
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 usePendingNotifications: Realtime subscription status:', status);
+        });
     } catch (error) {
       console.error('❌ Failed to setup notification subscription:', error);
       

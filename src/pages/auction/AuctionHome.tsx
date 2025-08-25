@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuctions } from '@/hooks/useAuctions';
 import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
+import { useAuth } from '@/contexts/AuthContext';
 import AuctionCard from '@/components/auction/AuctionCard';
 import SubscriptionRequired from '@/components/SubscriptionRequired';
 import Header from '@/components/Header';
@@ -12,13 +14,27 @@ import { Gavel, Trophy } from 'lucide-react';
 const AuctionHome = () => {
   const { auctions, loading } = useAuctions();
   const { hasActiveSubscription, loading: subscriptionLoading } = useSubscriptionCheck();
+  const { user } = useAuth();
 
   const liveAuctions = auctions.filter(auction => auction.is_live);
   const recordedAuctions = auctions.filter(auction => !auction.is_live);
 
-  // Check subscription first
+  console.log('🏠 AuctionHome: Current state:', {
+    user: user ? { email: user.email, role: user.role } : null,
+    hasActiveSubscription,
+    subscriptionLoading,
+    auctionsCount: auctions.length
+  });
+
+  // Check subscription, but allow admin/developer bypass
   if (!subscriptionLoading && hasActiveSubscription === false) {
-    return <SubscriptionRequired />;
+    // Double-check: admins and developers should always have access
+    if (user?.role === 'admin' || user?.role === 'desenvolvedor') {
+      console.log('🔓 AuctionHome: Admin/Developer override - allowing access');
+    } else {
+      console.log('🔒 AuctionHome: No subscription, showing SubscriptionRequired');
+      return <SubscriptionRequired />;
+    }
   }
 
   if (loading || subscriptionLoading) {
