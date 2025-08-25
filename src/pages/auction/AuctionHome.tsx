@@ -1,14 +1,24 @@
 
 import React, { useState, useEffect } from 'react';
-import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
+// import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
 import { useAuth } from '@/contexts/AuthContext';
 import AuctionDashboard from './AuctionDashboard';
 import SubscriptionRequiredModal from '@/components/SubscriptionRequiredModal';
+import { useSimpleSubscriptionCheck } from '@/hooks/useSimpleSubscriptionCheck';
 
 const AuctionHome = () => {
-  const { user } = useAuth();
-  const { hasActiveSubscription, loading } = useSubscriptionCheck();
+  const { user, isLoading: authLoading } = useAuth();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
+
+  // Checa assinatura apenas para não-admin/dev.
+  const { hasActiveSubscription, loading: subLoading } = useSimpleSubscriptionCheck(
+    user?.id,
+    !isAdmin
+  );
+
+  const loading = authLoading || (!isAdmin && subLoading);
 
   console.log('🎯 AuctionHome: Renderizando com dados:', {
     userEmail: user?.email,
@@ -17,18 +27,15 @@ const AuctionHome = () => {
     loading
   });
 
-  // Move useEffect to top level - before any conditional returns
+  // Mantém hooks sempre no topo
   useEffect(() => {
-    // Only show modal if user doesn't have access and isn't admin/developer
-    const shouldShowModal = !loading && 
-      user?.role !== 'admin' && 
-      user?.role !== 'desenvolvedor' && 
-      !hasActiveSubscription;
-    
+    const shouldShowModal = !loading && !isAdmin && !hasActiveSubscription;
     if (shouldShowModal) {
       setShowSubscriptionModal(true);
+    } else {
+      setShowSubscriptionModal(false);
     }
-  }, [loading, user?.role, hasActiveSubscription]);
+  }, [loading, isAdmin, hasActiveSubscription]);
 
   if (loading) {
     return (
@@ -42,7 +49,7 @@ const AuctionHome = () => {
   }
 
   // Admin e developer sempre têm acesso
-  if (user?.role === 'admin' || user?.role === 'desenvolvedor') {
+  if (isAdmin) {
     console.log('✅ AuctionHome: Acesso administrativo concedido');
     return <AuctionDashboard />;
   }
