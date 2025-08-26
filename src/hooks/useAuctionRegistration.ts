@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuctionRegistration } from '@/types/auction';
@@ -105,7 +104,7 @@ export const useAuctionRegistration = (auctionId: string) => {
             .eq('id', registration.id);
 
           if (error) throw error;
-        } else if (registration.status === 'canceled') {
+        } else if ((registration.status as string) === 'canceled') {
           // Permitir nova solicitação se foi cancelada
           const { error } = await supabase
             .from('auction_registrations')
@@ -176,7 +175,7 @@ export const useAuctionRegistration = (auctionId: string) => {
       const { error } = await supabase
         .from('auction_registrations')
         .update({
-          status: 'canceled',
+          status: 'canceled' as any,
           updated_at: new Date().toISOString()
         })
         .eq('id', registration.id)
