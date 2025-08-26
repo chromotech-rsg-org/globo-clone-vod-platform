@@ -6,6 +6,7 @@ import LoginForm from './components/auth/LoginForm';
 import Dashboard from './pages/Dashboard';
 import Subscription from './pages/Subscription';
 import Home from './pages/Home';
+import Plans from './pages/Plans';
 import { Toaster } from '@/components/ui/toaster';
 import { useCustomizationTheme } from '@/hooks/useCustomizationTheme';
 
@@ -44,7 +45,10 @@ const AppContent = () => {
               user ? (
                 <Navigate to="/dashboard" replace />
               ) : (
-                <LoginForm onSubmit={handleLoginSubmit} isSubmitting={false} />
+                <LoginForm 
+                  onSubmit={handleLoginSubmit} 
+                  isSubmitting={false} 
+                />
               )
             } 
           />
@@ -59,6 +63,10 @@ const AppContent = () => {
             element={
               user ? <Subscription /> : <Navigate to="/login" replace />
             } 
+          />
+          <Route 
+            path="/plans" 
+            element={<Plans />} 
           />
           <Route 
             path="/" 
