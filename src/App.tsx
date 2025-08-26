@@ -127,7 +127,7 @@ function AppContent() {
         </ProtectedRoute>
       } />
       
-      {/* Auction Routes - Corrigido */}
+      {/* Auction Routes - Corrigido para /auctions */}
       <Route path="/auctions" element={
         <ProtectedRoute>
           <AuctionHome />

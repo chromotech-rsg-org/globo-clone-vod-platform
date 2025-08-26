@@ -1,3 +1,4 @@
+
 export interface Auction {
   id: string;
   name: string;
@@ -35,7 +36,7 @@ export interface AuctionRegistration {
   id: string;
   user_id: string;
   auction_id: string;
-  status: 'approved' | 'pending' | 'rejected';
+  status: 'approved' | 'pending' | 'rejected' | 'canceled';
   internal_notes?: string;
   client_notes?: string;
   approved_by?: string;
