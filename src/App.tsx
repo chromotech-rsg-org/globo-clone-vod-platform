@@ -126,8 +126,6 @@ function AppContent() {
           </AdminLayout>
         </ProtectedRoute>
       } />
-      
-      {/* Auction Routes - Corrigido para /auctions */}
       <Route path="/auctions" element={
         <ProtectedRoute>
           <AuctionHome />
@@ -145,13 +143,6 @@ function AppContent() {
       } />
       
       {/* Admin Routes */}
-      <Route path="/admin" element={
-        <ProtectedRoute requiredRole="admin">
-          <AdminLayout>
-            <Dashboard />
-          </AdminLayout>
-        </ProtectedRoute>
-      } />
       <Route path="/admin/usuarios" element={
         <ProtectedRoute requiredRole="admin">
           <AdminLayout>
