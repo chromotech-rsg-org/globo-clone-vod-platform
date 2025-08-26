@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -8,6 +9,7 @@ interface AuctionStats {
   winnerBidValue?: number;
   initialBidValue: number;
   currentBidValue: number;
+  highestApprovedBid?: number;
 }
 
 export const useAuctionStats = (auctionId: string) => {
@@ -34,21 +36,35 @@ export const useAuctionStats = (auctionId: string) => {
       const { data: bids, error: bidsError } = await supabase
         .from('bids')
         .select('bid_value, is_winner, status')
-        .eq('auction_id', auctionId);
+        .eq('auction_id', auctionId)
+        .order('bid_value', { ascending: false });
 
       if (bidsError) throw bidsError;
 
       const totalBids = bids?.length || 0;
-      const winnerBid = bids?.find(bid => bid.is_winner);
+      const winnerBid = bids?.find(bid => bid.is_winner && bid.status === 'approved');
       const hasWinner = !!winnerBid;
       const winnerBidValue = winnerBid?.bid_value;
+
+      // Encontrar o maior lance aprovado (mesmo que não seja vencedor ainda)
+      const approvedBids = bids?.filter(bid => bid.status === 'approved') || [];
+      const highestApprovedBid = approvedBids.length > 0 
+        ? Math.max(...approvedBids.map(bid => bid.bid_value))
+        : undefined;
+
+      // O valor atual deve ser o maior entre current_bid_value do leilão e o maior lance aprovado
+      const effectiveCurrentValue = Math.max(
+        auction.current_bid_value,
+        highestApprovedBid || 0
+      );
 
       setStats({
         totalBids,
         hasWinner,
-        winnerBidValue,
+        winnerBidValue: hasWinner ? winnerBidValue : effectiveCurrentValue,
         initialBidValue: auction.initial_bid_value,
-        currentBidValue: auction.current_bid_value
+        currentBidValue: effectiveCurrentValue,
+        highestApprovedBid
       });
     } catch (error) {
       console.error('Error fetching auction stats:', error);
@@ -64,6 +80,31 @@ export const useAuctionStats = (auctionId: string) => {
 
   useEffect(() => {
     fetchStats();
+
+    // Real-time subscription para atualizações de lances
+    const channel = supabase
+      .channel(`auction-stats-${auctionId}-${Math.random().toString(36).substring(7)}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'bids',
+        filter: `auction_id=eq.${auctionId}`
+      }, () => {
+        fetchStats();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'auctions',
+        filter: `id=eq.${auctionId}`
+      }, () => {
+        fetchStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [auctionId]);
 
   return { stats, loading, refetch: fetchStats };

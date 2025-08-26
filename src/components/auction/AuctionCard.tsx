@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Auction } from '@/types/auction';
@@ -13,34 +14,34 @@ interface AuctionCardProps {
 const AuctionCard = ({ auction }: AuctionCardProps) => {
   const { stats, loading } = useAuctionStats(auction.id);
 
+  // Calcular valores finais baseados no leilão real
+  const finalCurrentValue = stats?.winnerBidValue || auction.current_bid_value;
+  const hasWinner = stats?.hasWinner || false;
+
   return (
     <Link to={`/auctions/${auction.id}`}>
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+      <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
+        <CardContent className="p-6 flex-1 flex flex-col">
+          {/* Header com badges - altura fixa */}
+          <div className="flex items-start justify-between mb-4 min-h-[60px]">
+            <div className="flex-1 pr-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 min-h-[56px]">
                 {auction.name}
               </h3>
-              {auction.description && (
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                  {auction.description}
-                </p>
-              )}
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-2 flex-shrink-0">
               <Badge 
                 variant={auction.is_live ? "default" : "secondary"}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 whitespace-nowrap"
               >
                 {auction.is_live ? <Play size={12} /> : <Square size={12} />}
                 {auction.is_live ? 'AO VIVO' : 'GRAVADO'}
               </Badge>
-              <Badge variant="outline">
+              <Badge variant="outline" className="whitespace-nowrap">
                 {auction.auction_type === 'rural' ? 'Rural' : 'Judicial'}
               </Badge>
-              {stats?.hasWinner && (
-                <Badge className="bg-green-500 text-white flex items-center gap-1">
+              {hasWinner && (
+                <Badge className="bg-green-500 text-white flex items-center gap-1 whitespace-nowrap">
                   <Trophy size={12} />
                   Finalizado
                 </Badge>
@@ -48,9 +49,19 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          {/* Descrição - altura controlada */}
+          {auction.description && (
+            <div className="mb-4 min-h-[40px]">
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {auction.description}
+              </p>
+            </div>
+          )}
+
+          {/* Valores - altura fixa */}
+          <div className="grid grid-cols-3 gap-3 mb-4 min-h-[60px]">
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1 mb-1">
                 <Target size={10} />
                 Lance Inicial
               </p>
@@ -59,18 +70,15 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                {stats?.hasWinner ? 'Arrematado' : 'Lance Atual'}
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                {hasWinner ? 'Arrematado' : 'Lance Atual'}
               </p>
-              <p className={`text-lg font-bold ${stats?.hasWinner ? 'text-green-600' : 'text-primary'}`}>
-                {stats?.hasWinner && stats?.winnerBidValue 
-                  ? formatCurrency(stats.winnerBidValue)
-                  : formatCurrency(auction.current_bid_value)
-                }
+              <p className={`text-lg font-bold ${hasWinner ? 'text-green-600' : 'text-primary'}`}>
+                {formatCurrency(finalCurrentValue)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                 Total de Lances
               </p>
               <p className="text-sm font-medium">
@@ -79,8 +87,9 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
             </div>
           </div>
 
+          {/* Data e progresso - margem automática para empurrar para baixo */}
           {(auction.start_date || auction.end_date) && (
-            <div className="mt-4 pt-4 border-t border-border">
+            <div className="mt-auto pt-4 border-t border-border">
               <div className="text-xs text-muted-foreground space-y-2">
                 {auction.start_date && auction.end_date ? (
                   <>

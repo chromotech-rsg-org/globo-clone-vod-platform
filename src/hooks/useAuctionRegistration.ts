@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuctionRegistration } from '@/types/auction';
@@ -118,6 +119,17 @@ export const useAuctionRegistration = (auctionId: string) => {
             variant: "destructive"
           });
           return;
+        } else if (registration.status === 'canceled') {
+          // Reativar habilitação cancelada
+          const { error } = await supabase
+            .from('auction_registrations')
+            .update({
+              status: 'pending',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', registration.id);
+
+          if (error) throw error;
         }
       } else {
         const { error } = await supabase
@@ -136,7 +148,7 @@ export const useAuctionRegistration = (auctionId: string) => {
         description: "Sua solicitação de habilitação foi enviada para análise",
       });
 
-      // Imediata atualização após envio
+      // Atualização imediata após envio
       setTimeout(() => {
         fetchRegistration();
       }, 500);
@@ -154,6 +166,45 @@ export const useAuctionRegistration = (auctionId: string) => {
         description: errorMessage,
         variant: "destructive"
       });
+    }
+  };
+
+  const reactivateRegistration = async () => {
+    if (!user?.id || !registration) return false;
+
+    try {
+      console.log('🔄 useAuctionRegistration: Reativando habilitação cancelada');
+
+      const { error } = await supabase
+        .from('auction_registrations')
+        .update({
+          status: 'pending',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', registration.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Habilitação reativada",
+        description: "Sua solicitação de habilitação foi reativada e está em análise",
+      });
+
+      // Atualização imediata
+      setTimeout(() => {
+        fetchRegistration();
+      }, 500);
+
+      return true;
+    } catch (error: any) {
+      console.error('❌ useAuctionRegistration: Erro ao reativar habilitação:', error);
+      
+      toast({
+        title: "Erro",
+        description: "Não foi possível reativar a habilitação",
+        variant: "destructive"
+      });
+      return false;
     }
   };
 
@@ -200,16 +251,20 @@ export const useAuctionRegistration = (auctionId: string) => {
               description: payload.new.client_notes || "Sua habilitação foi rejeitada.",
               variant: "destructive"
             });
+          } else if (newStatus === 'canceled') {
+            toast({
+              title: "Habilitação Cancelada",
+              description: "Sua habilitação foi cancelada.",
+              variant: "destructive"
+            });
           }
           
           // Atualização imediata para mudanças de status
-          fetchRegistration();
+          setRegistration(payload.new);
         }
       } else if (payload.eventType === 'INSERT' && payload.new?.user_id === user.id) {
         console.log('📝 useAuctionRegistration: Nova habilitação criada');
-        setTimeout(() => {
-          fetchRegistration();
-        }, 300);
+        setRegistration(payload.new);
       } else {
         // Para outros eventos, atualizar com delay
         setTimeout(() => {
@@ -261,6 +316,7 @@ export const useAuctionRegistration = (auctionId: string) => {
     registration, 
     loading, 
     requestRegistration, 
+    reactivateRegistration,
     refetch: fetchRegistration 
   };
 };
