@@ -1,44 +1,69 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginForm from './components/auth/LoginForm';
 import Dashboard from './pages/Dashboard';
 import Subscription from './pages/Subscription';
-import Header from './components/Header';
+import Home from './pages/Home';
 import { Toaster } from '@/components/ui/toaster';
 import { useCustomizationTheme } from '@/hooks/useCustomizationTheme';
 
 const AppContent = () => {
   const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   
   // Apply customization theme
   useCustomizationTheme();
 
-  // Redirect to login if not authenticated
+  // Show loading spinner while checking authentication
   if (isLoading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Carregando...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-xl text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!user && location.pathname !== '/login') {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user && location.pathname === '/login') {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // Handle login form submission
+  const handleLoginSubmit = async (email: string, password: string) => {
+    // This will be handled by the LoginForm component internally
+    // through the useAuth context
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <main className="flex-1">
         <Routes>
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/subscription" element={<Subscription />} />
-          <Route path="/" element={<Dashboard />} />
+          <Route 
+            path="/login" 
+            element={
+              user ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <LoginForm onSubmit={handleLoginSubmit} isSubmitting={false} />
+              )
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              user ? <Dashboard /> : <Navigate to="/login" replace />
+            } 
+          />
+          <Route 
+            path="/subscription" 
+            element={
+              user ? <Subscription /> : <Navigate to="/login" replace />
+            } 
+          />
+          <Route 
+            path="/" 
+            element={<Home />} 
+          />
         </Routes>
       </main>
       <Toaster />

@@ -3,44 +3,39 @@ import { useEffect } from 'react';
 import { useCustomizations } from '@/hooks/useCustomizations';
 
 export const useCustomizationTheme = () => {
-  const { customizations } = useCustomizations();
+  const { customizations } = useCustomizations('global');
 
   useEffect(() => {
-    if (!customizations) return;
+    if (!customizations || Object.keys(customizations).length === 0) return;
 
     const root = document.documentElement;
 
-    // Apply background colors
-    customizations.forEach(custom => {
-      if (custom.element_type === 'color' && custom.element_value) {
-        switch (custom.element_key) {
-          case 'page_background':
-            root.style.setProperty('--page-bg', custom.element_value);
-            document.body.style.backgroundColor = custom.element_value;
-            break;
-          case 'card_background':
-            root.style.setProperty('--card-bg', custom.element_value);
-            break;
-          case 'table_background':
-            root.style.setProperty('--table-bg', custom.element_value);
-            break;
-          case 'menu_background':
-            root.style.setProperty('--menu-bg', custom.element_value);
-            break;
-          case 'primary_color':
-            root.style.setProperty('--primary', custom.element_value);
-            break;
-          case 'secondary_color':
-            root.style.setProperty('--secondary', custom.element_value);
-            break;
+    // Apply background colors by checking the customizations object
+    Object.entries(customizations).forEach(([key, value]) => {
+      if (value && typeof value === 'string') {
+        // Parse the key to determine the element type
+        if (key.includes('page_background')) {
+          root.style.setProperty('--page-bg', value);
+          document.body.style.backgroundColor = value;
+        } else if (key.includes('card_background')) {
+          root.style.setProperty('--card-bg', value);
+        } else if (key.includes('table_background')) {
+          root.style.setProperty('--table-bg', value);
+        } else if (key.includes('menu_background')) {
+          root.style.setProperty('--menu-bg', value);
+        } else if (key.includes('primary_color')) {
+          root.style.setProperty('--primary', value);
+        } else if (key.includes('secondary_color')) {
+          root.style.setProperty('--secondary', value);
         }
       }
     });
 
     // Apply custom CSS if any
-    const customCss = customizations
-      .filter(c => c.element_type === 'css')
-      .map(c => c.element_value)
+    const customCssKeys = Object.keys(customizations).filter(key => key.includes('css'));
+    const customCss = customCssKeys
+      .map(key => customizations[key])
+      .filter(value => value && typeof value === 'string')
       .join('\n');
 
     if (customCss) {
