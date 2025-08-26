@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,14 +12,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Bid } from '@/types/auction';
 import FilterControls from '@/components/admin/FilterControls';
-import { Check, X, Eye, Clock, Trophy, Sparkles, DollarSign } from 'lucide-react';
-import { formatDateTime } from '@/utils/formatters';
-import { getUniqueChannelId, clearNotificationCache } from '@/utils/notificationCache';
-import { isProductionCustomDomain } from '@/utils/domainHealth';
-import { clearVercelCache } from '@/utils/vercelOptimizations';
+import { Check, X, Eye, Clock, Trophy, AlertCircle, Sparkles } from 'lucide-react';
+import { formatDateTime, formatCurrency } from '@/utils/formatters';
 
 interface BidWithDetails extends Bid {
   auction_name?: string;
+  auction_item_name?: string;
   user_name?: string;
   user_email?: string;
   auction_is_live?: boolean;
@@ -29,7 +26,6 @@ interface BidWithDetails extends Bid {
 
 const Bids = () => {
   const [bids, setBids] = useState<BidWithDetails[]>([]);
-  const [auctions, setAuctions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBid, setSelectedBid] = useState<BidWithDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -37,6 +33,8 @@ const Bids = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [auctionFilter, setAuctionFilter] = useState<string>('all');
   const [liveFilter, setLiveFilter] = useState<string>('all');
+  const [winnerFilter, setWinnerFilter] = useState<string>('all');
+  const [auctions, setAuctions] = useState<any[]>([]);
   const [internalNotes, setInternalNotes] = useState('');
   const [clientNotes, setClientNotes] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -48,16 +46,12 @@ const Bids = () => {
     try {
       setLoading(true);
       
-      if (isProductionCustomDomain()) {
-        clearVercelCache();
-        clearNotificationCache();
-      }
-      
       const { data, error } = await supabase
         .from('bids')
         .select(`
           *,
           auctions!inner(name, is_live),
+          auction_items!inner(name),
           profiles!bids_user_id_fkey(name, email)
         `)
         .order('created_at', { ascending: false });
@@ -68,6 +62,7 @@ const Bids = () => {
         ...item,
         auction_name: item.auctions?.name,
         auction_is_live: item.auctions?.is_live,
+        auction_item_name: item.auction_items?.name,
         user_name: item.profiles?.name,
         user_email: item.profiles?.email,
         isNew: newBidIds.has(item.id)
@@ -75,6 +70,46 @@ const Bids = () => {
 
       setBids(formattedData);
       
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('bids-changes')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bids'
+        }, (payload) => {
+          console.log('🆕 Novo lance inserido:', payload);
+          setNewBidIds(prev => new Set([...prev, payload.new.id]));
+          fetchBids();
+          
+          // Remove highlight after 10 seconds
+          setTimeout(() => {
+            setNewBidIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(payload.new.id);
+              return newSet;
+            });
+          }, 10000);
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bids'
+        }, () => {
+          fetchBids();
+        })
+        .on('postgres_changes', {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'bids'
+        }, () => {
+          fetchBids();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     } catch (error) {
       console.error('Error fetching bids:', error);
       toast({
@@ -101,25 +136,24 @@ const Bids = () => {
     }
   };
 
-  const handleStatusUpdate = async (bidId: string, status: 'approved' | 'rejected', isWinner: boolean = false) => {
+  const handleStatusUpdate = async (bidId: string, status: 'approved' | 'rejected') => {
     try {
+      const updateData: any = {
+        status,
+        internal_notes: internalNotes,
+        client_notes: clientNotes
+      };
+
       const { error } = await supabase
         .from('bids')
-        .update({
-          status,
-          is_winner: isWinner,
-          internal_notes: internalNotes,
-          client_notes: clientNotes
-        })
+        .update(updateData)
         .eq('id', bidId);
 
       if (error) throw error;
 
-      const statusMessage = status === 'approved' ? 'aprovado' : 'rejeitado';
-
       toast({
         title: "Sucesso",
-        description: `Lance ${statusMessage} com sucesso`,
+        description: `Lance ${status === 'approved' ? 'aprovado' : 'rejeitado'} com sucesso`,
       });
 
       setDialogOpen(false);
@@ -137,6 +171,31 @@ const Bids = () => {
     }
   };
 
+  const handleWinnerToggle = async (bidId: string, isWinner: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ is_winner: isWinner })
+        .eq('id', bidId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Lance ${isWinner ? 'marcado como vencedor' : 'removido como vencedor'}`,
+      });
+
+      fetchBids();
+    } catch (error) {
+      console.error('Error updating winner status:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status de vencedor",
+        variant: "destructive"
+      });
+    }
+  };
+
   const openDialog = (bid: BidWithDetails) => {
     setSelectedBid(bid);
     setInternalNotes(bid.internal_notes || '');
@@ -146,18 +205,18 @@ const Bids = () => {
 
   const getStatusBadge = (status: string, isWinner: boolean) => {
     if (isWinner) {
-      return <Badge className="bg-yellow-500 text-white"><Trophy className="h-3 w-3 mr-1" />Vencedor</Badge>;
+      return <Badge className="bg-green-500 text-white"><Trophy className="h-3 w-3 mr-1" />Vencedor</Badge>;
     }
     
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-500 text-white"><Check className="h-3 w-3 mr-1" />Aprovado</Badge>;
+        return <Badge className="bg-blue-500 text-white"><Check className="h-3 w-3 mr-1" />Aprovado</Badge>;
       case 'rejected':
         return <Badge variant="destructive"><X className="h-3 w-3 mr-1" />Rejeitado</Badge>;
-      case 'superseded':
-        return <Badge variant="outline">Superado</Badge>;
       case 'pending':
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
+      case 'superseded':
+        return <Badge variant="outline"><AlertCircle className="h-3 w-3 mr-1" />Superado</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -168,93 +227,29 @@ const Bids = () => {
     setStatusFilter('all');
     setAuctionFilter('all');
     setLiveFilter('all');
+    setWinnerFilter('all');
     setDateFrom('');
     setDateTo('');
   };
 
   const filteredBids = bids.filter(bid => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       bid.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bid.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bid.auction_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bid.bid_value.toString().includes(searchTerm);
+      bid.auction_item_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || bid.status === statusFilter;
     const matchesAuction = auctionFilter === 'all' || bid.auction_id === auctionFilter;
     const matchesLive = liveFilter === 'all' || bid.auction_is_live?.toString() === liveFilter;
+    const matchesWinner = winnerFilter === 'all' || bid.is_winner.toString() === winnerFilter;
     
     const bidDate = new Date(bid.created_at).toISOString().split('T')[0];
     const matchesDateFrom = !dateFrom || bidDate >= dateFrom;
     const matchesDateTo = !dateTo || bidDate <= dateTo;
     
-    return matchesSearch && matchesStatus && matchesAuction && matchesLive && matchesDateFrom && matchesDateTo;
+    return matchesSearch && matchesStatus && matchesAuction && matchesLive && matchesWinner && matchesDateFrom && matchesDateTo;
   });
-
-  // Setup realtime subscription
-  useEffect(() => {
-    let subscription: any;
-    
-    const setupRealtimeSubscription = () => {
-      if (isProductionCustomDomain()) {
-        clearVercelCache();
-      }
-      clearNotificationCache();
-      
-      const channelName = getUniqueChannelId('admin-bids');
-      console.log('🔔 Admin Bids: Setting up realtime subscription with channel:', channelName);
-      
-      subscription = supabase
-        .channel(channelName)
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bids'
-        }, (payload) => {
-          console.log('🆕 Novo lance inserido:', payload);
-          setNewBidIds(prev => new Set([...prev, payload.new.id]));
-          fetchBids();
-          
-          setTimeout(() => {
-            setNewBidIds(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(payload.new.id);
-              return newSet;
-            });
-          }, 10000);
-        })
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'bids'
-        }, (payload) => {
-          console.log('✅ Lance atualizado:', payload);
-          if (isProductionCustomDomain()) {
-            clearVercelCache();
-          }
-          clearNotificationCache();
-          fetchBids();
-        })
-        .on('postgres_changes', {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'bids'
-        }, () => {
-          fetchBids();
-        })
-        .subscribe((status) => {
-          console.log('📡 Admin Bids: Subscription status:', status);
-        });
-    };
-
-    setupRealtimeSubscription();
-
-    return () => {
-      if (subscription) {
-        console.log('🔌 Admin Bids: Cleaning up subscription');
-        supabase.removeChannel(subscription);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     fetchBids();
@@ -267,6 +262,7 @@ const Bids = () => {
     }
     if (urlParams.get('bid')) {
       const bidId = urlParams.get('bid');
+      // Find and open the bid when loaded
       setTimeout(() => {
         const bid = bids.find(b => b.id === bidId);
         if (bid) {
@@ -301,7 +297,7 @@ const Bids = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Lances</h1>
-          <p className="text-muted-foreground">Gerencie os lances dos leilões</p>
+          <p className="text-muted-foreground">Gerencie todos os lances dos leilões</p>
         </div>
       </div>
 
@@ -356,6 +352,17 @@ const Bids = () => {
                   { value: 'false', label: 'Gravado' }
                 ],
                 onChange: setLiveFilter
+              },
+              {
+                key: 'winner',
+                label: 'Vencedor',
+                value: winnerFilter,
+                options: [
+                  { value: 'all', label: 'Todos' },
+                  { value: 'true', label: 'Vencedores' },
+                  { value: 'false', label: 'Não Vencedores' }
+                ],
+                onChange: setWinnerFilter
               }
             ]}
             onClearFilters={clearFilters}
@@ -373,7 +380,8 @@ const Bids = () => {
               <TableRow>
                 <TableHead>Usuário</TableHead>
                 <TableHead>Leilão</TableHead>
-                <TableHead>Valor</TableHead>
+                <TableHead>Item</TableHead>
+                <TableHead>Valor do Lance</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Ações</TableHead>
@@ -395,23 +403,33 @@ const Bids = () => {
                     </div>
                   </TableCell>
                   <TableCell>{bid.auction_name}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" />
-                      R$ {bid.bid_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </div>
+                  <TableCell>{bid.auction_item_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {formatCurrency(bid.bid_value)}
                   </TableCell>
                   <TableCell>{getStatusBadge(bid.status, bid.is_winner)}</TableCell>
                   <TableCell>{formatDateTime(bid.created_at)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openDialog(bid)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Gerenciar
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDialog(bid)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Gerenciar
+                      </Button>
+                      {bid.status === 'approved' && (
+                        <Button
+                          variant={bid.is_winner ? "destructive" : "default"}
+                          size="sm"
+                          onClick={() => handleWinnerToggle(bid.id, !bid.is_winner)}
+                        >
+                          <Trophy className="h-4 w-4 mr-2" />
+                          {bid.is_winner ? 'Remover' : 'Vencedor'}
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -425,7 +443,7 @@ const Bids = () => {
           <DialogHeader>
             <DialogTitle>Gerenciar Lance</DialogTitle>
             <DialogDescription>
-              Aprove, rejeite ou defina como vencedor
+              Aprove, rejeite ou marque como vencedor
             </DialogDescription>
           </DialogHeader>
           
@@ -445,14 +463,21 @@ const Bids = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Valor do Lance</Label>
-                  <p className="text-lg font-bold">R$ {selectedBid.bid_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <Label className="text-sm font-medium">Item</Label>
+                  <p className="text-sm">{selectedBid.auction_item_name}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Status Atual</Label>
-                  <div className="mt-1">
-                    {getStatusBadge(selectedBid.status, selectedBid.is_winner)}
-                  </div>
+                  <Label className="text-sm font-medium">Valor do Lance</Label>
+                  <p className="text-sm font-bold text-green-600">
+                    {formatCurrency(selectedBid.bid_value)}
+                  </p>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium">Status Atual</Label>
+                <div className="mt-1">
+                  {getStatusBadge(selectedBid.status, selectedBid.is_winner)}
                 </div>
               </div>
 
@@ -501,14 +526,16 @@ const Bids = () => {
                   <Check className="h-4 w-4 mr-2" />
                   Aprovar
                 </Button>
-                <Button
-                  onClick={() => handleStatusUpdate(selectedBid.id, 'approved', true)}
-                  className="bg-yellow-600 hover:bg-yellow-700"
-                >
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Vencedor
-                </Button>
               </>
+            )}
+            {selectedBid?.status === 'approved' && (
+              <Button
+                variant={selectedBid.is_winner ? "destructive" : "default"}
+                onClick={() => handleWinnerToggle(selectedBid.id, !selectedBid.is_winner)}
+              >
+                <Trophy className="h-4 w-4 mr-2" />
+                {selectedBid.is_winner ? 'Remover Vencedor' : 'Marcar como Vencedor'}
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>

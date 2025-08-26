@@ -134,11 +134,8 @@ export type Database = {
           description: string | null
           end_date: string | null
           id: string
-          increment_mode: string
           initial_bid_value: number
           is_live: boolean
-          max_custom_bid: number | null
-          min_custom_bid: number | null
           name: string
           registration_wait_unit: string | null
           registration_wait_value: number | null
@@ -155,11 +152,8 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
-          increment_mode?: string
           initial_bid_value?: number
           is_live?: boolean
-          max_custom_bid?: number | null
-          min_custom_bid?: number | null
           name: string
           registration_wait_unit?: string | null
           registration_wait_value?: number | null
@@ -176,11 +170,8 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
-          increment_mode?: string
           initial_bid_value?: number
           is_live?: boolean
-          max_custom_bid?: number | null
-          min_custom_bid?: number | null
           name?: string
           registration_wait_unit?: string | null
           registration_wait_value?: number | null
@@ -547,7 +538,6 @@ export type Database = {
           id: string
           name: string
           phone: string | null
-          plan_id: string | null
           role: string | null
           updated_at: string | null
         }
@@ -558,7 +548,6 @@ export type Database = {
           id: string
           name: string
           phone?: string | null
-          plan_id?: string | null
           role?: string | null
           updated_at?: string | null
         }
@@ -569,19 +558,10 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
-          plan_id?: string | null
           role?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_plan_id_fkey"
-            columns: ["plan_id"]
-            isOneToOne: false
-            referencedRelation: "plans"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       subscriptions: {
         Row: {
@@ -631,68 +611,11 @@ export type Database = {
           },
         ]
       }
-      terms_acceptances: {
-        Row: {
-          accepted_at: string
-          extra: Json | null
-          id: string
-          ip_address: string | null
-          locale: string | null
-          referrer: string | null
-          screen_resolution: string | null
-          subscription_id: string | null
-          terms_version: string | null
-          timezone: string | null
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          accepted_at?: string
-          extra?: Json | null
-          id?: string
-          ip_address?: string | null
-          locale?: string | null
-          referrer?: string | null
-          screen_resolution?: string | null
-          subscription_id?: string | null
-          terms_version?: string | null
-          timezone?: string | null
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          accepted_at?: string
-          extra?: Json | null
-          id?: string
-          ip_address?: string | null
-          locale?: string | null
-          referrer?: string | null
-          screen_resolution?: string | null
-          subscription_id?: string | null
-          terms_version?: string | null
-          timezone?: string | null
-          user_agent?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "terms_acceptances_subscription_id_fkey"
-            columns: ["subscription_id"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      cancel_user_plan: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
       check_role_change_rate_limit: {
         Args: { user_id: string }
         Returns: boolean
@@ -724,14 +647,6 @@ export type Database = {
       health_check: {
         Args: Record<PropertyKey, never>
         Returns: Json
-      }
-      reopen_registration: {
-        Args: { p_auction: string; p_user: string }
-        Returns: undefined
-      }
-      set_bid_winner: {
-        Args: { p_bid_id: string }
-        Returns: undefined
       }
       user_has_active_subscription: {
         Args: { user_uuid: string }

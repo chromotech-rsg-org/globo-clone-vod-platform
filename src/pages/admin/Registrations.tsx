@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,9 +15,6 @@ import { AuctionRegistration } from '@/types/auction';
 import FilterControls from '@/components/admin/FilterControls';
 import { Check, X, Eye, Clock, AlertCircle, Sparkles, Ban } from 'lucide-react';
 import { formatDateTime } from '@/utils/formatters';
-import { getUniqueChannelId, clearNotificationCache } from '@/utils/notificationCache';
-import { isProductionCustomDomain } from '@/utils/domainHealth';
-import { clearVercelCache } from '@/utils/vercelOptimizations';
 
 interface RegistrationWithDetails extends AuctionRegistration {
   auction_name?: string;
@@ -48,11 +46,6 @@ const Registrations = () => {
     try {
       setLoading(true);
       
-      if (isProductionCustomDomain()) {
-        clearVercelCache();
-        clearNotificationCache();
-      }
-      
       const { data, error } = await supabase
         .from('auction_registrations')
         .select(`
@@ -75,6 +68,46 @@ const Registrations = () => {
 
       setRegistrations(formattedData);
       
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('registrations-changes')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'auction_registrations'
+        }, (payload) => {
+          console.log('🆕 Nova habilitação inserida:', payload);
+          setNewRegistrationIds(prev => new Set([...prev, payload.new.id]));
+          fetchRegistrations();
+          
+          // Remove highlight after 10 seconds
+          setTimeout(() => {
+            setNewRegistrationIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(payload.new.id);
+              return newSet;
+            });
+          }, 10000);
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'auction_registrations'
+        }, () => {
+          fetchRegistrations();
+        })
+        .on('postgres_changes', {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'auction_registrations'
+        }, () => {
+          fetchRegistrations();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     } catch (error) {
       console.error('Error fetching registrations:', error);
       toast({
@@ -194,72 +227,6 @@ const Registrations = () => {
     
     return matchesSearch && matchesStatus && matchesAuction && matchesLive && matchesDateFrom && matchesDateTo;
   });
-
-  // Setup realtime subscription
-  useEffect(() => {
-    let subscription: any;
-    
-    const setupRealtimeSubscription = () => {
-      if (isProductionCustomDomain()) {
-        clearVercelCache();
-      }
-      clearNotificationCache();
-      
-      const channelName = getUniqueChannelId('admin-registrations');
-      console.log('🔔 Admin Registrations: Setting up realtime subscription with channel:', channelName);
-      
-      subscription = supabase
-        .channel(channelName)
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'auction_registrations'
-        }, (payload) => {
-          console.log('🆕 Nova habilitação inserida:', payload);
-          setNewRegistrationIds(prev => new Set([...prev, payload.new.id]));
-          fetchRegistrations();
-          
-          setTimeout(() => {
-            setNewRegistrationIds(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(payload.new.id);
-              return newSet;
-            });
-          }, 10000);
-        })
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'auction_registrations'
-        }, (payload) => {
-          console.log('✅ Habilitação atualizada:', payload);
-          if (isProductionCustomDomain()) {
-            clearVercelCache();
-          }
-          clearNotificationCache();
-          fetchRegistrations();
-        })
-        .on('postgres_changes', {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'auction_registrations'
-        }, () => {
-          fetchRegistrations();
-        })
-        .subscribe((status) => {
-          console.log('📡 Admin Registrations: Subscription status:', status);
-        });
-    };
-
-    setupRealtimeSubscription();
-
-    return () => {
-      if (subscription) {
-        console.log('🔌 Admin Registrations: Cleaning up subscription');
-        supabase.removeChannel(subscription);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     fetchRegistrations();
