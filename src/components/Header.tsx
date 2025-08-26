@@ -1,256 +1,106 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
-import { useCustomizations } from '@/hooks/useCustomizations';
+import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { LogOut, User, Settings, Home, Tv, Gavel } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import GlobalNotificationBell from '@/components/notifications/GlobalNotificationBell';
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { getCustomization, loading } = useCustomizations('home');
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  // Don't show default values while loading
-  if (loading) {
-    return (
-      <header className="backdrop-blur-sm w-full top-0 z-50 border-b border-gray-800 relative bg-black/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="h-8 w-8 bg-gray-700 rounded animate-pulse"></div>
-            <div className="hidden md:flex space-x-8">
-              <div className="h-4 w-12 bg-gray-700 rounded animate-pulse"></div>
-              <div className="h-4 w-16 bg-gray-700 rounded animate-pulse"></div>
-              <div className="h-4 w-12 bg-gray-700 rounded animate-pulse"></div>
-              <div className="h-4 w-16 bg-gray-700 rounded animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  const logoImage = getCustomization('header', 'header_logo_image', '');
-  const siteName = getCustomization('global', 'global_site_name', 'Globoplay');
-  const headerBgColor = getCustomization('header', 'header_background_color', 'transparent');
-  const headerTextColor = getCustomization('header', 'header_text_color', '#ffffff');
-  const headerHoverColor = getCustomization('header', 'header_hover_color', '#ef4444');
-  
-  // Menu titles
-  const menuHome = getCustomization('header', 'header_menu_home', 'Início');
-  const menuContent = getCustomization('header', 'header_menu_content', 'Conteúdo');
-  const menuPlans = getCustomization('header', 'header_menu_plans', 'Planos');
-  const menuLogin = getCustomization('header', 'header_menu_login', 'Entrar');
-
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-    setIsMenuOpen(false);
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
   };
 
-  // Custom button configurations
-  const customButtonText = getCustomization('header', 'custom_button_text', '');
-  const customButtonBgColor = getCustomization('header', 'custom_button_bg_color', '#3b82f6');
-  const customButtonTextColor = getCustomization('header', 'custom_button_text_color', '#ffffff');
-  const customButtonIcon = getCustomization('header', 'custom_button_icon', '');
-  const customButtonLink = getCustomization('header', 'custom_button_link', '');
-
-  const handleCustomButtonClick = () => {
-    if (customButtonLink) {
-      window.open(customButtonLink, '_blank');
-    }
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
+
+  if (!user) return null;
 
   return (
-    <header 
-      className="backdrop-blur-sm w-full top-0 z-50 border-b border-gray-800 relative"
-      style={{ backgroundColor: headerBgColor === 'transparent' ? 'rgba(0,0,0,0.8)' : headerBgColor }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+    <header className="bg-background border-b sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          {/* Logo/Brand */}
           <Link to="/" className="flex items-center space-x-2">
-            {logoImage ? (
-              <img src={logoImage} alt={siteName} className="h-8 w-auto" />
-            ) : (
-              <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">G</div>
-            )}
-            <span className="font-bold text-xl" style={{ color: headerTextColor }}>{siteName}</span>
+            <Tv className="h-6 w-6 text-primary" />
+            <span className="font-bold text-lg">AgroMercado TV</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <button 
-              onClick={() => scrollToSection('hero')}
-              className="hover:transition-colors" 
-              style={{ 
-                color: headerTextColor,
-                '--hover-color': headerHoverColor
-              } as React.CSSProperties}
-              onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
-              onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
-            >
-              {menuHome}
-            </button>
-            <button 
-              onClick={() => scrollToSection('content')}
-              className="hover:transition-colors"
-              style={{ 
-                color: headerTextColor,
-                '--hover-color': headerHoverColor
-              } as React.CSSProperties}
-              onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
-              onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
-            >
-              {menuContent}
-            </button>
-            <button 
-              onClick={() => scrollToSection('plans')}
-              className="hover:transition-colors"
-              style={{ 
-                color: headerTextColor,
-                '--hover-color': headerHoverColor
-              } as React.CSSProperties}
-              onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
-              onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
-            >
-              {menuPlans}
-            </button>
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center space-x-6">
             <Link 
-              to="/auctions"
-              className="hover:transition-colors"
-              style={{ 
-                color: headerTextColor,
-                '--hover-color': headerHoverColor
-              } as React.CSSProperties}
-              onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
-              onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
+              to="/" 
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
             >
-              Leilões
+              <Home className="h-4 w-4" />
+              <span>Início</span>
             </Link>
-            {customButtonText && (
-              <button
-                onClick={handleCustomButtonClick}
-                className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center space-x-2"
-                style={{ 
-                  backgroundColor: customButtonBgColor,
-                  color: customButtonTextColor
-                }}
-              >
-                <span>{customButtonText}</span>
-                {customButtonIcon && (
-                  <img src={customButtonIcon} alt="" className="h-4 w-4" />
-                )}
-              </button>
-            )}
             <Link 
-              to="/login" 
-              className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
-              style={{ 
-                backgroundColor: headerHoverColor,
-                color: '#ffffff'
-              }}
+              to="/auction" 
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <User className="h-4 w-4 mr-2" />
-              {menuLogin}
+              <Gavel className="h-4 w-4" />
+              <span>Leilões</span>
             </Link>
           </nav>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2"
-            style={{ color: headerTextColor }}
-          >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
+          {/* User Actions */}
+          <div className="flex items-center space-x-4">
+            {/* Global Notification Bell */}
+            <GlobalNotificationBell />
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden border-t" style={{ backgroundColor: headerBgColor === 'transparent' ? 'rgba(0,0,0,0.9)' : headerBgColor, borderColor: 'rgba(255,255,255,0.1)' }}>
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              <button 
-                onClick={() => scrollToSection('hero')}
-                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
-                style={{ 
-                  color: headerTextColor,
-                  '--hover-color': headerHoverColor
-                } as React.CSSProperties}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                {menuHome}
-              </button>
-              <button 
-                onClick={() => scrollToSection('content')}
-                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
-                style={{ 
-                  color: headerTextColor,
-                  '--hover-color': headerHoverColor
-                } as React.CSSProperties}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                {menuContent}
-              </button>
-              <button 
-                onClick={() => scrollToSection('plans')}
-                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
-                style={{ 
-                  color: headerTextColor,
-                  '--hover-color': headerHoverColor
-                } as React.CSSProperties}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                {menuPlans}
-              </button>
-              <Link 
-                to="/auctions"
-                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
-                style={{ 
-                  color: headerTextColor,
-                  '--hover-color': headerHoverColor
-                } as React.CSSProperties}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Leilões
-              </Link>
-              {customButtonText && (
-                <button
-                  onClick={() => {
-                    handleCustomButtonClick();
-                    setIsMenuOpen(false);
-                  }}
-                  className="block w-full text-left hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4 flex items-center space-x-2"
-                  style={{ 
-                    backgroundColor: customButtonBgColor,
-                    color: customButtonTextColor
-                  }}
-                >
-                  <span>{customButtonText}</span>
-                  {customButtonIcon && (
-                    <img src={customButtonIcon} alt="" className="h-4 w-4" />
-                  )}
-                </button>
-              )}
-              <Link 
-                to="/login" 
-                className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4 flex items-center"
-                style={{ 
-                  backgroundColor: headerHoverColor,
-                  color: '#ffffff'
-                }}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <User className="h-4 w-4 mr-2" />
-                {menuLogin}
-              </Link>
-            </div>
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{user.name}</p>
+                    <p className="w-[200px] truncate text-sm text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
+                </DropdownMenuItem>
+                {user.role === 'admin' && (
+                  <DropdownMenuItem onClick={() => navigate('/admin')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Administração</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        )}
+        </div>
       </div>
     </header>
   );
