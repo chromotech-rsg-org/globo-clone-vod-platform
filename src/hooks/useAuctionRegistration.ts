@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuctionRegistration } from '@/types/auction';
@@ -104,6 +105,17 @@ export const useAuctionRegistration = (auctionId: string) => {
             .eq('id', registration.id);
 
           if (error) throw error;
+        } else if (registration.status === 'canceled') {
+          // Permitir nova solicitação se foi cancelada
+          const { error } = await supabase
+            .from('auction_registrations')
+            .update({
+              status: 'pending',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', registration.id);
+
+          if (error) throw error;
         } else if (registration.status === 'pending') {
           toast({
             title: "Solicitação já enviada",
@@ -157,6 +169,40 @@ export const useAuctionRegistration = (auctionId: string) => {
     }
   };
 
+  const cancelRegistration = async () => {
+    if (!user?.id || !registration) return;
+
+    try {
+      const { error } = await supabase
+        .from('auction_registrations')
+        .update({
+          status: 'canceled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', registration.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Habilitação cancelada",
+        description: "Sua habilitação foi cancelada. Você pode solicitar uma nova a qualquer momento.",
+      });
+
+      setTimeout(() => {
+        fetchRegistration();
+      }, 500);
+
+    } catch (error: any) {
+      console.error('❌ useAuctionRegistration: Erro ao cancelar habilitação:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível cancelar a habilitação",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     if (!auctionId || !user?.id) return;
 
@@ -199,6 +245,11 @@ export const useAuctionRegistration = (auctionId: string) => {
               title: "Habilitação Rejeitada ❌",
               description: payload.new.client_notes || "Sua habilitação foi rejeitada.",
               variant: "destructive"
+            });
+          } else if (newStatus === 'canceled') {
+            toast({
+              title: "Habilitação Cancelada",
+              description: "Sua habilitação foi cancelada. Você pode solicitar uma nova.",
             });
           }
           
@@ -260,7 +311,8 @@ export const useAuctionRegistration = (auctionId: string) => {
   return { 
     registration, 
     loading, 
-    requestRegistration, 
+    requestRegistration,
+    cancelRegistration,
     refetch: fetchRegistration 
   };
 };
