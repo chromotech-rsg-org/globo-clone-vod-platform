@@ -74,9 +74,7 @@ const Subscription = () => {
     
     setActionLoading('cancel');
     try {
-      const { error } = await supabase.rpc('cancel_user_plan', {
-        p_user: user.id
-      });
+      const { error } = await supabase.rpc('cancel_user_plan');
 
       if (error) throw error;
 

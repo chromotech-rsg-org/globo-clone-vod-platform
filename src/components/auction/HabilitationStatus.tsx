@@ -10,7 +10,7 @@ import { AlertCircle, CheckCircle, Clock, XCircle, RotateCcw } from 'lucide-reac
 
 interface Registration {
   id: string;
-  status: 'pending' | 'approved' | 'rejected' | 'canceled' | 'reopened';
+  status: string;
   client_notes?: string;
   internal_notes?: string;
   created_at: string;

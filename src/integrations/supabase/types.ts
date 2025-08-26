@@ -547,6 +547,7 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          plan_id: string | null
           role: string | null
           updated_at: string | null
         }
@@ -557,6 +558,7 @@ export type Database = {
           id: string
           name: string
           phone?: string | null
+          plan_id?: string | null
           role?: string | null
           updated_at?: string | null
         }
@@ -567,10 +569,19 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          plan_id?: string | null
           role?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -678,6 +689,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_user_plan: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       check_role_change_rate_limit: {
         Args: { user_id: string }
         Returns: boolean
@@ -709,6 +724,14 @@ export type Database = {
       health_check: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      reopen_registration: {
+        Args: { p_auction: string; p_user: string }
+        Returns: undefined
+      }
+      set_bid_winner: {
+        Args: { p_bid_id: string }
+        Returns: undefined
       }
       user_has_active_subscription: {
         Args: { user_uuid: string }

@@ -1,36 +1,32 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { Search, Edit, Trash2 } from 'lucide-react';
+import { Users, Shield, User, Crown } from 'lucide-react';
 
-interface User {
+interface Profile {
   id: string;
   name: string;
   email: string;
   role: string;
-  plan_id: string;
   created_at: string;
-  plan?: {
+  plan_id?: string;
+  plans?: {
     name: string;
-    price: number;
   };
 }
 
 const UserList = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const { user: currentUser } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -38,26 +34,21 @@ const UserList = () => {
           name,
           email,
           role,
-          plan_id,
           created_at,
-          plans:plan_id (
-            name,
-            price
+          plan_id,
+          plans (
+            name
           )
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      setUsers(data?.map(user => ({
-        ...user,
-        plan: user.plans
-      })) || []);
+      setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os usuários",
+        description: "Não foi possível carregar a lista de usuários",
         variant: "destructive"
       });
     } finally {
@@ -69,35 +60,26 @@ const UserList = () => {
     fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleIcon = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'destructive';
+        return <Shield className="h-4 w-4 text-red-500" />;
       case 'desenvolvedor':
-        return 'secondary';
+        return <Crown className="h-4 w-4 text-purple-500" />;
       default:
-        return 'default';
+        return <User className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getPlanDisplay = (user: User) => {
-    if (!user.plan) {
-      return <Badge variant="outline" className="text-gray-500">Sem plano</Badge>;
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return <Badge variant="destructive">Admin</Badge>;
+      case 'desenvolvedor':
+        return <Badge className="bg-purple-500">Desenvolvedor</Badge>;
+      default:
+        return <Badge variant="secondary">Usuário</Badge>;
     }
-    
-    return (
-      <div className="flex flex-col">
-        <span className="font-medium">{user.plan.name}</span>
-        <span className="text-sm text-gray-500">
-          R$ {user.plan.price.toFixed(2)}/mês
-        </span>
-      </div>
-    );
   };
 
   if (loading) {
@@ -110,87 +92,68 @@ const UserList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Usuários</h2>
-        <Button onClick={fetchUsers}>
-          Atualizar
-        </Button>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Search className="h-4 w-4 text-gray-400" />
-        <Input
-          placeholder="Buscar usuários..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
+      <div className="flex items-center gap-2">
+        <Users className="h-6 w-6" />
+        <h2 className="text-2xl font-bold">Lista de Usuários</h2>
+        <Badge variant="outline">{users.length} usuários</Badge>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Usuário
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Função
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Plano
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Data de Criação
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ações
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div className="font-medium text-gray-900">{user.name}</div>
-                    <div className="text-sm text-gray-500">{user.email}</div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <Badge variant={getRoleBadgeVariant(user.role)}>
-                    {user.role}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {getPlanDisplay(user)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {currentUser?.role === 'desenvolvedor' && (
-                      <Button variant="outline" size="sm" className="text-red-600">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Usuário
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Plano
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Data de Cadastro
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {filteredUsers.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          Nenhum usuário encontrado
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.map((profile) => (
+                <tr key={profile.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {profile.name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {profile.email}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {getRoleIcon(profile.role)}
+                      {getRoleBadge(profile.role)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {profile.plans?.name ? (
+                      <Badge variant="outline">{profile.plans.name}</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-gray-500">
+                        Sem plano
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(profile.created_at).toLocaleDateString('pt-BR')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 };
