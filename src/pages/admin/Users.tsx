@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,8 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import RoleChangeConfirmation from '@/components/auth/RoleChangeConfirmation';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { sanitizeInputSecure, validateEmailSecurity, validateCpfSecurity, validatePhoneSecurity, validateEmail, validateCPF, validatePhone } from '@/utils/validators';
-import { useAuth } from '@/contexts/AuthContext';
-
 interface UserProfile {
   id: string;
   name: string;
@@ -24,7 +21,6 @@ interface UserProfile {
   role: string;
   created_at: string;
 }
-
 const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -47,9 +43,9 @@ const AdminUsers = () => {
     userName: '',
     userId: ''
   });
-  const { toast } = useToast();
-  const { user: currentUser } = useAuth();
-
+  const {
+    toast
+  } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -57,24 +53,26 @@ const AdminUsers = () => {
     phone: '',
     role: 'user'
   });
-
   useEffect(() => {
     fetchUsers();
   }, []);
-
   const fetchUsers = async () => {
     try {
       setLoading(true);
 
       // Verificar autenticação antes de fazer a query
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Usuário não autenticado');
       }
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select(`
           id,
           name,
           email,
@@ -82,14 +80,13 @@ const AdminUsers = () => {
           phone,
           role,
           created_at
-        `)
-        .order('created_at', { ascending: false });
-
+        `).order('created_at', {
+        ascending: false
+      });
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
-
       setUsers(data || []);
     } catch (error: any) {
       console.error('Erro ao buscar usuários:', error);
@@ -101,7 +98,6 @@ const AdminUsers = () => {
       } else if (error.code === 'PGRST116') {
         errorMessage = "Nenhum dado encontrado";
       }
-      
       toast({
         title: "Erro",
         description: errorMessage,
@@ -111,7 +107,6 @@ const AdminUsers = () => {
       setLoading(false);
     }
   };
-
   const handleEdit = (user: UserProfile) => {
     setEditingUser(user);
     setFormData({
@@ -123,12 +118,10 @@ const AdminUsers = () => {
     });
     setIsDialogOpen(true);
   };
-
   const handleView = (user: UserProfile) => {
     setViewingUser(user);
     setIsViewDialogOpen(true);
   };
-
   const handleCreate = () => {
     setFormData({
       name: '',
@@ -139,47 +132,28 @@ const AdminUsers = () => {
     });
     setIsCreateDialogOpen(true);
   };
-
-  const getAvailableRoles = () => {
-    if (currentUser?.role === 'desenvolvedor') {
-      return [
-        { value: 'user', label: 'Usuário' },
-        { value: 'admin', label: 'Administrador' },
-        { value: 'desenvolvedor', label: 'Desenvolvedor' }
-      ];
-    }
-    return [
-      { value: 'user', label: 'Usuário' },
-      { value: 'admin', label: 'Administrador' }
-    ];
-  };
-
   const handleCreateSave = async () => {
     // Input validation
     const errors: string[] = [];
     if (!formData.name.trim()) {
       errors.push('Name is required');
     }
-
     const emailValidation = validateEmailSecurity(formData.email);
     if (!emailValidation.isValid) {
       errors.push(...emailValidation.errors);
     }
-
     if (formData.cpf) {
       const cpfValidation = validateCpfSecurity(formData.cpf);
       if (!cpfValidation.isValid) {
         errors.push(...cpfValidation.errors);
       }
     }
-
     if (formData.phone) {
       const phoneValidation = validatePhoneSecurity(formData.phone);
       if (!phoneValidation.isValid) {
         errors.push(...phoneValidation.errors);
       }
     }
-
     if (errors.length > 0) {
       toast({
         title: "Erro de validação",
@@ -188,7 +162,6 @@ const AdminUsers = () => {
       });
       return;
     }
-
     try {
       // Sanitize inputs
       const sanitizedData = {
@@ -198,7 +171,6 @@ const AdminUsers = () => {
         phone: formData.phone ? sanitizeInputSecure(formData.phone) : '',
         role: formData.role
       };
-
       const userData = {
         id: crypto.randomUUID(),
         name: sanitizedData.name,
@@ -207,21 +179,17 @@ const AdminUsers = () => {
         phone: sanitizedData.phone || null,
         role: sanitizedData.role
       };
-
-      const { error } = await supabase
-        .from('profiles')
-        .insert(userData);
-
+      const {
+        error
+      } = await supabase.from('profiles').insert(userData);
       if (error) throw error;
 
       // Log admin user creation for audit purposes
       console.log(`[SECURITY AUDIT] User created: ${sanitizedData.name} (${sanitizedData.email}) with role ${sanitizedData.role}`);
-      
       toast({
         title: "Sucesso",
         description: "Usuário criado com sucesso"
       });
-      
       await fetchUsers();
       resetCreateForm();
     } catch (error: any) {
@@ -235,7 +203,6 @@ const AdminUsers = () => {
       } else if (error.code === '42501') {
         errorMessage = "Você não tem permissão para realizar esta ação";
       }
-      
       toast({
         title: "Erro",
         description: errorMessage,
@@ -243,7 +210,6 @@ const AdminUsers = () => {
       });
     }
   };
-
   const handleSave = async () => {
     if (!editingUser) return;
 
@@ -261,7 +227,6 @@ const AdminUsers = () => {
     if (formData.phone && !validatePhone(formData.phone)) {
       errors.push('Please enter a valid phone number');
     }
-
     if (errors.length > 0) {
       toast({
         title: "Erro de validação",
@@ -286,10 +251,8 @@ const AdminUsers = () => {
     // Proceed with update if no role change
     await performUserUpdate();
   };
-
   const performUserUpdate = async () => {
     if (!editingUser) return;
-    
     try {
       // Sanitize inputs
       const sanitizedData = {
@@ -299,7 +262,6 @@ const AdminUsers = () => {
         phone: formData.phone ? sanitizeInputSecure(formData.phone) : '',
         role: formData.role
       };
-
       const userData = {
         name: sanitizedData.name,
         email: sanitizedData.email,
@@ -307,27 +269,25 @@ const AdminUsers = () => {
         phone: sanitizedData.phone || null,
         role: sanitizedData.role
       };
-
-      const { error } = await supabase
-        .from('profiles')
-        .update(userData)
-        .eq('id', editingUser.id);
-
+      const {
+        error
+      } = await supabase.from('profiles').update(userData).eq('id', editingUser.id);
       if (error) throw error;
 
       // Log role change for audit purposes
       if (formData.role !== editingUser.role) {
         console.log(`[SECURITY AUDIT] Role changed for user ${editingUser.name} (${editingUser.email}) from ${editingUser.role} to ${formData.role}`);
       }
-      
       toast({
         title: "Sucesso",
         description: "Usuário atualizado com sucesso"
       });
-      
       await fetchUsers();
       resetForm();
-      setRoleChangeConfirmation(prev => ({ ...prev, isOpen: false }));
+      setRoleChangeConfirmation(prev => ({
+        ...prev,
+        isOpen: false
+      }));
     } catch (error: any) {
       let errorMessage = "Não foi possível atualizar o usuário";
       if (error.message === 'Usuário não autenticado') {
@@ -339,7 +299,6 @@ const AdminUsers = () => {
       } else if (error.code === '42501') {
         errorMessage = "Você não tem permissão para realizar esta ação";
       }
-      
       toast({
         title: "Erro",
         description: errorMessage,
@@ -347,25 +306,19 @@ const AdminUsers = () => {
       });
     }
   };
-
   const handleDelete = async (userId: string) => {
     if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
       return;
     }
-    
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
+      const {
+        error
+      } = await supabase.from('profiles').delete().eq('id', userId);
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Usuário excluído com sucesso"
       });
-      
       await fetchUsers();
     } catch (error: any) {
       toast({
@@ -375,7 +328,6 @@ const AdminUsers = () => {
       });
     }
   };
-
   const resetForm = () => {
     setEditingUser(null);
     setIsDialogOpen(false);
@@ -387,7 +339,6 @@ const AdminUsers = () => {
       role: 'user'
     });
   };
-
   const resetCreateForm = () => {
     setIsCreateDialogOpen(false);
     setFormData({
@@ -398,29 +349,13 @@ const AdminUsers = () => {
       role: 'user'
     });
   };
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Hide developer users from non-developer admins
-    if (currentUser?.role !== 'desenvolvedor' && user.role === 'desenvolvedor') {
-      return false;
-    }
-    
-    return matchesSearch;
-  });
-
+  const filteredUsers = users.filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase()));
   if (loading) {
-    return (
-      <div className="p-6">
+    return <div className="p-6">
         <div className="text-white">Carregando...</div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <>
+  return <>
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-4">
@@ -435,12 +370,7 @@ const AdminUsers = () => {
             <div className="flex justify-between items-center gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Buscar usuários por nome ou email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white"
-                />
+                <Input placeholder="Buscar usuários por nome ou email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-gray-700 border-gray-600 text-white" />
               </div>
               <Button variant="admin" onClick={handleCreate}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -452,18 +382,13 @@ const AdminUsers = () => {
 
         {/* Users List */}
         <div className="space-y-4">
-          {filteredUsers.map((user) => (
-            <Card key={user.id} className="bg-gray-800 border-gray-700">
+          {filteredUsers.map(user => <Card key={user.id} className="bg-gray-800 border-gray-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-4 mb-2">
                       <h3 className="text-lg font-semibold text-white">{user.name}</h3>
-                      <Badge variant={
-                        user.role === 'admin' ? 'default' : 
-                        user.role === 'desenvolvedor' ? 'destructive' : 
-                        'secondary'
-                      }>
+                      <Badge variant={user.role === 'admin' ? 'default' : user.role === 'desenvolvedor' ? 'destructive' : 'secondary'}>
                         {user.role}
                       </Badge>
                     </div>
@@ -489,46 +414,28 @@ const AdminUsers = () => {
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleView(user)}
-                      className="border-gray-600 text-slate-950"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => handleView(user)} className="border-gray-600 text-slate-950">
                       <Eye className="h-4 w-4 mr-2" />
                       Ver
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(user)}
-                      className="border-gray-600 text-slate-950"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(user)} className="border-gray-600 text-slate-950">
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="bg-black text-white hover:bg-gray-800"
-                      onClick={() => handleDelete(user.id)}
-                    >
+                    <Button variant="destructive" size="sm" className="bg-black text-white hover:bg-gray-800" onClick={() => handleDelete(user.id)}>
                       Excluir
                     </Button>
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
 
-        {filteredUsers.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700">
+        {filteredUsers.length === 0 && <Card className="bg-gray-800 border-gray-700">
             <CardContent className="p-12 text-center">
               <p className="text-gray-400">Nenhum usuário encontrado</p>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </div>
 
       {/* Edit Dialog */}
@@ -541,59 +448,49 @@ const AdminUsers = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="name" className="text-gray-300">Nome</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
-              />
+              <Input id="name" value={formData.name} onChange={e => setFormData({
+              ...formData,
+              name: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" />
             </div>
 
             <div>
               <Label htmlFor="email" className="text-gray-300">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
-              />
+              <Input id="email" type="email" value={formData.email} onChange={e => setFormData({
+              ...formData,
+              email: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" />
             </div>
 
             <div>
               <Label htmlFor="cpf" className="text-gray-300">CPF</Label>
-              <Input
-                id="cpf"
-                value={formData.cpf}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="000.000.000-00"
-              />
+              <Input id="cpf" value={formData.cpf} onChange={e => setFormData({
+              ...formData,
+              cpf: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="000.000.000-00" />
             </div>
 
             <div>
               <Label htmlFor="phone" className="text-gray-300">Telefone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="(11) 99999-9999"
-              />
+              <Input id="phone" value={formData.phone} onChange={e => setFormData({
+              ...formData,
+              phone: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="(11) 99999-9999" />
             </div>
 
             <div>
               <Label htmlFor="role" className="text-gray-300">Função</Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+              <Select value={formData.role} onValueChange={value => setFormData({
+              ...formData,
+              role: value
+            })}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {getAvailableRoles().map((role) => (
-                    <SelectItem key={role.value} value={role.value}>
-                      {role.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="desenvolvedor">Desenvolvedor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -619,8 +516,7 @@ const AdminUsers = () => {
             <DialogTitle>Detalhes do Usuário</DialogTitle>
           </DialogHeader>
           
-          {viewingUser && (
-            <div className="space-y-4">
+          {viewingUser && <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-gray-400">Nome</Label>
@@ -640,11 +536,7 @@ const AdminUsers = () => {
                 </div>
                 <div>
                   <Label className="text-gray-400">Função</Label>
-                  <Badge variant={
-                    viewingUser.role === 'admin' ? 'default' : 
-                    viewingUser.role === 'desenvolvedor' ? 'destructive' : 
-                    'secondary'
-                  }>
+                  <Badge variant={viewingUser.role === 'admin' ? 'default' : viewingUser.role === 'desenvolvedor' ? 'destructive' : 'secondary'}>
                     {viewingUser.role}
                   </Badge>
                 </div>
@@ -653,8 +545,7 @@ const AdminUsers = () => {
                   <p className="text-white">{new Date(viewingUser.created_at).toLocaleDateString('pt-BR')}</p>
                 </div>
               </div>
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
 
@@ -668,61 +559,49 @@ const AdminUsers = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="create-name" className="text-gray-300">Nome</Label>
-              <Input
-                id="create-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Nome completo"
-              />
+              <Input id="create-name" value={formData.name} onChange={e => setFormData({
+              ...formData,
+              name: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Nome completo" />
             </div>
 
             <div>
               <Label htmlFor="create-email" className="text-gray-300">Email</Label>
-              <Input
-                id="create-email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="email@exemplo.com"
-              />
+              <Input id="create-email" type="email" value={formData.email} onChange={e => setFormData({
+              ...formData,
+              email: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="email@exemplo.com" />
             </div>
 
             <div>
               <Label htmlFor="create-cpf" className="text-gray-300">CPF</Label>
-              <Input
-                id="create-cpf"
-                value={formData.cpf}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="000.000.000-00"
-              />
+              <Input id="create-cpf" value={formData.cpf} onChange={e => setFormData({
+              ...formData,
+              cpf: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="000.000.000-00" />
             </div>
 
             <div>
               <Label htmlFor="create-phone" className="text-gray-300">Telefone</Label>
-              <Input
-                id="create-phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="(11) 99999-9999"
-              />
+              <Input id="create-phone" value={formData.phone} onChange={e => setFormData({
+              ...formData,
+              phone: e.target.value
+            })} className="bg-gray-700 border-gray-600 text-white" placeholder="(11) 99999-9999" />
             </div>
 
             <div>
               <Label htmlFor="create-role" className="text-gray-300">Função</Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+              <Select value={formData.role} onValueChange={value => setFormData({
+              ...formData,
+              role: value
+            })}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {getAvailableRoles().map((role) => (
-                    <SelectItem key={role.value} value={role.value}>
-                      {role.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="desenvolvedor">Desenvolvedor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -741,16 +620,10 @@ const AdminUsers = () => {
         </DialogContent>
       </Dialog>
 
-      <RoleChangeConfirmation
-        isOpen={roleChangeConfirmation.isOpen}
-        onClose={() => setRoleChangeConfirmation(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={performUserUpdate}
-        currentRole={roleChangeConfirmation.currentRole}
-        newRole={roleChangeConfirmation.newRole}
-        userName={roleChangeConfirmation.userName}
-      />
-    </>
-  );
+      <RoleChangeConfirmation isOpen={roleChangeConfirmation.isOpen} onClose={() => setRoleChangeConfirmation(prev => ({
+      ...prev,
+      isOpen: false
+    }))} onConfirm={performUserUpdate} currentRole={roleChangeConfirmation.currentRole} newRole={roleChangeConfirmation.newRole} userName={roleChangeConfirmation.userName} />
+    </>;
 };
-
 export default AdminUsers;

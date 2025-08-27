@@ -1,12 +1,13 @@
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { initializeVercelOptimizations } from "./utils/vercelOptimizations";
+import { logDomainInfo } from "./utils/domainHealth";
+import { initializeNotificationSystem } from "./utils/notificationCache";
 
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
-import './utils/urlCleanup';
+// Initialize optimizations and logging
+logDomainInfo();
+initializeVercelOptimizations();
+initializeNotificationSystem();
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+createRoot(document.getElementById("root")!).render(<App />);

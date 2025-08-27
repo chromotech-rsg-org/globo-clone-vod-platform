@@ -1,130 +1,312 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Bid } from '@/types/auction';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUniqueChannelId, clearNotificationCache } from '@/utils/notificationCache';
-import { isProductionCustomDomain } from '@/utils/domainHealth';
-import { clearVercelCache } from '@/utils/vercelOptimizations';
+import { useToast } from '@/components/ui/use-toast';
 
-export const useAuctionBids = (auctionItemId?: string) => {
+interface Bid {
+  id: string;
+  user_id: string;
+  auction_id: string;
+  auction_item_id: string;
+  bid_value: number;
+  status: 'approved' | 'pending' | 'rejected' | 'superseded';
+  internal_notes?: string;
+  client_notes?: string;
+  approved_by?: string;
+  is_winner: boolean;
+  created_at: string;
+  updated_at: string;
+  user_name?: string;
+}
+
+export const useAuctionBids = (auctionId: string) => {
   const [bids, setBids] = useState<Bid[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submittingBid, setSubmittingBid] = useState(false);
+  const [pendingBidExists, setPendingBidExists] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
+  const mounted = useRef(true);
 
-  const fetchBids = async () => {
-    if (!auctionItemId) {
+  const fetchBids = useCallback(async () => {
+    if (!auctionId || !mounted.current) return;
+
+    console.log('🔄 useAuctionBids: Iniciando busca de lances para:', auctionId);
+    
+    try {
+      // Query específica para lances
+      const { data: bidsData, error: bidsError } = await supabase
+        .from('bids')
+        .select('id, user_id, auction_id, auction_item_id, bid_value, status, is_winner, created_at, updated_at, client_notes')
+        .eq('auction_id', auctionId)
+        .order('created_at', { ascending: false });
+
+      if (bidsError) {
+        console.error('❌ useAuctionBids: Erro ao buscar lances:', bidsError);
+        setBids([]);
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ useAuctionBids: Lances encontrados:', bidsData?.length || 0);
+
+      if (!mounted.current) return;
+
+      // Processar lances
+      let formattedBids: Bid[] = [];
+      
+      if (bidsData && bidsData.length > 0) {
+        // Buscar nomes dos usuários separadamente
+        const userIds = [...new Set(bidsData.map(bid => bid.user_id))];
+        console.log('👥 useAuctionBids: Buscando perfis para:', userIds.length, 'usuários');
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.warn('⚠️ useAuctionBids: Erro ao buscar perfis:', profilesError);
+        }
+
+        console.log('👤 useAuctionBids: Perfis encontrados:', profilesData?.length || 0);
+
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p.name]) || []);
+
+        formattedBids = bidsData.map((bid: any) => ({
+          ...bid,
+          user_name: profilesMap.get(bid.user_id) || `Usuário ${bid.user_id.slice(-4)}`
+        }));
+
+        console.log('📋 useAuctionBids: Lances formatados:', formattedBids.length);
+      }
+
+      setBids(formattedBids);
+
+      // Verificar lance pendente do usuário
+      if (user?.id) {
+        const userHasPendingBid = formattedBids.some((bid: Bid) => 
+          bid.user_id === user.id && bid.status === 'pending'
+        );
+        setPendingBidExists(userHasPendingBid);
+        console.log('🔍 useAuctionBids: Usuário tem lance pendente?', userHasPendingBid);
+      }
+
+    } catch (error) {
+      console.error('💥 useAuctionBids: Erro geral:', error);
       setBids([]);
-      return;
+      if (mounted.current) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os lances",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      if (mounted.current) {
+        setLoading(false);
+        console.log('✨ useAuctionBids: Busca finalizada');
+      }
+    }
+  }, [auctionId, user, toast]);
+
+  const submitBid = async (bidValue: number) => {
+    if (!user || !auctionId) {
+      toast({
+        title: "Erro", 
+        description: "Usuário não autenticado",
+        variant: "destructive"
+      });
+      return false;
     }
 
+    if (pendingBidExists) {
+      toast({
+        title: "Lance em análise",
+        description: "Aguarde a análise do seu lance atual",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    setSubmittingBid(true);
+
     try {
-      setLoading(true);
-      console.log('🔄 useAuctionBids: Buscando lances para item:', auctionItemId);
-      
-      if (isProductionCustomDomain()) {
-        clearVercelCache();
-        clearNotificationCache();
+      // Verificar se o usuário tem lance pendente antes de enviar
+      const { data: existingBids } = await supabase
+        .from('bids')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('auction_id', auctionId)
+        .eq('status', 'pending');
+
+      if (existingBids && existingBids.length > 0) {
+        toast({
+          title: "Lance em análise",
+          description: "Você já possui um lance aguardando análise",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // Buscar ou criar auction_item para este leilão
+      let auctionItem;
+      const { data: existingItem, error: itemError } = await supabase
+        .from('auction_items')
+        .select('id')
+        .eq('auction_id', auctionId)
+        .eq('is_current', true)
+        .maybeSingle();
+
+      if (itemError) {
+        console.error('Error fetching auction item:', itemError);
+        throw new Error('Não foi possível encontrar o item do leilão');
+      }
+
+      if (!existingItem) {
+        // Criar um item padrão se não existir
+        const { data: auctionData } = await supabase
+          .from('auctions')
+          .select('name, description, initial_bid_value, current_bid_value')
+          .eq('id', auctionId)
+          .single();
+
+        if (auctionData) {
+          const { data: newItem, error: createError } = await supabase
+            .from('auction_items')
+            .insert({
+              auction_id: auctionId,
+              name: auctionData.name,
+              description: auctionData.description || 'Item principal do leilão',
+              initial_value: auctionData.initial_bid_value,
+              current_value: auctionData.current_bid_value,
+              is_current: true,
+              order_index: 0
+            })
+            .select('id')
+            .single();
+
+          if (createError) {
+            console.error('Error creating auction item:', createError);
+            throw new Error('Não foi possível criar o item do leilão');
+          }
+          auctionItem = newItem;
+        } else {
+          throw new Error('Leilão não encontrado');
+        }
+      } else {
+        auctionItem = existingItem;
       }
 
       const { data, error } = await supabase
         .from('bids')
-        .select(`
-          *,
-          profiles!bids_user_id_fkey (name)
-        `)
-        .eq('auction_item_id', auctionItemId)
-        .order('created_at', { ascending: false });
+        .insert([{
+          user_id: user.id,
+          auction_id: auctionId,
+          auction_item_id: auctionItem.id,
+          bid_value: bidValue,
+          status: 'pending'
+        }])
+        .select()
+        .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
+        console.error('Supabase error:', error);
         throw error;
       }
 
-      const bidsWithUserNames = (data || []).map(bid => ({
-        ...bid,
-        user_name: bid.profiles?.name || 'Usuário'
-      }));
+      toast({
+        title: "Lance enviado",
+        description: "Seu lance foi enviado para análise",
+      });
 
-      console.log('✅ useAuctionBids: Lances encontrados:', bidsWithUserNames.length);
-      setBids(bidsWithUserNames);
-    } catch (error) {
-      console.error('❌ useAuctionBids: Erro ao buscar lances:', error);
-      setBids([]); // Clear bids on error instead of keeping old data
+      await fetchBids();
+      return true;
+
+    } catch (error: any) {
+      console.error('Error submitting bid:', error);
+      
+      let errorMessage = "Não foi possível enviar o lance";
+      if (error?.message?.includes('duplicate')) {
+        errorMessage = "Você já possui um lance para este leilão";
+      } else if (error?.message) {
+        errorMessage = `Erro: ${error.message}`;
+      }
+      
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      return false;
     } finally {
-      setLoading(false);
+      setSubmittingBid(false);
     }
   };
 
   useEffect(() => {
-    if (!auctionItemId) {
-      setBids([]);
-      return;
-    }
-
-    console.log('🎯 useAuctionBids: Inicializando para item:', auctionItemId);
+    if (!auctionId) return;
     
-    if (isProductionCustomDomain()) {
-      clearVercelCache();
-    }
-    clearNotificationCache();
-    
+    mounted.current = true;
     fetchBids();
 
-    // Setup real-time subscription
-    const channelName = getUniqueChannelId(`bids-${auctionItemId}`);
-    
+    // Real-time subscription for bid updates
     const handleBidsChange = (payload: any) => {
-      console.log('🔔 useAuctionBids: Mudança detectada:', payload);
-      
-      if (isProductionCustomDomain()) {
-        clearVercelCache();
-      }
-      clearNotificationCache();
-      
-      // Refresh bids on any change
-      setTimeout(() => {
+      if (mounted.current) {
+        // Show toast for user's bid status changes
+        if (payload.new && payload.new.user_id === user?.id && payload.eventType === 'UPDATE') {
+          if (payload.new.status === 'approved') {
+            toast({
+              title: "Lance Aprovado",
+              description: payload.new.is_winner ? 
+                "Parabéns! Seu lance foi aprovado e você é o vencedor!" :
+                "Seu lance foi aprovado!",
+            });
+          } else if (payload.new.status === 'rejected') {
+            toast({
+              title: "Lance Rejeitado",
+              description: payload.new.client_notes || "Seu lance foi rejeitado.",
+              variant: "destructive"
+            });
+          }
+        }
+        
         fetchBids();
-      }, 500);
+      }
     };
 
-    let subscription: any;
-    
-    try {
-      subscription = supabase
-        .channel(channelName)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'bids',
-          filter: `auction_item_id=eq.${auctionItemId}`
-        }, handleBidsChange)
-        .subscribe((status) => {
-          console.log('📡 useAuctionBids: Subscription status:', status);
-        });
-        
-    } catch (error) {
-      console.error('❌ useAuctionBids: Erro ao configurar subscription:', error);
-      
-      // Fallback para polling em caso de erro
-      if (isProductionCustomDomain()) {
-        console.log('🔄 useAuctionBids: Fallback para polling');
-        const pollInterval = setInterval(() => {
-          fetchBids();
-        }, 10000);
-        
-        return () => {
-          clearInterval(pollInterval);
-        };
-      }
-    }
+    const channel = supabase
+      .channel(`auction-bids-${auctionId}-${Math.random().toString(36).substring(7)}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'bids',
+        filter: `auction_id=eq.${auctionId}`
+      }, handleBidsChange)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'auctions',
+        filter: `id=eq.${auctionId}`
+      }, handleBidsChange)
+      .subscribe();
 
     return () => {
-      if (subscription) {
-        console.log('🔌 useAuctionBids: Removendo subscription');
-        supabase.removeChannel(subscription);
-      }
+      mounted.current = false;
+      supabase.removeChannel(channel);
     };
-  }, [auctionItemId]);
+  }, [auctionId, fetchBids, user?.id, toast]);
 
-  return { bids, loading, refetch: fetchBids };
+  const userPendingBid = bids.find(bid => bid.user_id === user?.id && bid.status === 'pending');
+
+  return {
+    bids,
+    loading,
+    submitBid,
+    submittingBid,
+    pendingBidExists,
+    userPendingBid,
+    refetch: fetchBids
+  };
 };
