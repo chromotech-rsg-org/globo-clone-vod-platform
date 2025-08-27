@@ -1,290 +1,79 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
-  Home, 
+  LayoutDashboard, 
   Users, 
-  Package, 
-  CreditCard, 
-  Ticket, 
-  Palette,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  User,
   Gavel,
   UserCheck,
-  HandHeart,
-  Bell
+  TrendingUp,
+  CreditCard,
+  Settings,
+  Palette,
+  Images,
+  FileText,
+  Gift,
+  Package,
+  Monitor
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
-import { usePendingNotifications } from '@/hooks/usePendingNotifications';
-import NotificationBadge from '@/components/auction/NotificationBadge';
-import PendingNotificationModal from '@/components/auction/PendingNotificationModal';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
 
-interface AdminSidebarProps {
-  isCollapsed: boolean;
-  onToggle: () => void;
-}
-
-interface MenuItem {
-  path: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  pendingCount?: number;
-}
-
-const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
+const AdminSidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { getCustomization } = useAdminCustomizations();
-  const { pendingBids, pendingRegistrations, totalPending, loading, hasNewNotifications } = usePendingNotifications();
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
-  const { toast } = useToast();
+  const { user } = useAuth();
 
-  // Show toast for new notifications
-  useEffect(() => {
-    if (hasNewNotifications && totalPending > 0) {
-      toast({
-        title: "Nova Solicitação",
-        description: "Você recebeu uma nova solicitação",
-        duration: 5000,
-      });
-    }
-  }, [hasNewNotifications, totalPending, toast]);
-
-  // Check for notification modal reopening flag
-  useEffect(() => {
-    const shouldReopenNotifications = sessionStorage.getItem('reopenPendingNotifications');
-    if (shouldReopenNotifications === '1') {
-      sessionStorage.removeItem('reopenPendingNotifications');
-      setShowNotificationModal(true);
-    }
-  }, [location.pathname]);
-
-  // Listen for custom event to open notifications modal
-  useEffect(() => {
-    const handleOpenNotifications = () => {
-      setShowNotificationModal(true);
-    };
-
-    window.addEventListener('openPendingNotifications', handleOpenNotifications);
-    return () => {
-      window.removeEventListener('openPendingNotifications', handleOpenNotifications);
-    };
-  }, []);
-
-  // Stable navigation handler to prevent session timeouts
-  const handleNavigation = useCallback((path: string) => {
-    if (isNavigating) return;
-    
-    setIsNavigating(true);
-    console.log('🔗 Navegando para:', path);
-    
-    try {
-      navigate(path);
-      
-      setTimeout(() => {
-        setIsNavigating(false);
-      }, 500);
-    } catch (error) {
-      console.error('❌ Navigation error:', error);
-      setIsNavigating(false);
-    }
-  }, [navigate, isNavigating]);
-
-  useEffect(() => {
-    const handleCustomizationUpdate = () => {
-      // The colors are applied via CSS variables, no need for manual updates
-    };
-
-    window.addEventListener('adminCustomizationUpdated', handleCustomizationUpdate);
-    
-    return () => {
-      window.removeEventListener('adminCustomizationUpdated', handleCustomizationUpdate);
-    };
-  }, []);
-
-  const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
-  const isClient = user?.role === 'user';
-
-  const adminMenuItems: MenuItem[] = [
-    { path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { path: '/admin/usuarios', icon: Users, label: 'Usuários' },
-    { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
-    { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
-    { path: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
-    { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
-    { path: '/admin/leiloes', icon: Gavel, label: 'Leilões' },
-    { 
-      path: '/admin/habilitacoes', 
-      icon: UserCheck, 
-      label: 'Habilitações',
-      pendingCount: pendingRegistrations.length
-    },
-    { 
-      path: '/admin/lances', 
-      icon: HandHeart, 
-      label: 'Lances',
-      pendingCount: pendingBids.length
-    },
-    { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
+  const menuItems = [
+    { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/admin/users', icon: Users, label: 'Usuários' },
+    { path: '/admin/auctions', icon: Gavel, label: 'Leilões' },
+    { path: '/admin/habilitacoes', icon: UserCheck, label: 'Habilitações' },
+    { path: '/admin/bids', icon: TrendingUp, label: 'Lances' },
+    { path: '/admin/subscriptions', icon: CreditCard, label: 'Assinaturas' },
+    { path: '/admin/plans', icon: Package, label: 'Planos' },
+    { path: '/admin/packages', icon: Package, label: 'Pacotes' },
+    { path: '/admin/coupons', icon: Gift, label: 'Cupons' },
+    { path: '/admin/content', icon: FileText, label: 'Conteúdo' },
+    { path: '/admin/hero-slider', icon: Monitor, label: 'Slider Hero' },
+    { path: '/admin/images', icon: Images, label: 'Imagens' },
   ];
 
-  const clientMenuItems: MenuItem[] = [
-    { path: '/profile', icon: User, label: 'Meu Perfil' },
-    { path: '/subscription', icon: CreditCard, label: 'Minha Assinatura' },
-  ];
+  // Add developer-only menu items
+  if (user?.role === 'desenvolvedor') {
+    menuItems.push(
+      { path: '/admin/customizations', icon: Palette, label: 'Personalizações' },
+      { path: '/admin/customization', icon: Settings, label: 'Configurações' }
+    );
+  }
 
-  const menuItems = isAdmin ? adminMenuItems : clientMenuItems;
-
-  const siteName = getCustomization('global_site_name', 'Painel Administrativo');
-  const adminLogo = getCustomization('admin_logo_image', '');
+  const isActive = (path: string) => {
+    if (path === '/admin') {
+      return location.pathname === '/admin';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   return (
-    <div 
-      id="admin-sidebar-unique"
-      className={`transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-16' : 'w-64'
-      } h-screen fixed left-0 top-0 flex flex-col bg-admin-sidebar-bg text-admin-sidebar-text shadow-lg z-50 border-r border-admin-border`}
-      style={{
-        backdropFilter: 'blur(8px)',
-        backgroundColor: 'rgba(var(--admin-sidebar-bg), 0.95)'
-      }}
-    >
-      {/* Toggle Button */}
-      <button
-        onClick={onToggle}
-        className="absolute -right-4 top-6 bg-admin-content-bg border-2 border-admin-border rounded-full p-2 hover:bg-admin-muted transition-all duration-200 shadow-lg z-[60]"
-        style={{
-          color: 'hsl(var(--admin-primary))'
-        }}
-      >
-        {isCollapsed ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
-      </button>
-
-      {/* Logo */}
-      <div className="p-6 border-b border-admin-border/50">
-        <div className="flex items-center justify-between">
-          <button 
-            onClick={() => handleNavigation('/')} 
-            className="flex items-center space-x-3 hover:opacity-80 transition-all duration-200 group"
-          >
-            {adminLogo ? (
-              <img src={adminLogo} alt="Logo" className="w-10 h-10 object-contain rounded-lg" />
-            ) : (
-              <div className="w-10 h-10 bg-gradient-to-br from-admin-primary to-admin-accent rounded-lg flex items-center justify-center text-admin-primary-foreground font-bold text-xl shadow-md">
-                G
-              </div>
-            )}
-            {!isCollapsed && (
-              <div className="flex flex-col">
-                <span className="font-bold text-lg text-admin-sidebar-text group-hover:text-admin-primary transition-colors">
-                  {siteName}
-                </span>
-                <span className="text-xs text-admin-muted-foreground">
-                  Painel Administrativo
-                </span>
-              </div>
-            )}
-          </button>
-          
-          {/* Notification Badge - Apenas para admins */}
-          {isAdmin && !isCollapsed && (
-            <div className="ml-auto flex items-center gap-2">
-              {loading ? (
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-admin-primary"></div>
-              ) : (
-                <>
-                  <NotificationBadge 
-                    count={totalPending} 
-                    onClick={() => setShowNotificationModal(true)} 
-                  />
-                  {hasNewNotifications && (
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="mt-2 flex-1 overflow-y-auto px-3 space-y-1">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          const hasPending = item.pendingCount && item.pendingCount > 0;
-          
-          return (
-            <button
-              key={item.path}
-              onClick={() => handleNavigation(item.path)}
-              disabled={isNavigating}
-              className={`group flex items-center justify-between w-full px-3 py-3 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-admin-primary text-admin-primary-foreground shadow-md scale-105' 
-                  : 'text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text hover:scale-102'
-              } ${isNavigating ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title={isCollapsed ? item.label : undefined}
-            >
-              <div className="flex items-center">
-                <Icon className={`h-5 w-5 min-w-[20px] transition-transform duration-200 ${
-                  isActive ? 'scale-110' : 'group-hover:scale-105'
-                }`} />
-                {!isCollapsed && (
-                  <span className="ml-3 font-medium">{item.label}</span>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {hasPending && !isCollapsed && (
-                  <Badge variant="destructive" className="text-xs">
-                    {item.pendingCount}
-                  </Badge>
-                )}
-                {isActive && !isCollapsed && (
-                  <div className="w-2 h-2 bg-admin-primary-foreground rounded-full animate-pulse"></div>
-                )}
-              </div>
-            </button>
-          );
-        })}
+    <aside className="w-64 bg-gray-800 border-r border-gray-700 min-h-screen">
+      <nav className="p-4">
+        <ul className="space-y-2">
+          {menuItems.map((item) => (
+            <li key={item.path}>
+              <Link
+                to={item.path}
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  isActive(item.path)
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                }`}
+              >
+                <item.icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
-
-      {/* Logout Button */}
-      <div className="p-4 border-t border-admin-border/50 mt-auto">
-        <button
-          onClick={logout}
-          className="group flex items-center w-full px-3 py-3 text-admin-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 rounded-lg"
-          title={isCollapsed ? 'Sair' : undefined}
-        >
-          <LogOut className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
-          {!isCollapsed && (
-            <span className="ml-3 font-medium">Sair</span>
-          )}
-        </button>
-      </div>
-
-      {/* Modal de Notificações */}
-      {isAdmin && (
-        <PendingNotificationModal
-          open={showNotificationModal}
-          onOpenChange={setShowNotificationModal}
-          pendingBids={pendingBids}
-          pendingRegistrations={pendingRegistrations}
-        />
-      )}
-    </div>
+    </aside>
   );
 };
 
