@@ -46,44 +46,42 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Admin System Colors - Valores padrão que podem ser sobrescritos dinamicamente */
-    --admin-primary: 224 71% 25%;
+    /* Admin System Colors - Modern Dark Theme */
+    --admin-primary: 220 91% 65%;
     --admin-primary-foreground: 0 0% 100%;
-    --admin-foreground: 0 0% 100%;
-    --admin-border: 215 14% 40%;
-    --admin-input: 215 14% 34%;
-    --admin-card: 215 14% 34%;
-    --admin-card-foreground: 0 0% 100%;
-    --admin-accent: 217 33% 18%;
-    --admin-accent-foreground: 0 0% 100%;
-    --admin-button-bg: 224 71% 25%;
+    --admin-foreground: 0 0% 95%;
+    --admin-border: 240 5% 26%;
+    --admin-input: 240 6% 20%;
+    --admin-card: 240 6% 15%;
+    --admin-card-foreground: 0 0% 95%;
+    --admin-accent: 240 5% 18%;
+    --admin-accent-foreground: 0 0% 95%;
+    --admin-button-bg: 220 91% 65%;
     --admin-button-text: 0 0% 100%;
-    --admin-button-hover: 224 71% 20%;
-    --admin-sidebar-bg: 215 14% 34%;
-    --admin-sidebar-text: 0 0% 100%;
-    --admin-content-bg: 222 84% 5%;
-    --admin-dashboard-text: 0 0% 100%;
-    --admin-dashboard-card: 215 14% 34%;
-    --admin-dashboard-card-text: 0 0% 100%;
-    --admin-table-header: 217 33% 18%;
-    --admin-table-bg: 215 14% 34%;
-    --admin-table-text: 0 0% 100%;
-    --admin-modal-bg: 215 14% 34%;
-    --admin-modal-text: 0 0% 100%;
-    --admin-datatable-bg: 215 14% 34%;
-    --admin-datatable-text: 0 0% 100%;
-    --admin-datatable-header: 217 33% 18%;
+    --admin-button-hover: 220 91% 55%;
+    --admin-sidebar-bg: 240 8% 10%;
+    --admin-sidebar-text: 0 0% 95%;
+    --admin-content-bg: 240 6% 8%;
+    --admin-dashboard-text: 0 0% 95%;
+    --admin-dashboard-card: 240 6% 15%;
+    --admin-dashboard-card-text: 0 0% 95%;
+    --admin-table-header: 240 5% 18%;
+    --admin-table-bg: 240 6% 15%;
+    --admin-table-text: 0 0% 95%;
+    --admin-modal-bg: 240 6% 15%;
+    --admin-modal-text: 0 0% 95%;
+    --admin-datatable-bg: 240 6% 15%;
+    --admin-datatable-text: 0 0% 95%;
+    --admin-datatable-header: 240 5% 18%;
     --admin-success: 142 76% 36%;
     --admin-success-foreground: 0 0% 100%;
     --admin-danger: 0 84% 60%;
     --admin-danger-foreground: 0 0% 100%;
     --admin-warning: 48 96% 53%;
     --admin-warning-foreground: 0 0% 0%;
-    --admin-muted: 215 14% 34%;
-    --admin-muted-foreground: 0 0% 70%;
+    --admin-muted: 240 5% 26%;
+    --admin-muted-foreground: 0 0% 65%;
   }
-
-  /* ... keep existing code (prevent sidebar duplication styles) */
 
   /* Prevent sidebar duplication and layout issues */
   #admin-sidebar-unique {
@@ -142,23 +140,23 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
     
-    /* Admin System Variables - Dark theme overrides */
-    --admin-primary: 217 91% 60%;
-    --admin-sidebar-bg: 215 28% 17%;
-    --admin-sidebar-text: 210 40% 98%;
-    --admin-content-bg: 222.2 84% 4.9%;
-    --admin-foreground: 210 40% 98%;
-    --admin-card: 222.2 84% 4.9%;
-    --admin-border: 217.2 32.6% 17.5%;
-    --admin-input: 217.2 32.6% 17.5%;
-    --admin-muted: 217.2 32.6% 17.5%;
-    --admin-muted-foreground: 215 20.2% 65.1%;
-    --admin-modal-bg: 222.2 84% 4.9%;
-    --admin-modal-text: 210 40% 98%;
-    --admin-datatable-bg: 222.2 84% 4.9%;
-    --admin-datatable-text: 210 40% 98%;
-    --admin-dashboard-card: 222.2 84% 4.9%;
-    --admin-dashboard-card-text: 210 40% 98%;
+    /* Admin System Variables - Enhanced Dark theme */
+    --admin-primary: 220 91% 65%;
+    --admin-sidebar-bg: 240 8% 10%;
+    --admin-sidebar-text: 0 0% 95%;
+    --admin-content-bg: 240 6% 8%;
+    --admin-foreground: 0 0% 95%;
+    --admin-card: 240 6% 15%;
+    --admin-border: 240 5% 26%;
+    --admin-input: 240 6% 20%;
+    --admin-muted: 240 5% 26%;
+    --admin-muted-foreground: 0 0% 65%;
+    --admin-modal-bg: 240 6% 15%;
+    --admin-modal-text: 0 0% 95%;
+    --admin-datatable-bg: 240 6% 15%;
+    --admin-datatable-text: 0 0% 95%;
+    --admin-dashboard-card: 240 6% 15%;
+    --admin-dashboard-card-text: 0 0% 95%;
   }
 }
 
@@ -168,6 +166,34 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Enhanced typography for admin area */
+  .admin-layout-container {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Better table styling for admin */
+  .admin-table {
+    @apply bg-admin-table-bg border border-admin-border rounded-lg overflow-hidden;
+  }
+
+  .admin-table th {
+    @apply bg-admin-table-header text-admin-foreground font-semibold px-4 py-3 text-left text-sm;
+  }
+
+  .admin-table td {
+    @apply px-4 py-3 text-admin-table-text border-t border-admin-border;
+  }
+
+  /* Enhanced card styling */
+  .admin-card {
+    @apply bg-admin-card border border-admin-border rounded-lg shadow-lg;
+  }
+
+  /* Better button contrast */
+  .admin-button {
+    @apply bg-admin-primary text-admin-primary-foreground font-medium rounded-md px-4 py-2 hover:bg-admin-button-hover transition-colors;
   }
 }

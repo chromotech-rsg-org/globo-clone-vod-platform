@@ -70,7 +70,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         }}
       >
         <div className="h-full overflow-y-auto p-6">
-          {children}
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-admin-card/50 backdrop-blur-sm rounded-xl border border-admin-border/50 shadow-xl p-6 min-h-[calc(100vh-12rem)]">
+              {children}
+            </div>
+          </div>
         </div>
       </div>
     </div>
