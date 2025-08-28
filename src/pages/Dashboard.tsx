@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -152,7 +151,7 @@ const Dashboard = () => {
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                className="border-gray-600 text-black hover:bg-gray-700"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
