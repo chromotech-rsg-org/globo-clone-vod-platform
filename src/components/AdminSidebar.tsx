@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -110,6 +111,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   }, []);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
+  const isDeveloper = user?.role === 'desenvolvedor';
   const isClient = user?.role === 'user';
 
   const adminMenuItems: MenuItem[] = [
@@ -132,7 +134,8 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       label: 'Lances',
       pendingCount: pendingBids.length
     },
-    { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
+    // Only show customization menu for developers
+    ...(isDeveloper ? [{ path: '/admin/personalizacao', icon: Palette, label: 'Personalização' }] : []),
   ];
 
   const clientMenuItems: MenuItem[] = [
