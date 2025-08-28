@@ -151,7 +151,7 @@ const Dashboard = () => {
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className="border-gray-600 text-black hover:bg-gray-700"
+                className="border-gray-600 text-black hover:bg-gray-700 hover:text-white"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
