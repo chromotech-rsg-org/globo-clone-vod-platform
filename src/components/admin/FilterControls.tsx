@@ -1,3 +1,4 @@
+
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -92,7 +93,11 @@ const FilterControls = ({ searchTerm, onSearchChange, filters, onClearFilters, d
         ))}
         
         {hasActiveFilters && (
-          <Button variant="outline" onClick={onClearFilters} className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={onClearFilters} 
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
+          >
             <X size={16} />
             Limpar Filtros
           </Button>

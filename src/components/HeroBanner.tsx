@@ -21,8 +21,6 @@ const HeroBanner = () => {
   const description = getCustomization('hero', 'description', 'Em um futuro pós-apocalíptico, Joel e Ellie precisam sobreviver em um mundo devastado por uma infecção que transforma humanos em criaturas.');
   const buttonText = getCustomization('hero', 'button_text', 'Assistir');
   const titleColor = getCustomization('hero', 'title_color', '#ffffff');
-  const buttonBackgroundColor = getCustomization('hero', 'button_background_color', '#ffffff');
-  const buttonTextColor = getCustomization('hero', 'button_text_color', '#000000');
 
   return (
     <div id="hero" className="relative h-[70vh] bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900">
@@ -54,13 +52,7 @@ const HeroBanner = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <button 
-                className="px-8 py-3 rounded-md font-semibold flex items-center justify-center space-x-2 hover:opacity-90 transition-colors"
-                style={{ 
-                  backgroundColor: buttonBackgroundColor,
-                  color: buttonTextColor
-                }}
-              >
+              <button className="px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-semibold flex items-center justify-center space-x-2 transition-colors">
                 <Play className="h-5 w-5 fill-current" />
                 <span>{buttonText}</span>
               </button>

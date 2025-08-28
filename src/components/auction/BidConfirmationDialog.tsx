@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -87,7 +88,10 @@ const BidConfirmationDialog = ({
           >
             Cancelar
           </Button>
-          <Button onClick={onConfirm}>
+          <Button 
+            onClick={onConfirm}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
             Confirmar Lance
           </Button>
         </DialogFooter>

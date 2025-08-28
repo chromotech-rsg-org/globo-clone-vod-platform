@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -54,7 +55,7 @@ const AuctionPromoBanner = () => {
               </div>
               <p className="text-xs text-muted-foreground">Total</p>
             </div>
-            <Button asChild size="lg">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Link to="/auctions">
                 Ver Leilões
               </Link>

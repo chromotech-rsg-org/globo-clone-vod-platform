@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +31,7 @@ const SubscriptionRequired = () => {
             </ul>
           </div>
           <div className="flex flex-col space-y-2">
-            <Button asChild className="w-full">
+            <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
               <Link to="/checkout">
                 <CreditCard className="h-4 w-4 mr-2" />
                 Assinar Agora
