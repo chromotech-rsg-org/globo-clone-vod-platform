@@ -1,13 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { Users, CreditCard, Package, DollarSign, Settings, LogOut, Gavel, UserCheck } from 'lucide-react';
+import { Users, CreditCard, Package, DollarSign, Settings, LogOut, Gavel, UserCheck, TrendingUp, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import AuctionBanner from '@/components/admin/AuctionBanner';
-
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -20,6 +21,28 @@ const Dashboard = () => {
     activeAuctions: 0
   });
   const [loading, setLoading] = useState(true);
+
+  // Dados mockados para os gráficos (em um sistema real, viriam do backend)
+  const monthlyData = [
+    { name: 'Jan', usuarios: 120, lances: 450, receita: 15000 },
+    { name: 'Fev', usuarios: 185, lances: 680, receita: 22000 },
+    { name: 'Mar', usuarios: 230, lances: 820, receita: 28000 },
+    { name: 'Abr', usuarios: 278, lances: 950, receita: 35000 },
+    { name: 'Mai', usuarios: 320, lances: 1200, receita: 42000 },
+    { name: 'Jun', usuarios: 385, lances: 1450, receita: 48000 },
+  ];
+
+  const pieData = [
+    { name: 'Usuários Ativos', value: 65, color: '#22c55e' },
+    { name: 'Usuários Inativos', value: 25, color: '#6b7280' },
+    { name: 'Novos Usuários', value: 10, color: '#10b981' },
+  ];
+
+  const auctionStatusData = [
+    { name: 'Ativos', value: 12, color: '#22c55e' },
+    { name: 'Finalizados', value: 45, color: '#6b7280' },
+    { name: 'Pendentes', value: 8, color: '#f59e0b' },
+  ];
 
   const fetchStats = async () => {
     if (!user || user.role === 'user') {
@@ -66,8 +89,8 @@ const Dashboard = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Carregando...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Carregando...</div>
       </div>
     );
   }
@@ -77,50 +100,58 @@ const Dashboard = () => {
       title: 'Suas Habilitações',
       value: '1',
       icon: UserCheck,
-      description: 'Habilitações solicitadas'
+      description: 'Habilitações solicitadas',
+      color: 'from-green-600 to-green-800'
     },
     {
       title: 'Seus Lances',
       value: '0',
       icon: Gavel,
-      description: 'Lances realizados'
+      description: 'Lances realizados',
+      color: 'from-green-500 to-green-700'
     },
     {
       title: 'Leilões Ativos',
       value: loading ? '...' : stats.activeAuctions.toString(),
       icon: Package,
-      description: 'Leilões em andamento'
+      description: 'Leilões em andamento',
+      color: 'from-green-400 to-green-600'
     },
     {
       title: 'Sua Assinatura',
       value: 'Ativa',
       icon: CreditCard,
-      description: 'Status da conta'
+      description: 'Status da conta',
+      color: 'from-green-600 to-green-800'
     }
   ] : [
     {
       title: 'Total de Usuários',
       value: loading ? '...' : stats.totalUsers.toString(),
       icon: Users,
-      description: 'Usuários cadastrados'
+      description: 'Usuários cadastrados',
+      color: 'from-green-600 to-green-800'
     },
     {
       title: 'Total de Leilões',
       value: loading ? '...' : stats.totalAuctions.toString(),
       icon: Gavel,
-      description: `${stats.activeAuctions} ativos`
+      description: `${stats.activeAuctions} ativos`,
+      color: 'from-green-500 to-green-700'
     },
     {
       title: 'Total de Lances',
       value: loading ? '...' : stats.totalBids.toString(),
       icon: DollarSign,
-      description: 'Lances realizados'
+      description: 'Lances realizados',
+      color: 'from-green-400 to-green-600'
     },
     {
       title: 'Habilitações',
       value: loading ? '...' : stats.totalRegistrations.toString(),
       icon: UserCheck,
-      description: 'Habilitações solicitadas'
+      description: 'Habilitações solicitadas',
+      color: 'from-green-600 to-green-800'
     }
   ];
 
@@ -133,16 +164,21 @@ const Dashboard = () => {
   ];
 
   return (
-    <>
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
+      <header className="bg-black border-b border-green-600/30">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <h1 className="text-xl font-bold text-white">
                 Dashboard {user.role === 'user' ? 'Pessoal' : 'Administrativo'}
               </h1>
-              <Badge variant="secondary">{user.role}</Badge>
+              <Badge 
+                variant="secondary" 
+                className="bg-green-600 text-white hover:bg-green-700"
+              >
+                {user.role}
+              </Badge>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -151,7 +187,7 @@ const Dashboard = () => {
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className="border-gray-600 text-black hover:bg-gray-700 hover:text-white"
+                className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white transition-colors"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
@@ -178,7 +214,7 @@ const Dashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {dashboardStats.map((stat, index) => (
-            <Card key={index} className="bg-gray-800 border-gray-700">
+            <Card key={index} className="bg-black border border-green-600/30 green-glow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -192,12 +228,169 @@ const Dashboard = () => {
                       {stat.description}
                     </p>
                   </div>
-                  <stat.icon className="h-8 w-8 text-blue-500" />
+                  <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
+                    <stat.icon className="h-6 w-6 text-white" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Charts Section for Admin */}
+        {(user.role === 'admin' || user.role === 'desenvolvedor') && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Line Chart */}
+            <Card className="bg-black border border-green-600/30 green-glow">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-400" />
+                  Crescimento Mensal
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  Usuários e lances por mês
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#111827', 
+                        border: '1px solid #22c55e',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="usuarios" 
+                      stroke="#22c55e" 
+                      strokeWidth={3}
+                      name="Usuários"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="lances" 
+                      stroke="#10b981" 
+                      strokeWidth={3}
+                      name="Lances"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Area Chart */}
+            <Card className="bg-black border border-green-600/30 green-glow">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-green-400" />
+                  Receita Mensal
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  Evolução da receita ao longo do tempo
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#111827', 
+                        border: '1px solid #22c55e',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="receita" 
+                      stroke="#22c55e" 
+                      fill="url(#colorReceita)"
+                      strokeWidth={2}
+                    />
+                    <defs>
+                      <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Pie Chart - User Distribution */}
+            <Card className="bg-black border border-green-600/30 green-glow">
+              <CardHeader>
+                <CardTitle className="text-white">Distribuição de Usuários</CardTitle>
+                <CardDescription className="text-gray-400">
+                  Status dos usuários na plataforma
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#111827', 
+                        border: '1px solid #22c55e',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Bar Chart - Auction Status */}
+            <Card className="bg-black border border-green-600/30 green-glow">
+              <CardHeader>
+                <CardTitle className="text-white">Status dos Leilões</CardTitle>
+                <CardDescription className="text-gray-400">
+                  Distribuição por status dos leilões
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={auctionStatusData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#111827', 
+                        border: '1px solid #22c55e',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Bar dataKey="value" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Admin Menu */}
         {(user.role === 'admin' || user.role === 'desenvolvedor') && (
@@ -205,7 +398,7 @@ const Dashboard = () => {
             <h2 className="text-2xl font-bold text-white mb-6">Área Administrativa</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {adminMenuItems.map((item, index) => (
-                <Card key={index} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
+                <Card key={index} className="bg-black border border-green-600/30 hover:border-green-500 transition-all duration-300 green-glow hover:shadow-xl">
                   <CardHeader>
                     <CardTitle className="text-white">{item.title}</CardTitle>
                     <CardDescription className="text-gray-400">
@@ -214,7 +407,7 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <Link to={item.href}>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white transition-colors">
                         <Settings className="h-4 w-4 mr-2" />
                         Acessar
                       </Button>
@@ -226,7 +419,7 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 
