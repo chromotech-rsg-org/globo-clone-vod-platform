@@ -100,7 +100,7 @@ const CheckoutCouponStep = ({
       </Card>
 
       <div className="flex gap-4">
-        <Button onClick={onSkip} variant="outline" className="flex-1 border-gray-600 hover:bg-gray-700 text-slate-50">
+        <Button onClick={onSkip} variant="outline" className="flex-1 border-gray-600 hover:bg-gray-700 text-slate-950">
           Pular
         </Button>
         <Button onClick={handleApplyCoupon} disabled={!validatedCoupon} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
