@@ -37,12 +37,13 @@ const FilterControls = ({ searchTerm, onSearchChange, filters, onClearFilters, d
     <div className="space-y-4 mb-6">
       <div className="flex flex-wrap gap-4 items-end">
         <div className="flex-1 min-w-64">
-          <Label htmlFor="search">Buscar</Label>
+          <Label htmlFor="search" className="text-white">Buscar</Label>
           <Input
             id="search"
             placeholder="Buscar em todos os campos..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
+            className="bg-black border-green-600/30 text-white placeholder:text-gray-400 focus:border-green-500"
           />
         </div>
         
@@ -50,25 +51,26 @@ const FilterControls = ({ searchTerm, onSearchChange, filters, onClearFilters, d
         {dateRange && (
           <>
             <div className="min-w-40">
-              <Label htmlFor="date-from">Data Início</Label>
+              <Label htmlFor="date-from" className="text-white">Data Início</Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="date-from"
                   type="date"
                   value={dateRange.from}
                   onChange={(e) => dateRange.onFromChange(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-black border-green-600/30 text-white focus:border-green-500"
                 />
               </div>
             </div>
             <div className="min-w-40">
-              <Label htmlFor="date-to">Data Fim</Label>
+              <Label htmlFor="date-to" className="text-white">Data Fim</Label>
               <Input
                 id="date-to"
                 type="date"
                 value={dateRange.to}
                 onChange={(e) => dateRange.onToChange(e.target.value)}
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
               />
             </div>
           </>
@@ -76,14 +78,14 @@ const FilterControls = ({ searchTerm, onSearchChange, filters, onClearFilters, d
         
         {filters.map((filter) => (
           <div key={filter.key} className="min-w-48">
-            <Label htmlFor={filter.key}>{filter.label}</Label>
+            <Label htmlFor={filter.key} className="text-white">{filter.label}</Label>
             <Select value={filter.value} onValueChange={filter.onChange}>
-              <SelectTrigger id={filter.key}>
+              <SelectTrigger id={filter.key} className="bg-black border-green-600/30 text-white focus:border-green-500">
                 <SelectValue placeholder={`Filtrar por ${filter.label.toLowerCase()}`} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black border-green-600/30">
                 {filter.options.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem key={option.value} value={option.value} className="text-white hover:bg-green-600/20">
                     {option.label}
                   </SelectItem>
                 ))}
@@ -96,7 +98,7 @@ const FilterControls = ({ searchTerm, onSearchChange, filters, onClearFilters, d
           <Button 
             variant="outline" 
             onClick={onClearFilters} 
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-green-600"
           >
             <X size={16} />
             Limpar Filtros
