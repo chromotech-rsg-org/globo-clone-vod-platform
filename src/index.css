@@ -197,25 +197,25 @@
 
   /* Enhanced card styling with green borders */
   .admin-card {
-    @apply bg-admin-card border border-admin-green-secondary rounded-lg shadow-lg;
+    @apply bg-admin-card border border-admin-border rounded-lg shadow-lg;
   }
 
   /* Better button contrast with green theme */
   .admin-button {
-    @apply bg-admin-green-primary text-admin-primary-foreground font-medium rounded-md px-4 py-2 hover:bg-admin-green-light transition-colors;
+    @apply bg-admin-primary text-admin-primary-foreground font-medium rounded-md px-4 py-2 hover:bg-admin-primary transition-colors;
   }
 
   /* Green accent utilities */
   .green-border {
-    border-color: hsl(var(--admin-green-primary));
+    border-color: hsl(var(--admin-primary));
   }
 
   .green-glow {
-    box-shadow: 0 0 20px hsla(var(--admin-green-primary), 0.3);
+    box-shadow: 0 0 20px hsla(var(--admin-primary), 0.3);
   }
 
   .stat-card-green {
-    background: linear-gradient(135deg, hsl(var(--admin-card)) 0%, hsl(var(--admin-green-dark)) 100%);
-    border: 1px solid hsl(var(--admin-green-secondary));
+    background: linear-gradient(135deg, hsl(var(--admin-card)) 0%, hsl(var(--admin-primary)) 100%);
+    border: 1px solid hsl(var(--admin-border));
   }
 }
