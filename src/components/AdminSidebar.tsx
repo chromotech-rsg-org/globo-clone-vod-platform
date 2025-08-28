@@ -249,16 +249,18 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                 )}
               </div>
               
-              <div className="flex items-center gap-2">
-                {hasPending && !isCollapsed && (
-                  <Badge variant="destructive" className="text-xs">
-                    {item.pendingCount}
-                  </Badge>
-                )}
-                {isActive && !isCollapsed && (
-                  <div className="w-2 h-2 bg-admin-primary-foreground rounded-full animate-pulse"></div>
-                )}
-              </div>
+              {((hasPending && !isCollapsed) || (isActive && !isCollapsed)) && (
+                <div className="flex items-center gap-2">
+                  {hasPending && !isCollapsed && (
+                    <Badge variant="destructive" className="text-xs">
+                      {item.pendingCount}
+                    </Badge>
+                  )}
+                  {isActive && !isCollapsed && (
+                    <div className="w-2 h-2 bg-admin-primary-foreground rounded-full animate-pulse"></div>
+                  )}
+                </div>
+              )}
             </button>
           );
         })}
