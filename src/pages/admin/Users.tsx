@@ -498,11 +498,11 @@ const AdminUsers = () => {
         <div className="space-y-4">
           {filteredUsers.map((user) => (
             <Card key={user.id} className="bg-gray-800 border-gray-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-4 mb-2">
-                      <h3 className="text-lg font-semibold text-white">{user.name}</h3>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-3">
+                      <h3 className="text-lg font-semibold text-white mb-2 sm:mb-0">{user.name}</h3>
                       <Badge variant={
                         user.role === 'admin' ? 'default' : 
                         user.role === 'desenvolvedor' ? 'destructive' : 
@@ -512,27 +512,27 @@ const AdminUsers = () => {
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-sm">
+                      <div className="min-w-0">
                         <p className="text-gray-400">Email</p>
-                        <p className="text-white">{user.email}</p>
+                        <p className="text-white truncate">{user.email}</p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-gray-400">CPF</p>
                         <p className="text-white">{user.cpf || 'Não informado'}</p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-gray-400">Telefone</p>
                         <p className="text-white">{user.phone || 'Não informado'}</p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-gray-400">Cadastrado em</p>
                         <p className="text-white">{new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-row sm:flex-col lg:flex-row items-start sm:items-end lg:items-center space-x-2 sm:space-x-0 sm:space-y-2 lg:space-y-0 lg:space-x-2 flex-shrink-0">
                     <Button
                       variant="outline"
                       size="sm"
