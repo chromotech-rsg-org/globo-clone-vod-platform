@@ -246,7 +246,7 @@ const AdminPlans = () => {
       </div>;
   }
   return <>
-      <header className="bg-gray-800 border-b border-gray-700">
+      <header className="bg-black border-b border-green-600/30">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Planos</h1>
         </div>
@@ -257,7 +257,7 @@ const AdminPlans = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input placeholder="Buscar planos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-gray-700 border-gray-600 text-white" />
+            <Input placeholder="Buscar planos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-black border-green-600/30 text-white" />
           </div>
           
           <Button onClick={handleCreate} variant="admin">
@@ -267,7 +267,7 @@ const AdminPlans = () => {
         </div>
 
         {/* Plans Table */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-black border-green-600/30">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -313,7 +313,7 @@ const AdminPlans = () => {
           </CardContent>
         </Card>
 
-        {filteredPlans.length === 0 && <Card className="bg-gray-800 border-gray-700 mt-6">
+        {filteredPlans.length === 0 && <Card className="bg-black border-green-600/30 mt-6">
             <CardContent className="p-12 text-center">
               <p className="text-gray-400">Nenhum plano encontrado</p>
             </CardContent>
@@ -322,7 +322,7 @@ const AdminPlans = () => {
 
       {/* Edit/Create Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-2xl">
+        <DialogContent className="bg-black border-green-600/30 text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {editingItem ? 'Editar Plano' : 'Novo Plano'}
@@ -336,7 +336,7 @@ const AdminPlans = () => {
                 <Input id="name" value={formData.name} onChange={e => setFormData({
                 ...formData,
                 name: e.target.value
-              })} className="bg-gray-700 border-gray-600 text-white" placeholder="Nome do plano" />
+              })} className="bg-black border-green-600/30 text-white" placeholder="Nome do plano" />
               </div>
 
               <div>
@@ -344,7 +344,7 @@ const AdminPlans = () => {
                 <Input id="priority" type="number" value={formData.priority} onChange={e => setFormData({
                 ...formData,
                 priority: parseInt(e.target.value) || 0
-              })} className="bg-gray-700 border-gray-600 text-white" placeholder="0" />
+              })} className="bg-black border-green-600/30 text-white" placeholder="0" />
               </div>
             </div>
 
@@ -354,7 +354,7 @@ const AdminPlans = () => {
                 <Input id="price" type="number" step="0.01" value={formData.price} onChange={e => setFormData({
                 ...formData,
                 price: parseFloat(e.target.value) || 0
-              })} className="bg-gray-700 border-gray-600 text-white" placeholder="0.00" />
+              })} className="bg-black border-green-600/30 text-white" placeholder="0.00" />
               </div>
 
               <div>
@@ -362,7 +362,7 @@ const AdminPlans = () => {
                 <Input id="free_days" type="number" value={formData.free_days} onChange={e => setFormData({
                 ...formData,
                 free_days: parseInt(e.target.value) || 0
-              })} className="bg-gray-700 border-gray-600 text-white" placeholder="0" />
+              })} className="bg-black border-green-600/30 text-white" placeholder="0" />
               </div>
             </div>
 
@@ -373,7 +373,7 @@ const AdminPlans = () => {
                 ...formData,
                 billing_cycle: value
               })}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectTrigger className="bg-black border-green-600/30 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -392,7 +392,7 @@ const AdminPlans = () => {
                 ...formData,
                 payment_type: value
               })}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectTrigger className="bg-black border-green-600/30 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -409,7 +409,7 @@ const AdminPlans = () => {
               <Textarea id="description" value={formData.description} onChange={e => setFormData({
               ...formData,
               description: e.target.value
-            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Descrição do plano" rows={3} />
+            })} className="bg-black border-green-600/30 text-white" placeholder="Descrição do plano" rows={3} />
             </div>
 
             <div>
@@ -417,7 +417,7 @@ const AdminPlans = () => {
               <Textarea id="benefits" value={formData.benefits} onChange={e => setFormData({
               ...formData,
               benefits: e.target.value
-            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Globoplay completo&#10;Canais ao vivo&#10;Download para offline" rows={4} />
+            })} className="bg-black border-green-600/30 text-white" placeholder="Globoplay completo&#10;Canais ao vivo&#10;Download para offline" rows={4} />
             </div>
 
             <div className="flex space-x-6">
