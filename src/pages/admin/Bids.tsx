@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Search, Eye } from 'lucide-react';
+import { Trash2, Search, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -153,9 +152,9 @@ const AdminBids = () => {
                           size="sm" 
                           variant="ghost" 
                           onClick={() => handleViewDetails(bid)}
-                          className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
+                          className="text-gray-400 hover:text-white hover:bg-gray-800"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
                           size="sm" 
