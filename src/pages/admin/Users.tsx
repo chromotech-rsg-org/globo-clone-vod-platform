@@ -466,7 +466,7 @@ const AdminUsers = () => {
   return (
     <>
       {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
+      <header className="bg-black border-b border-green-600/30">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Usuários</h1>
         </div>
@@ -474,7 +474,7 @@ const AdminUsers = () => {
 
       <div className="p-6">
         {/* Search and Create */}
-        <Card className="bg-gray-800 border-gray-700 mb-6">
+        <Card className="bg-black border-green-600/30 mb-6">
           <CardContent className="p-6">
             <div className="flex justify-between items-center gap-4">
               <div className="relative flex-1">
@@ -483,7 +483,7 @@ const AdminUsers = () => {
                   placeholder="Buscar usuários por nome ou email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white"
+                  className="pl-10 bg-black border-green-600/30 text-white focus:border-green-500"
                 />
               </div>
               <Button variant="admin" onClick={handleCreate}>
@@ -497,7 +497,7 @@ const AdminUsers = () => {
         {/* Users List */}
         <div className="space-y-4">
           {filteredUsers.map((user) => (
-            <Card key={user.id} className="bg-gray-800 border-gray-700">
+            <Card key={user.id} className="bg-black border-green-600/30">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
                   <div className="flex-1 min-w-0">
@@ -567,7 +567,7 @@ const AdminUsers = () => {
         </div>
 
         {filteredUsers.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-black border-green-600/30">
             <CardContent className="p-12 text-center">
               <p className="text-gray-400">Nenhum usuário encontrado</p>
             </CardContent>
@@ -577,7 +577,7 @@ const AdminUsers = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+        <DialogContent className="bg-black border-green-600/30 text-white">
           <DialogHeader>
             <DialogTitle>Editar Usuário</DialogTitle>
           </DialogHeader>
@@ -589,7 +589,7 @@ const AdminUsers = () => {
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
               />
             </div>
 
@@ -600,7 +600,7 @@ const AdminUsers = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
               />
             </div>
 
@@ -610,7 +610,7 @@ const AdminUsers = () => {
                 id="cpf"
                 value={formData.cpf}
                 onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
                 placeholder="000.000.000-00"
               />
             </div>
@@ -621,7 +621,7 @@ const AdminUsers = () => {
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
                 placeholder="(11) 99999-9999"
               />
             </div>
@@ -632,14 +632,14 @@ const AdminUsers = () => {
                 value={formData.role}
                 onValueChange={(value) => setFormData({ ...formData, role: value })}
               >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger className="bg-black border-green-600/30 text-white focus:border-green-500">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">Usuário</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
+                <SelectContent className="bg-black border-green-600/30">
+                  <SelectItem value="user" className="text-white hover:bg-green-600/20">Usuário</SelectItem>
+                  <SelectItem value="admin" className="text-white hover:bg-green-600/20">Administrador</SelectItem>
                   {isDeveloper && (
-                    <SelectItem value="desenvolvedor">Desenvolvedor</SelectItem>
+                    <SelectItem value="desenvolvedor" className="text-white hover:bg-green-600/20">Desenvolvedor</SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -661,7 +661,7 @@ const AdminUsers = () => {
 
       {/* View Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+        <DialogContent className="bg-black border-green-600/30 text-white">
           <DialogHeader>
             <DialogTitle>Detalhes do Usuário</DialogTitle>
           </DialogHeader>
@@ -707,7 +707,7 @@ const AdminUsers = () => {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+        <DialogContent className="bg-black border-green-600/30 text-white">
           <DialogHeader>
             <DialogTitle>Criar Usuário</DialogTitle>
           </DialogHeader>
@@ -719,7 +719,7 @@ const AdminUsers = () => {
                 id="create-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
                 placeholder="Nome completo"
               />
             </div>
@@ -731,7 +731,7 @@ const AdminUsers = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
                 placeholder="email@exemplo.com"
               />
             </div>
@@ -742,7 +742,7 @@ const AdminUsers = () => {
                 id="create-cpf"
                 value={formData.cpf}
                 onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
                 placeholder="000.000.000-00"
               />
             </div>
@@ -753,7 +753,7 @@ const AdminUsers = () => {
                 id="create-phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
                 placeholder="(11) 99999-9999"
               />
             </div>
@@ -764,14 +764,14 @@ const AdminUsers = () => {
                 value={formData.role}
                 onValueChange={(value) => setFormData({ ...formData, role: value })}
               >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger className="bg-black border-green-600/30 text-white focus:border-green-500">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">Usuário</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
+                <SelectContent className="bg-black border-green-600/30">
+                  <SelectItem value="user" className="text-white hover:bg-green-600/20">Usuário</SelectItem>
+                  <SelectItem value="admin" className="text-white hover:bg-green-600/20">Administrador</SelectItem>
                   {isDeveloper && (
-                    <SelectItem value="desenvolvedor">Desenvolvedor</SelectItem>
+                    <SelectItem value="desenvolvedor" className="text-white hover:bg-green-600/20">Desenvolvedor</SelectItem>
                   )}
                 </SelectContent>
               </Select>
