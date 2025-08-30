@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,15 +8,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trash2, Search, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import FilterControls from '@/components/admin/FilterControls';
 
 interface Bid {
   id: string;
-  auction_id: string | null;
-  user_id: string | null;
-  amount: number | null;
-  bid_time: string | null;
-  // Adicione outros campos conforme necessário
+  auction_id: string;
+  user_id: string;
+  auction_item_id: string;
+  bid_value: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  approved_by?: string;
+  is_winner: boolean;
+  internal_notes?: string;
+  client_notes?: string;
 }
 
 const AdminBids = () => {
@@ -33,9 +39,10 @@ const AdminBids = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('bids')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       if (error) throw error;
-      setBids(data || []);
+      setBids(data as Bid[] || []);
     } catch (error) {
       console.error('Erro ao buscar lances:', error);
       toast({
@@ -72,7 +79,6 @@ const AdminBids = () => {
   };
 
   const handleViewDetails = (bid: Bid) => {
-    // Implemente a lógica para visualizar os detalhes do lance
     console.log('Visualizar detalhes do lance:', bid);
     toast({
       title: "Detalhes",
@@ -81,8 +87,8 @@ const AdminBids = () => {
   };
 
   const filteredBids = bids.filter(bid =>
-    bid.id.toLowerCase().includes(searchTerm.toLowerCase()) || // Ajuste conforme necessário
-    (bid.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) // Exemplo com user_id
+    bid.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (bid.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
   );
 
   return (
@@ -117,18 +123,30 @@ const AdminBids = () => {
                   <TableHead className="text-admin-muted-foreground">Leilão ID</TableHead>
                   <TableHead className="text-admin-muted-foreground">Usuário ID</TableHead>
                   <TableHead className="text-admin-muted-foreground">Valor</TableHead>
-                  <TableHead className="text-admin-muted-foreground">Tempo</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Status</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Data</TableHead>
                   <TableHead className="text-admin-muted-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredBids.map(bid => (
                   <TableRow key={bid.id} className="border-admin-border">
-                    <TableCell className="text-admin-table-text">{bid.id}</TableCell>
-                    <TableCell className="text-admin-table-text">{bid.auction_id}</TableCell>
-                    <TableCell className="text-admin-table-text">{bid.user_id}</TableCell>
-                    <TableCell className="text-admin-table-text">{bid.amount}</TableCell>
-                    <TableCell className="text-admin-table-text">{bid.bid_time}</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.auction_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.user_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-admin-table-text">R$ {bid.bid_value}</TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        bid.status === 'approved' ? 'admin-success' :
+                        bid.status === 'rejected' ? 'admin-danger' :
+                        'secondary'
+                      }>
+                        {bid.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-admin-table-text">
+                      {new Date(bid.created_at).toLocaleDateString()}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 

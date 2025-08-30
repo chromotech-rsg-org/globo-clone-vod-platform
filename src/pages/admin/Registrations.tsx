@@ -1,13 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2, Search, Eye, UserCheck, UserX } from 'lucide-react';
+import { Trash2, Search, Eye, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import FilterControls from '@/components/admin/FilterControls';
 
 interface Registration {
   id: string;
@@ -16,15 +16,10 @@ interface Registration {
   status: 'pending' | 'approved' | 'rejected' | 'canceled';
   created_at: string;
   updated_at: string;
-  // Assuming you might want to display user info
-  user?: {
-    id: string;
-    email: string;
-  };
-  auction?: {
-    id: string;
-    title: string;
-  };
+  internal_notes?: string;
+  client_notes?: string;
+  approved_by?: string;
+  next_registration_allowed_at?: string;
 }
 
 const AdminRegistrations = () => {
@@ -43,16 +38,7 @@ const AdminRegistrations = () => {
     try {
       let query = supabase
         .from('auction_registrations')
-        .select(`
-          id,
-          auction_id,
-          user_id,
-          status,
-          created_at,
-          updated_at,
-          user:user_id (id, email),
-          auction:auction_id (id, title)
-        `);
+        .select('*');
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -70,7 +56,7 @@ const AdminRegistrations = () => {
         return;
       }
 
-      setRegistrations(data || []);
+      setRegistrations(data as Registration[] || []);
     } catch (error) {
       console.error('Error fetching registrations:', error);
       toast({
@@ -104,7 +90,7 @@ const AdminRegistrations = () => {
         title: 'Success',
         description: 'Registration status updated successfully.',
       });
-      fetchRegistrations(); // Refresh data
+      fetchRegistrations();
     } catch (error) {
       console.error('Error updating registration status:', error);
       toast({
@@ -136,15 +122,15 @@ const AdminRegistrations = () => {
   };
 
   const handleViewDetails = (registration: Registration) => {
-    // Implement your view details logic here
     alert(`View details for registration ID: ${registration.id}`);
   };
 
   const filteredRegistrations = registrations.filter(reg => {
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      reg.user?.email?.toLowerCase().includes(searchTermLower) ||
-      reg.auction?.title?.toLowerCase().includes(searchTermLower)
+      reg.id.toLowerCase().includes(searchTermLower) ||
+      reg.auction_id.toLowerCase().includes(searchTermLower) ||
+      reg.user_id.toLowerCase().includes(searchTermLower)
     );
   });
 
@@ -163,13 +149,23 @@ const AdminRegistrations = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="text"
-              placeholder="Buscar por email ou leilão..."
+              placeholder="Buscar por ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
             />
           </div>
-          <FilterControls statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 bg-black border border-green-600/30 text-white rounded"
+          >
+            <option value="all">Todos os Status</option>
+            <option value="pending">Pendente</option>
+            <option value="approved">Aprovado</option>
+            <option value="rejected">Rejeitado</option>
+            <option value="canceled">Cancelado</option>
+          </select>
         </div>
 
         {/* Registrations Table */}
@@ -178,8 +174,9 @@ const AdminRegistrations = () => {
             <Table>
               <TableHeader>
                 <TableRow className="border-admin-border">
-                  <TableHead className="text-admin-muted-foreground">Leilão</TableHead>
-                  <TableHead className="text-admin-muted-foreground">Usuário</TableHead>
+                  <TableHead className="text-admin-muted-foreground">ID</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Leilão ID</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Usuário ID</TableHead>
                   <TableHead className="text-admin-muted-foreground">Status</TableHead>
                   <TableHead className="text-admin-muted-foreground">Data de Registro</TableHead>
                   <TableHead className="text-admin-muted-foreground">Ações</TableHead>
@@ -188,28 +185,28 @@ const AdminRegistrations = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center p-4 text-admin-table-text">
+                    <TableCell colSpan={6} className="text-center p-4 text-admin-table-text">
                       Carregando habilitações...
                     </TableCell>
                   </TableRow>
                 ) : filteredRegistrations.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center p-4 text-admin-table-text">
+                    <TableCell colSpan={6} className="text-center p-4 text-admin-table-text">
                       Nenhuma habilitação encontrada.
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredRegistrations.map(registration => (
                     <TableRow key={registration.id} className="border-admin-border">
-                      <TableCell className="text-admin-table-text">{registration.auction?.title}</TableCell>
-                      <TableCell className="text-admin-table-text">{registration.user?.email}</TableCell>
+                      <TableCell className="text-admin-table-text">{registration.id.slice(0, 8)}...</TableCell>
+                      <TableCell className="text-admin-table-text">{registration.auction_id.slice(0, 8)}...</TableCell>
+                      <TableCell className="text-admin-table-text">{registration.user_id.slice(0, 8)}...</TableCell>
                       <TableCell>
-                        <Badge variant={{
-                            approved: 'admin-success',
-                            pending: 'secondary',
-                            rejected: 'admin-danger',
-                            canceled: 'admin-danger',
-                          }[registration.status] || 'default'}>
+                        <Badge variant={
+                          registration.status === 'approved' ? 'admin-success' :
+                          registration.status === 'pending' ? 'secondary' :
+                          'admin-danger'
+                        }>
                           {registration.status}
                         </Badge>
                       </TableCell>

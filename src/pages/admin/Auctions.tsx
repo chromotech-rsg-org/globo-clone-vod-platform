@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,33 +9,19 @@ import { Edit, Trash2, Plus, Search, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import FilterControls from '@/components/admin/FilterControls';
-
-interface Auction {
-  id: string;
-  title: string;
-  description: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  start_price: number | null;
-  current_price: number | null;
-  status: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  package_id: string | null;
-}
+import { Auction } from '@/types/auction';
 
 const AdminAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<{ status: string | null }>({ status: null });
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchAuctions();
-  }, [filters]);
+  }, [statusFilter]);
 
   const fetchAuctions = async () => {
     try {
@@ -44,8 +31,8 @@ const AdminAuctions = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (filters.status) {
-        query = query.eq('status', filters.status);
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
       }
 
       const { data, error } = await query;
@@ -55,7 +42,7 @@ const AdminAuctions = () => {
         throw error;
       }
 
-      setAuctions(data || []);
+      setAuctions(data as Auction[] || []);
     } catch (error: any) {
       console.error('Erro ao buscar leilões:', error);
       toast({
@@ -97,7 +84,7 @@ const AdminAuctions = () => {
   };
 
   const filteredAuctions = auctions.filter(auction =>
-    auction.title.toLowerCase().includes(searchTerm.toLowerCase())
+    auction.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -132,7 +119,17 @@ const AdminAuctions = () => {
           </Button>
         </div>
 
-        <FilterControls filters={filters} setFilters={setFilters} />
+        <div className="flex gap-4 mb-6">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 bg-black border border-green-600/30 text-white rounded"
+          >
+            <option value="all">Todos os Status</option>
+            <option value="active">Ativo</option>
+            <option value="inactive">Inativo</option>
+          </select>
+        </div>
 
         {/* Auctions Table */}
         <Card className="bg-black border-green-600/30">
@@ -140,7 +137,7 @@ const AdminAuctions = () => {
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-300">Título</TableHead>
+                  <TableHead className="text-gray-300">Nome</TableHead>
                   <TableHead className="text-gray-300">Status</TableHead>
                   <TableHead className="text-gray-300">Data de Início</TableHead>
                   <TableHead className="text-gray-300">Data de Encerramento</TableHead>
@@ -150,18 +147,21 @@ const AdminAuctions = () => {
               <TableBody>
                 {filteredAuctions.map(auction => (
                   <TableRow key={auction.id} className="border-gray-700">
-                    <TableCell className="text-white">{auction.title}</TableCell>
+                    <TableCell className="text-white">{auction.name}</TableCell>
                     <TableCell>
                       <Badge variant={
                         auction.status === 'active' ? 'admin-success' :
-                          auction.status === 'scheduled' ? 'admin' :
-                            'admin-muted'
+                          'admin-muted'
                       }>
                         {auction.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-white">{auction.start_date}</TableCell>
-                    <TableCell className="text-white">{auction.end_date}</TableCell>
+                    <TableCell className="text-white">
+                      {auction.start_date ? new Date(auction.start_date).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell className="text-white">
+                      {auction.end_date ? new Date(auction.end_date).toLocaleDateString() : '-'}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
