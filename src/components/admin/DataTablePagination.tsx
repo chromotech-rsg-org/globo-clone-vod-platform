@@ -55,7 +55,7 @@ const DataTablePagination: React.FC<DataTablePaginationProps> = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent side="top" className="bg-admin-content-bg border-admin-border">
-            {[10, 25, 50, 100].map((size) => (
+            {[5, 10, 30, 50, 100].map((size) => (
               <SelectItem key={size} value={size.toString()} className="text-admin-table-text hover:bg-gray-800">
                 {size}
               </SelectItem>
