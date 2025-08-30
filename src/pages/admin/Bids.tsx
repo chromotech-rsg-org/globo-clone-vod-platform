@@ -1,547 +1,171 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/components/ui/use-toast';
+import { Trash2, Search, Eye } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Bid } from '@/types/auction';
 import FilterControls from '@/components/admin/FilterControls';
-import { Check, X, Eye, Clock, Trophy, AlertCircle, Sparkles } from 'lucide-react';
-import { formatDateTime, formatCurrency } from '@/utils/formatters';
 
-interface BidWithDetails extends Bid {
-  auction_name?: string;
-  auction_item_name?: string;
-  user_name?: string;
-  user_email?: string;
-  auction_is_live?: boolean;
-  isNew?: boolean;
+interface Bid {
+  id: string;
+  auction_id: string | null;
+  user_id: string | null;
+  amount: number | null;
+  bid_time: string | null;
+  // Adicione outros campos conforme necessário
 }
 
-const Bids = () => {
-  const [bids, setBids] = useState<BidWithDetails[]>([]);
+const AdminBids = () => {
+  const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedBid, setSelectedBid] = useState<BidWithDetails | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [auctionFilter, setAuctionFilter] = useState<string>('all');
-  const [liveFilter, setLiveFilter] = useState<string>('all');
-  const [winnerFilter, setWinnerFilter] = useState<string>('all');
-  const [auctions, setAuctions] = useState<any[]>([]);
-  const [internalNotes, setInternalNotes] = useState('');
-  const [clientNotes, setClientNotes] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [newBidIds, setNewBidIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchBids();
+  }, []);
 
   const fetchBids = async () => {
     try {
       setLoading(true);
-      
       const { data, error } = await supabase
         .from('bids')
-        .select(`
-          *,
-          auctions!inner(name, is_live),
-          auction_items!inner(name),
-          profiles!bids_user_id_fkey(name, email)
-        `)
-        .order('created_at', { ascending: false });
-
+        .select('*');
       if (error) throw error;
-
-      const formattedData = data.map(item => ({
-        ...item,
-        auction_name: item.auctions?.name,
-        auction_is_live: item.auctions?.is_live,
-        auction_item_name: item.auction_items?.name,
-        user_name: item.profiles?.name,
-        user_email: item.profiles?.email,
-        isNew: newBidIds.has(item.id)
-      })) as BidWithDetails[];
-
-      setBids(formattedData);
-      
-      // Set up real-time subscription
-      const subscription = supabase
-        .channel('bids-changes')
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bids'
-        }, (payload) => {
-          console.log('🆕 Novo lance inserido:', payload);
-          setNewBidIds(prev => new Set([...prev, payload.new.id]));
-          fetchBids();
-          
-          // Remove highlight after 10 seconds
-          setTimeout(() => {
-            setNewBidIds(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(payload.new.id);
-              return newSet;
-            });
-          }, 10000);
-        })
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'bids'
-        }, () => {
-          fetchBids();
-        })
-        .on('postgres_changes', {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'bids'
-        }, () => {
-          fetchBids();
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(subscription);
-      };
+      setBids(data || []);
     } catch (error) {
-      console.error('Error fetching bids:', error);
+      console.error('Erro ao buscar lances:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os lances",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchAuctions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('auctions')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
-      setAuctions(data || []);
-    } catch (error) {
-      console.error('Error fetching auctions:', error);
-    }
-  };
-
-  const handleStatusUpdate = async (bidId: string, status: 'approved' | 'rejected') => {
-    try {
-      const updateData: any = {
-        status,
-        internal_notes: internalNotes,
-        client_notes: clientNotes
-      };
-
-      const { error } = await supabase
-        .from('bids')
-        .update(updateData)
-        .eq('id', bidId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: `Lance ${status === 'approved' ? 'aprovado' : 'rejeitado'} com sucesso`,
-      });
-
-      setDialogOpen(false);
-      setSelectedBid(null);
-      setInternalNotes('');
-      setClientNotes('');
-      fetchBids();
-    } catch (error) {
-      console.error('Error updating bid:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o lance",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleWinnerToggle = async (bidId: string, isWinner: boolean) => {
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este lance?')) return;
     try {
       const { error } = await supabase
         .from('bids')
-        .update({ is_winner: isWinner })
-        .eq('id', bidId);
-
+        .delete()
+        .eq('id', id);
       if (error) throw error;
-
       toast({
         title: "Sucesso",
-        description: `Lance ${isWinner ? 'marcado como vencedor' : 'removido como vencedor'}`,
+        description: "Lance excluído com sucesso",
       });
-
       fetchBids();
     } catch (error) {
-      console.error('Error updating winner status:', error);
+      console.error('Erro ao excluir:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o status de vencedor",
-        variant: "destructive"
+        description: "Não foi possível excluir o lance",
+        variant: "destructive",
       });
     }
   };
 
-  const openDialog = (bid: BidWithDetails) => {
-    setSelectedBid(bid);
-    setInternalNotes(bid.internal_notes || '');
-    setClientNotes(bid.client_notes || '');
-    setDialogOpen(true);
+  const handleViewDetails = (bid: Bid) => {
+    // Implemente a lógica para visualizar os detalhes do lance
+    console.log('Visualizar detalhes do lance:', bid);
+    toast({
+      title: "Detalhes",
+      description: `Visualizando detalhes do lance ${bid.id}`,
+    });
   };
 
-  const getStatusBadge = (status: string, isWinner: boolean) => {
-    if (isWinner) {
-      return <Badge className="bg-green-500 text-white"><Trophy className="h-3 w-3 mr-1" />Vencedor</Badge>;
-    }
-    
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-blue-500 text-white"><Check className="h-3 w-3 mr-1" />Aprovado</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive"><X className="h-3 w-3 mr-1" />Rejeitado</Badge>;
-      case 'pending':
-        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
-      case 'superseded':
-        return <Badge variant="outline"><AlertCircle className="h-3 w-3 mr-1" />Superado</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setAuctionFilter('all');
-    setLiveFilter('all');
-    setWinnerFilter('all');
-    setDateFrom('');
-    setDateTo('');
-  };
-
-  const filteredBids = bids.filter(bid => {
-    const matchesSearch = searchTerm === '' ||
-      bid.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bid.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bid.auction_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bid.auction_item_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || bid.status === statusFilter;
-    const matchesAuction = auctionFilter === 'all' || bid.auction_id === auctionFilter;
-    const matchesLive = liveFilter === 'all' || bid.auction_is_live?.toString() === liveFilter;
-    const matchesWinner = winnerFilter === 'all' || bid.is_winner.toString() === winnerFilter;
-    
-    const bidDate = new Date(bid.created_at).toISOString().split('T')[0];
-    const matchesDateFrom = !dateFrom || bidDate >= dateFrom;
-    const matchesDateTo = !dateTo || bidDate <= dateTo;
-    
-    return matchesSearch && matchesStatus && matchesAuction && matchesLive && matchesWinner && matchesDateFrom && matchesDateTo;
-  });
-
-  useEffect(() => {
-    fetchBids();
-    fetchAuctions();
-    
-    // Check URL params for filtering
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('status')) {
-      setStatusFilter(urlParams.get('status') || 'all');
-    }
-    if (urlParams.get('bid')) {
-      const bidId = urlParams.get('bid');
-      // Find and open the bid when loaded
-      setTimeout(() => {
-        const bid = bids.find(b => b.id === bidId);
-        if (bid) {
-          openDialog(bid);
-        }
-      }, 1000);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Open bid dialog if bid ID in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const bidId = urlParams.get('bid');
-    if (bidId && bids.length > 0) {
-      const bid = bids.find(b => b.id === bidId);
-      if (bid) {
-        openDialog(bid);
-      }
-    }
-  }, [bids]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const filteredBids = bids.filter(bid =>
+    bid.id.toLowerCase().includes(searchTerm.toLowerCase()) || // Ajuste conforme necessário
+    (bid.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) // Exemplo com user_id
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Lances</h1>
-          <p className="text-muted-foreground">Gerencie todos os lances dos leilões</p>
+    <>
+      <header className="bg-admin-header border-b border-admin-border">
+        <div className="px-6 py-4">
+          <h1 className="text-xl font-bold text-admin-sidebar-text">Gerenciar Lances</h1>
         </div>
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Lances ({filteredBids.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FilterControls
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            dateRange={{
-              from: dateFrom,
-              to: dateTo,
-              onFromChange: setDateFrom,
-              onToChange: setDateTo
-            }}
-            filters={[
-              {
-                key: 'status',
-                label: 'Status',
-                value: statusFilter,
-                options: [
-                  { value: 'all', label: 'Todos' },
-                  { value: 'pending', label: 'Pendente' },
-                  { value: 'approved', label: 'Aprovado' },
-                  { value: 'rejected', label: 'Rejeitado' },
-                  { value: 'superseded', label: 'Superado' }
-                ],
-                onChange: setStatusFilter
-              },
-              {
-                key: 'auction',
-                label: 'Leilão',
-                value: auctionFilter,
-                options: [
-                  { value: 'all', label: 'Todos' },
-                  ...auctions.map(auction => ({
-                    value: auction.id,
-                    label: auction.name
-                  }))
-                ],
-                onChange: setAuctionFilter
-              },
-              {
-                key: 'live',
-                label: 'Transmissão',
-                value: liveFilter,
-                options: [
-                  { value: 'all', label: 'Todas' },
-                  { value: 'true', label: 'Ao Vivo' },
-                  { value: 'false', label: 'Gravado' }
-                ],
-                onChange: setLiveFilter
-              },
-              {
-                key: 'winner',
-                label: 'Vencedor',
-                value: winnerFilter,
-                options: [
-                  { value: 'all', label: 'Todos' },
-                  { value: 'true', label: 'Vencedores' },
-                  { value: 'false', label: 'Não Vencedores' }
-                ],
-                onChange: setWinnerFilter
-              }
-            ]}
-            onClearFilters={clearFilters}
-          />
-        </CardContent>
-      </Card>
+      <div className="p-6">
+        {/* Search */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar lances..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
+            />
+          </div>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lances Filtrados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Usuário</TableHead>
-                <TableHead>Leilão</TableHead>
-                <TableHead>Item</TableHead>
-                <TableHead>Valor do Lance</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBids.map((bid) => (
-                <TableRow 
-                  key={bid.id}
-                  className={`${bid.isNew ? 'bg-green-50 border-l-4 border-l-green-500 animate-pulse' : ''}`}
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div>
-                        <div className="font-medium">{bid.user_name}</div>
-                        <div className="text-sm text-muted-foreground">{bid.user_email}</div>
-                      </div>
-                      {bid.isNew && <Sparkles className="h-4 w-4 text-green-500" />}
-                    </div>
-                  </TableCell>
-                  <TableCell>{bid.auction_name}</TableCell>
-                  <TableCell>{bid.auction_item_name}</TableCell>
-                  <TableCell className="font-medium">
-                    {formatCurrency(bid.bid_value)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(bid.status, bid.is_winner)}</TableCell>
-                  <TableCell>{formatDateTime(bid.created_at)}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openDialog(bid)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Gerenciar
-                      </Button>
-                      {bid.status === 'approved' && (
-                        <Button
-                          variant={bid.is_winner ? "destructive" : "default"}
-                          size="sm"
-                          onClick={() => handleWinnerToggle(bid.id, !bid.is_winner)}
-                        >
-                          <Trophy className="h-4 w-4 mr-2" />
-                          {bid.is_winner ? 'Remover' : 'Vencedor'}
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+        {/* Bids Table */}
+        <Card className="bg-admin-card border-admin-border">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-admin-border">
+                  <TableHead className="text-admin-muted-foreground">ID</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Leilão ID</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Usuário ID</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Valor</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Tempo</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredBids.map(bid => (
+                  <TableRow key={bid.id} className="border-admin-border">
+                    <TableCell className="text-admin-table-text">{bid.id}</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.auction_id}</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.user_id}</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.amount}</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.bid_time}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleViewDetails(bid)}
+                          className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleDelete(bid.id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Gerenciar Lance</DialogTitle>
-            <DialogDescription>
-              Aprove, rejeite ou marque como vencedor
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedBid && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Usuário</Label>
-                  <p className="text-sm">{selectedBid.user_name}</p>
-                  <p className="text-xs text-muted-foreground">{selectedBid.user_email}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Leilão</Label>
-                  <p className="text-sm">{selectedBid.auction_name}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Item</Label>
-                  <p className="text-sm">{selectedBid.auction_item_name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Valor do Lance</Label>
-                  <p className="text-sm font-bold text-green-600">
-                    {formatCurrency(selectedBid.bid_value)}
-                  </p>
-                </div>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium">Status Atual</Label>
-                <div className="mt-1">
-                  {getStatusBadge(selectedBid.status, selectedBid.is_winner)}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="internal-notes">Observações Internas</Label>
-                  <Textarea
-                    id="internal-notes"
-                    value={internalNotes}
-                    onChange={(e) => setInternalNotes(e.target.value)}
-                    placeholder="Notas para uso interno..."
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="client-notes">Observações para o Cliente</Label>
-                  <Textarea
-                    id="client-notes"
-                    value={clientNotes}
-                    onChange={(e) => setClientNotes(e.target.value)}
-                    placeholder="Mensagem que será enviada ao cliente..."
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="space-x-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
-            </Button>
-            {selectedBid?.status === 'pending' && (
-              <>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleStatusUpdate(selectedBid.id, 'rejected')}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Rejeitar
-                </Button>
-                <Button
-                  onClick={() => handleStatusUpdate(selectedBid.id, 'approved')}
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  Aprovar
-                </Button>
-              </>
-            )}
-            {selectedBid?.status === 'approved' && (
-              <Button
-                variant={selectedBid.is_winner ? "destructive" : "default"}
-                onClick={() => handleWinnerToggle(selectedBid.id, !selectedBid.is_winner)}
-              >
-                <Trophy className="h-4 w-4 mr-2" />
-                {selectedBid.is_winner ? 'Remover Vencedor' : 'Marcar como Vencedor'}
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        {filteredBids.length === 0 && (
+          <Card className="bg-admin-card border-admin-border mt-6">
+            <CardContent className="p-12 text-center">
+              <p className="text-admin-muted-foreground">Nenhum lance encontrado</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </>
   );
 };
 
-export default Bids;
+export default AdminBids;

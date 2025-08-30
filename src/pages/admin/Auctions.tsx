@@ -1,74 +1,63 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Edit, Trash2, Plus, Search, Eye } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Auction } from '@/types/auction';
-import { formatCurrency, formatDate } from '@/utils/formatters';
-import { useToast } from '@/components/ui/use-toast';
-import CurrencyInput from '@/components/ui/currency-input';
+import { useNavigate } from 'react-router-dom';
 import FilterControls from '@/components/admin/FilterControls';
-import { Plus, Edit, Trash2, Play, Square, Copy } from 'lucide-react';
-import AuctionBanner from '@/components/admin/AuctionBanner';
-const Auctions = () => {
+
+interface Auction {
+  id: string;
+  title: string;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  start_price: number | null;
+  current_price: number | null;
+  status: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  package_id: string | null;
+}
+
+const AdminAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [liveFilter, setLiveFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const {
-    toast
-  } = useToast();
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    youtube_url: '',
-    initial_bid_value: 0,
-    current_bid_value: 0,
-    bid_increment: 100,
-    registration_wait_value: 5,
-    registration_wait_unit: 'minutes' as 'minutes' | 'hours' | 'days',
-    auction_date: '',
-    start_time: '',
-    end_time: '',
-    status: 'inactive' as 'active' | 'inactive',
-    auction_type: 'rural' as 'rural' | 'judicial',
-    is_live: false
-  });
+  const [filters, setFilters] = useState<{ status: string | null }>({ status: null });
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchAuctions();
+  }, [filters]);
+
   const fetchAuctions = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('auctions').select('*').order('created_at', {
-        ascending: false
-      });
-      if (error) throw error;
-      setAuctions(data as Auction[] || []);
+      setLoading(true);
+      let query = supabase
+        .from('auctions')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      // Set up real-time subscription
-      const subscription = supabase.channel('auctions-changes').on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'auctions'
-      }, () => {
-        fetchAuctions();
-      }).subscribe();
-      return () => {
-        supabase.removeChannel(subscription);
-      };
-    } catch (error) {
-      console.error('Error fetching auctions:', error);
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      setAuctions(data || []);
+    } catch (error: any) {
+      console.error('Erro ao buscar leilões:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os leilões",
@@ -78,101 +67,15 @@ const Auctions = () => {
       setLoading(false);
     }
   };
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Construir datas completas se fornecidas
-      const startDateTime = formData.auction_date && formData.start_time ? `${formData.auction_date}T${formData.start_time}:00` : null;
-      const endDateTime = formData.auction_date && formData.end_time ? `${formData.auction_date}T${formData.end_time}:00` : null;
-      const dataToSave = {
-        ...formData,
-        start_date: startDateTime,
-        end_date: endDateTime
-      };
 
-      // Remove campos temporários
-      delete dataToSave.auction_date;
-      delete dataToSave.start_time;
-      delete dataToSave.end_time;
-      if (editingAuction) {
-        const {
-          error
-        } = await supabase.from('auctions').update(dataToSave).eq('id', editingAuction.id);
-        if (error) throw error;
-        toast({
-          title: "Sucesso",
-          description: "Leilão atualizado com sucesso"
-        });
-      } else {
-        const {
-          error
-        } = await supabase.from('auctions').insert([dataToSave]);
-        if (error) throw error;
-        toast({
-          title: "Sucesso",
-          description: "Leilão criado com sucesso"
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      fetchAuctions();
-    } catch (error) {
-      console.error('Error saving auction:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar o leilão",
-        variant: "destructive"
-      });
-    }
+  const handleEdit = (item: Auction) => {
+    navigate(`/admin/leiloes/editar/${item.id}`);
   };
-  const handleEdit = (auction: Auction) => {
-    setEditingAuction(auction);
-    setFormData({
-      name: auction.name,
-      description: auction.description || '',
-      youtube_url: auction.youtube_url || '',
-      initial_bid_value: auction.initial_bid_value,
-      current_bid_value: auction.current_bid_value,
-      bid_increment: auction.bid_increment,
-      registration_wait_value: auction.registration_wait_value || 5,
-      registration_wait_unit: auction.registration_wait_unit || 'minutes',
-      auction_date: auction.start_date ? auction.start_date.split('T')[0] : '',
-      start_time: auction.start_date ? auction.start_date.split('T')[1]?.slice(0, 5) || '' : '',
-      end_time: auction.end_date ? auction.end_date.split('T')[1]?.slice(0, 5) || '' : '',
-      status: auction.status,
-      auction_type: auction.auction_type,
-      is_live: auction.is_live
-    });
-    setShowDialog(true);
-  };
-  const handleDuplicate = (auction: Auction) => {
-    setEditingAuction(null); // Não é edição, é duplicação
-    setFormData({
-      name: `${auction.name} (Cópia)`,
-      description: auction.description || '',
-      youtube_url: auction.youtube_url || '',
-      initial_bid_value: auction.initial_bid_value,
-      current_bid_value: auction.initial_bid_value,
-      // Reset para valor inicial
-      bid_increment: auction.bid_increment,
-      registration_wait_value: auction.registration_wait_value || 5,
-      registration_wait_unit: auction.registration_wait_unit || 'minutes',
-      auction_date: '',
-      start_time: '',
-      end_time: '',
-      status: 'inactive' as const,
-      // Sempre inativo para cópias
-      auction_type: auction.auction_type,
-      is_live: false // Sempre falso para cópias
-    });
-    setShowDialog(true);
-  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este leilão?')) return;
     try {
-      const {
-        error
-      } = await supabase.from('auctions').delete().eq('id', id);
+      const { error } = await supabase.from('auctions').delete().eq('id', id);
       if (error) throw error;
       toast({
         title: "Sucesso",
@@ -180,7 +83,7 @@ const Auctions = () => {
       });
       fetchAuctions();
     } catch (error) {
-      console.error('Error deleting auction:', error);
+      console.error('Erro ao excluir:', error);
       toast({
         title: "Erro",
         description: "Não foi possível excluir o leilão",
@@ -188,336 +91,122 @@ const Auctions = () => {
       });
     }
   };
-  const resetForm = () => {
-    setEditingAuction(null);
-    setFormData({
-      name: '',
-      description: '',
-      youtube_url: '',
-      initial_bid_value: 0,
-      current_bid_value: 0,
-      bid_increment: 100,
-      registration_wait_value: 5,
-      registration_wait_unit: 'minutes',
-      auction_date: '',
-      start_time: '',
-      end_time: '',
-      status: 'inactive',
-      auction_type: 'rural',
-      is_live: false
-    });
+
+  const handleCreate = () => {
+    navigate('/admin/leiloes/criar');
   };
-  const clearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setLiveFilter('all');
-    setTypeFilter('all');
-  };
-  const filteredAuctions = auctions.filter(auction => {
-    const matchesSearch = searchTerm === '' || auction.name.toLowerCase().includes(searchTerm.toLowerCase()) || auction.description?.toLowerCase().includes(searchTerm.toLowerCase()) || auction.auction_type.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || auction.status === statusFilter;
-    const matchesLive = liveFilter === 'all' || auction.is_live.toString() === liveFilter;
-    const matchesType = typeFilter === 'all' || auction.auction_type === typeFilter;
-    return matchesSearch && matchesStatus && matchesLive && matchesType;
-  });
-  useEffect(() => {
-    fetchAuctions();
-  }, []);
-  return <div className="p-6 space-y-6">
-      <AuctionBanner />
-      
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-50">Gerenciar Leilões</h1>
-          <p className="text-slate-300">Crie e gerencie leilões do sistema</p>
+
+  const filteredAuctions = auctions.filter(auction =>
+    auction.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return <div className="p-6">
+      <div className="text-white">Carregando...</div>
+    </div>;
+  }
+
+  return (
+    <>
+      <header className="bg-black border-b border-green-600/30">
+        <div className="px-6 py-4">
+          <h1 className="text-xl font-bold text-white">Gerenciar Leilões</h1>
         </div>
-        
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus size={16} className="mr-2" />
-              Novo Leilão
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingAuction ? 'Editar Leilão' : 'Novo Leilão'}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Leilão</Label>
-                  <Input id="name" value={formData.name} onChange={e => setFormData({
-                  ...formData,
-                  name: e.target.value
-                })} required />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="auction_type">Tipo de Leilão</Label>
-                  <Select value={formData.auction_type} onValueChange={(value: 'rural' | 'judicial') => setFormData({
-                  ...formData,
-                  auction_type: value
-                })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="rural">Rural</SelectItem>
-                      <SelectItem value="judicial">Judicial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" value={formData.description} onChange={e => setFormData({
-                ...formData,
-                description: e.target.value
-              })} rows={3} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="youtube_url">URL do YouTube</Label>
-                <Input id="youtube_url" value={formData.youtube_url} onChange={e => setFormData({
-                ...formData,
-                youtube_url: e.target.value
-              })} placeholder="https://www.youtube.com/watch?v=..." />
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="initial_bid_value">Lance Inicial</Label>
-                  <CurrencyInput value={formData.initial_bid_value} onChange={value => setFormData({
-                  ...formData,
-                  initial_bid_value: value
-                })} placeholder="R$ 0,00" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="current_bid_value">Lance Atual</Label>
-                  <CurrencyInput value={formData.current_bid_value} onChange={value => setFormData({
-                  ...formData,
-                  current_bid_value: value
-                })} placeholder="R$ 0,00" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="bid_increment">Incremento</Label>
-                  <CurrencyInput value={formData.bid_increment} onChange={value => setFormData({
-                  ...formData,
-                  bid_increment: value
-                })} placeholder="R$ 100,00" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="registration_wait_value">Tempo Espera Habilitação</Label>
-                  <Input id="registration_wait_value" type="number" min="1" value={formData.registration_wait_value} onChange={e => setFormData({
-                  ...formData,
-                  registration_wait_value: parseInt(e.target.value) || 1
-                })} />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="registration_wait_unit">Unidade</Label>
-                  <Select value={formData.registration_wait_unit} onValueChange={(value: 'minutes' | 'hours' | 'days') => setFormData({
-                  ...formData,
-                  registration_wait_unit: value
-                })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="minutes">Minutos</SelectItem>
-                      <SelectItem value="hours">Horas</SelectItem>
-                      <SelectItem value="days">Dias</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="auction_date">Data do Leilão</Label>
-                  <Input id="auction_date" type="date" value={formData.auction_date} onChange={e => setFormData({
-                  ...formData,
-                  auction_date: e.target.value
-                })} />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="start_time">Hora de Início</Label>
-                  <Input id="start_time" type="time" value={formData.start_time} onChange={e => setFormData({
-                  ...formData,
-                  start_time: e.target.value
-                })} />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="end_time">Hora de Fim</Label>
-                  <Input id="end_time" type="time" value={formData.end_time} onChange={e => setFormData({
-                  ...formData,
-                  end_time: e.target.value
-                })} />
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Switch id="status" checked={formData.status === 'active'} onCheckedChange={checked => setFormData({
-                  ...formData,
-                  status: checked ? 'active' : 'inactive'
-                })} />
-                  <Label htmlFor="status">Leilão Ativo</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Switch id="is_live" checked={formData.is_live} onCheckedChange={checked => setFormData({
-                  ...formData,
-                  is_live: checked
-                })} />
-                  <Label htmlFor="is_live">Transmissão ao Vivo</Label>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  {editingAuction ? 'Atualizar' : 'Criar'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Leilões ({filteredAuctions.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FilterControls searchTerm={searchTerm} onSearchChange={setSearchTerm} filters={[{
-          key: 'status',
-          label: 'Status',
-          value: statusFilter,
-          options: [{
-            value: 'all',
-            label: 'Todos'
-          }, {
-            value: 'active',
-            label: 'Ativo'
-          }, {
-            value: 'inactive',
-            label: 'Inativo'
-          }],
-          onChange: setStatusFilter
-        }, {
-          key: 'live',
-          label: 'Transmissão',
-          value: liveFilter,
-          options: [{
-            value: 'all',
-            label: 'Todas'
-          }, {
-            value: 'true',
-            label: 'Ao Vivo'
-          }, {
-            value: 'false',
-            label: 'Gravado'
-          }],
-          onChange: setLiveFilter
-        }, {
-          key: 'type',
-          label: 'Tipo',
-          value: typeFilter,
-          options: [{
-            value: 'all',
-            label: 'Todos'
-          }, {
-            value: 'rural',
-            label: 'Rural'
-          }, {
-            value: 'judicial',
-            label: 'Judicial'
-          }],
-          onChange: setTypeFilter
-        }]} onClearFilters={clearFilters} />
-        </CardContent>
-      </Card>
+      <div className="p-6">
+        {/* Search and Create */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar leilões..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10 bg-black border-green-600/30 text-white"
+            />
+          </div>
+          <Button onClick={handleCreate} variant="admin">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Leilão
+          </Button>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Leilões Filtrados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            </div> : <Table>
+        <FilterControls filters={filters} setFilters={setFilters} />
+
+        {/* Auctions Table */}
+        <Card className="bg-black border-green-600/30">
+          <CardContent className="p-0">
+            <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Lance Atual</TableHead>
-                  <TableHead>Transmissão</TableHead>
-                  <TableHead>Programação</TableHead>
-                  <TableHead>Ações</TableHead>
+                <TableRow className="border-gray-700">
+                  <TableHead className="text-gray-300">Título</TableHead>
+                  <TableHead className="text-gray-300">Status</TableHead>
+                  <TableHead className="text-gray-300">Data de Início</TableHead>
+                  <TableHead className="text-gray-300">Data de Encerramento</TableHead>
+                  <TableHead className="text-gray-300">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAuctions.map(auction => <TableRow key={auction.id}>
-                    <TableCell className="font-medium">{auction.name}</TableCell>
+                {filteredAuctions.map(auction => (
+                  <TableRow key={auction.id} className="border-gray-700">
+                    <TableCell className="text-white">{auction.title}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {auction.auction_type === 'rural' ? 'Rural' : 'Judicial'}
+                      <Badge variant={
+                        auction.status === 'active' ? 'admin-success' :
+                          auction.status === 'scheduled' ? 'admin' :
+                            'admin-muted'
+                      }>
+                        {auction.status}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-white">{auction.start_date}</TableCell>
+                    <TableCell className="text-white">{auction.end_date}</TableCell>
                     <TableCell>
-                      <Badge variant={auction.status === 'active' ? 'default' : 'secondary'}>
-                        {auction.status === 'active' ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatCurrency(auction.current_bid_value)}</TableCell>
-                    <TableCell>
-                      <Badge variant={auction.is_live ? "default" : "secondary"} className="flex items-center gap-1 w-fit">
-                        {auction.is_live ? <Play size={12} /> : <Square size={12} />}
-                        {auction.is_live ? 'Ao Vivo' : 'Gravado'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {auction.start_date && auction.end_date ? <div className="text-sm">
-                          <div>{formatDate(auction.start_date).split(' ')[0]}</div>
-                          <div className="text-muted-foreground">
-                            {auction.start_date.split('T')[1]?.slice(0, 5)} - {auction.end_date.split('T')[1]?.slice(0, 5)}
-                          </div>
-                        </div> : <span className="text-muted-foreground">Não definida</span>}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(auction)} title="Editar leilão">
-                          <Edit size={14} />
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => navigate(`/admin/leiloes/${auction.id}`)}
+                          className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
+                        >
+                          <Eye className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDuplicate(auction)} title="Duplicar leilão">
-                          <Copy size={14} />
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEdit(auction)}
+                          className="text-gray-400 hover:text-white hover:bg-gray-800"
+                        >
+                          <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDelete(auction.id)} title="Excluir leilão">
-                          <Trash2 size={14} />
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleDelete(auction.id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>)}
+                  </TableRow>
+                ))}
               </TableBody>
-            </Table>}
-        </CardContent>
-      </Card>
-    </div>;
+            </Table>
+          </CardContent>
+        </Card>
+
+        {filteredAuctions.length === 0 && (
+          <Card className="bg-black border-green-600/30 mt-6">
+            <CardContent className="p-12 text-center">
+              <p className="text-gray-400">Nenhum leilão encontrado</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </>
+  );
 };
-export default Auctions;
+
+export default AdminAuctions;

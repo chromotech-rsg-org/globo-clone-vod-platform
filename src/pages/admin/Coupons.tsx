@@ -7,18 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
+import { Edit, Trash2, Plus, Save, X, Search, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import ErrorBoundary from '@/components/ErrorBoundary';
+
 interface Coupon {
   id: string;
-  name: string;
   code: string;
-  discount_percentage: number;
+  discount: number | null;
   active: boolean | null;
-  notes: string | null;
+  expiration_date: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -32,11 +32,10 @@ const AdminCoupons = () => {
     toast
   } = useToast();
   const [formData, setFormData] = useState({
-    name: '',
     code: '',
-    discount_percentage: 0,
+    discount: 0,
     active: true,
-    notes: ''
+    expiration_date: ''
   });
   useEffect(() => {
     fetchCoupons();
@@ -44,49 +43,19 @@ const AdminCoupons = () => {
   const fetchCoupons = async () => {
     try {
       setLoading(true);
-
-      // Verificar autenticação antes de fazer a query
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Usuário não autenticado');
-      }
       const {
         data,
         error
-      } = await supabase.from('coupons').select(`
-          id,
-          name,
-          code,
-          discount_percentage,
-          active,
-          notes,
-          created_at,
-          updated_at
-        `).order('name', {
-        ascending: true
+      } = await supabase.from('coupons').select('*').order('created_at', {
+        ascending: false
       });
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
+      if (error) throw error;
       setCoupons(data || []);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erro ao buscar cupons:', error);
-      let errorMessage = "Não foi possível carregar os cupons";
-      if (error.message === 'Usuário não autenticado') {
-        errorMessage = "Você precisa estar logado para acessar esta página";
-      } else if (error.code === '42501') {
-        errorMessage = "Você não tem permissão para acessar esta página";
-      } else if (error.code === 'PGRST116') {
-        errorMessage = "Nenhum cupom encontrado";
-      }
       toast({
         title: "Erro",
-        description: errorMessage,
+        description: "Não foi possível carregar os cupons",
         variant: "destructive"
       });
     } finally {
@@ -106,21 +75,17 @@ const AdminCoupons = () => {
       }
 
       // Validar dados obrigatórios
-      if (!formData.name.trim()) {
-        throw new Error('Nome é obrigatório');
-      }
       if (!formData.code.trim()) {
         throw new Error('Código é obrigatório');
       }
-      if (!formData.discount_percentage || formData.discount_percentage <= 0 || formData.discount_percentage > 100) {
-        throw new Error('Desconto deve ser entre 1% e 100%');
+      if (!formData.discount || formData.discount <= 0) {
+        throw new Error('Desconto deve ser maior que zero');
       }
       const couponData = {
-        name: formData.name.trim(),
-        code: formData.code.trim().toUpperCase(),
-        discount_percentage: Number(formData.discount_percentage),
+        code: formData.code.trim(),
+        discount: Number(formData.discount),
         active: formData.active,
-        notes: formData.notes.trim() || null
+        expiration_date: formData.expiration_date || null
       };
       if (editingItem) {
         // Update existing
@@ -149,7 +114,7 @@ const AdminCoupons = () => {
       let errorMessage = "Não foi possível salvar o cupom";
       if (error.message === 'Usuário não autenticado') {
         errorMessage = "Você precisa estar logado para realizar esta ação";
-      } else if (error.message.includes('obrigatório') || error.message.includes('Desconto')) {
+      } else if (error.message.includes('obrigatório')) {
         errorMessage = error.message;
       } else if (error.code === '23505') {
         errorMessage = "Já existe um cupom com este código";
@@ -187,11 +152,10 @@ const AdminCoupons = () => {
   const handleEdit = (item: Coupon) => {
     setEditingItem(item);
     setFormData({
-      name: item.name,
       code: item.code,
-      discount_percentage: item.discount_percentage,
+      discount: item.discount || 0,
       active: item.active || false,
-      notes: item.notes || ''
+      expiration_date: item.expiration_date || ''
     });
     setIsDialogOpen(true);
   };
@@ -204,21 +168,20 @@ const AdminCoupons = () => {
     setEditingItem(null);
     setIsDialogOpen(false);
     setFormData({
-      name: '',
       code: '',
-      discount_percentage: 0,
+      discount: 0,
       active: true,
-      notes: ''
+      expiration_date: ''
     });
   };
-  const filteredCoupons = coupons.filter(coupon => coupon.name.toLowerCase().includes(searchTerm.toLowerCase()) || coupon.code.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredCoupons = coupons.filter(coupon => coupon.code.toLowerCase().includes(searchTerm.toLowerCase()));
   if (loading) {
     return <div className="p-6">
-          <div className="text-white">Carregando...</div>
-        </div>;
+        <div className="text-white">Carregando...</div>
+      </div>;
   }
   return <>
-      <header className="bg-gray-800 border-b border-gray-700">
+      <header className="bg-black border-b border-green-600/30">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-white">Gerenciar Cupons</h1>
         </div>
@@ -229,48 +192,44 @@ const AdminCoupons = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input placeholder="Buscar cupons..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-gray-700 border-gray-600 text-white" />
+            <Input placeholder="Buscar cupons..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-black border-green-600/30 text-white" />
           </div>
           
-          <Button onClick={handleCreate} className="bg-red-600 hover:bg-red-700">
+          <Button onClick={handleCreate} variant="admin">
             <Plus className="h-4 w-4 mr-2" />
             Novo Cupom
           </Button>
         </div>
 
         {/* Coupons Table */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-black border-green-600/30">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-300">Nome</TableHead>
                   <TableHead className="text-gray-300">Código</TableHead>
                   <TableHead className="text-gray-300">Desconto (%)</TableHead>
                   <TableHead className="text-gray-300">Status</TableHead>
-                  <TableHead className="text-gray-300">Observações</TableHead>
+                  <TableHead className="text-gray-300">Expiração</TableHead>
                   <TableHead className="text-gray-300">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCoupons.map(coupon => <TableRow key={coupon.id} className="border-gray-700">
-                    <TableCell className="text-white">{coupon.name}</TableCell>
-                    <TableCell className="text-white font-mono">{coupon.code}</TableCell>
-                    <TableCell className="text-white">{coupon.discount_percentage}%</TableCell>
+                    <TableCell className="text-white">{coupon.code}</TableCell>
+                    <TableCell className="text-white">{coupon.discount?.toFixed(2)}</TableCell>
                     <TableCell>
-                      <Badge variant={coupon.active ? 'default' : 'secondary'}>
+                      <Badge variant={coupon.active ? 'admin-success' : 'admin-muted'}>
                         {coupon.active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-white truncate max-w-xs">
-                      {coupon.notes || '-'}
-                    </TableCell>
+                    <TableCell className="text-white">{coupon.expiration_date ? new Date(coupon.expiration_date).toLocaleDateString() : '-'}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(coupon)} className="text-gray-400 hover:text-white">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(coupon)} className="text-gray-400 hover:text-white hover:bg-gray-800">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(coupon.id)} className="text-red-400 hover:text-red-300">
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(coupon.id)} className="text-red-400 hover:text-red-300 hover:bg-gray-800">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -281,7 +240,7 @@ const AdminCoupons = () => {
           </CardContent>
         </Card>
 
-        {filteredCoupons.length === 0 && <Card className="bg-gray-800 border-gray-700 mt-6">
+        {filteredCoupons.length === 0 && <Card className="bg-black border-green-600/30 mt-6">
             <CardContent className="p-12 text-center">
               <p className="text-gray-400">Nenhum cupom encontrado</p>
             </CardContent>
@@ -290,7 +249,7 @@ const AdminCoupons = () => {
 
       {/* Edit/Create Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+        <DialogContent className="bg-black border-green-600/30 text-white">
           <DialogHeader>
             <DialogTitle>
               {editingItem ? 'Editar Cupom' : 'Novo Cupom'}
@@ -299,51 +258,43 @@ const AdminCoupons = () => {
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-gray-300">Nome</Label>
-              <Input id="name" value={formData.name} onChange={e => setFormData({
-              ...formData,
-              name: e.target.value
-            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Nome do cupom" />
-            </div>
-
-            <div>
               <Label htmlFor="code" className="text-gray-300">Código</Label>
               <Input id="code" value={formData.code} onChange={e => setFormData({
-              ...formData,
-              code: e.target.value.toUpperCase()
-            })} className="bg-gray-700 border-gray-600 text-white font-mono" placeholder="DESCONTO10" />
+                ...formData,
+                code: e.target.value
+              })} className="bg-black border-green-600/30 text-white" placeholder="Código do cupom" />
             </div>
 
             <div>
-              <Label htmlFor="discount_percentage" className="text-gray-300">Desconto (%)</Label>
-              <Input id="discount_percentage" type="number" min="0" max="100" step="0.01" value={formData.discount_percentage} onChange={e => setFormData({
-              ...formData,
-              discount_percentage: parseFloat(e.target.value) || 0
-            })} className="bg-gray-700 border-gray-600 text-white" placeholder="10.00" />
+              <Label htmlFor="discount" className="text-gray-300">Desconto (%)</Label>
+              <Input id="discount" type="number" step="0.01" value={formData.discount} onChange={e => setFormData({
+                ...formData,
+                discount: parseFloat(e.target.value) || 0
+              })} className="bg-black border-green-600/30 text-white" placeholder="0.00" />
             </div>
 
             <div>
-              <Label htmlFor="notes" className="text-gray-300">Observações</Label>
-              <Textarea id="notes" value={formData.notes} onChange={e => setFormData({
-              ...formData,
-              notes: e.target.value
-            })} className="bg-gray-700 border-gray-600 text-white" placeholder="Observações sobre o cupom (opcional)" rows={3} />
+              <Label htmlFor="expiration_date" className="text-gray-300">Data de Expiração</Label>
+              <Input type="date" id="expiration_date" value={formData.expiration_date} onChange={e => setFormData({
+                ...formData,
+                expiration_date: e.target.value
+              })} className="bg-black border-green-600/30 text-white" />
             </div>
 
             <div className="flex items-center space-x-2">
               <Switch id="active" checked={formData.active} onCheckedChange={checked => setFormData({
-              ...formData,
-              active: checked
-            })} />
+                ...formData,
+                active: checked
+              })} />
               <Label htmlFor="active" className="text-gray-300">Ativo</Label>
             </div>
 
             <div className="flex space-x-2 pt-4">
-              <Button onClick={handleSave} className="bg-red-600 hover:bg-red-700 flex-1">
+              <Button onClick={handleSave} variant="admin" className="flex-1">
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>
-              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-gray-950">
+              <Button onClick={resetForm} variant="outline" className="border-gray-600 text-zinc-950">
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>

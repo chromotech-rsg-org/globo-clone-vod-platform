@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
 interface Package {
   id: string;
   name: string;
@@ -20,6 +21,7 @@ interface Package {
   created_at: string | null;
   updated_at: string | null;
 }
+
 const AdminPackages = () => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,9 +38,11 @@ const AdminPackages = () => {
     active: true,
     suspension_package: false
   });
+
   useEffect(() => {
     fetchPackages();
   }, []);
+
   const fetchPackages = async () => {
     try {
       const {
@@ -60,6 +64,7 @@ const AdminPackages = () => {
       setLoading(false);
     }
   };
+
   const handleSave = async () => {
     try {
       // Verificar autenticação
@@ -127,6 +132,7 @@ const AdminPackages = () => {
       });
     }
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este pacote?')) return;
     try {
@@ -148,6 +154,7 @@ const AdminPackages = () => {
       });
     }
   };
+
   const handleEdit = (item: Package) => {
     setEditingItem(item);
     setFormData({
@@ -159,11 +166,13 @@ const AdminPackages = () => {
     });
     setIsDialogOpen(true);
   };
+
   const handleCreate = () => {
     setEditingItem(null);
     resetForm();
     setIsDialogOpen(true);
   };
+
   const resetForm = () => {
     setEditingItem(null);
     setIsDialogOpen(false);
@@ -175,11 +184,13 @@ const AdminPackages = () => {
       suspension_package: false
     });
   };
+
   const filteredPackages = packages.filter(pkg => pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) || pkg.code.toLowerCase().includes(searchTerm.toLowerCase()));
+
   return <>
-      {loading ? <div className="p-6">
-          <div className="text-admin-table-text">Carregando...</div>
-        </div> : <>
+    {loading ? <div className="p-6">
+        <div className="text-admin-table-text">Carregando...</div>
+      </div> : <>
       <header className="bg-admin-header border-b border-admin-border">
         <div className="px-6 py-4">
           <h1 className="text-xl font-bold text-admin-sidebar-text">Gerenciar Pacotes</h1>
@@ -231,10 +242,10 @@ const AdminPackages = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(pkg)} className="text-admin-muted-foreground hover:text-white">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(pkg)} className="text-admin-muted-foreground hover:text-white hover:bg-gray-800">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(pkg.id)} className="text-red-400 hover:text-red-300">
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(pkg.id)} className="text-red-400 hover:text-red-300 hover:bg-gray-800">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -318,4 +329,5 @@ const AdminPackages = () => {
       </>}
     </>;
 };
+
 export default AdminPackages;

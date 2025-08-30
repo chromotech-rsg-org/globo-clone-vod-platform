@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { formatBillingCycle } from '@/utils/formatters';
+
 interface Plan {
   id: string;
   name: string;
@@ -28,6 +29,7 @@ interface Plan {
   package_id: string | null;
   priority: number | null;
 }
+
 const AdminPlans = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,9 +51,11 @@ const AdminPlans = () => {
     benefits: '',
     priority: 0
   });
+
   useEffect(() => {
     fetchPlans();
   }, []);
+
   const fetchPlans = async () => {
     try {
       setLoading(true);
@@ -108,6 +112,7 @@ const AdminPlans = () => {
       setLoading(false);
     }
   };
+
   const handleSave = async () => {
     try {
       // Verificar autenticação
@@ -181,6 +186,7 @@ const AdminPlans = () => {
       });
     }
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este plano?')) return;
     try {
@@ -202,6 +208,7 @@ const AdminPlans = () => {
       });
     }
   };
+
   const handleEdit = (item: Plan) => {
     setEditingItem(item);
     setFormData({
@@ -218,11 +225,13 @@ const AdminPlans = () => {
     });
     setIsDialogOpen(true);
   };
+
   const handleCreate = () => {
     setEditingItem(null);
     resetForm();
     setIsDialogOpen(true);
   };
+
   const resetForm = () => {
     setEditingItem(null);
     setIsDialogOpen(false);
@@ -239,12 +248,15 @@ const AdminPlans = () => {
       priority: 0
     });
   };
+
   const filteredPlans = plans.filter(plan => plan.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
   if (loading) {
     return <div className="p-6">
         <div className="text-white">Carregando...</div>
       </div>;
   }
+
   return <>
       <header className="bg-black border-b border-green-600/30">
         <div className="px-6 py-4">
@@ -299,10 +311,10 @@ const AdminPlans = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(plan)} className="text-gray-400 hover:text-white">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(plan)} className="text-gray-400 hover:text-white hover:bg-gray-800">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(plan.id)} className="text-red-400 hover:text-red-300">
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(plan.id)} className="text-red-400 hover:text-red-300 hover:bg-gray-800">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -453,4 +465,5 @@ const AdminPlans = () => {
       </Dialog>
     </>;
 };
+
 export default AdminPlans;
