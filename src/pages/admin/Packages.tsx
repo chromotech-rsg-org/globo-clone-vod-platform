@@ -231,7 +231,7 @@ const AdminPackages = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(pkg)} className="text-admin-muted-foreground hover:text-admin-table-text">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(pkg)} className="text-admin-muted-foreground hover:text-white">
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => handleDelete(pkg.id)} className="text-red-400 hover:text-red-300">
