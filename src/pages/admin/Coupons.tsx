@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import DataTablePagination from '@/components/admin/DataTablePagination';
 
 interface Coupon {
   id: string;
@@ -24,22 +25,34 @@ const AdminCoupons = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchCoupons();
-  }, []);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchCoupons = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('coupons')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
+
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,code.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
       
       if (error) throw error;
       setCoupons(data as Coupon[] || []);
+      setTotalItems(count || 0);
     } catch (error) {
       console.error('Erro ao buscar cupons:', error);
       toast({
@@ -95,10 +108,21 @@ const AdminCoupons = () => {
     });
   };
 
-  const filteredCoupons = coupons.filter(coupon =>
-    coupon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    coupon.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   if (loading) {
     return <div className="p-6">
@@ -122,7 +146,7 @@ const AdminCoupons = () => {
             <Input
               placeholder="Buscar cupons..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
             />
           </div>
@@ -146,7 +170,7 @@ const AdminCoupons = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCoupons.map(coupon => (
+                {coupons.map(coupon => (
                   <TableRow key={coupon.id} className="border-admin-border">
                     <TableCell className="text-admin-table-text">{coupon.name}</TableCell>
                     <TableCell className="text-admin-table-text font-mono">{coupon.code}</TableCell>
@@ -180,10 +204,19 @@ const AdminCoupons = () => {
                 ))}
               </TableBody>
             </Table>
+            
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </CardContent>
         </Card>
 
-        {filteredCoupons.length === 0 && (
+        {coupons.length === 0 && (
           <Card className="bg-admin-card border-admin-border mt-6">
             <CardContent className="p-12 text-center">
               <p className="text-admin-muted-foreground">Nenhum cupom encontrado</p>

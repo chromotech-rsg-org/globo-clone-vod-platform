@@ -9,33 +9,64 @@ import { Edit, Trash2, Plus, Search, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Auction } from '@/types/auction';
+import DataTablePagination from '@/components/admin/DataTablePagination';
+
+interface Auction {
+  id: string;
+  name: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  initial_bid_value: number;
+  current_bid_value: number;
+  bid_increment: number;
+  is_live: boolean;
+  youtube_url?: string;
+  auction_type: string;
+  increment_mode: string;
+  registration_wait_value?: number;
+  registration_wait_unit?: string;
+  min_custom_bid?: number;
+  max_custom_bid?: number;
+}
 
 const AdminAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchAuctions();
-  }, [statusFilter]);
+  }, [statusFilter, currentPage, pageSize, searchTerm]);
 
   const fetchAuctions = async () => {
     try {
       setLoading(true);
+      
       let query = supabase
         .from('auctions')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
 
-      const { data, error } = await query;
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
       if (error) {
         console.error('Supabase error:', error);
@@ -43,6 +74,7 @@ const AdminAuctions = () => {
       }
 
       setAuctions(data as Auction[] || []);
+      setTotalItems(count || 0);
     } catch (error: any) {
       console.error('Erro ao buscar leilões:', error);
       toast({
@@ -83,9 +115,21 @@ const AdminAuctions = () => {
     navigate('/admin/leiloes/criar');
   };
 
-  const filteredAuctions = auctions.filter(auction =>
-    auction.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   if (loading) {
     return <div className="p-6">
@@ -109,7 +153,7 @@ const AdminAuctions = () => {
             <Input
               placeholder="Buscar leilões..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10 bg-black border-green-600/30 text-white"
             />
           </div>
@@ -122,7 +166,10 @@ const AdminAuctions = () => {
         <div className="flex gap-4 mb-6">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-3 py-2 bg-black border border-green-600/30 text-white rounded"
           >
             <option value="all">Todos os Status</option>
@@ -145,7 +192,7 @@ const AdminAuctions = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAuctions.map(auction => (
+                {auctions.map(auction => (
                   <TableRow key={auction.id} className="border-gray-700">
                     <TableCell className="text-white">{auction.name}</TableCell>
                     <TableCell>
@@ -194,10 +241,19 @@ const AdminAuctions = () => {
                 ))}
               </TableBody>
             </Table>
+            
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </CardContent>
         </Card>
 
-        {filteredAuctions.length === 0 && (
+        {auctions.length === 0 && (
           <Card className="bg-black border-green-600/30 mt-6">
             <CardContent className="p-12 text-center">
               <p className="text-gray-400">Nenhum leilão encontrado</p>

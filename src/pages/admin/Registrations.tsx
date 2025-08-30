@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trash2, Search, Eye, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import DataTablePagination from '@/components/admin/DataTablePagination';
 
 interface Registration {
   id: string;
@@ -27,24 +28,33 @@ const AdminRegistrations = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchRegistrations();
-  }, [statusFilter]);
+  }, [statusFilter, currentPage, pageSize, searchTerm]);
 
   const fetchRegistrations = async () => {
     setLoading(true);
     try {
       let query = supabase
         .from('auction_registrations')
-        .select('*');
+        .select('*', { count: 'exact' });
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      if (searchTerm) {
+        query = query.or(`id.ilike.%${searchTerm}%,auction_id.ilike.%${searchTerm}%,user_id.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
       if (error) {
         console.error('Error fetching registrations:', error);
@@ -57,6 +67,7 @@ const AdminRegistrations = () => {
       }
 
       setRegistrations(data as Registration[] || []);
+      setTotalItems(count || 0);
     } catch (error) {
       console.error('Error fetching registrations:', error);
       toast({
@@ -125,14 +136,21 @@ const AdminRegistrations = () => {
     alert(`View details for registration ID: ${registration.id}`);
   };
 
-  const filteredRegistrations = registrations.filter(reg => {
-    const searchTermLower = searchTerm.toLowerCase();
-    return (
-      reg.id.toLowerCase().includes(searchTermLower) ||
-      reg.auction_id.toLowerCase().includes(searchTermLower) ||
-      reg.user_id.toLowerCase().includes(searchTermLower)
-    );
-  });
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
     <>
@@ -151,13 +169,16 @@ const AdminRegistrations = () => {
               type="text"
               placeholder="Buscar por ID..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
             />
           </div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-3 py-2 bg-black border border-green-600/30 text-white rounded"
           >
             <option value="all">Todos os Status</option>
@@ -189,14 +210,14 @@ const AdminRegistrations = () => {
                       Carregando habilitações...
                     </TableCell>
                   </TableRow>
-                ) : filteredRegistrations.length === 0 ? (
+                ) : registrations.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center p-4 text-admin-table-text">
                       Nenhuma habilitação encontrada.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredRegistrations.map(registration => (
+                  registrations.map(registration => (
                     <TableRow key={registration.id} className="border-admin-border">
                       <TableCell className="text-admin-table-text">{registration.id.slice(0, 8)}...</TableCell>
                       <TableCell className="text-admin-table-text">{registration.auction_id.slice(0, 8)}...</TableCell>
@@ -278,6 +299,15 @@ const AdminRegistrations = () => {
                 )}
               </TableBody>
             </Table>
+            
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </CardContent>
         </Card>
       </div>

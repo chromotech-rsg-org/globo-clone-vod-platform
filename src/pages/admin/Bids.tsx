@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trash2, Search, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import DataTablePagination from '@/components/admin/DataTablePagination';
 
 interface Bid {
   id: string;
@@ -27,21 +29,34 @@ const AdminBids = () => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchBids();
-  }, []);
+  }, [currentPage, pageSize, searchTerm]);
 
   const fetchBids = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('bids')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
+
+      if (searchTerm) {
+        query = query.or(`id.ilike.%${searchTerm}%,user_id.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
+      
       if (error) throw error;
       setBids(data as Bid[] || []);
+      setTotalItems(count || 0);
     } catch (error) {
       console.error('Erro ao buscar lances:', error);
       toast({
@@ -85,10 +100,21 @@ const AdminBids = () => {
     });
   };
 
-  const filteredBids = bids.filter(bid =>
-    bid.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (bid.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
-  );
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
     <>
@@ -106,7 +132,7 @@ const AdminBids = () => {
             <Input
               placeholder="Buscar lances..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
             />
           </div>
@@ -128,7 +154,7 @@ const AdminBids = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredBids.map(bid => (
+                {bids.map(bid => (
                   <TableRow key={bid.id} className="border-admin-border">
                     <TableCell className="text-admin-table-text">{bid.id.slice(0, 8)}...</TableCell>
                     <TableCell className="text-admin-table-text">{bid.auction_id.slice(0, 8)}...</TableCell>
@@ -170,10 +196,19 @@ const AdminBids = () => {
                 ))}
               </TableBody>
             </Table>
+            
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </CardContent>
         </Card>
 
-        {filteredBids.length === 0 && (
+        {bids.length === 0 && (
           <Card className="bg-admin-card border-admin-border mt-6">
             <CardContent className="p-12 text-center">
               <p className="text-admin-muted-foreground">Nenhum lance encontrado</p>
