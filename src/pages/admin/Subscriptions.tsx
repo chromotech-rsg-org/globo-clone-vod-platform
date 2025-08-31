@@ -11,6 +11,7 @@ import { Calendar, Edit, Plus, Trash2, Users, DollarSign, CalendarDays } from 'l
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDate } from '@/utils/formatters';
+
 interface Subscription {
   id: string;
   user_id: string;
@@ -30,17 +31,20 @@ interface Subscription {
     billing_cycle: string;
   };
 }
+
 interface Plan {
   id: string;
   name: string;
   price: number;
   billing_cycle: string;
 }
+
 interface User {
   id: string;
   name: string;
   email: string;
 }
+
 interface SubscriptionForm {
   user_id: string;
   plan_id: string;
@@ -48,6 +52,7 @@ interface SubscriptionForm {
   start_date: string;
   end_date: string;
 }
+
 const AdminSubscriptions = () => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -67,11 +72,13 @@ const AdminSubscriptions = () => {
     start_date: new Date().toISOString().split('T')[0],
     end_date: ''
   });
+
   useEffect(() => {
     fetchSubscriptions();
     fetchPlans();
     fetchUsers();
   }, []);
+
   const fetchSubscriptions = async () => {
     try {
       const {
@@ -97,6 +104,7 @@ const AdminSubscriptions = () => {
       setLoading(false);
     }
   };
+
   const fetchPlans = async () => {
     try {
       const {
@@ -109,6 +117,7 @@ const AdminSubscriptions = () => {
       console.error('Erro ao buscar planos:', error);
     }
   };
+
   const fetchUsers = async () => {
     try {
       const {
@@ -121,6 +130,7 @@ const AdminSubscriptions = () => {
       console.error('Erro ao buscar usuários:', error);
     }
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.user_id || !formData.plan_id) {
@@ -168,6 +178,7 @@ const AdminSubscriptions = () => {
       });
     }
   };
+
   const handleEdit = (subscription: Subscription) => {
     setEditingSubscription(subscription);
     setFormData({
@@ -179,6 +190,7 @@ const AdminSubscriptions = () => {
     });
     setIsDialogOpen(true);
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta assinatura?')) return;
     try {
@@ -200,6 +212,7 @@ const AdminSubscriptions = () => {
       });
     }
   };
+
   const resetForm = () => {
     setFormData({
       user_id: '',
@@ -209,16 +222,19 @@ const AdminSubscriptions = () => {
       end_date: ''
     });
   };
+
   const openCreateDialog = () => {
     setEditingSubscription(null);
     resetForm();
     setIsDialogOpen(true);
   };
+
   const filteredSubscriptions = subscriptions.filter(subscription => {
     const matchesSearch = subscription.profiles?.name.toLowerCase().includes(searchTerm.toLowerCase()) || subscription.profiles?.email.toLowerCase().includes(searchTerm.toLowerCase()) || subscription.plans?.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || subscription.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
   const getStatusBadge = (status: string) => {
     const variants: {
       [key: string]: 'default' | 'secondary' | 'destructive' | 'outline';
@@ -228,13 +244,23 @@ const AdminSubscriptions = () => {
       cancelled: 'destructive',
       expired: 'outline'
     };
-    return <Badge variant={variants[status] || 'outline'}>{status}</Badge>;
+    
+    const statusLabels: { [key: string]: string } = {
+      active: 'Ativo',
+      inactive: 'Inativo', 
+      cancelled: 'Cancelado',
+      expired: 'Expirado'
+    };
+    
+    return <Badge variant={variants[status] || 'outline'}>{statusLabels[status] || status}</Badge>;
   };
+
   const stats = {
     total: subscriptions.length,
     active: subscriptions.filter(s => s.status === 'active').length,
     revenue: subscriptions.filter(s => s.status === 'active').reduce((sum, s) => sum + (s.plans?.price || 0), 0)
   };
+
   return <>
       {loading ? <div className="p-6">
           <div className="text-admin-table-text">Carregando...</div>
@@ -292,7 +318,7 @@ const AdminSubscriptions = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
+            <SelectItem value="all">Todos os Status</SelectItem>
             <SelectItem value="active">Ativo</SelectItem>
             <SelectItem value="inactive">Inativo</SelectItem>
             <SelectItem value="cancelled">Cancelado</SelectItem>
@@ -440,4 +466,5 @@ const AdminSubscriptions = () => {
       </>}
     </>;
 };
+
 export default AdminSubscriptions;
