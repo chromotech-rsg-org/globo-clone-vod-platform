@@ -536,27 +536,28 @@ const AdminUsers = () => {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleView(user)}
-                      className="text-gray-400 hover:text-white hover:bg-gray-800"
+                      className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
+                      title="Visualizar"
                     >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver
+                      <Eye className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => handleEdit(user)}
                       className="text-gray-400 hover:text-white hover:bg-gray-800"
+                      title="Editar"
                     >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Editar
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => handleDelete(user.id, user.role)}
                       className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                      title="Excluir"
                     >
-                      Excluir
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
