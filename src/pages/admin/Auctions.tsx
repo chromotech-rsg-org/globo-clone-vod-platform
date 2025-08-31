@@ -199,7 +199,7 @@ const AdminAuctions = () => {
                         auction.status === 'active' ? 'admin-success' :
                           'admin-muted'
                       }>
-                        {auction.status}
+                        {auction.status === 'active' ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-white">
