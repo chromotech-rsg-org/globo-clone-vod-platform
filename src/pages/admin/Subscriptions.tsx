@@ -360,11 +360,11 @@ const AdminSubscriptions = () => {
                     R$ {subscription.plans?.price?.toFixed(2)} / {subscription.plans?.billing_cycle}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(subscription)} className="border-admin-border text-admin-table-text hover:bg-admin-muted text-gray-950">
+                    <div className="flex space-x-2">
+                      <Button size="sm" variant="ghost" onClick={() => handleEdit(subscription)} className="text-gray-400 hover:text-white hover:bg-gray-800">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(subscription.id)} className="border-red-500 text-red-500 hover:bg-red-500/10">
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(subscription.id)} className="text-red-400 hover:text-red-300 hover:bg-gray-800">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -453,7 +453,7 @@ const AdminSubscriptions = () => {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="border-admin-border text-admin-table-text hover:bg-admin-muted text-slate-950">
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="border-gray-600 text-zinc-950">
                 Cancelar
               </Button>
               <Button type="submit" className="bg-admin-primary hover:bg-admin-button-hover text-admin-primary-foreground">
