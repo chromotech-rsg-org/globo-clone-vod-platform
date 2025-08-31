@@ -53,73 +53,8 @@ const AuctionHome = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Promo Banner - mais atrativo como na home */}
+      {/* Promo Banner with home menus - more compact */}
       <AuctionPromoBanner />
-
-      {/* Hero Section aprimorada */}
-      <div className="bg-gradient-to-br from-black via-gray-900 to-black border-b border-green-600/30">
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center relative">
-            {/* Background pattern */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(22,163,74,0.1),transparent_50%)]"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(22,163,74,0.05)_50%,transparent_75%)]"></div>
-            
-            <div className="relative z-10">
-              <div className="flex items-center justify-center mb-6">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl"></div>
-                  <div className="relative p-4 bg-gradient-to-br from-green-500/20 to-green-600/30 rounded-2xl border border-green-500/40">
-                    <Gavel className="h-12 w-12 text-green-400 drop-shadow-lg" />
-                  </div>
-                </div>
-              </div>
-              
-              <h1 className="text-5xl font-bold text-white mb-6 tracking-tight">
-                Portal de Leilões
-              </h1>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                Acompanhe leilões ao vivo e acesse gravações de leilões anteriores. 
-                Participe de lances em tempo real com total segurança e transparência.
-              </p>
-              
-              {/* Stats mini cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-12">
-                <div className="bg-gradient-to-br from-gray-900/80 to-black/60 backdrop-blur-sm border border-green-500/30 rounded-xl p-4 hover:border-green-500/50 transition-all duration-300">
-                  <div className="flex items-center justify-center mb-2">
-                    <Play className="h-6 w-6 text-green-400" />
-                  </div>
-                  <p className="text-2xl font-bold text-white">{liveAuctions.length}</p>
-                  <p className="text-green-400 text-sm">Ao Vivo</p>
-                </div>
-                
-                <div className="bg-gradient-to-br from-gray-900/80 to-black/60 backdrop-blur-sm border border-blue-500/30 rounded-xl p-4 hover:border-blue-500/50 transition-all duration-300">
-                  <div className="flex items-center justify-center mb-2">
-                    <TrendingUp className="h-6 w-6 text-blue-400" />
-                  </div>
-                  <p className="text-2xl font-bold text-white">{auctions.length}</p>
-                  <p className="text-blue-400 text-sm">Total</p>
-                </div>
-                
-                <div className="bg-gradient-to-br from-gray-900/80 to-black/60 backdrop-blur-sm border border-amber-500/30 rounded-xl p-4 hover:border-amber-500/50 transition-all duration-300">
-                  <div className="flex items-center justify-center mb-2">
-                    <Users className="h-6 w-6 text-amber-400" />
-                  </div>
-                  <p className="text-2xl font-bold text-white">{auctions.filter(a => a.auction_type === 'rural').length}</p>
-                  <p className="text-amber-400 text-sm">Rurais</p>
-                </div>
-                
-                <div className="bg-gradient-to-br from-gray-900/80 to-black/60 backdrop-blur-sm border border-purple-500/30 rounded-xl p-4 hover:border-purple-500/50 transition-all duration-300">
-                  <div className="flex items-center justify-center mb-2">
-                    <Award className="h-6 w-6 text-purple-400" />
-                  </div>
-                  <p className="text-2xl font-bold text-white">{auctions.filter(a => a.auction_type === 'judicial').length}</p>
-                  <p className="text-purple-400 text-sm">Judiciais</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
