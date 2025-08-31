@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -534,28 +533,28 @@ const AdminUsers = () => {
                   
                   <div className="flex flex-row sm:flex-col lg:flex-row items-start sm:items-end lg:items-center space-x-2 sm:space-x-0 sm:space-y-2 lg:space-y-0 lg:space-x-2 flex-shrink-0">
                     <Button
-                      variant="outline"
                       size="sm"
+                      variant="ghost"
                       onClick={() => handleView(user)}
-                      className="border-gray-600 text-slate-950"
+                      className="text-gray-400 hover:text-white hover:bg-gray-800"
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       Ver
                     </Button>
                     <Button
-                      variant="outline"
                       size="sm"
+                      variant="ghost"
                       onClick={() => handleEdit(user)}
-                      className="border-gray-600 text-slate-950"
+                      className="text-gray-400 hover:text-white hover:bg-gray-800"
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
                     </Button>
                     <Button
-                      variant="destructive"
                       size="sm"
-                      className="bg-black text-white hover:bg-gray-800"
+                      variant="ghost"
                       onClick={() => handleDelete(user.id, user.role)}
+                      className="text-red-400 hover:text-red-300 hover:bg-gray-800"
                     >
                       Excluir
                     </Button>
