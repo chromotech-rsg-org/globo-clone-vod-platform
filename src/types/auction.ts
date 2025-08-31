@@ -58,6 +58,7 @@ export interface Bid {
   is_winner: boolean;
   created_at: string;
   updated_at: string;
+  user_name?: string;
 }
 
 export type BidUserState = 
