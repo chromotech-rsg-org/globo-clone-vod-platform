@@ -4,16 +4,15 @@ import { useAuctionDetails } from '@/hooks/useAuctions';
 import { useAuctionRegistration } from '@/hooks/useAuctionRegistration';
 import { useAuctionBids } from '@/hooks/useAuctionBids';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { formatCurrency } from '@/utils/formatters';
 import { BidUserState } from '@/types/auction';
 import { Play, Square, User, AlertCircle, CheckCircle, Clock, ArrowLeft, Trophy } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
 import BidHistory from '@/components/auction/BidHistory';
 import ClientNotifications from '@/components/auction/ClientNotifications';
+import AuctionRoomHeader from '@/components/auction/AuctionRoomHeader';
+import AuctionVideoPlayer from '@/components/auction/AuctionVideoPlayer';
+import AuctionBidInfo from '@/components/auction/AuctionBidInfo';
+import AuctionUserActions from '@/components/auction/AuctionUserActions';
 import { useToast } from '@/components/ui/use-toast';
 
 const AuctionRoom = () => {
@@ -68,16 +67,6 @@ const AuctionRoom = () => {
       }
     }
   }, [bids, auction]);
-
-  const getYouTubeEmbedUrl = (url: string) => {
-    if (!url) return '';
-    
-    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-    if (videoIdMatch) {
-      return `https://www.youtube.com/embed/${videoIdMatch[1]}?autoplay=1&modestbranding=1`;
-    }
-    return url;
-  };
 
   const getUserStateInfo = () => {
     const hasWinner = bids.some(bid => bid.is_winner);
@@ -173,10 +162,10 @@ const AuctionRoom = () => {
 
   if (auctionLoading || registrationLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando leilão...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+          <p className="text-gray-300">Carregando leilão...</p>
         </div>
       </div>
     );
@@ -184,10 +173,10 @@ const AuctionRoom = () => {
 
   if (!auction) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-2">Leilão não encontrado</h2>
-          <p className="text-muted-foreground">O leilão que você está procurando não existe.</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Leilão não encontrado</h2>
+          <p className="text-gray-300">O leilão que você está procurando não existe.</p>
         </div>
       </div>
     );
@@ -196,234 +185,70 @@ const AuctionRoom = () => {
   const stateInfo = getUserStateInfo();
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Botão Voltar */}
-        <div className="mb-6">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/auctions')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft size={16} />
-            Voltar ao Painel
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="min-h-screen bg-black">
+      <AuctionRoomHeader />
+      
+      <div className="p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video Player */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardContent className="p-0">
-                <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
-                  {auction.youtube_url ? (
-                    <iframe
-                      src={getYouTubeEmbedUrl(auction.youtube_url)}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white">
-                      <div className="text-center">
-                        <Play size={64} className="mx-auto mb-4 opacity-50" />
-                        <p>Transmissão não disponível</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h1 className="text-2xl font-bold text-foreground mb-2">
-                        {auction.name}
-                      </h1>
-                      {auction.description && (
-                        <p className="text-muted-foreground">
-                          {auction.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Badge 
-                        variant={auction.is_live ? "default" : "secondary"}
-                        className="flex items-center gap-1"
-                      >
-                        {auction.is_live ? <Play size={12} /> : <Square size={12} />}
-                        {auction.is_live ? 'AO VIVO' : 'GRAVADO'}
-                      </Badge>
-                      <Badge variant="outline">
-                        {auction.auction_type === 'rural' ? 'Rural' : 'Judicial'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AuctionVideoPlayer auction={auction} />
           </div>
 
           {/* Bidding Panel */}
           <div className="space-y-6">
             {/* Current Bid Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Informações do Lance</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                    Lance Atual
-                  </p>
-                  <p className="text-2xl font-bold text-primary">
-                    {(() => {
-                      const approvedBids = bids.filter(bid => bid.status === 'approved');
-                      if (approvedBids.length > 0) {
-                        const highestBid = Math.max(...approvedBids.map(bid => bid.bid_value));
-                        return formatCurrency(Math.max(highestBid, auction.current_bid_value));
-                      }
-                      return formatCurrency(auction.current_bid_value);
-                    })()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                    Lance Inicial
-                  </p>
-                  <p className="text-lg font-medium text-muted-foreground">
-                    {formatCurrency(auction.initial_bid_value)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                    {(() => {
-                      const hasWinner = bids.some(bid => bid.is_winner);
-                      return hasWinner ? 'Valor Arrematado' : 'Próximo Lance';
-                    })()}
-                  </p>
-                  <p className="text-xl font-semibold text-foreground">
-                    {(() => {
-                      const hasWinner = bids.some(bid => bid.is_winner);
-                      if (hasWinner) {
-                        const winningBid = bids.find(bid => bid.is_winner);
-                        return formatCurrency(winningBid?.bid_value || auction.current_bid_value);
-                      }
-                      return formatCurrency(nextBidValue);
-                    })()}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <AuctionBidInfo 
+              auction={auction}
+              bids={bids}
+              nextBidValue={nextBidValue}
+            />
 
             {/* User Action Panel */}
             {stateInfo && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <stateInfo.icon size={20} />
-                    {stateInfo.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Alert variant={stateInfo.variant === 'destructive' ? 'destructive' : 'default'}>
-                    <AlertDescription>
-                      {stateInfo.description}
-                    </AlertDescription>
-                  </Alert>
-                   
-                    {stateInfo.action && (
-                      <Button 
-                        onClick={stateInfo.onClick}
-                        className="w-full"
-                        variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
-                        disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick}
-                      >
-                        {submittingBid ? 'Enviando lance...' : stateInfo.action}
-                      </Button>
-                    )}
-
-                    {/* Status do lance do usuário */}
-                    {userPendingBid && (
-                      <Alert className="mt-4">
-                        <Clock className="h-4 w-4" />
-                        <AlertDescription>
-                          <div className="flex justify-between items-center">
-                            <span>Seu lance: {formatCurrency(userPendingBid.bid_value)}</span>
-                            <Badge variant="secondary">Em análise</Badge>
-                          </div>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-
-                    {/* Mostrar se o usuário tem lance vencedor */}
-                    {(() => {
-                      const userWinningBid = bids.find(bid => 
-                        bid.user_id === user?.id && bid.is_winner && bid.status === 'approved'
-                      );
-                      if (userWinningBid) {
-                        return (
-                          <Alert className="mt-4 border-green-500 bg-green-50">
-                            <Trophy className="h-4 w-4 text-green-600" />
-                            <AlertDescription className="text-green-800">
-                              <div className="text-center">
-                                <p className="font-bold">🎉 Parabéns! Você é o vencedor!</p>
-                                <p>Lance vencedor: {formatCurrency(userWinningBid.bid_value)}</p>
-                              </div>
-                            </AlertDescription>
-                          </Alert>
-                        );
-                      }
-                      
-                      // Verificar se há algum vencedor no leilão
-                      const anyWinner = bids.find(bid => bid.is_winner);
-                      if (anyWinner && anyWinner.user_id !== user?.id) {
-                        return (
-                          <Alert className="mt-4 border-orange-500 bg-orange-50">
-                            <Trophy className="h-4 w-4 text-orange-600" />
-                            <AlertDescription className="text-orange-800">
-                              <div className="text-center">
-                                <p className="font-bold">Leilão Finalizado</p>
-                                <p>Lance vencedor: {formatCurrency(anyWinner.bid_value)}</p>
-                                <p className="text-sm">Vencedor: {anyWinner.user_name || 'Usuário'}</p>
-                              </div>
-                            </AlertDescription>
-                          </Alert>
-                        );
-                      }
-                    })()}
-                </CardContent>
-              </Card>
-             )}
-
-              {/* Histórico de Lances */}
-              <BidHistory 
-                bids={bids} 
-                loading={bidsLoading} 
-                currentUserId={user?.id} 
+              <AuctionUserActions
+                auction={auction}
+                bids={bids}
+                userState={userState}
+                stateInfo={stateInfo}
+                submittingBid={submittingBid}
+                userPendingBid={userPendingBid}
+                userId={user?.id}
+                onBidClick={() => setShowBidDialog(true)}
+                onRequestRegistration={requestRegistration}
               />
-           </div>
-         </div>
-       </div>
+            )}
 
-      {/* Bid Confirmation Dialog */}
-       <BidConfirmationDialog
-         open={showBidDialog}
-         onOpenChange={setShowBidDialog}
-         auction={auction}
-         bidValue={nextBidValue}
-         onConfirm={async () => {
-           const success = await submitBid(nextBidValue);
-           if (success) {
-             setShowBidDialog(false);
-           }
-         }}
-        />
-
-        {/* Client Notifications - Fixed position */}
-        <div className="fixed top-20 right-4 z-40">
-          <ClientNotifications auctionId={id} />
+            {/* Histórico de Lances */}
+            <BidHistory 
+              bids={bids} 
+              loading={bidsLoading} 
+              currentUserId={user?.id} 
+            />
+          </div>
         </div>
       </div>
-    );
-  };
+
+      {/* Bid Confirmation Dialog */}
+      <BidConfirmationDialog
+        open={showBidDialog}
+        onOpenChange={setShowBidDialog}
+        auction={auction}
+        bidValue={nextBidValue}
+        onConfirm={async () => {
+          const success = await submitBid(nextBidValue);
+          if (success) {
+            setShowBidDialog(false);
+          }
+        }}
+      />
+
+      {/* Client Notifications - Fixed position */}
+      <div className="fixed top-20 right-4 z-40">
+        <ClientNotifications auctionId={id} />
+      </div>
+    </div>
+  );
+};
 
 export default AuctionRoom;
