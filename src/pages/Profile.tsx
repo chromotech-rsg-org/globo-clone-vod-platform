@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -8,18 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatCpf, formatPhone } from '@/utils/formatters';
-import { 
-  sanitizeInputSecure, 
-  validateEmailSecurity, 
-  validateCpfSecurity, 
-  validatePhoneSecurity,
-  globalRateLimiter,
-  securityConfig
-} from '@/utils/validators';
-
+import { sanitizeInputSecure, validateEmailSecurity, validateCpfSecurity, validatePhoneSecurity, globalRateLimiter, securityConfig } from '@/utils/validators';
 const Profile = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -28,7 +23,6 @@ const Profile = () => {
     phone: ''
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
-
   useEffect(() => {
     if (user) {
       setFormData({
@@ -39,10 +33,9 @@ const Profile = () => {
       });
     }
   }, [user]);
-
   const validateForm = () => {
     const errors: Record<string, string[]> = {};
-    
+
     // Validate name
     const sanitizedName = sanitizeInputSecure(formData.name, securityConfig.maxLengths.name);
     if (!sanitizedName.trim()) {
@@ -66,13 +59,14 @@ const Profile = () => {
         errors.phone = phoneValidation.errors;
       }
     }
-
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value
+    } = e.target;
     let formattedValue = value;
 
     // Apply formatting and sanitization
@@ -83,7 +77,6 @@ const Profile = () => {
     } else if (name === 'phone') {
       formattedValue = formatPhone(sanitizeInputSecure(value, securityConfig.maxLengths.phone));
     }
-
     setFormData(prev => ({
       ...prev,
       [name]: formattedValue
@@ -92,13 +85,14 @@ const Profile = () => {
     // Clear validation errors for this field
     if (validationErrors[name]) {
       setValidationErrors(prev => {
-        const newErrors = { ...prev };
+        const newErrors = {
+          ...prev
+        };
         delete newErrors[name];
         return newErrors;
       });
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
@@ -108,7 +102,6 @@ const Profile = () => {
     if (!globalRateLimiter.isAllowed(rateLimitKey, 3, securityConfig.rateLimits.timeWindow)) {
       const remainingTime = globalRateLimiter.getRemainingTime(rateLimitKey, securityConfig.rateLimits.timeWindow);
       const minutes = Math.ceil(remainingTime / (1000 * 60));
-      
       toast({
         title: "Muitas tentativas",
         description: `Aguarde ${minutes} minutos antes de tentar novamente`,
@@ -116,7 +109,6 @@ const Profile = () => {
       });
       return;
     }
-
     if (!validateForm()) {
       toast({
         title: "Dados inválidos",
@@ -125,21 +117,16 @@ const Profile = () => {
       });
       return;
     }
-
     setLoading(true);
-
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: sanitizeInputSecure(formData.name, securityConfig.maxLengths.name),
-          cpf: formData.cpf || null,
-          phone: formData.phone || null
-        })
-        .eq('id', user.id);
-
+      const {
+        error
+      } = await supabase.from('profiles').update({
+        name: sanitizeInputSecure(formData.name, securityConfig.maxLengths.name),
+        cpf: formData.cpf || null,
+        phone: formData.phone || null
+      }).eq('id', user.id);
       if (error) throw error;
-
       toast({
         title: "Perfil atualizado",
         description: "Seus dados foram atualizados com sucesso."
@@ -155,15 +142,13 @@ const Profile = () => {
       setLoading(false);
     }
   };
-
-  return (
-    <div className="p-6">
+  return <div className="p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-slate-50">
             Meu Perfil
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-200">
             Gerencie suas informações pessoais
           </p>
         </div>
@@ -176,35 +161,15 @@ const Profile = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Seu nome completo"
-                  maxLength={securityConfig.maxLengths.name}
-                  className={validationErrors.name ? "border-red-500" : ""}
-                />
-                {validationErrors.name && (
-                  <div className="text-sm text-red-600">
-                    {validationErrors.name.map((error, index) => (
-                      <p key={index}>{error}</p>
-                    ))}
-                  </div>
-                )}
+                <Input id="name" name="name" type="text" value={formData.name} onChange={handleInputChange} placeholder="Seu nome completo" maxLength={securityConfig.maxLengths.name} className={validationErrors.name ? "border-red-500" : ""} />
+                {validationErrors.name && <div className="text-sm text-red-600">
+                    {validationErrors.name.map((error, index) => <p key={index}>{error}</p>)}
+                  </div>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  disabled
-                  className="bg-gray-100 dark:bg-gray-800"
-                />
+                <Input id="email" name="email" type="email" value={formData.email} disabled className="bg-gray-100 dark:bg-gray-800" />
                 <p className="text-sm text-gray-500">
                   O email não pode ser alterado
                 </p>
@@ -212,59 +177,27 @@ const Profile = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="cpf">CPF</Label>
-                <Input
-                  id="cpf"
-                  name="cpf"
-                  type="text"
-                  value={formData.cpf}
-                  onChange={handleInputChange}
-                  placeholder="000.000.000-00"
-                  maxLength={securityConfig.maxLengths.cpf}
-                  className={validationErrors.cpf ? "border-red-500" : ""}
-                />
-                {validationErrors.cpf && (
-                  <div className="text-sm text-red-600">
-                    {validationErrors.cpf.map((error, index) => (
-                      <p key={index}>{error}</p>
-                    ))}
-                  </div>
-                )}
+                <Input id="cpf" name="cpf" type="text" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" maxLength={securityConfig.maxLengths.cpf} className={validationErrors.cpf ? "border-red-500" : ""} />
+                {validationErrors.cpf && <div className="text-sm text-red-600">
+                    {validationErrors.cpf.map((error, index) => <p key={index}>{error}</p>)}
+                  </div>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="(00) 00000-0000"
-                  maxLength={securityConfig.maxLengths.phone}
-                  className={validationErrors.phone ? "border-red-500" : ""}
-                />
-                {validationErrors.phone && (
-                  <div className="text-sm text-red-600">
-                    {validationErrors.phone.map((error, index) => (
-                      <p key={index}>{error}</p>
-                    ))}
-                  </div>
-                )}
+                <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} placeholder="(00) 00000-0000" maxLength={securityConfig.maxLengths.phone} className={validationErrors.phone ? "border-red-500" : ""} />
+                {validationErrors.phone && <div className="text-sm text-red-600">
+                    {validationErrors.phone.map((error, index) => <p key={index}>{error}</p>)}
+                  </div>}
               </div>
 
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="w-full"
-              >
+              <Button type="submit" disabled={loading} className="w-full">
                 {loading ? 'Salvando...' : 'Salvar Alterações'}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Profile;
