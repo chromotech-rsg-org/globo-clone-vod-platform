@@ -102,7 +102,7 @@ const AuctionUserActions = ({
                     <p className="text-sm">Vencedor: {anyWinner.user_name || 'Usuário'}</p>
                   </div>
                 </AlertDescription>
-              </div>
+              </Alert>
             );
           }
         })()}
