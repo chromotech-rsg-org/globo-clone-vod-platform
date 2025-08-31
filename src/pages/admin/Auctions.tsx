@@ -203,10 +203,10 @@ const AdminAuctions = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-white">
-                      {auction.start_date ? new Date(auction.start_date).toLocaleDateString() : '-'}
+                      {auction.start_date ? new Date(auction.start_date).toLocaleDateString('pt-BR') : '-'}
                     </TableCell>
                     <TableCell className="text-white">
-                      {auction.end_date ? new Date(auction.end_date).toLocaleDateString() : '-'}
+                      {auction.end_date ? new Date(auction.end_date).toLocaleDateString('pt-BR') : '-'}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
@@ -215,6 +215,7 @@ const AdminAuctions = () => {
                           variant="ghost" 
                           onClick={() => navigate(`/admin/leiloes/${auction.id}`)}
                           className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
+                          title="Visualizar"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -223,6 +224,7 @@ const AdminAuctions = () => {
                           variant="ghost" 
                           onClick={() => handleEdit(auction)}
                           className="text-gray-400 hover:text-white hover:bg-gray-800"
+                          title="Editar"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -231,6 +233,7 @@ const AdminAuctions = () => {
                           variant="ghost" 
                           onClick={() => handleDelete(auction.id)}
                           className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                          title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
