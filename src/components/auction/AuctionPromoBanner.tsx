@@ -147,7 +147,7 @@ const AuctionPromoBanner = () => {
             <Button 
               asChild 
               variant="outline" 
-              className="border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60 transition-all duration-300"
+              className="border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60 hover:text-white transition-all duration-300"
             >
               <Link to="/register">
                 Cadastrar-se
