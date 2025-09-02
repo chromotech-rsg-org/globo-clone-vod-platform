@@ -63,9 +63,9 @@ const BidDetailsModal: React.FC<BidDetailsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-admin-modal-bg text-admin-modal-text border-admin-border">
+      <DialogContent className="max-w-2xl bg-gray-900 text-white border-gray-700">
         <DialogHeader>
-          <DialogTitle className="text-admin-modal-text">
+          <DialogTitle className="text-white">
             Detalhes do Lance
           </DialogTitle>
         </DialogHeader>
@@ -74,11 +74,11 @@ const BidDetailsModal: React.FC<BidDetailsModalProps> = ({
           {/* Basic Information */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-admin-muted-foreground">ID do Lance</label>
-              <p className="text-admin-modal-text font-mono text-sm">{bid.id}</p>
+              <label className="text-sm font-medium text-gray-300">ID do Lance</label>
+              <p className="text-white font-mono text-sm">{bid.id}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-admin-muted-foreground">Status</label>
+              <label className="text-sm font-medium text-gray-300">Status</label>
               <div className="mt-1">
                 <Badge variant={getStatusVariant(bid.status)}>
                   {getStatusDisplay(bid.status)}
@@ -87,41 +87,41 @@ const BidDetailsModal: React.FC<BidDetailsModalProps> = ({
             </div>
           </div>
 
-          <Separator className="border-admin-border" />
+          <Separator className="border-gray-700" />
 
           {/* Auction and User Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-admin-muted-foreground">ID do Leilão</label>
-              <p className="text-admin-modal-text font-mono text-sm">{bid.auction_id}</p>
+              <label className="text-sm font-medium text-gray-300">ID do Leilão</label>
+              <p className="text-white font-mono text-sm">{bid.auction_id}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-admin-muted-foreground">ID do Usuário</label>
-              <p className="text-admin-modal-text font-mono text-sm">{bid.user_id}</p>
+              <label className="text-sm font-medium text-gray-300">ID do Usuário</label>
+              <p className="text-white font-mono text-sm">{bid.user_id}</p>
             </div>
           </div>
 
           {/* Bid Value */}
           <div>
-            <label className="text-sm font-medium text-admin-muted-foreground">Valor do Lance</label>
-            <p className="text-2xl font-bold text-admin-modal-text">
+            <label className="text-sm font-medium text-gray-300">Valor do Lance</label>
+            <p className="text-2xl font-bold text-white">
               R$ {bid.bid_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
 
-          <Separator className="border-admin-border" />
+          <Separator className="border-gray-700" />
 
           {/* Timestamps */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-admin-muted-foreground">Criado em</label>
-              <p className="text-admin-modal-text">
+              <label className="text-sm font-medium text-gray-300">Criado em</label>
+              <p className="text-white">
                 {new Date(bid.created_at).toLocaleString('pt-BR')}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-admin-muted-foreground">Atualizado em</label>
-              <p className="text-admin-modal-text">
+              <label className="text-sm font-medium text-gray-300">Atualizado em</label>
+              <p className="text-white">
                 {new Date(bid.updated_at).toLocaleString('pt-BR')}
               </p>
             </div>
@@ -137,20 +137,20 @@ const BidDetailsModal: React.FC<BidDetailsModalProps> = ({
           {/* Notes */}
           {(bid.internal_notes || bid.client_notes) && (
             <>
-              <Separator className="border-admin-border" />
+              <Separator className="border-gray-700" />
               <div className="space-y-4">
                 {bid.client_notes && (
                   <div>
-                    <label className="text-sm font-medium text-admin-muted-foreground">Observações do Cliente</label>
-                    <p className="text-admin-modal-text bg-admin-content-bg p-3 rounded border border-admin-border">
+                    <label className="text-sm font-medium text-gray-300">Observações do Cliente</label>
+                    <p className="text-white bg-gray-800 p-3 rounded border border-gray-700">
                       {bid.client_notes}
                     </p>
                   </div>
                 )}
                 {bid.internal_notes && (
                   <div>
-                    <label className="text-sm font-medium text-admin-muted-foreground">Observações Internas</label>
-                    <p className="text-admin-modal-text bg-admin-content-bg p-3 rounded border border-admin-border">
+                    <label className="text-sm font-medium text-gray-300">Observações Internas</label>
+                    <p className="text-white bg-gray-800 p-3 rounded border border-gray-700">
                       {bid.internal_notes}
                     </p>
                   </div>
@@ -160,11 +160,11 @@ const BidDetailsModal: React.FC<BidDetailsModalProps> = ({
           )}
 
           {/* Actions */}
-          <div className="flex justify-between pt-4 border-t border-admin-border">
+          <div className="flex justify-between pt-4 border-t border-gray-700">
             <Button 
               variant="outline" 
               onClick={() => onOpenChange(false)}
-              className="border-admin-border"
+              className="border-gray-600 text-black bg-white hover:bg-gray-100"
             >
               Fechar
             </Button>
@@ -190,7 +190,7 @@ const BidDetailsModal: React.FC<BidDetailsModalProps> = ({
                       onApprove(bid.id);
                       onOpenChange(false);
                     }}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     <Check className="h-4 w-4 mr-1" />
                     Aprovar
