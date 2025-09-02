@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -175,7 +174,7 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-black text-white border-green-600/30 max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl bg-black text-white border-green-600/30 max-h-[80vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-black [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-700">
         <DialogHeader>
           <DialogTitle className="text-white">
             {isEditing ? 'Editar Plano' : 'Novo Plano'}
