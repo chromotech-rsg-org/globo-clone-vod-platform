@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Gavel, Users, ArrowRight, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PendingNotificationItem from './PendingNotificationItem';
+
 interface PendingItem {
   id: string;
   type: 'bid' | 'registration';
@@ -13,12 +14,14 @@ interface PendingItem {
   value?: number;
   created_at: string;
 }
+
 interface PendingNotificationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pendingBids: PendingItem[];
   pendingRegistrations: PendingItem[];
 }
+
 const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   open,
   onOpenChange,
@@ -26,14 +29,17 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   pendingRegistrations
 }) => {
   const navigate = useNavigate();
+
   const handleGoToBids = () => {
     navigate('/admin/lances');
     onOpenChange(false);
   };
+
   const handleGoToRegistrations = () => {
     navigate('/admin/habilitacoes');
     onOpenChange(false);
   };
+
   const handleItemClick = (item: PendingItem) => {
     // Close current modal
     onOpenChange(false);
@@ -45,9 +51,12 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       navigate(`/admin/habilitacoes?registration=${item.id}&notifModal=1`);
     }
   };
+
   const totalPending = pendingBids.length + pendingRegistrations.length;
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-admin-modal-bg text-admin-modal-text border-admin-border">
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-black/95 text-admin-modal-text border-admin-border backdrop-blur-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-admin-modal-text">
             <Bell className="h-5 w-5" />
@@ -116,6 +125,8 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
           </div>
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
+
 export default PendingNotificationModal;
