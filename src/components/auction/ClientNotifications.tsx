@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -184,9 +183,9 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
       </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-black border-green-600/30 text-white [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-green-500">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-green-400">
               <Bell className="h-5 w-5" />
               Suas Notificações ({notifications.length})
             </DialogTitle>
@@ -194,36 +193,36 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
 
           <div className="space-y-4">
             {notifications.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-gray-400">
                 Nenhuma notificação encontrada
               </div>
             ) : (
               notifications.map((notification) => (
-                <Card key={notification.id} className={`${!notification.read ? 'border-primary' : ''}`}>
+                <Card key={notification.id} className={`bg-gray-900 border-gray-700 ${!notification.read ? 'border-green-600/50' : ''}`}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getStatusIcon(notification.status, notification.type)}
-                        <CardTitle className="text-sm">
+                        <CardTitle className="text-sm text-white">
                           {getStatusText(notification.status, notification.type)}
                         </CardTitle>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-gray-400">
                         {formatDateTime(notification.updated_at)}
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-2">
-                      <div className="text-sm font-medium">
+                      <div className="text-sm font-medium text-green-400">
                         {notification.auction_name}
                       </div>
                       {notification.client_notes && (
-                        <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                        <div className="text-sm text-gray-300 bg-gray-800 p-3 rounded border border-green-600/30">
                           <div className="flex items-start gap-2">
-                            <MessageSquare className="h-4 w-4 mt-0.5 text-primary" />
+                            <MessageSquare className="h-4 w-4 mt-0.5 text-green-400" />
                             <div>
-                              <div className="font-medium text-foreground mb-1">Mensagem:</div>
+                              <div className="font-medium text-green-400 mb-1">Mensagem:</div>
                               {notification.client_notes}
                             </div>
                           </div>
@@ -236,8 +235,11 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
             )}
           </div>
 
-          <div className="flex justify-end pt-4 border-t">
-            <Button onClick={() => setShowModal(false)}>
+          <div className="flex justify-end pt-4 border-t border-green-600/30">
+            <Button 
+              onClick={() => setShowModal(false)}
+              className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+            >
               Fechar
             </Button>
           </div>
