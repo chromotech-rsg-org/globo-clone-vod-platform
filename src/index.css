@@ -109,6 +109,42 @@
     transition: margin-left 0.3s ease-in-out;
   }
 
+  /* Scrollbar styling for admin sidebar */
+  #admin-sidebar-unique::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #admin-sidebar-unique::-webkit-scrollbar-track {
+    background: #000000;
+  }
+
+  #admin-sidebar-unique::-webkit-scrollbar-thumb {
+    background: #1a1a1a;
+    border-radius: 4px;
+  }
+
+  #admin-sidebar-unique::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+  }
+
+  /* Navigation scrollbar styling */
+  #admin-sidebar-unique nav::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  #admin-sidebar-unique nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  #admin-sidebar-unique nav::-webkit-scrollbar-thumb {
+    background: #1a1a1a;
+    border-radius: 3px;
+  }
+
+  #admin-sidebar-unique nav::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+  }
+
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 98%;
