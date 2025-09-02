@@ -54,7 +54,7 @@ const AdminRegistrations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
