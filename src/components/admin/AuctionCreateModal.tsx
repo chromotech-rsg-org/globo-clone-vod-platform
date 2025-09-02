@@ -261,7 +261,7 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-green-600/30 text-white"
+              className="border-green-600/30 text-black"
             >
               Cancelar
             </Button>
