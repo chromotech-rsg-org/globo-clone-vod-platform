@@ -1,57 +1,43 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save } from 'lucide-react';
-
-interface AuctionFormData {
-  name: string;
-  description?: string;
-  youtube_url?: string;
-  initial_bid_value: number;
-  bid_increment: number;
-  start_date?: string;
-  end_date?: string;
-  registration_wait_value: number;
-  registration_wait_unit: 'minutes' | 'hours' | 'days';
-  status: 'active' | 'inactive';
-  auction_type: 'rural' | 'judicial';
-  increment_mode: string;
-  min_custom_bid?: number;
-  max_custom_bid?: number;
-}
+import { Auction } from '@/types/auction';
 
 const AuctionEdit = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState<AuctionFormData>({
+  const [auction, setAuction] = useState<Partial<Auction>>({
     name: '',
     description: '',
     youtube_url: '',
     initial_bid_value: 0,
-    bid_increment: 100,
+    current_bid_value: 0,
+    bid_increment: 0,
     start_date: '',
     end_date: '',
     registration_wait_value: 5,
     registration_wait_unit: 'minutes',
     status: 'inactive',
     auction_type: 'rural',
-    increment_mode: 'fixed',
-    min_custom_bid: 0,
-    max_custom_bid: 0,
+    is_live: false
   });
 
   useEffect(() => {
     if (id) {
       fetchAuction();
+    } else {
+      setLoading(false);
     }
   }, [id]);
 
@@ -66,29 +52,19 @@ const AuctionEdit = () => {
       if (error) throw error;
 
       if (data) {
-        setFormData({
-          name: data.name || '',
-          description: data.description || '',
-          youtube_url: data.youtube_url || '',
-          initial_bid_value: data.initial_bid_value || 0,
-          bid_increment: data.bid_increment || 100,
-          start_date: data.start_date ? new Date(data.start_date).toISOString().slice(0, 16) : '',
-          end_date: data.end_date ? new Date(data.end_date).toISOString().slice(0, 16) : '',
-          registration_wait_value: data.registration_wait_value || 5,
-          registration_wait_unit: (data.registration_wait_unit as 'minutes' | 'hours' | 'days') || 'minutes',
-          status: (data.status as 'active' | 'inactive') || 'inactive',
-          auction_type: (data.auction_type as 'rural' | 'judicial') || 'rural',
-          increment_mode: data.increment_mode || 'fixed',
-          min_custom_bid: data.min_custom_bid || 0,
-          max_custom_bid: data.max_custom_bid || 0,
+        setAuction({
+          ...data,
+          registration_wait_unit: data.registration_wait_unit as 'minutes' | 'hours' | 'days',
+          status: data.status as 'active' | 'inactive',
+          auction_type: data.auction_type as 'rural' | 'judicial'
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar leilão:', error);
+      console.error('Erro ao buscar leilão:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar o leilão",
-        variant: "destructive"
+        description: "Não foi possível carregar os dados do leilão",
+        variant: "destructive",
       });
       navigate('/admin/leiloes');
     } finally {
@@ -101,112 +77,100 @@ const AuctionEdit = () => {
     setSaving(true);
 
     try {
-      const updateData = {
-        ...formData,
-        start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
-        end_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
-        updated_at: new Date().toISOString(),
+      const auctionData = {
+        name: auction.name,
+        description: auction.description,
+        youtube_url: auction.youtube_url,
+        initial_bid_value: auction.initial_bid_value,
+        current_bid_value: auction.current_bid_value,
+        bid_increment: auction.bid_increment,
+        start_date: auction.start_date,
+        end_date: auction.end_date,
+        registration_wait_value: auction.registration_wait_value,
+        registration_wait_unit: auction.registration_wait_unit,
+        status: auction.status,
+        auction_type: auction.auction_type,
+        is_live: auction.is_live
       };
 
-      const { error } = await supabase
-        .from('auctions')
-        .update(updateData)
-        .eq('id', id);
+      let result;
+      if (id) {
+        result = await supabase
+          .from('auctions')
+          .update(auctionData)
+          .eq('id', id);
+      } else {
+        result = await supabase
+          .from('auctions')
+          .insert([auctionData]);
+      }
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       toast({
         title: "Sucesso",
-        description: "Leilão atualizado com sucesso"
+        description: id ? "Leilão atualizado com sucesso" : "Leilão criado com sucesso",
       });
-      
+
       navigate('/admin/leiloes');
     } catch (error) {
-      console.error('Erro ao atualizar leilão:', error);
+      console.error('Erro ao salvar leilão:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o leilão",
-        variant: "destructive"
+        description: "Não foi possível salvar o leilão",
+        variant: "destructive",
       });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleInputChange = (field: keyof AuctionFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
   if (loading) {
     return (
       <div className="p-6">
-        <div className="text-white">Carregando...</div>
+        <div className="text-admin-table-text">Carregando...</div>
       </div>
     );
   }
 
   return (
     <>
-      <header className="bg-black border-b border-green-600/30">
-        <div className="px-6 py-4 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/admin/leiloes')}
-            className="text-gray-400 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <h1 className="text-xl font-bold text-white">Editar Leilão</h1>
+      <header className="bg-admin-header border-b border-admin-border">
+        <div className="px-6 py-4">
+          <h1 className="text-xl font-bold text-admin-sidebar-text">
+            {id ? 'Editar Leilão' : 'Criar Leilão'}
+          </h1>
         </div>
       </header>
 
       <div className="p-6">
-        <Card className="bg-black border-green-600/30">
+        <Card className="bg-admin-card border-admin-border">
           <CardHeader>
-            <CardTitle className="text-white">Informações do Leilão</CardTitle>
+            <CardTitle className="text-admin-table-text">
+              {id ? 'Editar Leilão' : 'Novo Leilão'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Nome *
-                  </label>
+                  <Label htmlFor="name" className="text-admin-table-text">Nome</Label>
                   <Input
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="bg-gray-900 border-gray-700 text-white"
+                    id="name"
+                    value={auction.name}
+                    onChange={(e) => setAuction({ ...auction, name: e.target.value })}
+                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Status
-                  </label>
+                  <Label htmlFor="auction_type" className="text-admin-table-text">Tipo</Label>
                   <select
-                    value={formData.status}
-                    onChange={(e) => handleInputChange('status', e.target.value as 'active' | 'inactive')}
-                    className="w-full px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded"
-                  >
-                    <option value="inactive">Inativo</option>
-                    <option value="active">Ativo</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Tipo do Leilão
-                  </label>
-                  <select
-                    value={formData.auction_type}
-                    onChange={(e) => handleInputChange('auction_type', e.target.value as 'rural' | 'judicial')}
-                    className="w-full px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded"
+                    id="auction_type"
+                    value={auction.auction_type}
+                    onChange={(e) => setAuction({ ...auction, auction_type: e.target.value as 'rural' | 'judicial' })}
+                    className="w-full px-3 py-2 bg-admin-content-bg border border-admin-border text-admin-table-text rounded"
                   >
                     <option value="rural">Rural</option>
                     <option value="judicial">Judicial</option>
@@ -214,124 +178,123 @@ const AuctionEdit = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Valor Inicial (R$)
-                  </label>
+                  <Label htmlFor="initial_bid_value" className="text-admin-table-text">Valor Inicial</Label>
                   <Input
+                    id="initial_bid_value"
                     type="number"
-                    value={formData.initial_bid_value}
-                    onChange={(e) => handleInputChange('initial_bid_value', parseFloat(e.target.value) || 0)}
-                    className="bg-gray-900 border-gray-700 text-white"
-                    min="0"
                     step="0.01"
+                    value={auction.initial_bid_value}
+                    onChange={(e) => setAuction({ ...auction, initial_bid_value: parseFloat(e.target.value) || 0 })}
+                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Incremento (R$)
-                  </label>
+                  <Label htmlFor="current_bid_value" className="text-admin-table-text">Valor Atual</Label>
                   <Input
+                    id="current_bid_value"
                     type="number"
-                    value={formData.bid_increment}
-                    onChange={(e) => handleInputChange('bid_increment', parseFloat(e.target.value) || 0)}
-                    className="bg-gray-900 border-gray-700 text-white"
-                    min="0"
                     step="0.01"
+                    value={auction.current_bid_value}
+                    onChange={(e) => setAuction({ ...auction, current_bid_value: parseFloat(e.target.value) || 0 })}
+                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Tempo de Espera
-                  </label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      value={formData.registration_wait_value}
-                      onChange={(e) => handleInputChange('registration_wait_value', parseInt(e.target.value) || 0)}
-                      className="bg-gray-900 border-gray-700 text-white flex-1"
-                      min="1"
-                    />
-                    <select
-                      value={formData.registration_wait_unit}
-                      onChange={(e) => handleInputChange('registration_wait_unit', e.target.value as 'minutes' | 'hours' | 'days')}
-                      className="px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded"
-                    >
-                      <option value="minutes">Minutos</option>
-                      <option value="hours">Horas</option>
-                      <option value="days">Dias</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Data/Hora de Início
-                  </label>
+                  <Label htmlFor="bid_increment" className="text-admin-table-text">Incremento</Label>
                   <Input
-                    type="datetime-local"
-                    value={formData.start_date}
-                    onChange={(e) => handleInputChange('start_date', e.target.value)}
-                    className="bg-gray-900 border-gray-700 text-white"
+                    id="bid_increment"
+                    type="number"
+                    step="0.01"
+                    value={auction.bid_increment}
+                    onChange={(e) => setAuction({ ...auction, bid_increment: parseFloat(e.target.value) || 0 })}
+                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Data/Hora de Término
-                  </label>
+                  <Label htmlFor="status" className="text-admin-table-text">Status</Label>
+                  <select
+                    id="status"
+                    value={auction.status}
+                    onChange={(e) => setAuction({ ...auction, status: e.target.value as 'active' | 'inactive' })}
+                    className="w-full px-3 py-2 bg-admin-content-bg border border-admin-border text-admin-table-text rounded"
+                  >
+                    <option value="inactive">Inativo</option>
+                    <option value="active">Ativo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="start_date" className="text-admin-table-text">Data de Início</Label>
                   <Input
+                    id="start_date"
                     type="datetime-local"
-                    value={formData.end_date}
-                    onChange={(e) => handleInputChange('end_date', e.target.value)}
-                    className="bg-gray-900 border-gray-700 text-white"
+                    value={auction.start_date}
+                    onChange={(e) => setAuction({ ...auction, start_date: e.target.value })}
+                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="end_date" className="text-admin-table-text">Data de Fim</Label>
+                  <Input
+                    id="end_date"
+                    type="datetime-local"
+                    value={auction.end_date}
+                    onChange={(e) => setAuction({ ...auction, end_date: e.target.value })}
+                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  URL do YouTube
-                </label>
-                <Input
-                  type="url"
-                  value={formData.youtube_url}
-                  onChange={(e) => handleInputChange('youtube_url', e.target.value)}
-                  className="bg-gray-900 border-gray-700 text-white"
-                  placeholder="https://www.youtube.com/watch?v=..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Descrição
-                </label>
+                <Label htmlFor="description" className="text-admin-table-text">Descrição</Label>
                 <Textarea
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="bg-gray-900 border-gray-700 text-white"
+                  id="description"
+                  value={auction.description}
+                  onChange={(e) => setAuction({ ...auction, description: e.target.value })}
+                  className="bg-admin-content-bg border-admin-border text-admin-table-text"
                   rows={4}
                 />
               </div>
 
-              <div className="flex justify-end gap-4">
+              <div>
+                <Label htmlFor="youtube_url" className="text-admin-table-text">URL do YouTube</Label>
+                <Input
+                  id="youtube_url"
+                  value={auction.youtube_url}
+                  onChange={(e) => setAuction({ ...auction, youtube_url: e.target.value })}
+                  className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_live"
+                  checked={auction.is_live}
+                  onCheckedChange={(checked) => setAuction({ ...auction, is_live: checked })}
+                />
+                <Label htmlFor="is_live" className="text-admin-table-text">Leilão ao vivo</Label>
+              </div>
+
+              <div className="flex justify-end space-x-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => navigate('/admin/leiloes')}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  className="border-admin-border text-admin-table-text"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
-                  variant="admin"
                   disabled={saving}
-                  className="flex items-center gap-2"
+                  className="bg-admin-primary hover:bg-admin-primary/90"
                 >
-                  <Save className="h-4 w-4" />
-                  {saving ? 'Salvando...' : 'Salvar Alterações'}
+                  {saving ? 'Salvando...' : (id ? 'Atualizar' : 'Criar')}
                 </Button>
               </div>
             </form>

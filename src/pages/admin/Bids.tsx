@@ -1,14 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Search, Edit } from 'lucide-react';
+import { Trash2, Search, Edit, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import BidDetailsModal from '@/components/admin/BidDetailsModal';
 
 interface Bid {
   id: string;
@@ -53,8 +53,10 @@ const AdminBids = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5); // Mudança aqui: padrão 5 linhas
+  const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
+  const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -116,11 +118,69 @@ const AdminBids = () => {
   };
 
   const handleViewDetails = (bid: Bid) => {
-    console.log('Visualizar detalhes do lance:', bid);
-    toast({
-      title: "Detalhes",
-      description: `Visualizando detalhes do lance ${bid.id}`,
-    });
+    setSelectedBid(bid);
+    setDetailsModalOpen(true);
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ 
+          status: 'approved',
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Lance aprovado com sucesso"
+      });
+      
+      fetchBids();
+    } catch (error) {
+      console.error('Erro ao aprovar:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível aprovar o lance",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt('Motivo da rejeição (opcional):');
+    
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ 
+          status: 'rejected',
+          client_notes: reason || 'Lance rejeitado',
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Lance rejeitado"
+      });
+      
+      fetchBids();
+    } catch (error) {
+      console.error('Erro ao rejeitar:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível rejeitar o lance",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -197,15 +257,39 @@ const AdminBids = () => {
                           size="sm" 
                           variant="ghost" 
                           onClick={() => handleViewDetails(bid)}
-                          className="text-gray-400 hover:text-white hover:bg-gray-800"
+                          className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
+                          title="Visualizar"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
+                        {bid.status === 'pending' && (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleApprove(bid.id)}
+                              className="text-green-400 hover:text-green-300 hover:bg-gray-800"
+                              title="Aprovar"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleReject(bid.id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                              title="Rejeitar"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                         <Button 
                           size="sm" 
                           variant="ghost" 
                           onClick={() => handleDelete(bid.id)}
                           className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                          title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -235,6 +319,14 @@ const AdminBids = () => {
           </Card>
         )}
       </div>
+
+      <BidDetailsModal
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        bid={selectedBid}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
     </>
   );
 };

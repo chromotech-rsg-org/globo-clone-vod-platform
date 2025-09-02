@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { Check, X, Search, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import RegistrationDetailsModal from '@/components/admin/RegistrationDetailsModal';
 
 interface Registration {
   id: string;
@@ -56,6 +56,8 @@ const AdminRegistrations = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [totalItems, setTotalItems] = useState(0);
+  const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -159,11 +161,8 @@ const AdminRegistrations = () => {
   };
 
   const handleViewDetails = (registration: Registration) => {
-    console.log('Visualizar detalhes:', registration);
-    toast({
-      title: "Detalhes",
-      description: `Visualizando habilitação ${registration.id}`,
-    });
+    setSelectedRegistration(registration);
+    setDetailsModalOpen(true);
   };
 
   const handlePageChange = (page: number) => {
@@ -315,6 +314,14 @@ const AdminRegistrations = () => {
           </Card>
         )}
       </div>
+
+      <RegistrationDetailsModal
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        registration={selectedRegistration}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
     </>
   );
 };
