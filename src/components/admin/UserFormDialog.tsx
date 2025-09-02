@@ -160,7 +160,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               placeholder="Nome completo"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-black border-gray-700 text-white placeholder:text-gray-500"
               disabled={isLoading}
               required
             />
@@ -174,7 +174,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               placeholder="email@exemplo.com"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-black border-gray-700 text-white placeholder:text-gray-500"
               disabled={isLoading || !!user}
               required
             />
@@ -188,7 +188,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               placeholder="000.000.000-00"
               value={formData.cpf}
               onChange={(e) => setFormData(prev => ({ ...prev, cpf: e.target.value }))}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-black border-gray-700 text-white placeholder:text-gray-500"
               disabled={isLoading}
             />
           </div>
@@ -201,7 +201,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               placeholder="(00) 00000-0000"
               value={formData.phone}
               onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-black border-gray-700 text-white placeholder:text-gray-500"
               disabled={isLoading}
             />
           </div>
@@ -213,7 +213,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
               disabled={isLoading}
             >
-              <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+              <SelectTrigger className="bg-black border-gray-700 text-white">
                 <SelectValue placeholder="Selecione uma função" />
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-700">
@@ -233,7 +233,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
                 placeholder="Senha (mínimo 6 caracteres)"
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
                 disabled={isLoading}
                 minLength={6}
                 required
@@ -247,7 +247,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               variant="outline"
               onClick={handleClose}
               disabled={isLoading}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              className="border-gray-600 text-black bg-gray-200 hover:bg-gray-300"
             >
               Cancelar
             </Button>
