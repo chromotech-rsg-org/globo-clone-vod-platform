@@ -8,30 +8,9 @@ import { Edit, Trash2, Plus, Search, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { Auction } from '@/types/auction';
 import DataTablePagination from '@/components/admin/DataTablePagination';
 import AuctionEditModal from '@/components/admin/AuctionEditModal';
-
-interface Auction {
-  id: string;
-  name: string;
-  description?: string;
-  start_date?: string;
-  end_date?: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  initial_bid_value: number;
-  current_bid_value: number;
-  bid_increment: number;
-  is_live: boolean;
-  youtube_url?: string;
-  auction_type: string;
-  increment_mode: string;
-  registration_wait_value?: number;
-  registration_wait_unit?: string;
-  min_custom_bid?: number;
-  max_custom_bid?: number;
-}
 
 const AdminAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
