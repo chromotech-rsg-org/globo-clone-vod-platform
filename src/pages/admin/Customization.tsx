@@ -647,19 +647,19 @@ const AdminCustomization = () => {
       <div className="p-6 bg-black">
         <Tabs defaultValue="home" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 bg-black border border-gray-800">
-            <TabsTrigger value="home" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
+            <TabsTrigger value="home" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <Home className="h-4 w-4 mr-2" />
               Página Inicial
             </TabsTrigger>
-            <TabsTrigger value="content" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
+            <TabsTrigger value="content" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <Image className="h-4 w-4 mr-2" />
               Conteúdo
             </TabsTrigger>
-            <TabsTrigger value="login" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
+            <TabsTrigger value="login" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <LogIn className="h-4 w-4 mr-2" />
               Login
             </TabsTrigger>
-            <TabsTrigger value="global" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
+            <TabsTrigger value="global" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <Settings className="h-4 w-4 mr-2" />
               Configurações
             </TabsTrigger>
