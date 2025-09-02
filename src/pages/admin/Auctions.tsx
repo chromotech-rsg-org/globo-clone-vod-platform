@@ -86,6 +86,10 @@ const AdminAuctions = () => {
     }
   };
 
+  const handleView = (item: Auction) => {
+    navigate(`/admin/leiloes/${item.id}`);
+  };
+
   const handleEdit = (item: Auction) => {
     navigate(`/admin/leiloes/editar/${item.id}`);
   };
@@ -213,7 +217,7 @@ const AdminAuctions = () => {
                         <Button 
                           size="sm" 
                           variant="ghost" 
-                          onClick={() => navigate(`/admin/leiloes/${auction.id}`)}
+                          onClick={() => handleView(auction)}
                           className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
                           title="Visualizar"
                         >
