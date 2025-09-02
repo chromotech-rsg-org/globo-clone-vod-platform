@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from '@/components/ui/image-upload';
 import { Save, Edit, Plus, Trash2, Eye, GripVertical } from 'lucide-react';
+
 interface ContentSection {
   id: string;
   title: string;
@@ -18,6 +19,7 @@ interface ContentSection {
   active: boolean;
   content_items: ContentItem[];
 }
+
 interface ContentItem {
   id: string;
   title: string;
@@ -29,6 +31,7 @@ interface ContentItem {
   order_index: number;
   active: boolean;
 }
+
 const ContentEditor = () => {
   const [sections, setSections] = useState<ContentSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,9 +40,11 @@ const ContentEditor = () => {
   const {
     toast
   } = useToast();
+
   useEffect(() => {
     fetchSections();
   }, []);
+
   const fetchSections = async () => {
     try {
       const {
@@ -62,6 +67,7 @@ const ContentEditor = () => {
       setLoading(false);
     }
   };
+
   const saveSection = async (section: Partial<ContentSection>) => {
     try {
       if (section.id) {
@@ -101,6 +107,7 @@ const ContentEditor = () => {
       });
     }
   };
+
   const saveItem = async (item: Partial<ContentItem>) => {
     try {
       if (item.id) {
@@ -147,6 +154,7 @@ const ContentEditor = () => {
       });
     }
   };
+
   const deleteItem = async (itemId: string) => {
     try {
       const {
@@ -167,6 +175,7 @@ const ContentEditor = () => {
       });
     }
   };
+
   const ItemEditor = ({
     item,
     sectionId
@@ -182,12 +191,14 @@ const ContentEditor = () => {
       age_rating_background_color: item?.age_rating_background_color || '#fbbf24',
       section_id: sectionId
     });
+
     const handleImageUpload = (url: string) => {
       setFormData(prev => ({
         ...prev,
         image_url: url
       }));
     };
+
     const handleSave = () => {
       if (!formData.title.trim()) {
         toast({
@@ -203,14 +214,15 @@ const ContentEditor = () => {
         section_id: sectionId
       });
     };
-    return <Card className="bg-admin-muted border-admin-border">
-        <CardHeader>
+
+    return <Card className="bg-black border-admin-border">
+        <CardHeader className="bg-black">
           <CardTitle className="text-admin-foreground text-sm">
             {item ? 'Editar Item' : 'Novo Item'}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
+        <CardContent className="space-y-4 bg-black">
+          <div className="bg-black">
             <Label className="text-admin-foreground">Título</Label>
             <Input value={formData.title} onChange={e => setFormData(prev => ({
             ...prev,
@@ -218,7 +230,7 @@ const ContentEditor = () => {
           }))} className="bg-admin-input border-admin-border text-admin-foreground" placeholder="Nome do filme/série" />
           </div>
 
-          <div>
+          <div className="bg-black">
             <Label className="text-admin-foreground">Categoria</Label>
             <Input value={formData.category} onChange={e => setFormData(prev => ({
             ...prev,
@@ -226,7 +238,7 @@ const ContentEditor = () => {
           }))} className="bg-admin-input border-admin-border text-admin-foreground" placeholder="Ex: Ação, Drama, Comédia" />
           </div>
 
-          <div>
+          <div className="bg-black">
             <Label className="text-admin-foreground">Faixa Etária</Label>
             <Input value={formData.rating} onChange={e => setFormData(prev => ({
             ...prev,
@@ -234,9 +246,9 @@ const ContentEditor = () => {
           }))} className="bg-admin-input border-admin-border text-admin-foreground" placeholder="Ex: 12+, 16+, Livre" />
           </div>
 
-          <div>
+          <div className="bg-black">
             <Label className="text-admin-foreground">Cor de Fundo da Faixa Etária</Label>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 bg-black">
               <input type="color" value={formData.age_rating_background_color || '#fbbf24'} onChange={e => setFormData(prev => ({
               ...prev,
               age_rating_background_color: e.target.value
@@ -248,15 +260,15 @@ const ContentEditor = () => {
             </div>
           </div>
 
-          <div>
+          <div className="bg-black">
             <Label className="text-admin-foreground">Imagem</Label>
-            {formData.image_url && <div className="mb-2">
+            {formData.image_url && <div className="mb-2 bg-black">
                 <img src={formData.image_url} alt="Preview" className="w-20 h-28 object-cover rounded border border-admin-border" />
               </div>}
             <ImageUpload onImageUploaded={handleImageUpload} folder="content" maxSizeKB={5120} />
           </div>
 
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 bg-black">
             <Button onClick={handleSave} variant="admin" size="sm" className="flex-1">
               <Save className="h-4 w-4 mr-2" />
               Salvar
@@ -268,12 +280,14 @@ const ContentEditor = () => {
         </CardContent>
       </Card>;
   };
+
   const SectionEditor = ({
     section
   }: {
     section?: ContentSection;
   }) => {
     const [title, setTitle] = useState(section?.title || '');
+
     const handleSave = () => {
       if (!title.trim()) {
         toast({
@@ -289,19 +303,20 @@ const ContentEditor = () => {
         type: section?.type || 'horizontal'
       });
     };
-    return <Card className="bg-admin-muted border-admin-border">
-        <CardHeader>
+
+    return <Card className="bg-black border-admin-border">
+        <CardHeader className="bg-black">
           <CardTitle className="text-admin-foreground text-sm">
             {section ? 'Editar Seção' : 'Nova Seção'}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
+        <CardContent className="space-y-4 bg-black">
+          <div className="bg-black">
             <Label className="text-admin-foreground">Título da Seção</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)} className="bg-admin-input border-admin-border text-admin-foreground" placeholder="Ex: Filmes em Alta, Séries Originais" />
           </div>
 
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 bg-black">
             <Button onClick={handleSave} variant="admin" size="sm" className="flex-1">
               <Save className="h-4 w-4 mr-2" />
               Salvar
@@ -313,11 +328,13 @@ const ContentEditor = () => {
         </CardContent>
       </Card>;
   };
+
   if (loading) {
-    return <div className="text-admin-foreground">Carregando conteúdo...</div>;
+    return <div className="text-admin-foreground bg-black">Carregando conteúdo...</div>;
   }
-  return <div className="space-y-6">
-      <div className="flex items-center justify-between">
+
+  return <div className="space-y-6 bg-black">
+      <div className="flex items-center justify-between bg-black">
         <h3 className="text-lg font-semibold text-admin-foreground text-slate-50">
           Seções de Conteúdo
         </h3>
@@ -327,9 +344,9 @@ const ContentEditor = () => {
         </Button>
       </div>
 
-      {editingSection && <SectionEditor section={editingSection.id ? editingSection : undefined} />}
+      {editingSection && <div className="bg-black"><SectionEditor section={editingSection.id ? editingSection : undefined} /></div>}
 
-      <Tabs defaultValue={sections[0]?.id} className="space-y-4">
+      <Tabs defaultValue={sections[0]?.id} className="space-y-4 bg-black">
         <TabsList className="bg-admin-muted">
           {sections.map(section => <TabsTrigger key={section.id} value={section.id} className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
               {section.title}
@@ -339,16 +356,16 @@ const ContentEditor = () => {
             </TabsTrigger>)}
         </TabsList>
 
-        {sections.map(section => <TabsContent key={section.id} value={section.id} className="space-y-4">
+        {sections.map(section => <TabsContent key={section.id} value={section.id} className="space-y-4 bg-black">
             <Card className="bg-admin-card border-admin-border">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
+              <CardHeader className="flex flex-row items-center justify-between bg-black">
+                <div className="bg-black">
                   <CardTitle className="text-admin-foreground text-slate-50">{section.title}</CardTitle>
                   <p className="text-sm text-admin-muted-foreground">
                     {section.content_items?.length || 0} itens
                   </p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 bg-black">
                   <Button onClick={() => setEditingSection(section)} variant="outline" size="sm" className="border-admin-border text-admin-foreground">
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -358,21 +375,21 @@ const ContentEditor = () => {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                {editingItem && !editingItem.id && <div className="mb-4">
+              <CardContent className="bg-black">
+                {editingItem && !editingItem.id && <div className="mb-4 bg-black">
                     <ItemEditor sectionId={section.id} />
                   </div>}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-black">
                   {section.content_items?.map(item => <Card key={item.id} className="bg-admin-muted border-admin-border">
-                      <CardContent className="p-4">
-                        {editingItem?.id === item.id ? <ItemEditor item={item} sectionId={section.id} /> : <div className="space-y-3">
+                      <CardContent className="p-4 bg-black">
+                        {editingItem?.id === item.id ? <ItemEditor item={item} sectionId={section.id} /> : <div className="space-y-3 bg-black">
                             {item.image_url && <img src={item.image_url} alt={item.title} className="w-full h-32 object-cover rounded" />}
-                            <div>
+                            <div className="bg-black">
                               <h4 className="font-medium text-admin-foreground text-sm">
                                 {item.title}
                               </h4>
-                              <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center justify-between mt-2 bg-black">
                                 <span className="text-xs text-admin-muted-foreground">
                                   {item.category}
                                 </span>
@@ -385,7 +402,7 @@ const ContentEditor = () => {
                                   </Badge>}
                               </div>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex space-x-2 bg-black">
                               <Button onClick={() => setEditingItem(item)} variant="outline" size="sm" className="flex-1 border-admin-border text-admin-foreground">
                                 <Edit className="h-3 w-3" />
                               </Button>
@@ -403,4 +420,5 @@ const ContentEditor = () => {
       </Tabs>
     </div>;
 };
+
 export default ContentEditor;
