@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import PackageFormDialog from '@/components/admin/PackageFormDialog';
 
 interface Package {
   id: string;
@@ -75,7 +75,7 @@ const AdminPackages = () => {
   };
 
   const handleEdit = (pkg: Package) => {
-    console.log('Editar pacote:', pkg);
+    // A função de editar agora será chamada pelo PackageFormDialog
   };
 
   const handleDelete = async (id: string) => {
@@ -99,7 +99,7 @@ const AdminPackages = () => {
   };
 
   const handleCreate = () => {
-    console.log('Criar novo pacote');
+    // A função de criar agora será chamada pelo PackageFormDialog
   };
 
   const handlePageChange = (page: number) => {
@@ -144,10 +144,15 @@ const AdminPackages = () => {
               className="pl-10 bg-black border-green-600/30 text-white"
             />
           </div>
-          <Button onClick={handleCreate} variant="admin">
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Pacote
-          </Button>
+          <PackageFormDialog
+            trigger={
+              <Button variant="admin">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Pacote
+              </Button>
+            }
+            onSuccess={fetchPackages}
+          />
         </div>
 
         <div className="flex gap-4 mb-6">
@@ -191,15 +196,20 @@ const AdminPackages = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleEdit(pkg)}
-                          className="text-gray-400 hover:text-white hover:bg-gray-800"
-                          title="Editar"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <PackageFormDialog
+                          package={pkg}
+                          trigger={
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="text-gray-400 hover:text-white hover:bg-gray-800"
+                              title="Editar"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          }
+                          onSuccess={fetchPackages}
+                        />
                         <Button 
                           size="sm" 
                           variant="ghost" 
