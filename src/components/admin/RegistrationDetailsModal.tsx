@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -65,7 +64,7 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-gray-900 text-white border-gray-700">
+      <DialogContent className="max-w-2xl bg-black text-white border-gray-700">
         <DialogHeader>
           <DialogTitle className="text-white">
             Detalhes da Habilitação
