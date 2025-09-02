@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
-import { ImageUpload } from '@/components/ui/image-upload';
+import ImageUpload from '@/components/ui/image-upload';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -23,8 +23,32 @@ import {
 
 const Customization = () => {
   const { toast } = useToast();
-  const { getCustomization, updateCustomization } = useAdminCustomizations();
+  const { getCustomization, refetch } = useAdminCustomizations();
   
+  // Função para atualizar customização
+  const updateCustomization = async (key: string, value: string) => {
+    try {
+      const { error } = await supabase
+        .from('customizations')
+        .upsert({
+          page: 'home',
+          section: 'global',
+          element_type: 'text',
+          element_key: key,
+          element_value: value,
+          active: true
+        }, {
+          onConflict: 'page,section,element_key'
+        });
+
+      if (error) throw error;
+      await refetch();
+    } catch (error) {
+      console.error('Erro ao salvar customização:', error);
+      throw error;
+    }
+  };
+
   // Estados para as diferentes abas
   const [globalSettings, setGlobalSettings] = useState({
     site_name: '',
