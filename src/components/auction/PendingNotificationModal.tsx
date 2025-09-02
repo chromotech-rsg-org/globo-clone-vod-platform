@@ -111,7 +111,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
 
           {/* Botões de Ação */}
           <div className="flex justify-between pt-4 border-t border-admin-border">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="border-admin-border">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="border-admin-border text-black">
               Fechar
             </Button>
             <div className="space-x-2">
