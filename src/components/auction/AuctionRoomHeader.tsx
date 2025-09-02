@@ -10,11 +10,11 @@ const AuctionRoomHeader = () => {
   return (
     <header className="bg-black border-b border-green-600/30">
       <div className="px-6 py-4">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-start">
           <Button 
             variant="outline" 
             onClick={() => navigate('/auctions')}
-            className="flex items-center gap-2 border-green-600/30 text-green-400 hover:text-green-300 hover:bg-green-600/10"
+            className="flex items-center gap-2 bg-black border-white text-white hover:bg-white hover:text-black"
           >
             <ArrowLeft size={16} />
             Voltar ao Painel
