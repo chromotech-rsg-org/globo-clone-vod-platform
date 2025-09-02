@@ -99,7 +99,7 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-green-600/30 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-black border-green-600/30 text-white max-w-4xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-black [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-700">
         <DialogHeader>
           <DialogTitle className="text-white">Criar Novo Leilão</DialogTitle>
         </DialogHeader>
