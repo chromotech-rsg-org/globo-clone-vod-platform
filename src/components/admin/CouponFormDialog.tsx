@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
 interface Coupon {
   id: string;
   name: string;
@@ -20,14 +18,12 @@ interface Coupon {
   created_at: string;
   updated_at: string;
 }
-
 interface CouponFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
   editingCoupon: Coupon | null;
 }
-
 const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
   isOpen,
   onClose,
@@ -41,9 +37,9 @@ const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
     active: true,
     notes: ''
   });
-  
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     if (editingCoupon) {
       setFormData({
@@ -63,7 +59,6 @@ const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
       });
     }
   }, [editingCoupon, isOpen]);
-
   const handleSave = async () => {
     try {
       // Validar dados obrigatórios
@@ -76,7 +71,6 @@ const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
       if (formData.discount_percentage <= 0 || formData.discount_percentage > 100) {
         throw new Error('Desconto deve ser entre 1% e 100%');
       }
-      
       const couponData = {
         name: formData.name.trim(),
         code: formData.code.trim().toUpperCase(),
@@ -84,13 +78,11 @@ const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
         active: formData.active,
         notes: formData.notes.trim() || null
       };
-      
       if (editingCoupon) {
         // Update existing
-        const { error } = await supabase
-          .from('coupons')
-          .update(couponData)
-          .eq('id', editingCoupon.id);
+        const {
+          error
+        } = await supabase.from('coupons').update(couponData).eq('id', editingCoupon.id);
         if (error) throw error;
         toast({
           title: "Sucesso",
@@ -98,16 +90,15 @@ const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
         });
       } else {
         // Create new
-        const { error } = await supabase
-          .from('coupons')
-          .insert([couponData]);
+        const {
+          error
+        } = await supabase.from('coupons').insert([couponData]);
         if (error) throw error;
         toast({
           title: "Sucesso",
           description: "Cupom criado com sucesso"
         });
       }
-      
       onSave();
       onClose();
     } catch (error: any) {
@@ -124,9 +115,7 @@ const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
       });
     }
   };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+  return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-admin-content-bg border-admin-border text-admin-table-text">
         <DialogHeader>
           <DialogTitle className="text-admin-sidebar-text">
@@ -137,58 +126,41 @@ const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
         <div className="space-y-4">
           <div>
             <Label htmlFor="name" className="text-admin-table-text">Nome</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="bg-admin-content-bg border-admin-border text-admin-table-text"
-              placeholder="Nome do cupom"
-            />
+            <Input id="name" value={formData.name} onChange={e => setFormData({
+            ...formData,
+            name: e.target.value
+          })} className="bg-admin-content-bg border-admin-border text-admin-table-text" placeholder="Nome do cupom" />
           </div>
 
           <div>
             <Label htmlFor="code" className="text-admin-table-text">Código</Label>
-            <Input
-              id="code"
-              value={formData.code}
-              onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-              className="bg-admin-content-bg border-admin-border text-admin-table-text"
-              placeholder="CODIGO_CUPOM"
-            />
+            <Input id="code" value={formData.code} onChange={e => setFormData({
+            ...formData,
+            code: e.target.value.toUpperCase()
+          })} className="bg-admin-content-bg border-admin-border text-admin-table-text" placeholder="CODIGO_CUPOM" />
           </div>
 
           <div>
             <Label htmlFor="discount" className="text-admin-table-text">Desconto (%)</Label>
-            <Input
-              id="discount"
-              type="number"
-              min="1"
-              max="100"
-              value={formData.discount_percentage}
-              onChange={e => setFormData({ ...formData, discount_percentage: Number(e.target.value) })}
-              className="bg-admin-content-bg border-admin-border text-admin-table-text"
-              placeholder="10"
-            />
+            <Input id="discount" type="number" min="1" max="100" value={formData.discount_percentage} onChange={e => setFormData({
+            ...formData,
+            discount_percentage: Number(e.target.value)
+          })} className="bg-admin-content-bg border-admin-border text-admin-table-text" placeholder="10" />
           </div>
 
           <div>
             <Label htmlFor="notes" className="text-admin-table-text">Observações</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              className="bg-admin-content-bg border-admin-border text-admin-table-text"
-              placeholder="Observações sobre o cupom (opcional)"
-              rows={3}
-            />
+            <Textarea id="notes" value={formData.notes} onChange={e => setFormData({
+            ...formData,
+            notes: e.target.value
+          })} className="bg-admin-content-bg border-admin-border text-admin-table-text" placeholder="Observações sobre o cupom (opcional)" rows={3} />
           </div>
 
           <div className="flex items-center space-x-2">
-            <Switch
-              id="active"
-              checked={formData.active}
-              onCheckedChange={checked => setFormData({ ...formData, active: checked })}
-            />
+            <Switch id="active" checked={formData.active} onCheckedChange={checked => setFormData({
+            ...formData,
+            active: checked
+          })} />
             <Label htmlFor="active" className="text-admin-table-text">Ativo</Label>
           </div>
 
@@ -197,15 +169,13 @@ const CouponFormDialog: React.FC<CouponFormDialogProps> = ({
               <Save className="h-4 w-4 mr-2" />
               Salvar
             </Button>
-            <Button onClick={onClose} variant="outline" className="border-admin-border text-admin-table-text">
+            <Button onClick={onClose} variant="outline" className="border-admin-border text-admin-table-text text-slate-950">
               <X className="h-4 w-4 mr-2" />
               Cancelar
             </Button>
           </div>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
-
 export default CouponFormDialog;
