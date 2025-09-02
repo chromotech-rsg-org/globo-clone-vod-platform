@@ -71,19 +71,20 @@ const HeroSliderEditor = () => {
   return (
     <div className="space-y-6">
       {/* General Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Configurações Gerais</CardTitle>
+      <Card className="bg-black border-admin-border">
+        <CardHeader className="bg-black">
+          <CardTitle className="text-white">Configurações Gerais</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 bg-black">
           <div>
-            <Label htmlFor="autoplay">Duração do autoplay (ms)</Label>
+            <Label htmlFor="autoplay" className="text-white">Duração do autoplay (ms)</Label>
             <Input
               id="autoplay"
               type="number"
               value={autoplayDuration}
               onChange={(e) => setAutoplayDuration(e.target.value)}
               placeholder="5000"
+              className="bg-black border-gray-600 text-white placeholder:text-gray-400"
             />
           </div>
           <Button 
@@ -97,11 +98,11 @@ const HeroSliderEditor = () => {
       </Card>
 
       {/* Add New Slide Button */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Adicionar Novo Slide</CardTitle>
+      <Card className="bg-black border-admin-border">
+        <CardHeader className="bg-black">
+          <CardTitle className="text-white">Adicionar Novo Slide</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-black">
           <Button 
             onClick={addSlide}
             className="w-full"
@@ -115,11 +116,11 @@ const HeroSliderEditor = () => {
 
       {/* Slides */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Slides do Carrossel</h3>
+        <h3 className="text-lg font-semibold text-white">Slides do Carrossel</h3>
         {slides.map((slide, index) => (
-          <Card key={slide.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg">Slide {index + 1}</CardTitle>
+          <Card key={slide.id} className="bg-black border-admin-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-black">
+              <CardTitle className="text-lg text-white">Slide {index + 1}</CardTitle>
               <div className="flex gap-2">
                 <Button
                   onClick={() => handleSaveSlide(slide.id)}
@@ -140,77 +141,84 @@ const HeroSliderEditor = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-black">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor={`title-${slide.id}`}>Título</Label>
+                  <Label htmlFor={`title-${slide.id}`} className="text-white">Título</Label>
                   <Input
                     id={`title-${slide.id}`}
                     value={slide.title}
                     onChange={(e) => updateSlide(slide.id, 'title', e.target.value)}
                     placeholder="Título do slide"
+                    className="bg-black border-gray-600 text-white placeholder:text-gray-400"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor={`subtitle-${slide.id}`}>Subtítulo</Label>
+                  <Label htmlFor={`subtitle-${slide.id}`} className="text-white">Subtítulo</Label>
                   <Input
                     id={`subtitle-${slide.id}`}
                     value={slide.subtitle}
                     onChange={(e) => updateSlide(slide.id, 'subtitle', e.target.value)}
                     placeholder="Subtítulo do slide"
+                    className="bg-black border-gray-600 text-white placeholder:text-gray-400"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor={`description-${slide.id}`}>Descrição</Label>
+                  <Label htmlFor={`description-${slide.id}`} className="text-white">Descrição</Label>
                   <Textarea
                     id={`description-${slide.id}`}
                     value={slide.description}
                     onChange={(e) => updateSlide(slide.id, 'description', e.target.value)}
                     placeholder="Descrição do slide"
                     rows={3}
+                    className="bg-black border-gray-600 text-white placeholder:text-gray-400"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor={`buttonText-${slide.id}`}>Texto do Botão</Label>
+                  <Label htmlFor={`buttonText-${slide.id}`} className="text-white">Texto do Botão</Label>
                   <Input
                     id={`buttonText-${slide.id}`}
                     value={slide.buttonText}
                     onChange={(e) => updateSlide(slide.id, 'buttonText', e.target.value)}
                     placeholder="Texto do botão"
+                    className="bg-black border-gray-600 text-white placeholder:text-gray-400"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <Label htmlFor={`titleColor-${slide.id}`}>Cor do Título</Label>
+                    <Label htmlFor={`titleColor-${slide.id}`} className="text-white">Cor do Título</Label>
                     <Input
                       id={`titleColor-${slide.id}`}
                       type="color"
                       value={slide.titleColor}
                       onChange={(e) => updateSlide(slide.id, 'titleColor', e.target.value)}
+                      className="bg-black border-gray-600"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor={`buttonBackgroundColor-${slide.id}`}>Cor de Fundo do Botão</Label>
+                    <Label htmlFor={`buttonBackgroundColor-${slide.id}`} className="text-white">Cor de Fundo do Botão</Label>
                     <Input
                       id={`buttonBackgroundColor-${slide.id}`}
                       type="color"
                       value={slide.buttonBackgroundColor}
                       onChange={(e) => updateSlide(slide.id, 'buttonBackgroundColor', e.target.value)}
+                      className="bg-black border-gray-600"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor={`buttonTextColor-${slide.id}`}>Cor do Texto do Botão</Label>
+                    <Label htmlFor={`buttonTextColor-${slide.id}`} className="text-white">Cor do Texto do Botão</Label>
                     <Input
                       id={`buttonTextColor-${slide.id}`}
                       type="color"
                       value={slide.buttonTextColor}
                       onChange={(e) => updateSlide(slide.id, 'buttonTextColor', e.target.value)}
+                      className="bg-black border-gray-600"
                     />
                   </div>
                 </div>
@@ -218,13 +226,13 @@ const HeroSliderEditor = () => {
 
               <div className="space-y-4">
                 <div>
-                  <Label>Imagem de Fundo</Label>
+                  <Label className="text-white">Imagem de Fundo</Label>
                   <ImageUpload
                     onImageUploaded={(url) => updateSlide(slide.id, 'image', url)}
                     folder="hero-slides"
                   />
                   {slide.image && (
-                    <div className="mt-2 text-sm text-gray-600">
+                    <div className="mt-2 text-sm text-gray-400">
                       Imagem carregada
                     </div>
                   )}
@@ -232,9 +240,9 @@ const HeroSliderEditor = () => {
 
                 {slide.image && (
                   <div>
-                    <Label>Preview</Label>
+                    <Label className="text-white">Preview</Label>
                     <div 
-                      className="aspect-video bg-cover bg-center rounded-lg border relative overflow-hidden"
+                      className="aspect-video bg-cover bg-center rounded-lg border border-gray-600 relative overflow-hidden"
                       style={{ backgroundImage: `url(${slide.image})` }}
                     >
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
