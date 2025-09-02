@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -44,11 +45,23 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
     // Close current modal
     onOpenChange(false);
 
-    // Navigate to edit page with parameters to return to notifications
+    // Navigate directly to the edit page for the specific item
     if (item.type === 'bid') {
-      navigate(`/admin/lances?bid=${item.id}&notifModal=1`);
+      // Navigate to bids page and trigger edit for specific bid
+      navigate(`/admin/lances`, { 
+        state: { 
+          editBidId: item.id,
+          returnToNotifications: true 
+        } 
+      });
     } else {
-      navigate(`/admin/habilitacoes?registration=${item.id}&notifModal=1`);
+      // Navigate to registrations page and trigger edit for specific registration
+      navigate(`/admin/habilitacoes`, { 
+        state: { 
+          editRegistrationId: item.id,
+          returnToNotifications: true 
+        } 
+      });
     }
   };
 
@@ -56,7 +69,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-black/95 text-admin-modal-text border-admin-border backdrop-blur-sm">
+      <DialogContent className="max-w-4xl max-h-[80vh] bg-black/95 text-admin-modal-text border-admin-border backdrop-blur-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-admin-modal-text">
             <Bell className="h-5 w-5" />
@@ -64,7 +77,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 pr-2">
           {/* Lances Pendentes */}
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -72,19 +85,29 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                 <Gavel className="h-5 w-5" />
                 Lances Pendentes ({pendingBids.length})
               </h3>
-              {pendingBids.length > 0 && <Button onClick={handleGoToBids} variant="outline" size="sm" className="border-admin-border text-slate-950">
+              {pendingBids.length > 0 && (
+                <Button onClick={handleGoToBids} variant="outline" size="sm" className="border-admin-border text-slate-950">
                   Ver Todos <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>}
+                </Button>
+              )}
             </div>
 
-            {pendingBids.length === 0 ? <div className="text-center text-admin-muted-foreground py-8">
+            {pendingBids.length === 0 ? (
+              <div className="text-center text-admin-muted-foreground py-8">
                 Nenhum lance pendente
-              </div> : <div className="space-y-2 max-h-48 overflow-y-auto">
-                {pendingBids.slice(0, 5).map(bid => <PendingNotificationItem key={bid.id} item={bid} onClick={handleItemClick} />)}
-                {pendingBids.length > 5 && <p className="text-center text-sm text-admin-muted-foreground pt-2">
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-48">
+                {pendingBids.slice(0, 5).map(bid => (
+                  <PendingNotificationItem key={bid.id} item={bid} onClick={handleItemClick} />
+                ))}
+                {pendingBids.length > 5 && (
+                  <p className="text-center text-sm text-admin-muted-foreground pt-2">
                     +{pendingBids.length - 5} lances adicionais
-                  </p>}
-              </div>}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Habilitações Pendentes */}
@@ -94,19 +117,29 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                 <Users className="h-5 w-5" />
                 Habilitações Pendentes ({pendingRegistrations.length})
               </h3>
-              {pendingRegistrations.length > 0 && <Button onClick={handleGoToRegistrations} variant="outline" size="sm" className="border-admin-border">
+              {pendingRegistrations.length > 0 && (
+                <Button onClick={handleGoToRegistrations} variant="outline" size="sm" className="border-admin-border">
                   Ver Todas <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>}
+                </Button>
+              )}
             </div>
 
-            {pendingRegistrations.length === 0 ? <div className="text-center text-admin-muted-foreground py-8">
+            {pendingRegistrations.length === 0 ? (
+              <div className="text-center text-admin-muted-foreground py-8">
                 Nenhuma habilitação pendente
-              </div> : <div className="space-y-2 max-h-48 overflow-y-auto">
-                {pendingRegistrations.slice(0, 5).map(registration => <PendingNotificationItem key={registration.id} item={registration} onClick={handleItemClick} />)}
-                {pendingRegistrations.length > 5 && <p className="text-center text-sm text-admin-muted-foreground pt-2">
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-48">
+                {pendingRegistrations.slice(0, 5).map(registration => (
+                  <PendingNotificationItem key={registration.id} item={registration} onClick={handleItemClick} />
+                ))}
+                {pendingRegistrations.length > 5 && (
+                  <p className="text-center text-sm text-admin-muted-foreground pt-2">
                     +{pendingRegistrations.length - 5} habilitações adicionais
-                  </p>}
-              </div>}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Botões de Ação */}
@@ -115,12 +148,16 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
               Fechar
             </Button>
             <div className="space-x-2">
-              {pendingBids.length > 0 && <Button onClick={handleGoToBids} className="bg-admin-primary hover:bg-admin-primary/90">
+              {pendingBids.length > 0 && (
+                <Button onClick={handleGoToBids} className="bg-admin-primary hover:bg-admin-primary/90">
                   Gerenciar Lances
-                </Button>}
-              {pendingRegistrations.length > 0 && <Button onClick={handleGoToRegistrations} className="bg-admin-primary hover:bg-admin-primary/90">
+                </Button>
+              )}
+              {pendingRegistrations.length > 0 && (
+                <Button onClick={handleGoToRegistrations} className="bg-admin-primary hover:bg-admin-primary/90">
                   Gerenciar Habilitações
-                </Button>}
+                </Button>
+              )}
             </div>
           </div>
         </div>

@@ -25,31 +25,31 @@ const PendingNotificationItem: React.FC<PendingNotificationItemProps> = ({
 }) => {
   return (
     <Card 
-      className="p-3 cursor-pointer transition-all duration-300 ease-in-out hover:bg-muted/70 hover:border-primary/50 hover:shadow-lg hover:scale-[1.02] group" 
+      className="p-3 cursor-pointer transition-all duration-200 hover:bg-admin-primary/10 hover:border-admin-primary/50 border-admin-border" 
       onClick={() => onClick(item)}
     >
       <CardContent className="p-0">
         <div className="flex items-center justify-between">
-          <div className="transition-all duration-200 group-hover:translate-x-1">
-            <p className="font-medium group-hover:text-primary transition-colors duration-200">
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-admin-modal-text truncate">
               {item.auction_name}
             </p>
-            <p className="text-sm text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200">
+            <p className="text-sm text-admin-muted-foreground truncate">
               por {item.user_name}
             </p>
           </div>
-          <div className="text-right transition-all duration-200 group-hover:translate-x-[-2px]">
+          <div className="text-right flex-shrink-0 ml-4">
             {item.type === 'bid' ? (
-              <p className="font-semibold text-slate-50 group-hover:text-primary transition-colors duration-200">
+              <p className="font-semibold text-admin-modal-text">
                 {formatCurrency(item.value || 0)}
               </p>
             ) : (
-              <Badge variant="outline" className="group-hover:border-primary/70 transition-colors duration-200">
-                <Clock className="h-3 w-3 mr-1 group-hover:animate-pulse" />
+              <Badge variant="outline" className="border-admin-border text-admin-muted-foreground">
+                <Clock className="h-3 w-3 mr-1" />
                 Pendente
               </Badge>
             )}
-            <p className="text-xs text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200">
+            <p className="text-xs text-admin-muted-foreground">
               {formatDate(item.created_at)}
             </p>
           </div>
