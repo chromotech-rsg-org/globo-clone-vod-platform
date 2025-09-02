@@ -105,7 +105,7 @@ const HeroSliderEditor = () => {
         <CardContent className="bg-black">
           <Button 
             onClick={addSlide}
-            className="w-full"
+            className="w-full text-black bg-white hover:bg-gray-100"
             variant="outline"
           >
             <Plus className="h-4 w-4 mr-2" />
