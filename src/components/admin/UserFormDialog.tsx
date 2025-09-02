@@ -216,7 +216,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               <SelectTrigger className="bg-black border-gray-700 text-white">
                 <SelectValue placeholder="Selecione uma função" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-700">
+              <SelectContent className="bg-black border-gray-700">
                 <SelectItem value="user">Usuário</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
                 <SelectItem value="desenvolvedor">Desenvolvedor</SelectItem>
