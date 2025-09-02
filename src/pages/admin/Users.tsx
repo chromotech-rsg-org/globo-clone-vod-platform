@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -75,7 +74,6 @@ const AdminUsers = () => {
   };
 
   const handleEdit = (user: User) => {
-    // Implementar edição
     console.log('Editar usuário:', user);
   };
 
@@ -100,7 +98,6 @@ const AdminUsers = () => {
   };
 
   const handleCreate = () => {
-    // Implementar criação
     console.log('Criar novo usuário');
   };
 

@@ -206,8 +206,8 @@ const AdminSubscriptions = () => {
                     <TableCell>
                       <Badge variant={
                         subscription.status === 'active' ? 'admin-success' :
-                        subscription.status === 'canceled' ? 'admin-destructive' :
-                        subscription.status === 'expired' ? 'admin-warning' :
+                        subscription.status === 'canceled' ? 'admin-danger' :
+                        subscription.status === 'expired' ? 'admin-muted' :
                           'admin-muted'
                       }>
                         {subscription.status === 'active' ? 'Ativo' :

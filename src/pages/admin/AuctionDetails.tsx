@@ -171,7 +171,7 @@ const AuctionDetails = () => {
                     {auction.status === 'active' ? 'Ativo' : 'Inativo'}
                   </Badge>
                   {auction.is_live && (
-                    <Badge variant="admin-destructive">
+                    <Badge variant="admin-danger">
                       AO VIVO
                     </Badge>
                   )}

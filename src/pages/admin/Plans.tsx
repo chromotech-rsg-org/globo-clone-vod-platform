@@ -190,7 +190,7 @@ const AdminPlans = () => {
                       <div className="flex items-center gap-2">
                         {plan.name}
                         {plan.best_seller && (
-                          <Badge variant="admin-warning" className="text-xs">
+                          <Badge variant="admin-success" className="text-xs">
                             Mais Vendido
                           </Badge>
                         )}

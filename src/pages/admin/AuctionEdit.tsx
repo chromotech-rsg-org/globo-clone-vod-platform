@@ -75,9 +75,9 @@ const AuctionEdit = () => {
           start_date: data.start_date ? new Date(data.start_date).toISOString().slice(0, 16) : '',
           end_date: data.end_date ? new Date(data.end_date).toISOString().slice(0, 16) : '',
           registration_wait_value: data.registration_wait_value || 5,
-          registration_wait_unit: data.registration_wait_unit || 'minutes',
-          status: data.status || 'inactive',
-          auction_type: data.auction_type || 'rural',
+          registration_wait_unit: (data.registration_wait_unit as 'minutes' | 'hours' | 'days') || 'minutes',
+          status: (data.status as 'active' | 'inactive') || 'inactive',
+          auction_type: (data.auction_type as 'rural' | 'judicial') || 'rural',
           increment_mode: data.increment_mode || 'fixed',
           min_custom_bid: data.min_custom_bid || 0,
           max_custom_bid: data.max_custom_bid || 0,
@@ -191,7 +191,7 @@ const AuctionEdit = () => {
                   </label>
                   <select
                     value={formData.status}
-                    onChange={(e) => handleInputChange('status', e.target.value)}
+                    onChange={(e) => handleInputChange('status', e.target.value as 'active' | 'inactive')}
                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded"
                   >
                     <option value="inactive">Inativo</option>
@@ -205,7 +205,7 @@ const AuctionEdit = () => {
                   </label>
                   <select
                     value={formData.auction_type}
-                    onChange={(e) => handleInputChange('auction_type', e.target.value)}
+                    onChange={(e) => handleInputChange('auction_type', e.target.value as 'rural' | 'judicial')}
                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded"
                   >
                     <option value="rural">Rural</option>
@@ -255,7 +255,7 @@ const AuctionEdit = () => {
                     />
                     <select
                       value={formData.registration_wait_unit}
-                      onChange={(e) => handleInputChange('registration_wait_unit', e.target.value)}
+                      onChange={(e) => handleInputChange('registration_wait_unit', e.target.value as 'minutes' | 'hours' | 'days')}
                       className="px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded"
                     >
                       <option value="minutes">Minutos</option>

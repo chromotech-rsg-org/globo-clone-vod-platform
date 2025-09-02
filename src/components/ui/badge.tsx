@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -18,6 +19,8 @@ const badgeVariants = cva(
         "admin-success": "border-transparent bg-admin-success text-admin-success-foreground",
         "admin-danger": "border-transparent bg-admin-danger text-admin-danger-foreground",
         "admin-muted": "border-transparent bg-admin-muted text-admin-muted-foreground",
+        "admin-warning": "border-transparent bg-yellow-600 text-white",
+        "admin-destructive": "border-transparent bg-red-600 text-white",
       },
     },
     defaultVariants: {
