@@ -19,7 +19,10 @@ import {
   Image, 
   Monitor,
   Settings,
-  Play
+  Play,
+  Home,
+  FileText,
+  LogIn
 } from 'lucide-react';
 
 const Customization = () => {
@@ -80,6 +83,30 @@ const Customization = () => {
     streaming_api_url: ''
   });
 
+  const [homeSettings, setHomeSettings] = useState({
+    home_title: '',
+    home_subtitle: '',
+    home_featured_content: ''
+  });
+
+  const [contentSettings, setContentSettings] = useState({
+    content_sections_title: '',
+    content_carousel_autoplay: '',
+    content_default_category: ''
+  });
+
+  const [loginSettings, setLoginSettings] = useState({
+    login_background_image: '',
+    login_logo_image: '',
+    login_welcome_text: ''
+  });
+
+  const [configSettings, setConfigSettings] = useState({
+    maintenance_mode: '',
+    debug_mode: '',
+    max_users: ''
+  });
+
   const [isLoading, setIsLoading] = useState(false);
 
   // Carregar configurações ao montar o componente
@@ -120,6 +147,34 @@ const Customization = () => {
         streaming_login: getCustomization('streaming_login', 'agroplay.api'),
         streaming_secret: getCustomization('streaming_secret', 'ldkjgeo29vkg99133xswrt48rq3sqyf6q4r58f8h'),
         streaming_api_url: getCustomization('streaming_api_url', '')
+      });
+
+      // Carregar configurações da página inicial
+      setHomeSettings({
+        home_title: getCustomization('home_title', ''),
+        home_subtitle: getCustomization('home_subtitle', ''),
+        home_featured_content: getCustomization('home_featured_content', '')
+      });
+
+      // Carregar configurações de conteúdo
+      setContentSettings({
+        content_sections_title: getCustomization('content_sections_title', ''),
+        content_carousel_autoplay: getCustomization('content_carousel_autoplay', ''),
+        content_default_category: getCustomization('content_default_category', '')
+      });
+
+      // Carregar configurações de login
+      setLoginSettings({
+        login_background_image: getCustomization('login_background_image', ''),
+        login_logo_image: getCustomization('login_logo_image', ''),
+        login_welcome_text: getCustomization('login_welcome_text', '')
+      });
+
+      // Carregar configurações gerais
+      setConfigSettings({
+        maintenance_mode: getCustomization('maintenance_mode', ''),
+        debug_mode: getCustomization('debug_mode', ''),
+        max_users: getCustomization('max_users', '')
       });
 
     } catch (error) {
@@ -237,6 +292,106 @@ const Customization = () => {
     }
   };
 
+  const handleSaveHome = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([
+        updateCustomization('home_title', homeSettings.home_title),
+        updateCustomization('home_subtitle', homeSettings.home_subtitle),
+        updateCustomization('home_featured_content', homeSettings.home_featured_content)
+      ]);
+
+      toast({
+        title: "Sucesso",
+        description: "Configurações da página inicial salvas com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar configurações da página inicial:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar as configurações da página inicial",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveContent = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([
+        updateCustomization('content_sections_title', contentSettings.content_sections_title),
+        updateCustomization('content_carousel_autoplay', contentSettings.content_carousel_autoplay),
+        updateCustomization('content_default_category', contentSettings.content_default_category)
+      ]);
+
+      toast({
+        title: "Sucesso",
+        description: "Configurações de conteúdo salvas com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar configurações de conteúdo:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar as configurações de conteúdo",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveLogin = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([
+        updateCustomization('login_background_image', loginSettings.login_background_image),
+        updateCustomization('login_logo_image', loginSettings.login_logo_image),
+        updateCustomization('login_welcome_text', loginSettings.login_welcome_text)
+      ]);
+
+      toast({
+        title: "Sucesso",
+        description: "Configurações de login salvas com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar configurações de login:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar as configurações de login",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveConfig = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([
+        updateCustomization('maintenance_mode', configSettings.maintenance_mode),
+        updateCustomization('debug_mode', configSettings.debug_mode),
+        updateCustomization('max_users', configSettings.max_users)
+      ]);
+
+      toast({
+        title: "Sucesso",
+        description: "Configurações gerais salvas com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar configurações gerais:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar as configurações gerais",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -253,10 +408,22 @@ const Customization = () => {
       </div>
 
       <Tabs defaultValue="global" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-admin-muted">
+        <TabsList className="grid w-full grid-cols-8 bg-admin-muted">
           <TabsTrigger value="global" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
             Global
+          </TabsTrigger>
+          <TabsTrigger value="home" className="flex items-center gap-2">
+            <Home className="h-4 w-4" />
+            Página Inicial
+          </TabsTrigger>
+          <TabsTrigger value="content" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Conteúdo
+          </TabsTrigger>
+          <TabsTrigger value="login" className="flex items-center gap-2">
+            <LogIn className="h-4 w-4" />
+            Login
           </TabsTrigger>
           <TabsTrigger value="colors" className="flex items-center gap-2">
             <Palette className="h-4 w-4" />
@@ -341,6 +508,185 @@ const Customization = () => {
               >
                 <Save className="h-4 w-4 mr-2" />
                 {isLoading ? 'Salvando...' : 'Salvar Configurações Globais'}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba Página Inicial */}
+        <TabsContent value="home" className="space-y-6">
+          <Card className="bg-admin-card border-admin-border">
+            <CardHeader>
+              <CardTitle className="text-admin-foreground flex items-center gap-2">
+                <Home className="h-5 w-5" />
+                Configurações da Página Inicial
+              </CardTitle>
+              <CardDescription className="text-admin-muted-foreground">
+                Personalize o conteúdo da página inicial
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="home_title" className="text-admin-foreground">Título Principal</Label>
+                <Input
+                  id="home_title"
+                  value={homeSettings.home_title}
+                  onChange={(e) => setHomeSettings({...homeSettings, home_title: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="Título da página inicial"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="home_subtitle" className="text-admin-foreground">Subtítulo</Label>
+                <Textarea
+                  id="home_subtitle"
+                  value={homeSettings.home_subtitle}
+                  onChange={(e) => setHomeSettings({...homeSettings, home_subtitle: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="Subtítulo da página inicial"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="home_featured_content" className="text-admin-foreground">Conteúdo em Destaque</Label>
+                <Input
+                  id="home_featured_content"
+                  value={homeSettings.home_featured_content}
+                  onChange={(e) => setHomeSettings({...homeSettings, home_featured_content: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="ID do conteúdo em destaque"
+                />
+              </div>
+
+              <Separator className="bg-admin-border" />
+
+              <Button 
+                onClick={handleSaveHome} 
+                disabled={isLoading}
+                className="bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? 'Salvando...' : 'Salvar Configurações da Página Inicial'}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba Conteúdo */}
+        <TabsContent value="content" className="space-y-6">
+          <Card className="bg-admin-card border-admin-border">
+            <CardHeader>
+              <CardTitle className="text-admin-foreground flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Configurações de Conteúdo
+              </CardTitle>
+              <CardDescription className="text-admin-muted-foreground">
+                Configure as opções de exibição de conteúdo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="content_sections_title" className="text-admin-foreground">Título das Seções</Label>
+                <Input
+                  id="content_sections_title"
+                  value={contentSettings.content_sections_title}
+                  onChange={(e) => setContentSettings({...contentSettings, content_sections_title: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="Título padrão das seções de conteúdo"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="content_carousel_autoplay" className="text-admin-foreground">Autoplay do Carrossel (segundos)</Label>
+                <Input
+                  id="content_carousel_autoplay"
+                  type="number"
+                  value={contentSettings.content_carousel_autoplay}
+                  onChange={(e) => setContentSettings({...contentSettings, content_carousel_autoplay: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="5"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="content_default_category" className="text-admin-foreground">Categoria Padrão</Label>
+                <Input
+                  id="content_default_category"
+                  value={contentSettings.content_default_category}
+                  onChange={(e) => setContentSettings({...contentSettings, content_default_category: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="Categoria padrão para novo conteúdo"
+                />
+              </div>
+
+              <Separator className="bg-admin-border" />
+
+              <Button 
+                onClick={handleSaveContent} 
+                disabled={isLoading}
+                className="bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? 'Salvando...' : 'Salvar Configurações de Conteúdo'}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba Login */}
+        <TabsContent value="login" className="space-y-6">
+          <Card className="bg-admin-card border-admin-border">
+            <CardHeader>
+              <CardTitle className="text-admin-foreground flex items-center gap-2">
+                <LogIn className="h-5 w-5" />
+                Configurações de Login
+              </CardTitle>
+              <CardDescription className="text-admin-muted-foreground">
+                Personalize a página de login
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-admin-foreground">Imagem de Fundo do Login</Label>
+                <ImageUpload
+                  onImageUploaded={(url) => setLoginSettings({...loginSettings, login_background_image: url})}
+                  existingImages={loginSettings.login_background_image ? [{ url: loginSettings.login_background_image, path: '', name: 'Background Login' }] : []}
+                  folder="login-backgrounds"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-admin-foreground">Logo do Login</Label>
+                <ImageUpload
+                  onImageUploaded={(url) => setLoginSettings({...loginSettings, login_logo_image: url})}
+                  existingImages={loginSettings.login_logo_image ? [{ url: loginSettings.login_logo_image, path: '', name: 'Logo Login' }] : []}
+                  folder="login-logos"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="login_welcome_text" className="text-admin-foreground">Texto de Boas-vindas</Label>
+                <Textarea
+                  id="login_welcome_text"
+                  value={loginSettings.login_welcome_text}
+                  onChange={(e) => setLoginSettings({...loginSettings, login_welcome_text: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="Mensagem de boas-vindas na tela de login"
+                  rows={3}
+                />
+              </div>
+
+              <Separator className="bg-admin-border" />
+
+              <Button 
+                onClick={handleSaveLogin} 
+                disabled={isLoading}
+                className="bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? 'Salvando...' : 'Salvar Configurações de Login'}
               </Button>
             </CardContent>
           </Card>
@@ -615,13 +961,63 @@ const Customization = () => {
                 Configurações Avançadas
               </CardTitle>
               <CardDescription className="text-admin-muted-foreground">
-                Opções de configuração avançadas
+                Opções de configuração avançadas do sistema
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-admin-foreground">
-                Em breve, configurações avançadas estarão disponíveis aqui.
-              </p>
+              <div className="space-y-2">
+                <Label htmlFor="maintenance_mode" className="text-admin-foreground">Modo de Manutenção</Label>
+                <Input
+                  id="maintenance_mode"
+                  value={configSettings.maintenance_mode}
+                  onChange={(e) => setConfigSettings({...configSettings, maintenance_mode: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="false"
+                />
+                <p className="text-sm text-admin-muted-foreground">
+                  Ativar modo de manutenção (true/false)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="debug_mode" className="text-admin-foreground">Modo Debug</Label>
+                <Input
+                  id="debug_mode"
+                  value={configSettings.debug_mode}
+                  onChange={(e) => setConfigSettings({...configSettings, debug_mode: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="false"
+                />
+                <p className="text-sm text-admin-muted-foreground">
+                  Ativar modo debug (true/false)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="max_users" className="text-admin-foreground">Máximo de Usuários</Label>
+                <Input
+                  id="max_users"
+                  type="number"
+                  value={configSettings.max_users}
+                  onChange={(e) => setConfigSettings({...configSettings, max_users: e.target.value})}
+                  className="bg-admin-input border-admin-border text-admin-foreground"
+                  placeholder="1000"
+                />
+                <p className="text-sm text-admin-muted-foreground">
+                  Número máximo de usuários simultâneos
+                </p>
+              </div>
+
+              <Separator className="bg-admin-border" />
+
+              <Button 
+                onClick={handleSaveConfig} 
+                disabled={isLoading}
+                className="bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? 'Salvando...' : 'Salvar Configurações Avançadas'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
