@@ -86,7 +86,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                 Lances Pendentes ({pendingBids.length})
               </h3>
               {pendingBids.length > 0 && (
-                <Button onClick={handleGoToBids} variant="outline" size="sm" className="border-admin-border text-slate-950">
+                <Button onClick={handleGoToBids} variant="outline" size="sm" className="border-admin-border text-white">
                   Ver Todos <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
@@ -118,7 +118,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                 Habilitações Pendentes ({pendingRegistrations.length})
               </h3>
               {pendingRegistrations.length > 0 && (
-                <Button onClick={handleGoToRegistrations} variant="outline" size="sm" className="border-admin-border">
+                <Button onClick={handleGoToRegistrations} variant="outline" size="sm" className="border-admin-border text-white">
                   Ver Todas <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
@@ -144,7 +144,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
 
           {/* Botões de Ação */}
           <div className="flex justify-between pt-4 border-t border-admin-border">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="border-admin-border text-black">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="border-admin-border text-white">
               Fechar
             </Button>
             <div className="space-x-2">
