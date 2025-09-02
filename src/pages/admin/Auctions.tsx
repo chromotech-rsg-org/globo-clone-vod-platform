@@ -69,7 +69,8 @@ const AdminAuctions = () => {
   };
 
   const handleView = (item: Auction) => {
-    navigate(`/admin/leiloes/${item.id}`);
+    setEditingAuction(item);
+    setIsEditModalOpen(true);
   };
 
   const handleEdit = (item: Auction) => {
@@ -210,8 +211,8 @@ const AdminAuctions = () => {
                           size="sm" 
                           variant="ghost" 
                           onClick={() => handleView(auction)}
-                          className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
-                          title="Visualizar"
+                          className="text-green-400 hover:text-green-300 hover:bg-gray-800"
+                          title="Visualizar/Editar"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -219,7 +220,7 @@ const AdminAuctions = () => {
                           size="sm" 
                           variant="ghost" 
                           onClick={() => handleEdit(auction)}
-                          className="text-green-400 hover:text-green-300 hover:bg-gray-800"
+                          className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
                           title="Editar"
                         >
                           <Edit className="h-4 w-4" />
