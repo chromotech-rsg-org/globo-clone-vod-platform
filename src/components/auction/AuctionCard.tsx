@@ -25,8 +25,8 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
         <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         
         <CardContent className="p-4 flex-1 flex flex-col relative z-10">
-          {/* Header com badges - altura fixa */}
-          <div className="flex items-start justify-between mb-3 h-[60px]">
+          {/* Header com badges - altura fixa aumentada para acomodar o badge finalizado */}
+          <div className="flex items-start justify-between mb-3 h-[80px]">
             <div className="flex-1 pr-2 min-w-0">
               <h3 className="text-base font-semibold text-white mb-2 line-clamp-2 leading-tight group-hover:text-green-300 transition-colors break-words h-[44px] overflow-hidden">
                 {auction.name}
@@ -74,14 +74,14 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
             </div>
           </div>
 
-          {/* Descrição - altura fixa */}
-          <div className="mb-3 h-[48px] overflow-hidden">
+          {/* Descrição - altura reduzida para dar espaço aos badges */}
+          <div className="mb-3 h-[28px] overflow-hidden">
             {auction.description ? (
-              <p className="text-sm text-gray-300 line-clamp-2 break-words">
+              <p className="text-sm text-gray-300 line-clamp-1 break-words">
                 {auction.description}
               </p>
             ) : (
-              <div className="h-[48px]"></div>
+              <div className="h-[28px]"></div>
             )}
           </div>
 
