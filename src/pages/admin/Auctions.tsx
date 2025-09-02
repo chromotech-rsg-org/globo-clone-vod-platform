@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { Auction } from '@/types/auction';
 import DataTablePagination from '@/components/admin/DataTablePagination';
 import AuctionEditModal from '@/components/admin/AuctionEditModal';
+import AuctionCreateModal from '@/components/admin/AuctionCreateModal';
 
 const AdminAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -22,6 +23,7 @@ const AdminAuctions = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -108,7 +110,11 @@ const AdminAuctions = () => {
   };
 
   const handleCreate = () => {
-    navigate('/admin/leiloes/criar');
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreateModalClose = () => {
+    setIsCreateModalOpen(false);
   };
 
   const handlePageChange = (page: number) => {
@@ -268,6 +274,11 @@ const AdminAuctions = () => {
         isOpen={isEditModalOpen}
         onClose={handleModalClose}
         onSave={handleModalSave}
+      />
+
+      <AuctionCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCreateModalClose}
       />
     </>
   );
