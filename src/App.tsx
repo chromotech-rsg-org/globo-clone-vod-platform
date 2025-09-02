@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +23,9 @@ import AdminImages from "./pages/admin/Images";
 import AdminAuctions from "./pages/admin/Auctions";
 import AdminRegistrations from "./pages/admin/Registrations";
 import AdminBids from "./pages/admin/Bids";
+import AuctionCreate from "./pages/admin/AuctionCreate";
+import AuctionEdit from "./pages/admin/AuctionEdit";
+import AuctionDetails from "./pages/admin/AuctionDetails";
 import AuctionHome from "./pages/auction/AuctionHome";
 import AuctionRoom from "./pages/auction/AuctionRoom";
 import AuctionDashboard from "./pages/auction/AuctionDashboard";
@@ -210,6 +212,27 @@ function AppContent() {
         <ProtectedRoute requiredRole="admin">
           <AdminLayout>
             <AdminAuctions />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/leiloes/criar" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AuctionCreate />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/leiloes/editar/:id" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AuctionEdit />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/leiloes/:id" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AuctionDetails />
           </AdminLayout>
         </ProtectedRoute>
       } />

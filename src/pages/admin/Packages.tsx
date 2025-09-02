@@ -1,14 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
-import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
+import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
@@ -17,41 +14,39 @@ interface Package {
   id: string;
   name: string;
   code: string;
-  vendor_id: string | null;
-  active: boolean | null;
-  suspension_package: boolean | null;
-  created_at: string | null;
-  updated_at: string | null;
+  vendor_id?: string;
+  active: boolean;
+  suspension_package: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 const AdminPackages = () => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingItem, setEditingItem] = useState<Package | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    vendor_id: '',
-    active: true,
-    suspension_package: false
-  });
 
   useEffect(() => {
     fetchPackages();
-  }, [currentPage, pageSize, searchTerm]);
+  }, [statusFilter, currentPage, pageSize, searchTerm]);
 
   const fetchPackages = async () => {
     try {
+      setLoading(true);
+      
       let query = supabase
         .from('packages')
         .select('*', { count: 'exact' })
-        .order('name', { ascending: true });
+        .order('created_at', { ascending: false });
+
+      if (statusFilter !== 'all') {
+        query = query.eq('active', statusFilter === 'active');
+      }
 
       if (searchTerm) {
         query = query.or(`name.ilike.%${searchTerm}%,code.ilike.%${searchTerm}%`);
@@ -59,11 +54,15 @@ const AdminPackages = () => {
 
       const { data, error, count } = await query
         .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
-      
-      if (error) throw error;
-      setPackages(data || []);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      setPackages(data as Package[] || []);
       setTotalItems(count || 0);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar pacotes:', error);
       toast({
         title: "Erro",
@@ -75,81 +74,14 @@ const AdminPackages = () => {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      // Verificar autenticação
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      // Validar dados obrigatórios
-      if (!formData.name.trim()) {
-        throw new Error('Nome é obrigatório');
-      }
-      if (!formData.code.trim()) {
-        throw new Error('Código é obrigatório');
-      }
-      
-      const packageData = {
-        name: formData.name.trim(),
-        code: formData.code.trim(),
-        vendor_id: formData.vendor_id.trim() || null,
-        active: formData.active,
-        suspension_package: formData.suspension_package
-      };
-      
-      if (editingItem) {
-        // Update existing
-        const { error } = await supabase
-          .from('packages')
-          .update(packageData)
-          .eq('id', editingItem.id);
-        if (error) throw error;
-        toast({
-          title: "Sucesso",
-          description: "Pacote atualizado com sucesso"
-        });
-      } else {
-        // Create new
-        const { error } = await supabase
-          .from('packages')
-          .insert([packageData]);
-        if (error) throw error;
-        toast({
-          title: "Sucesso",
-          description: "Pacote criado com sucesso"
-        });
-      }
-      
-      await fetchPackages();
-      resetForm();
-    } catch (error: any) {
-      let errorMessage = "Não foi possível salvar o pacote";
-      if (error.message === 'Usuário não autenticado') {
-        errorMessage = "Você precisa estar logado para realizar esta ação";
-      } else if (error.message.includes('obrigatório')) {
-        errorMessage = error.message;
-      } else if (error.code === '23505') {
-        errorMessage = "Já existe um pacote com este código";
-      } else if (error.code === '42501') {
-        errorMessage = "Você não tem permissão para realizar esta ação";
-      }
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    }
+  const handleEdit = (pkg: Package) => {
+    console.log('Editar pacote:', pkg);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este pacote?')) return;
     try {
-      const { error } = await supabase
-        .from('packages')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('packages').delete().eq('id', id);
       if (error) throw error;
       toast({
         title: "Sucesso",
@@ -166,34 +98,8 @@ const AdminPackages = () => {
     }
   };
 
-  const handleEdit = (item: Package) => {
-    setEditingItem(item);
-    setFormData({
-      name: item.name,
-      code: item.code,
-      vendor_id: item.vendor_id || '',
-      active: item.active || false,
-      suspension_package: item.suspension_package || false
-    });
-    setIsDialogOpen(true);
-  };
-
   const handleCreate = () => {
-    setEditingItem(null);
-    resetForm();
-    setIsDialogOpen(true);
-  };
-
-  const resetForm = () => {
-    setEditingItem(null);
-    setIsDialogOpen(false);
-    setFormData({
-      name: '',
-      code: '',
-      vendor_id: '',
-      active: true,
-      suspension_package: false
-    });
+    console.log('Criar novo pacote');
   };
 
   const handlePageChange = (page: number) => {
@@ -212,190 +118,123 @@ const AdminPackages = () => {
 
   const totalPages = Math.ceil(totalItems / pageSize);
 
+  if (loading) {
+    return <div className="p-6">
+      <div className="text-white">Carregando...</div>
+    </div>;
+  }
+
   return (
     <>
-      {loading ? (
-        <div className="p-6">
-          <div className="text-admin-table-text">Carregando...</div>
+      <header className="bg-black border-b border-green-600/30">
+        <div className="px-6 py-4">
+          <h1 className="text-xl font-bold text-white">Gerenciar Pacotes</h1>
         </div>
-      ) : (
-        <>
-          <header className="bg-admin-header border-b border-admin-border">
-            <div className="px-6 py-4">
-              <h1 className="text-xl font-bold text-admin-sidebar-text">Gerenciar Pacotes</h1>
-            </div>
-          </header>
+      </header>
 
-          <div className="p-6">
-            {/* Search and Create */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Buscar pacotes..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
-                />
-              </div>
-              
-              <Button onClick={handleCreate} variant="admin">
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Pacote
-              </Button>
-            </div>
-
-            {/* Packages Table */}
-            <Card className="bg-admin-card border-admin-border">
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-admin-border">
-                      <TableHead className="text-admin-muted-foreground">Nome</TableHead>
-                      <TableHead className="text-admin-muted-foreground">Código</TableHead>
-                      <TableHead className="text-admin-muted-foreground">Vendor ID</TableHead>
-                      <TableHead className="text-admin-muted-foreground">Status</TableHead>
-                      <TableHead className="text-admin-muted-foreground">Suspensão</TableHead>
-                      <TableHead className="text-admin-muted-foreground">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {packages.map(pkg => (
-                      <TableRow key={pkg.id} className="border-admin-border">
-                        <TableCell className="text-admin-table-text">{pkg.name}</TableCell>
-                        <TableCell className="text-admin-table-text">{pkg.code}</TableCell>
-                        <TableCell className="text-admin-table-text">{pkg.vendor_id || '-'}</TableCell>
-                        <TableCell>
-                          <Badge variant={pkg.active ? 'admin-success' : 'admin-muted'}>
-                            {pkg.active ? 'Ativo' : 'Inativo'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={pkg.suspension_package ? 'admin-danger' : 'outline'} className={!pkg.suspension_package ? 'text-admin-table-text' : ''}>
-                            {pkg.suspension_package ? 'Sim' : 'Não'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEdit(pkg)}
-                              className="text-admin-muted-foreground hover:text-white hover:bg-gray-800"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDelete(pkg.id)}
-                              className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                
-                <DataTablePagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  pageSize={pageSize}
-                  totalItems={totalItems}
-                  onPageChange={handlePageChange}
-                  onPageSizeChange={handlePageSizeChange}
-                />
-              </CardContent>
-            </Card>
-
-            {packages.length === 0 && (
-              <Card className="bg-admin-card border-admin-border mt-6">
-                <CardContent className="p-12 text-center">
-                  <p className="text-admin-muted-foreground">Nenhum pacote encontrado</p>
-                </CardContent>
-              </Card>
-            )}
+      <div className="p-6">
+        {/* Search and Create */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar pacotes..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="pl-10 bg-black border-green-600/30 text-white"
+            />
           </div>
+          <Button onClick={handleCreate} variant="admin">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Pacote
+          </Button>
+        </div>
 
-          {/* Edit/Create Dialog */}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="bg-admin-content-bg border-admin-border text-admin-table-text">
-              <DialogHeader>
-                <DialogTitle className="text-admin-sidebar-text">
-                  {editingItem ? 'Editar Pacote' : 'Novo Pacote'}
-                </DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name" className="text-admin-table-text">Nome</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                    placeholder="Nome do pacote"
-                  />
-                </div>
+        <div className="flex gap-4 mb-6">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-2 bg-black border border-green-600/30 text-white rounded"
+          >
+            <option value="all">Todos os Status</option>
+            <option value="active">Ativo</option>
+            <option value="inactive">Inativo</option>
+          </select>
+        </div>
 
-                <div>
-                  <Label htmlFor="code" className="text-admin-table-text">Código</Label>
-                  <Input
-                    id="code"
-                    value={formData.code}
-                    onChange={e => setFormData({ ...formData, code: e.target.value })}
-                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                    placeholder="Código único do pacote"
-                  />
-                </div>
+        {/* Packages Table */}
+        <Card className="bg-black border-green-600/30">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-700">
+                  <TableHead className="text-gray-300">Nome</TableHead>
+                  <TableHead className="text-gray-300">Código</TableHead>
+                  <TableHead className="text-gray-300">Status</TableHead>
+                  <TableHead className="text-gray-300">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {packages.map(pkg => (
+                  <TableRow key={pkg.id} className="border-gray-700">
+                    <TableCell className="text-white">{pkg.name}</TableCell>
+                    <TableCell className="text-white">{pkg.code}</TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        pkg.active ? 'admin-success' : 'admin-muted'
+                      }>
+                        {pkg.active ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEdit(pkg)}
+                          className="text-gray-400 hover:text-white hover:bg-gray-800"
+                          title="Editar"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleDelete(pkg.id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </CardContent>
+        </Card>
 
-                <div>
-                  <Label htmlFor="vendor_id" className="text-admin-table-text">Vendor ID</Label>
-                  <Input
-                    id="vendor_id"
-                    value={formData.vendor_id}
-                    onChange={e => setFormData({ ...formData, vendor_id: e.target.value })}
-                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                    placeholder="ID do fornecedor (opcional)"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="active"
-                    checked={formData.active}
-                    onCheckedChange={checked => setFormData({ ...formData, active: checked })}
-                  />
-                  <Label htmlFor="active" className="text-admin-table-text">Ativo</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="suspension_package"
-                    checked={formData.suspension_package}
-                    onCheckedChange={checked => setFormData({ ...formData, suspension_package: checked })}
-                  />
-                  <Label htmlFor="suspension_package" className="text-admin-table-text">Pacote de Suspensão</Label>
-                </div>
-
-                <div className="flex space-x-2 pt-4">
-                  <Button onClick={handleSave} variant="admin" className="flex-1">
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar
-                  </Button>
-                  <Button onClick={resetForm} variant="outline" className="border-admin-border text-admin-table-text text-zinc-950">
-                    <X className="h-4 w-4 mr-2" />
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </>
-      )}
+        {packages.length === 0 && (
+          <Card className="bg-black border-green-600/30 mt-6">
+            <CardContent className="p-12 text-center">
+              <p className="text-gray-400">Nenhum pacote encontrado</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </>
   );
 };

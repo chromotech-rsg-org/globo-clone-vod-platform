@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Bell, Clock, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import { formatDateTime } from '@/utils/formatters';
 import { useToast } from '@/components/ui/use-toast';
+import NotificationBadge from './NotificationBadge';
 
 interface ClientNotification {
   id: string;
@@ -175,19 +177,10 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
   return (
     <>
       <div className="fixed top-4 right-4 z-50">
-        <Button
-          variant={unreadCount > 0 ? "destructive" : "outline"}
-          size="sm"
-          onClick={() => setShowModal(true)}
-          className={`flex items-center gap-2 ${unreadCount > 0 ? 'animate-pulse' : ''}`}
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 ? (
-            `${unreadCount} nova${unreadCount > 1 ? 's' : ''} notificação${unreadCount > 1 ? 'ões' : ''}`
-          ) : (
-            '0'
-          )}
-        </Button>
+        <NotificationBadge 
+          count={unreadCount} 
+          onClick={() => setShowModal(true)} 
+        />
       </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>

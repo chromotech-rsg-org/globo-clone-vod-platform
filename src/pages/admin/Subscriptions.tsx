@@ -1,99 +1,79 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Edit, Plus, Trash2, Users, DollarSign, CalendarDays } from 'lucide-react';
+import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { formatDate } from '@/utils/formatters';
+import DataTablePagination from '@/components/admin/DataTablePagination';
 
 interface Subscription {
   id: string;
   user_id: string;
-  plan_id: string;
+  plan_id?: string;
   status: string;
-  start_date: string;
+  start_date?: string;
   end_date?: string;
   created_at: string;
   updated_at: string;
-  profiles: {
+  profiles?: {
     name: string;
     email: string;
   };
-  plans: {
+  plans?: {
     name: string;
-    price: number;
-    billing_cycle: string;
   };
-}
-
-interface Plan {
-  id: string;
-  name: string;
-  price: number;
-  billing_cycle: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
-interface SubscriptionForm {
-  user_id: string;
-  plan_id: string;
-  status: string;
-  start_date: string;
-  end_date: string;
 }
 
 const AdminSubscriptions = () => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const {
-    toast
-  } = useToast();
-  const [formData, setFormData] = useState<SubscriptionForm>({
-    user_id: '',
-    plan_id: '',
-    status: 'active',
-    start_date: new Date().toISOString().split('T')[0],
-    end_date: ''
-  });
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [totalItems, setTotalItems] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchSubscriptions();
-    fetchPlans();
-    fetchUsers();
-  }, []);
+  }, [statusFilter, currentPage, pageSize, searchTerm]);
 
   const fetchSubscriptions = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('subscriptions').select(`
+      setLoading(true);
+      
+      let query = supabase
+        .from('subscriptions')
+        .select(`
           *,
-          profiles (name, email),
-          plans (name, price, billing_cycle)
-        `).order('created_at', {
-        ascending: false
-      });
-      if (error) throw error;
-      setSubscriptions(data || []);
-    } catch (error) {
+          profiles(name, email),
+          plans(name)
+        `, { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      if (searchTerm) {
+        query = query.or(`profiles.name.ilike.%${searchTerm}%,profiles.email.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      setSubscriptions(data as Subscription[] || []);
+      setTotalItems(count || 0);
+    } catch (error: any) {
       console.error('Erro ao buscar assinaturas:', error);
       toast({
         title: "Erro",
@@ -105,366 +85,188 @@ const AdminSubscriptions = () => {
     }
   };
 
-  const fetchPlans = async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('plans').select('id, name, price, billing_cycle').eq('active', true).order('name');
-      if (error) throw error;
-      setPlans(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar planos:', error);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('profiles').select('id, name, email').order('name');
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.user_id || !formData.plan_id) {
-      toast({
-        title: "Erro",
-        description: "Usuário e plano são obrigatórios",
-        variant: "destructive"
-      });
-      return;
-    }
-    try {
-      const subscriptionData = {
-        ...formData,
-        end_date: formData.end_date || null
-      };
-      if (editingSubscription) {
-        const {
-          error
-        } = await supabase.from('subscriptions').update(subscriptionData).eq('id', editingSubscription.id);
-        if (error) throw error;
-        toast({
-          title: "Sucesso",
-          description: "Assinatura atualizada com sucesso"
-        });
-      } else {
-        const {
-          error
-        } = await supabase.from('subscriptions').insert(subscriptionData);
-        if (error) throw error;
-        toast({
-          title: "Sucesso",
-          description: "Assinatura criada com sucesso"
-        });
-      }
-      setIsDialogOpen(false);
-      setEditingSubscription(null);
-      resetForm();
-      fetchSubscriptions();
-    } catch (error: any) {
-      console.error('Erro ao salvar assinatura:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao salvar assinatura",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleEdit = (subscription: Subscription) => {
-    setEditingSubscription(subscription);
-    setFormData({
-      user_id: subscription.user_id,
-      plan_id: subscription.plan_id,
-      status: subscription.status,
-      start_date: subscription.start_date.split('T')[0],
-      end_date: subscription.end_date ? subscription.end_date.split('T')[0] : ''
-    });
-    setIsDialogOpen(true);
+    console.log('Editar assinatura:', subscription);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta assinatura?')) return;
     try {
-      const {
-        error
-      } = await supabase.from('subscriptions').delete().eq('id', id);
+      const { error } = await supabase.from('subscriptions').delete().eq('id', id);
       if (error) throw error;
       toast({
         title: "Sucesso",
         description: "Assinatura excluída com sucesso"
       });
       fetchSubscriptions();
-    } catch (error: any) {
-      console.error('Erro ao excluir assinatura:', error);
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
       toast({
         title: "Erro",
-        description: "Erro ao excluir assinatura",
+        description: "Não foi possível excluir a assinatura",
         variant: "destructive"
       });
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      user_id: '',
-      plan_id: '',
-      status: 'active',
-      start_date: new Date().toISOString().split('T')[0],
-      end_date: ''
-    });
+  const handleCreate = () => {
+    console.log('Criar nova assinatura');
   };
 
-  const openCreateDialog = () => {
-    setEditingSubscription(null);
-    resetForm();
-    setIsDialogOpen(true);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
-  const filteredSubscriptions = subscriptions.filter(subscription => {
-    const matchesSearch = subscription.profiles?.name.toLowerCase().includes(searchTerm.toLowerCase()) || subscription.profiles?.email.toLowerCase().includes(searchTerm.toLowerCase()) || subscription.plans?.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || subscription.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const getStatusBadge = (status: string) => {
-    const variants: {
-      [key: string]: 'default' | 'secondary' | 'destructive' | 'outline';
-    } = {
-      active: 'default',
-      inactive: 'secondary',
-      cancelled: 'destructive',
-      expired: 'outline'
-    };
-    
-    const statusLabels: { [key: string]: string } = {
-      active: 'Ativo',
-      inactive: 'Inativo', 
-      cancelled: 'Cancelado',
-      expired: 'Expirado'
-    };
-    
-    return <Badge variant={variants[status] || 'outline'}>{statusLabels[status] || status}</Badge>;
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
   };
 
-  const stats = {
-    total: subscriptions.length,
-    active: subscriptions.filter(s => s.status === 'active').length,
-    revenue: subscriptions.filter(s => s.status === 'active').reduce((sum, s) => sum + (s.plans?.price || 0), 0)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
   };
 
-  return <>
-      {loading ? <div className="p-6">
-          <div className="text-admin-table-text">Carregando...</div>
-        </div> : <>
-      <header className="bg-admin-header border-b border-admin-border">
-        <div className="px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-admin-sidebar-text">Gerenciar Assinaturas</h1>
-          <Button onClick={openCreateDialog} className="bg-admin-primary hover:bg-admin-button-hover text-admin-primary-foreground">
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  if (loading) {
+    return <div className="p-6">
+      <div className="text-white">Carregando...</div>
+    </div>;
+  }
+
+  return (
+    <>
+      <header className="bg-black border-b border-green-600/30">
+        <div className="px-6 py-4">
+          <h1 className="text-xl font-bold text-white">Gerenciar Assinaturas</h1>
+        </div>
+      </header>
+
+      <div className="p-6">
+        {/* Search and Create */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar assinaturas..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="pl-10 bg-black border-green-600/30 text-white"
+            />
+          </div>
+          <Button onClick={handleCreate} variant="admin">
             <Plus className="h-4 w-4 mr-2" />
             Nova Assinatura
           </Button>
         </div>
-      </header>
 
-      {/* Stats Cards */}
-      <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-admin-card border-admin-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-admin-muted-foreground">Total de Assinaturas</CardTitle>
-            <Users className="h-4 w-4 text-admin-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-admin-table-text">{stats.total}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-admin-card border-admin-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-admin-muted-foreground">Assinaturas Ativas</CardTitle>
-            <CalendarDays className="h-4 w-4 text-admin-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-admin-success">{stats.active}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-admin-card border-admin-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-admin-muted-foreground">Receita Mensal</CardTitle>
-            <DollarSign className="h-4 w-4 text-admin-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-admin-success">R$ {stats.revenue.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="px-6 pb-6 flex gap-4">
-        <div className="flex-1">
-          <Input placeholder="Buscar por usuário ou plano..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="bg-admin-content-bg border-admin-border text-admin-table-text" />
+        <div className="flex gap-4 mb-6">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-2 bg-black border border-green-600/30 text-white rounded"
+          >
+            <option value="all">Todos os Status</option>
+            <option value="active">Ativo</option>
+            <option value="inactive">Inativo</option>
+            <option value="canceled">Cancelado</option>
+            <option value="expired">Expirado</option>
+          </select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40 bg-admin-content-bg border-admin-border text-admin-table-text">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Status</SelectItem>
-            <SelectItem value="active">Ativo</SelectItem>
-            <SelectItem value="inactive">Inativo</SelectItem>
-            <SelectItem value="cancelled">Cancelado</SelectItem>
-            <SelectItem value="expired">Expirado</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
-      {/* Subscriptions Table */}
-      <div className="px-6 pb-6">
-        <Card className="bg-admin-card border-admin-border">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-admin-border">
-                <TableHead className="text-admin-muted-foreground">Usuário</TableHead>
-                <TableHead className="text-admin-muted-foreground">Plano</TableHead>
-                <TableHead className="text-admin-muted-foreground">Status</TableHead>
-                <TableHead className="text-admin-muted-foreground">Início</TableHead>
-                <TableHead className="text-admin-muted-foreground">Fim</TableHead>
-                <TableHead className="text-admin-muted-foreground">Preço</TableHead>
-                <TableHead className="text-admin-muted-foreground">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSubscriptions.map(subscription => <TableRow key={subscription.id} className="border-admin-border">
-                  <TableCell className="text-admin-table-text">
-                    <div>
-                      <div className="font-medium">{subscription.profiles?.name}</div>
-                      <div className="text-sm text-admin-muted-foreground">{subscription.profiles?.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-admin-table-text">{subscription.plans?.name}</TableCell>
-                  <TableCell>{getStatusBadge(subscription.status)}</TableCell>
-                  <TableCell className="text-admin-table-text">{formatDate(subscription.start_date)}</TableCell>
-                  <TableCell className="text-admin-table-text">
-                    {subscription.end_date ? formatDate(subscription.end_date) : '-'}
-                  </TableCell>
-                  <TableCell className="text-admin-table-text">
-                    R$ {subscription.plans?.price?.toFixed(2)} / {subscription.plans?.billing_cycle}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="ghost" onClick={() => handleEdit(subscription)} className="text-gray-400 hover:text-white hover:bg-gray-800">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(subscription.id)} className="text-red-400 hover:text-red-300 hover:bg-gray-800">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>)}
-            </TableBody>
-          </Table>
+        {/* Subscriptions Table */}
+        <Card className="bg-black border-green-600/30">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-700">
+                  <TableHead className="text-gray-300">Usuário</TableHead>
+                  <TableHead className="text-gray-300">Plano</TableHead>
+                  <TableHead className="text-gray-300">Status</TableHead>
+                  <TableHead className="text-gray-300">Data de Início</TableHead>
+                  <TableHead className="text-gray-300">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {subscriptions.map(subscription => (
+                  <TableRow key={subscription.id} className="border-gray-700">
+                    <TableCell className="text-white">
+                      <div>
+                        <div>{subscription.profiles?.name || 'N/A'}</div>
+                        <div className="text-sm text-gray-400">{subscription.profiles?.email || 'N/A'}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-white">
+                      {subscription.plans?.name || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        subscription.status === 'active' ? 'admin-success' :
+                        subscription.status === 'canceled' ? 'admin-destructive' :
+                        subscription.status === 'expired' ? 'admin-warning' :
+                          'admin-muted'
+                      }>
+                        {subscription.status === 'active' ? 'Ativo' :
+                         subscription.status === 'canceled' ? 'Cancelado' :
+                         subscription.status === 'expired' ? 'Expirado' :
+                         subscription.status === 'inactive' ? 'Inativo' : subscription.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-white">
+                      {subscription.start_date ? new Date(subscription.start_date).toLocaleDateString('pt-BR') : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEdit(subscription)}
+                          className="text-gray-400 hover:text-white hover:bg-gray-800"
+                          title="Editar"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleDelete(subscription.id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </CardContent>
         </Card>
+
+        {subscriptions.length === 0 && (
+          <Card className="bg-black border-green-600/30 mt-6">
+            <CardContent className="p-12 text-center">
+              <p className="text-gray-400">Nenhuma assinatura encontrada</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {/* Create/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-admin-content-bg border-admin-border">
-          <DialogHeader>
-            <DialogTitle className="text-admin-sidebar-text">
-              {editingSubscription ? 'Editar Assinatura' : 'Nova Assinatura'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label className="text-admin-table-text">Usuário *</Label>
-              <Select value={formData.user_id} onValueChange={value => setFormData({
-                ...formData,
-                user_id: value
-              })}>
-                <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
-                  <SelectValue placeholder="Selecione um usuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map(user => <SelectItem key={user.id} value={user.id}>
-                      {user.name} ({user.email})
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-admin-table-text">Plano *</Label>
-              <Select value={formData.plan_id} onValueChange={value => setFormData({
-                ...formData,
-                plan_id: value
-              })}>
-                <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
-                  <SelectValue placeholder="Selecione um plano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {plans.map(plan => <SelectItem key={plan.id} value={plan.id}>
-                      {plan.name} - R$ {plan.price} / {plan.billing_cycle}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-admin-table-text">Status</Label>
-              <Select value={formData.status} onValueChange={value => setFormData({
-                ...formData,
-                status: value
-              })}>
-                <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                  <SelectItem value="expired">Expirado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-admin-table-text">Data de Início</Label>
-              <Input type="date" value={formData.start_date} onChange={e => setFormData({
-                ...formData,
-                start_date: e.target.value
-              })} className="bg-admin-content-bg border-admin-border text-admin-table-text" required />
-            </div>
-
-            <div>
-              <Label className="text-admin-table-text">Data de Fim (opcional)</Label>
-              <Input type="date" value={formData.end_date} onChange={e => setFormData({
-                ...formData,
-                end_date: e.target.value
-              })} className="bg-admin-content-bg border-admin-border text-admin-table-text" />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="border-gray-600 text-zinc-950">
-                Cancelar
-              </Button>
-              <Button type="submit" className="bg-admin-primary hover:bg-admin-button-hover text-admin-primary-foreground">
-                {editingSubscription ? 'Atualizar' : 'Criar'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-      </>}
-    </>;
+    </>
+  );
 };
 
 export default AdminSubscriptions;
