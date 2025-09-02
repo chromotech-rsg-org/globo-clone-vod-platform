@@ -31,6 +31,9 @@ const AuctionUserActions = ({
   onBidClick,
   onRequestRegistration
 }: AuctionUserActionsProps) => {
+  // Verificar se a transmissão está encerrada
+  const isTransmissionEnded = auction.status === 'inactive' || !auction.is_live;
+
   return (
     <Card className="bg-black border-green-600/30">
       <CardHeader>
@@ -45,13 +48,26 @@ const AuctionUserActions = ({
             {stateInfo.description}
           </AlertDescription>
         </Alert>
+
+        {/* Mostrar alerta se a transmissão estiver encerrada */}
+        {isTransmissionEnded && (
+          <Alert className="bg-red-900/20 border-red-500/50">
+            <AlertCircle className="h-4 w-4 text-red-400" />
+            <AlertDescription className="text-red-300">
+              <div className="text-center">
+                <p className="font-bold">Transmissão Encerrada</p>
+                <p>Não é mais possível fazer lances ou solicitar habilitação.</p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
          
         {stateInfo.action && (
           <Button 
             onClick={stateInfo.onClick}
             className="w-full bg-green-600 hover:bg-green-700 text-white"
             variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
-            disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick}
+            disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick || isTransmissionEnded}
           >
             {submittingBid ? 'Enviando lance...' : stateInfo.action}
           </Button>
