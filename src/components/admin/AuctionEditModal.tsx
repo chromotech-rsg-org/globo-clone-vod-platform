@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -235,7 +234,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-green-600/30 text-white"
+              className="border-green-600/30 text-black"
             >
               Cancelar
             </Button>
