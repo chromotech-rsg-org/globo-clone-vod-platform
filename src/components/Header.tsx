@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { useCustomizations } from '@/hooks/useCustomizations';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getCustomization, loading } = useCustomizations('home');
+  const { user, logout } = useAuth();
 
   // Don't show default values while loading
   if (loading) {
@@ -58,6 +60,11 @@ const Header = () => {
     if (customButtonLink) {
       window.open(customButtonLink, '_blank');
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setIsMenuOpen(false);
   };
 
   return (
@@ -142,17 +149,43 @@ const Header = () => {
                 )}
               </button>
             )}
-            <Link 
-              to="/login" 
-              className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
-              style={{ 
-                backgroundColor: headerHoverColor,
-                color: '#ffffff'
-              }}
-            >
-              <User className="h-4 w-4 mr-2" />
-              {menuLogin}
-            </Link>
+            
+            {/* User Authentication Section */}
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <Link 
+                  to="/dashboard" 
+                  className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
+                  style={{ 
+                    backgroundColor: headerHoverColor,
+                    color: '#ffffff'
+                  }}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  {user.name || user.email}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="hover:opacity-90 transition-opacity p-2 rounded-md"
+                  style={{ color: headerTextColor }}
+                  title="Sair"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <Link 
+                to="/login" 
+                className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
+                style={{ 
+                  backgroundColor: headerHoverColor,
+                  color: '#ffffff'
+                }}
+              >
+                <User className="h-4 w-4 mr-2" />
+                {menuLogin}
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -236,18 +269,48 @@ const Header = () => {
                   )}
                 </button>
               )}
-              <Link 
-                to="/login" 
-                className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4 flex items-center"
-                style={{ 
-                  backgroundColor: headerHoverColor,
-                  color: '#ffffff'
-                }}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <User className="h-4 w-4 mr-2" />
-                {menuLogin}
-              </Link>
+              
+              {/* Mobile User Authentication Section */}
+              {user ? (
+                <div className="mt-4 space-y-2">
+                  <Link 
+                    to="/dashboard" 
+                    className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
+                    style={{ 
+                      backgroundColor: headerHoverColor,
+                      color: '#ffffff'
+                    }}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    {user.name || user.email}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
+                    style={{ 
+                      color: headerTextColor,
+                      backgroundColor: 'rgba(255,255,255,0.1)'
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </button>
+                </div>
+              ) : (
+                <Link 
+                  to="/login" 
+                  className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md mt-4 flex items-center"
+                  style={{ 
+                    backgroundColor: headerHoverColor,
+                    color: '#ffffff'
+                  }}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  {menuLogin}
+                </Link>
+              )}
             </div>
           </div>
         )}
