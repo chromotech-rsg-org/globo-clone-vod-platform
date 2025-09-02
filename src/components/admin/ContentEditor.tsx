@@ -273,7 +273,7 @@ const ContentEditor = () => {
               <Save className="h-4 w-4 mr-2" />
               Salvar
             </Button>
-            <Button onClick={() => setEditingItem(null)} variant="outline" size="sm" className="border-admin-border text-admin-foreground">
+            <Button onClick={() => setEditingItem(null)} variant="outline" size="sm" className="border-admin-border text-black bg-white hover:bg-gray-100">
               Cancelar
             </Button>
           </div>
@@ -321,7 +321,7 @@ const ContentEditor = () => {
               <Save className="h-4 w-4 mr-2" />
               Salvar
             </Button>
-            <Button onClick={() => setEditingSection(null)} variant="outline" size="sm" className="border-admin-border text-admin-foreground">
+            <Button onClick={() => setEditingSection(null)} variant="outline" size="sm" className="border-admin-border text-black bg-white hover:bg-gray-100">
               Cancelar
             </Button>
           </div>
@@ -366,7 +366,7 @@ const ContentEditor = () => {
                   </p>
                 </div>
                 <div className="flex space-x-2 bg-black">
-                  <Button onClick={() => setEditingSection(section)} variant="outline" size="sm" className="border-admin-border text-admin-foreground">
+                  <Button onClick={() => setEditingSection(section)} variant="outline" size="sm" className="border-admin-border text-black bg-white hover:bg-gray-100">
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button onClick={() => setEditingItem({} as ContentItem)} variant="admin" size="sm">
@@ -403,7 +403,7 @@ const ContentEditor = () => {
                               </div>
                             </div>
                             <div className="flex space-x-2 bg-black">
-                              <Button onClick={() => setEditingItem(item)} variant="outline" size="sm" className="flex-1 border-admin-border text-admin-foreground">
+                              <Button onClick={() => setEditingItem(item)} variant="outline" size="sm" className="flex-1 border-admin-border text-black bg-white hover:bg-gray-100">
                                 <Edit className="h-3 w-3" />
                               </Button>
                               <Button onClick={() => deleteItem(item.id)} variant="destructive" size="sm" className="flex-1">
