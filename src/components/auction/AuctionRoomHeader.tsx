@@ -10,8 +10,7 @@ const AuctionRoomHeader = () => {
   return (
     <header className="bg-black border-b border-green-600/30">
       <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-white">Sala do Leilão</h1>
+        <div className="flex items-center justify-end">
           <Button 
             variant="outline" 
             onClick={() => navigate('/auctions')}
