@@ -117,6 +117,10 @@ const AdminAuctions = () => {
     setIsCreateModalOpen(false);
   };
 
+  const handleCreateModalSave = () => {
+    fetchAuctions();
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -279,6 +283,7 @@ const AdminAuctions = () => {
       <AuctionCreateModal
         isOpen={isCreateModalOpen}
         onClose={handleCreateModalClose}
+        onSave={handleCreateModalSave}
       />
     </>
   );
