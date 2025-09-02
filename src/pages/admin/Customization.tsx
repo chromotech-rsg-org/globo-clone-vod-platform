@@ -616,10 +616,10 @@ const AdminCustomization = () => {
   const renderSection = (page: string, section: string, title: string, description?: string) => {
     const sectionConfigs = customizationConfigs.filter(config => config.page === page && config.section === section);
     if (sectionConfigs.length === 0) return null;
-    return <Card className="bg-black border-admin-border">
+    return <Card className="bg-black border-gray-800">
         <CardHeader className="bg-black">
-          <CardTitle className="text-admin-foreground">{title}</CardTitle>
-          {description && <p className="text-sm text-admin-muted-foreground">{description}</p>}
+          <CardTitle className="text-white">{title}</CardTitle>
+          {description && <p className="text-sm text-gray-400">{description}</p>}
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-black">
           {sectionConfigs.map(config => <CustomizationEditor key={config.key} id={config.key} label={config.label} value={getCurrentValue(config)} type={config.type} placeholder={config.placeholder} description={config.description} onChange={value => handleChange(config, value)} onSave={() => handleSave(config)} loading={config.page === 'login' ? loginSaving[config.key] || false : saving[config.key] || false} />)}
@@ -629,16 +629,16 @@ const AdminCustomization = () => {
 
   const isLoading = Object.keys(customizations).length === 0;
   if (isLoading) {
-    return <div className="p-6">
-          <div className="text-admin-foreground text-slate-50">Carregando personalizações...</div>
+    return <div className="p-6 bg-black">
+          <div className="text-white">Carregando personalizações...</div>
         </div>;
   }
 
-  return <>
-      <header className="bg-black border-b border-admin-border">
+  return <div className="bg-black min-h-screen">
+      <header className="bg-black border-b border-gray-800">
         <div className="px-6 py-4 bg-black">
-          <h1 className="text-xl font-bold text-admin-foreground text-slate-50">Central de Personalização</h1>
-          <p className="text-admin-muted-foreground text-sm">
+          <h1 className="text-xl font-bold text-white">Central de Personalização</h1>
+          <p className="text-gray-400 text-sm">
             Personalize a aparência, conteúdo e configurações do seu site
           </p>
         </div>
@@ -646,20 +646,20 @@ const AdminCustomization = () => {
 
       <div className="p-6 bg-black">
         <Tabs defaultValue="home" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-black border border-admin-border">
-            <TabsTrigger value="home" className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
+          <TabsList className="grid w-full grid-cols-4 bg-black border border-gray-800">
+            <TabsTrigger value="home" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <Home className="h-4 w-4 mr-2" />
               Página Inicial
             </TabsTrigger>
-            <TabsTrigger value="content" className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
+            <TabsTrigger value="content" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <Image className="h-4 w-4 mr-2" />
               Conteúdo
             </TabsTrigger>
-            <TabsTrigger value="login" className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
+            <TabsTrigger value="login" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <LogIn className="h-4 w-4 mr-2" />
               Login
             </TabsTrigger>
-            <TabsTrigger value="global" className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
+            <TabsTrigger value="global" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <Settings className="h-4 w-4 mr-2" />
               Configurações
             </TabsTrigger>
@@ -675,10 +675,10 @@ const AdminCustomization = () => {
           </TabsContent>
 
           <TabsContent value="content" className="space-y-6 bg-black">
-            <Card className="bg-black border-admin-border">
+            <Card className="bg-black border-gray-800">
               <CardHeader className="bg-black">
-                <CardTitle className="text-admin-foreground">Gerenciamento de Conteúdo</CardTitle>
-                <p className="text-sm text-admin-muted-foreground">
+                <CardTitle className="text-white">Gerenciamento de Conteúdo</CardTitle>
+                <p className="text-sm text-gray-400">
                   Gerencie seções de conteúdo, carrosséis e itens individuais
                 </p>
               </CardHeader>
@@ -701,25 +701,25 @@ const AdminCustomization = () => {
         </Tabs>
 
         {/* Preview Button */}
-        <div className="mt-8 p-4 bg-black border border-admin-border rounded-lg">
+        <div className="mt-8 p-4 bg-black border border-gray-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-admin-foreground font-medium flex items-center">
+              <h3 className="text-white font-medium flex items-center">
                 <Eye className="h-4 w-4 mr-2" />
                 Preview das Mudanças
               </h3>
-              <p className="text-admin-muted-foreground text-sm">
+              <p className="text-gray-400 text-sm">
                 Visualize o site com as personalizações aplicadas
               </p>
             </div>
-            <Button onClick={() => window.open('/', '_blank')} variant="outline" className="border-admin-border text-admin-foreground hover:bg-admin-primary hover:text-admin-primary-foreground">
+            <Button onClick={() => window.open('/', '_blank')} variant="outline" className="border-gray-800 text-white hover:bg-gray-900">
               <Eye className="h-4 w-4 mr-2" />
               Visualizar Site
             </Button>
           </div>
         </div>
       </div>
-    </>;
+    </div>;
 };
 
 export default AdminCustomization;
