@@ -9,6 +9,7 @@ import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import SubscriptionFormDialog from '@/components/admin/SubscriptionFormDialog';
 
 interface Subscription {
   id: string;
@@ -36,6 +37,8 @@ const AdminSubscriptions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingSubscription, setEditingSubscription] = useState<Subscription | undefined>();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -86,7 +89,8 @@ const AdminSubscriptions = () => {
   };
 
   const handleEdit = (subscription: Subscription) => {
-    console.log('Editar assinatura:', subscription);
+    setEditingSubscription(subscription);
+    setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -110,7 +114,12 @@ const AdminSubscriptions = () => {
   };
 
   const handleCreate = () => {
-    console.log('Criar nova assinatura');
+    setEditingSubscription(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleDialogSuccess = () => {
+    fetchSubscriptions();
   };
 
   const handlePageChange = (page: number) => {
@@ -265,6 +274,13 @@ const AdminSubscriptions = () => {
           </Card>
         )}
       </div>
+
+      <SubscriptionFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        subscription={editingSubscription}
+        onSuccess={handleDialogSuccess}
+      />
     </>
   );
 };
