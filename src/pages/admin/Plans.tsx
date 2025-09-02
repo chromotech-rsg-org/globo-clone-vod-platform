@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import PlanFormDialog from '@/components/admin/PlanFormDialog';
 
 interface Plan {
   id: string;
@@ -34,6 +34,8 @@ const AdminPlans = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -80,7 +82,8 @@ const AdminPlans = () => {
   };
 
   const handleEdit = (plan: Plan) => {
-    console.log('Editar plano:', plan);
+    setEditingPlan(plan);
+    setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -104,7 +107,12 @@ const AdminPlans = () => {
   };
 
   const handleCreate = () => {
-    console.log('Criar novo plano');
+    setEditingPlan(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleDialogSuccess = () => {
+    fetchPlans();
   };
 
   const handlePageChange = (page: number) => {
@@ -256,6 +264,13 @@ const AdminPlans = () => {
           </Card>
         )}
       </div>
+
+      <PlanFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        plan={editingPlan}
+        onSuccess={handleDialogSuccess}
+      />
     </>
   );
 };
