@@ -9,6 +9,7 @@ import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import CouponFormDialog from '@/components/admin/CouponFormDialog';
 
 interface Coupon {
   id: string;
@@ -28,6 +29,8 @@ const AdminCoupons = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [totalItems, setTotalItems] = useState(0);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,11 +69,8 @@ const AdminCoupons = () => {
   };
 
   const handleEdit = (coupon: Coupon) => {
-    console.log('Editar cupom:', coupon);
-    toast({
-      title: "Editar",
-      description: `Editando cupom ${coupon.code}`,
-    });
+    setEditingCoupon(coupon);
+    setIsDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -101,11 +101,13 @@ const AdminCoupons = () => {
   };
 
   const handleCreate = () => {
-    console.log('Criar novo cupom');
-    toast({
-      title: "Criar",
-      description: "Abrindo formulário para criar novo cupom",
-    });
+    setEditingCoupon(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setEditingCoupon(null);
   };
 
   const handlePageChange = (page: number) => {
@@ -224,6 +226,13 @@ const AdminCoupons = () => {
           </Card>
         )}
       </div>
+
+      <CouponFormDialog
+        isOpen={isDialogOpen}
+        onClose={handleDialogClose}
+        onSave={fetchCoupons}
+        editingCoupon={editingCoupon}
+      />
     </>
   );
 };

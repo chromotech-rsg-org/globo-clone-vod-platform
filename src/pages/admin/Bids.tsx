@@ -25,12 +25,35 @@ interface Bid {
   client_notes?: string;
 }
 
+const getStatusDisplay = (status: string) => {
+  const statusMap: { [key: string]: string } = {
+    'pending': 'Pendente',
+    'approved': 'Aprovado',
+    'rejected': 'Rejeitado',
+    'superseded': 'Superado'
+  };
+  return statusMap[status] || status;
+};
+
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case 'approved':
+      return 'admin-success';
+    case 'rejected':
+      return 'admin-danger';
+    case 'pending':
+      return 'secondary';
+    default:
+      return 'outline';
+  }
+};
+
 const AdminBids = () => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(5); // Mudança aqui: padrão 5 linhas
   const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
 
@@ -161,12 +184,8 @@ const AdminBids = () => {
                     <TableCell className="text-admin-table-text">{bid.user_id.slice(0, 8)}...</TableCell>
                     <TableCell className="text-admin-table-text">R$ {bid.bid_value}</TableCell>
                     <TableCell>
-                      <Badge variant={
-                        bid.status === 'approved' ? 'admin-success' :
-                        bid.status === 'rejected' ? 'admin-danger' :
-                        'secondary'
-                      }>
-                        {bid.status}
+                      <Badge variant={getStatusVariant(bid.status)}>
+                        {getStatusDisplay(bid.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-admin-table-text">

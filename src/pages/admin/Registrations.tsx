@@ -5,23 +5,48 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Search, Eye, UserCheck, UserX } from 'lucide-react';
+import { Check, X, Search, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
 
 interface Registration {
   id: string;
-  auction_id: string;
   user_id: string;
-  status: 'pending' | 'approved' | 'rejected' | 'canceled';
+  auction_id: string;
+  status: string;
   created_at: string;
   updated_at: string;
-  internal_notes?: string;
   client_notes?: string;
+  internal_notes?: string;
   approved_by?: string;
-  next_registration_allowed_at?: string;
 }
+
+const getStatusDisplay = (status: string) => {
+  const statusMap: { [key: string]: string } = {
+    'pending': 'Pendente',
+    'approved': 'Aprovado',
+    'rejected': 'Rejeitado',
+    'canceled': 'Cancelado',
+    'reopened': 'Reaberto'
+  };
+  return statusMap[status] || status;
+};
+
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case 'approved':
+      return 'admin-success';
+    case 'rejected':
+    case 'canceled':
+      return 'admin-danger';
+    case 'pending':
+    case 'reopened':
+      return 'secondary';
+    default:
+      return 'outline';
+  }
+};
 
 const AdminRegistrations = () => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -38,102 +63,107 @@ const AdminRegistrations = () => {
   }, [statusFilter, currentPage, pageSize, searchTerm]);
 
   const fetchRegistrations = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
+      
       let query = supabase
         .from('auction_registrations')
-        .select('*', { count: 'exact' });
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
 
       if (searchTerm) {
-        query = query.or(`id.ilike.%${searchTerm}%,auction_id.ilike.%${searchTerm}%,user_id.ilike.%${searchTerm}%`);
+        query = query.or(`user_id.ilike.%${searchTerm}%,auction_id.ilike.%${searchTerm}%`);
       }
 
       const { data, error, count } = await query
-        .order('created_at', { ascending: false })
         .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
-      if (error) {
-        console.error('Error fetching registrations:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch registrations.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
+      if (error) throw error;
       setRegistrations(data as Registration[] || []);
       setTotalItems(count || 0);
     } catch (error) {
-      console.error('Error fetching registrations:', error);
+      console.error('Erro ao buscar habilitações:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to fetch registrations.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Não foi possível carregar as habilitações",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: 'approved' | 'rejected' | 'canceled') => {
+  const handleApprove = async (id: string) => {
     try {
       const { error } = await supabase
         .from('auction_registrations')
-        .update({ status: newStatus })
+        .update({ 
+          status: 'approved',
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id);
-
-      if (error) {
-        console.error('Error updating registration status:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to update registration status.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
+      
+      if (error) throw error;
+      
       toast({
-        title: 'Success',
-        description: 'Registration status updated successfully.',
+        title: "Sucesso",
+        description: "Habilitação aprovada com sucesso"
       });
+      
       fetchRegistrations();
     } catch (error) {
-      console.error('Error updating registration status:', error);
+      console.error('Erro ao aprovar:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to update registration status.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Não foi possível aprovar a habilitação",
+        variant: "destructive"
       });
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this registration?')) return;
+  const handleReject = async (id: string) => {
+    const reason = prompt('Motivo da rejeição (opcional):');
+    
     try {
-      const { error } = await supabase.from('auction_registrations').delete().eq('id', id);
+      const { error } = await supabase
+        .from('auction_registrations')
+        .update({ 
+          status: 'rejected',
+          client_notes: reason || 'Habilitação rejeitada',
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
       if (error) throw error;
+      
       toast({
-        title: "Success",
-        description: "Registration deleted successfully"
+        title: "Sucesso",
+        description: "Habilitação rejeitada"
       });
+      
       fetchRegistrations();
     } catch (error) {
-      console.error('Error deleting registration:', error);
+      console.error('Erro ao rejeitar:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete the registration",
+        title: "Erro",
+        description: "Não foi possível rejeitar a habilitação",
         variant: "destructive"
       });
     }
   };
 
   const handleViewDetails = (registration: Registration) => {
-    alert(`View details for registration ID: ${registration.id}`);
+    console.log('Visualizar detalhes:', registration);
+    toast({
+      title: "Detalhes",
+      description: `Visualizando habilitação ${registration.id}`,
+    });
   };
 
   const handlePageChange = (page: number) => {
@@ -152,6 +182,12 @@ const AdminRegistrations = () => {
 
   const totalPages = Math.ceil(totalItems / pageSize);
 
+  if (loading) {
+    return <div className="p-6">
+      <div className="text-admin-table-text">Carregando...</div>
+    </div>;
+  }
+
   return (
     <>
       <header className="bg-admin-header border-b border-admin-border">
@@ -166,26 +202,29 @@ const AdminRegistrations = () => {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              type="text"
-              placeholder="Buscar por ID..."
+              placeholder="Buscar habilitações..."
               value={searchTerm}
               onChange={handleSearchChange}
               className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
             />
           </div>
+        </div>
+
+        <div className="flex gap-4 mb-6">
           <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 bg-black border border-green-600/30 text-white rounded"
+            className="px-3 py-2 bg-admin-content-bg border border-admin-border text-admin-table-text rounded"
           >
             <option value="all">Todos os Status</option>
             <option value="pending">Pendente</option>
             <option value="approved">Aprovado</option>
             <option value="rejected">Rejeitado</option>
             <option value="canceled">Cancelado</option>
+            <option value="reopened">Reaberto</option>
           </select>
         </div>
 
@@ -196,107 +235,64 @@ const AdminRegistrations = () => {
               <TableHeader>
                 <TableRow className="border-admin-border">
                   <TableHead className="text-admin-muted-foreground">ID</TableHead>
-                  <TableHead className="text-admin-muted-foreground">Leilão ID</TableHead>
                   <TableHead className="text-admin-muted-foreground">Usuário ID</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Leilão ID</TableHead>
                   <TableHead className="text-admin-muted-foreground">Status</TableHead>
-                  <TableHead className="text-admin-muted-foreground">Data de Registro</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Data</TableHead>
                   <TableHead className="text-admin-muted-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center p-4 text-admin-table-text">
-                      Carregando habilitações...
+                {registrations.map(registration => (
+                  <TableRow key={registration.id} className="border-admin-border">
+                    <TableCell className="text-admin-table-text">{registration.id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-admin-table-text">{registration.user_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-admin-table-text">{registration.auction_id.slice(0, 8)}...</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(registration.status)}>
+                        {getStatusDisplay(registration.status)}
+                      </Badge>
                     </TableCell>
-                  </TableRow>
-                ) : registrations.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center p-4 text-admin-table-text">
-                      Nenhuma habilitação encontrada.
+                    <TableCell className="text-admin-table-text">
+                      {new Date(registration.created_at).toLocaleDateString()}
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  registrations.map(registration => (
-                    <TableRow key={registration.id} className="border-admin-border">
-                      <TableCell className="text-admin-table-text">{registration.id.slice(0, 8)}...</TableCell>
-                      <TableCell className="text-admin-table-text">{registration.auction_id.slice(0, 8)}...</TableCell>
-                      <TableCell className="text-admin-table-text">{registration.user_id.slice(0, 8)}...</TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          registration.status === 'approved' ? 'admin-success' :
-                          registration.status === 'pending' ? 'secondary' :
-                          'admin-danger'
-                        }>
-                          {registration.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-admin-table-text">
-                        {new Date(registration.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleViewDetails(registration)}
-                            className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {registration.status === 'approved' && (
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleViewDetails(registration)}
+                          className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
+                          title="Visualizar"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {registration.status === 'pending' && (
+                          <>
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              onClick={() => handleStatusChange(registration.id, 'canceled')}
-                              className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                            >
-                              <UserX className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {registration.status === 'pending' && (
-                            <>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleStatusChange(registration.id, 'approved')}
-                                className="text-green-400 hover:text-green-300 hover:bg-gray-800"
-                              >
-                                <UserCheck className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleStatusChange(registration.id, 'rejected')}
-                                className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                              >
-                                <UserX className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                          {registration.status === 'canceled' && (
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => handleStatusChange(registration.id, 'approved')}
+                              onClick={() => handleApprove(registration.id)}
                               className="text-green-400 hover:text-green-300 hover:bg-gray-800"
+                              title="Aprovar"
                             >
-                              <UserCheck className="h-4 w-4" />
+                              <Check className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleDelete(registration.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleReject(registration.id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                              title="Rejeitar"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
             
@@ -310,6 +306,14 @@ const AdminRegistrations = () => {
             />
           </CardContent>
         </Card>
+
+        {registrations.length === 0 && (
+          <Card className="bg-admin-card border-admin-border mt-6">
+            <CardContent className="p-12 text-center">
+              <p className="text-admin-muted-foreground">Nenhuma habilitação encontrada</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );
