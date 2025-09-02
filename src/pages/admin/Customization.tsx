@@ -712,7 +712,7 @@ const AdminCustomization = () => {
                 Visualize o site com as personalizações aplicadas
               </p>
             </div>
-            <Button onClick={() => window.open('/', '_blank')} variant="outline" className="border-gray-800 text-black hover:bg-gray-900 bg-white">
+            <Button onClick={() => window.open('/', '_blank')} variant="outline" className="border-gray-800 text-black hover:bg-green-600 hover:text-white hover:border-green-600 bg-white transition-colors">
               <Eye className="h-4 w-4 mr-2" />
               Visualizar Site
             </Button>
