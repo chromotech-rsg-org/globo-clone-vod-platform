@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import AuctionEditModal from '@/components/admin/AuctionEditModal';
 
 interface Auction {
   id: string;
@@ -41,6 +41,8 @@ const AdminAuctions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
+  const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -92,7 +94,17 @@ const AdminAuctions = () => {
   };
 
   const handleEdit = (item: Auction) => {
-    navigate(`/admin/leiloes/editar/${item.id}`);
+    setEditingAuction(item);
+    setIsEditModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsEditModalOpen(false);
+    setEditingAuction(null);
+  };
+
+  const handleModalSave = () => {
+    fetchAuctions();
   };
 
   const handleDelete = async (id: string) => {
@@ -228,7 +240,7 @@ const AdminAuctions = () => {
                           size="sm" 
                           variant="ghost" 
                           onClick={() => handleEdit(auction)}
-                          className="text-gray-400 hover:text-white hover:bg-gray-800"
+                          className="text-green-400 hover:text-green-300 hover:bg-gray-800"
                           title="Editar"
                         >
                           <Edit className="h-4 w-4" />
@@ -270,6 +282,13 @@ const AdminAuctions = () => {
           </Card>
         )}
       </div>
+
+      <AuctionEditModal
+        auction={editingAuction}
+        isOpen={isEditModalOpen}
+        onClose={handleModalClose}
+        onSave={handleModalSave}
+      />
     </>
   );
 };
