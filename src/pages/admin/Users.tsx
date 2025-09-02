@@ -8,6 +8,7 @@ import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import UserFormDialog from '@/components/admin/UserFormDialog';
 
 interface User {
   id: string;
@@ -28,6 +29,8 @@ const AdminUsers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
+  const [showUserDialog, setShowUserDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -74,7 +77,8 @@ const AdminUsers = () => {
   };
 
   const handleEdit = (user: User) => {
-    console.log('Editar usuário:', user);
+    setSelectedUser(user);
+    setShowUserDialog(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -98,7 +102,17 @@ const AdminUsers = () => {
   };
 
   const handleCreate = () => {
-    console.log('Criar novo usuário');
+    setSelectedUser(null);
+    setShowUserDialog(true);
+  };
+
+  const handleDialogClose = () => {
+    setShowUserDialog(false);
+    setSelectedUser(null);
+  };
+
+  const handleDialogSuccess = () => {
+    fetchUsers();
   };
 
   const handlePageChange = (page: number) => {
@@ -238,6 +252,13 @@ const AdminUsers = () => {
           </Card>
         )}
       </div>
+
+      <UserFormDialog
+        open={showUserDialog}
+        onClose={handleDialogClose}
+        user={selectedUser}
+        onSuccess={handleDialogSuccess}
+      />
     </>
   );
 };
