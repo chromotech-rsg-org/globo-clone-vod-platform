@@ -20,15 +20,15 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
 
   return (
     <Link to={`/auctions/${auction.id}`} className="block h-full">
-      <Card className="group hover:shadow-2xl transition-all duration-300 cursor-pointer h-full flex flex-col bg-gradient-to-br from-gray-900/80 to-black/60 border-green-600/30 hover:border-green-500/60 hover:scale-[1.02] relative overflow-hidden">
+      <Card className="group hover:shadow-2xl transition-all duration-300 cursor-pointer h-[400px] flex flex-col bg-gradient-to-br from-gray-900/80 to-black/60 border-green-600/30 hover:border-green-500/60 hover:scale-[1.02] relative overflow-hidden">
         {/* Background glow effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         
-        <CardContent className="p-4 flex-1 flex flex-col relative z-10 min-h-0">
-          {/* Header com badges - altura fixa e controlada */}
-          <div className="flex items-start justify-between mb-3 min-h-[50px]">
+        <CardContent className="p-4 flex-1 flex flex-col relative z-10">
+          {/* Header com badges - altura fixa */}
+          <div className="flex items-start justify-between mb-3 h-[60px]">
             <div className="flex-1 pr-2 min-w-0">
-              <h3 className="text-base font-semibold text-white mb-2 line-clamp-2 leading-tight group-hover:text-green-300 transition-colors break-words">
+              <h3 className="text-base font-semibold text-white mb-2 line-clamp-2 leading-tight group-hover:text-green-300 transition-colors break-words h-[44px] overflow-hidden">
                 {auction.name}
               </h3>
             </div>
@@ -74,18 +74,20 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
             </div>
           </div>
 
-          {/* Descrição - altura controlada com overflow */}
-          {auction.description && (
-            <div className="mb-3 min-h-[32px] max-h-[48px] overflow-hidden">
+          {/* Descrição - altura fixa */}
+          <div className="mb-3 h-[48px] overflow-hidden">
+            {auction.description ? (
               <p className="text-sm text-gray-300 line-clamp-2 break-words">
                 {auction.description}
               </p>
-            </div>
-          )}
+            ) : (
+              <div className="h-[48px]"></div>
+            )}
+          </div>
 
-          {/* Valores - altura fixa com design melhorado */}
-          <div className="grid grid-cols-3 gap-2 mb-4 min-h-[70px]">
-            <div className="bg-gray-800/50 rounded-lg p-2 border border-gray-700/50 min-w-0">
+          {/* Valores - altura fixa */}
+          <div className="grid grid-cols-3 gap-2 mb-4 h-[70px]">
+            <div className="bg-gray-800/50 rounded-lg p-2 border border-gray-700/50 min-w-0 flex flex-col">
               <p className="text-xs text-gray-400 uppercase tracking-wide flex items-center gap-1 mb-1.5 truncate">
                 <Target size={8} />
                 Inicial
@@ -95,7 +97,7 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
               </p>
             </div>
             
-            <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-lg p-2 border border-green-600/30 min-w-0">
+            <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-lg p-2 border border-green-600/30 min-w-0 flex flex-col">
               <p className="text-xs text-green-400 uppercase tracking-wide mb-1.5 truncate">
                 {hasWinner ? 'Arrematado' : 'Lance Atual'}
               </p>
@@ -104,7 +106,7 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
               </p>
             </div>
             
-            <div className="bg-gray-800/50 rounded-lg p-2 border border-gray-700/50 min-w-0">
+            <div className="bg-gray-800/50 rounded-lg p-2 border border-gray-700/50 min-w-0 flex flex-col">
               <p className="text-xs text-gray-400 uppercase tracking-wide flex items-center gap-1 mb-1.5 truncate">
                 <Zap size={8} />
                 Lances
@@ -115,10 +117,10 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
             </div>
           </div>
 
-          {/* Data e progresso - margem automática para empurrar para baixo */}
-          {(auction.start_date || auction.end_date) && (
-            <div className="mt-auto pt-3 border-t border-gray-700/50">
-              <div className="text-xs text-gray-400 space-y-2">
+          {/* Data e progresso - posicionado na parte inferior */}
+          <div className="mt-auto pt-3 border-t border-gray-700/50 h-[120px] flex flex-col justify-between">
+            {(auction.start_date || auction.end_date) ? (
+              <div className="text-xs text-gray-400 space-y-2 flex-1 flex flex-col justify-between">
                 {auction.start_date && auction.end_date ? (
                   <>
                     <div className="flex justify-between items-center">
@@ -135,7 +137,7 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
                       </div>
                     </div>
                     
-                    {/* Barra de Progresso melhorada */}
+                    {/* Barra de Progresso */}
                     {(() => {
                       const now = new Date().getTime();
                       const start = new Date(auction.start_date).getTime();
@@ -175,8 +177,10 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
                   <div className="truncate">Fim: {new Date(auction.end_date).toLocaleString('pt-BR')}</div>
                 ) : null}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="h-full"></div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </Link>
