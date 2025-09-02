@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -325,9 +326,9 @@ const Customization = () => {
               <div className="space-y-2">
                 <Label className="text-admin-foreground">Logo do Painel Admin</Label>
                 <ImageUpload
-                  value={globalSettings.admin_logo_image}
-                  onChange={(url) => setGlobalSettings({...globalSettings, admin_logo_image: url})}
-                  className="bg-admin-input border-admin-border"
+                  onImageUploaded={(url) => setGlobalSettings({...globalSettings, admin_logo_image: url})}
+                  existingImages={globalSettings.admin_logo_image ? [{ url: globalSettings.admin_logo_image, path: '', name: 'Logo Admin' }] : []}
+                  folder="admin-logos"
                 />
               </div>
 
@@ -562,9 +563,9 @@ const Customization = () => {
               <div className="space-y-2">
                 <Label className="text-admin-foreground">Imagem do Banner</Label>
                 <ImageUpload
-                  value={bannerSettings.hero_banner_image}
-                  onChange={(url) => setBannerSettings({...bannerSettings, hero_banner_image: url})}
-                  className="bg-admin-input border-admin-border"
+                  onImageUploaded={(url) => setBannerSettings({...bannerSettings, hero_banner_image: url})}
+                  existingImages={bannerSettings.hero_banner_image ? [{ url: bannerSettings.hero_banner_image, path: '', name: 'Banner Hero' }] : []}
+                  folder="hero-banners"
                 />
               </div>
 
