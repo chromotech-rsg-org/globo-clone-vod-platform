@@ -162,7 +162,7 @@ export default function AdminIntegration() {
           onClick={loadJobsHistory}
           variant="outline"
           size="sm"
-          className="gap-2"
+          className="gap-2 border-admin-border text-admin-foreground hover:bg-admin-muted"
         >
           <RefreshCw className="h-4 w-4" />
           Atualizar
@@ -170,29 +170,29 @@ export default function AdminIntegration() {
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="settings" className="gap-2">
+        <TabsList className="grid w-full grid-cols-2 bg-admin-card border-admin-border">
+          <TabsTrigger value="settings" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <Settings className="h-4 w-4" />
             Configurações
           </TabsTrigger>
-          <TabsTrigger value="jobs" className="gap-2">
+          <TabsTrigger value="jobs" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <History className="h-4 w-4" />
             Histórico de Jobs
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings">
-          <Card>
+          <Card className="bg-admin-card border-admin-border">
             <CardHeader>
-              <CardTitle>Configurações da API</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-admin-foreground">Configurações da API</CardTitle>
+              <CardDescription className="text-admin-muted-foreground">
                 Configure as credenciais para integração com a API MOTV
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSaveSettings} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="api_base_url">URL Base da API</Label>
+                  <Label htmlFor="api_base_url" className="text-admin-foreground">URL Base da API</Label>
                   <Input
                     id="api_base_url"
                     type="url"
@@ -203,11 +203,12 @@ export default function AdminIntegration() {
                       api_base_url: e.target.value
                     }))}
                     required
+                    className="bg-admin-input border-admin-border text-admin-foreground placeholder:text-admin-muted-foreground focus:ring-admin-primary focus:border-admin-primary"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="api_login">Login da API</Label>
+                  <Label htmlFor="api_login" className="text-admin-foreground">Login da API</Label>
                   <Input
                     id="api_login"
                     type="text"
@@ -218,11 +219,12 @@ export default function AdminIntegration() {
                       api_login: e.target.value
                     }))}
                     required
+                    className="bg-admin-input border-admin-border text-admin-foreground placeholder:text-admin-muted-foreground focus:ring-admin-primary focus:border-admin-primary"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="api_secret">Chave Secreta</Label>
+                  <Label htmlFor="api_secret" className="text-admin-foreground">Chave Secreta</Label>
                   <Input
                     id="api_secret"
                     type="password"
@@ -233,10 +235,11 @@ export default function AdminIntegration() {
                       api_secret: e.target.value
                     }))}
                     required
+                    className="bg-admin-input border-admin-border text-admin-foreground placeholder:text-admin-muted-foreground focus:ring-admin-primary focus:border-admin-primary"
                   />
                 </div>
 
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} className="bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90">
                   {loading ? "Salvando..." : "Salvar Configurações"}
                 </Button>
               </form>
@@ -245,56 +248,56 @@ export default function AdminIntegration() {
         </TabsContent>
 
         <TabsContent value="jobs">
-          <Card>
+          <Card className="bg-admin-card border-admin-border">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
+              <CardTitle className="flex items-center justify-between text-admin-foreground">
                 Histórico de Jobs de Integração
                 <Button
                   onClick={handleProcessPendingJobs}
                   disabled={processingJobs}
                   size="sm"
-                  className="gap-2"
+                  className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
                 >
                   <Play className="h-4 w-4" />
                   {processingJobs ? "Processando..." : "Processar Pendentes"}
                 </Button>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-admin-muted-foreground">
                 Visualize o status dos jobs de integração com a API MOTV
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="bg-admin-table-bg border-admin-border">
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Entidade</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Tentativas</TableHead>
-                      <TableHead>Criado em</TableHead>
-                      <TableHead>Processado em</TableHead>
-                      <TableHead>Erro</TableHead>
+                    <TableRow className="bg-admin-table-header border-admin-border">
+                      <TableHead className="text-admin-foreground">Tipo</TableHead>
+                      <TableHead className="text-admin-foreground">Entidade</TableHead>
+                      <TableHead className="text-admin-foreground">Status</TableHead>
+                      <TableHead className="text-admin-foreground">Tentativas</TableHead>
+                      <TableHead className="text-admin-foreground">Criado em</TableHead>
+                      <TableHead className="text-admin-foreground">Processado em</TableHead>
+                      <TableHead className="text-admin-foreground">Erro</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {jobs.map((job) => (
-                      <TableRow key={job.id}>
-                        <TableCell className="font-medium">
+                      <TableRow key={job.id} className="border-admin-border hover:bg-admin-muted/20">
+                        <TableCell className="font-medium text-admin-table-text">
                           {job.job_type.replace('_', ' ').toUpperCase()}
                         </TableCell>
-                        <TableCell>{job.entity_type}</TableCell>
+                        <TableCell className="text-admin-table-text">{job.entity_type}</TableCell>
                         <TableCell>{getStatusBadge(job.status)}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-admin-table-text">
                           {job.attempts}/{job.max_attempts}
                         </TableCell>
-                        <TableCell>{formatDate(job.created_at)}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-admin-table-text">{formatDate(job.created_at)}</TableCell>
+                        <TableCell className="text-admin-table-text">
                           {job.processed_at ? formatDate(job.processed_at) : '-'}
                         </TableCell>
                         <TableCell className="max-w-xs">
                           {job.last_error && (
-                            <div className="text-sm text-red-600 truncate" title={job.last_error}>
+                            <div className="text-sm text-red-400 truncate" title={job.last_error}>
                               {job.last_error}
                             </div>
                           )}
@@ -305,7 +308,7 @@ export default function AdminIntegration() {
                 </Table>
                 
                 {jobs.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-admin-muted-foreground">
                     Nenhum job encontrado
                   </div>
                 )}
