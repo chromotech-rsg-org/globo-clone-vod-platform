@@ -97,7 +97,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                 <Users className="h-5 w-5" />
                 Habilitações Pendentes ({pendingRegistrations.length})
               </h3>
-              {pendingRegistrations.length > 0 && <Button onClick={handleGoToRegistrations} variant="outline" size="sm" className="border-admin-border text-white">
+              {pendingRegistrations.length > 0 && <Button onClick={handleGoToRegistrations} variant="outline" size="sm" className="border-admin-border text-slate-950">
                   Ver Todas <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>}
             </div>
