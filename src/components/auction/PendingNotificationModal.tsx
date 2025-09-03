@@ -30,7 +30,9 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   pendingRegistrations
 }) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [selectedBid, setSelectedBid] = useState<any>(null);
   const [selectedRegistration, setSelectedRegistration] = useState<any>(null);
   const [bidModalOpen, setBidModalOpen] = useState(false);
@@ -47,26 +49,20 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
     try {
       if (item.type === 'bid') {
         // Fetch full bid details
-        const { data: bidData, error } = await supabase
-          .from('bids')
-          .select('*')
-          .eq('id', item.id)
-          .single();
-        
+        const {
+          data: bidData,
+          error
+        } = await supabase.from('bids').select('*').eq('id', item.id).single();
         if (error) throw error;
-        
         setSelectedBid(bidData);
         setBidModalOpen(true);
       } else {
         // Fetch full registration details
-        const { data: registrationData, error } = await supabase
-          .from('auction_registrations')
-          .select('*')
-          .eq('id', item.id)
-          .single();
-        
+        const {
+          data: registrationData,
+          error
+        } = await supabase.from('auction_registrations').select('*').eq('id', item.id).single();
         if (error) throw error;
-        
         setSelectedRegistration(registrationData);
         setRegistrationModalOpen(true);
       }
@@ -75,28 +71,24 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       toast({
         title: "Erro",
         description: "Não foi possível carregar os detalhes",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
   const handleBidApprove = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('bids')
-        .update({ 
-          status: 'approved',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
+      const {
+        error
+      } = await supabase.from('bids').update({
+        status: 'approved',
+        approved_by: (await supabase.auth.getUser()).data.user?.id,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Lance aprovado com sucesso"
       });
-      
       setBidModalOpen(false);
       // Trigger refresh of parent component if needed
     } catch (error) {
@@ -108,28 +100,22 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       });
     }
   };
-
   const handleBidReject = async (id: string) => {
     const reason = prompt('Motivo da rejeição (opcional):');
-    
     try {
-      const { error } = await supabase
-        .from('bids')
-        .update({ 
-          status: 'rejected',
-          client_notes: reason || 'Lance rejeitado',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
+      const {
+        error
+      } = await supabase.from('bids').update({
+        status: 'rejected',
+        client_notes: reason || 'Lance rejeitado',
+        approved_by: (await supabase.auth.getUser()).data.user?.id,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Lance rejeitado"
       });
-      
       setBidModalOpen(false);
     } catch (error) {
       console.error('Erro ao rejeitar:', error);
@@ -140,25 +126,20 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       });
     }
   };
-
   const handleRegistrationApprove = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('auction_registrations')
-        .update({ 
-          status: 'approved',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
+      const {
+        error
+      } = await supabase.from('auction_registrations').update({
+        status: 'approved',
+        approved_by: (await supabase.auth.getUser()).data.user?.id,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Habilitação aprovada com sucesso"
       });
-      
       setRegistrationModalOpen(false);
     } catch (error) {
       console.error('Erro ao aprovar:', error);
@@ -169,28 +150,22 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       });
     }
   };
-
   const handleRegistrationReject = async (id: string) => {
     const reason = prompt('Motivo da rejeição (opcional):');
-    
     try {
-      const { error } = await supabase
-        .from('auction_registrations')
-        .update({ 
-          status: 'rejected',
-          client_notes: reason || 'Habilitação rejeitada',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
+      const {
+        error
+      } = await supabase.from('auction_registrations').update({
+        status: 'rejected',
+        client_notes: reason || 'Habilitação rejeitada',
+        approved_by: (await supabase.auth.getUser()).data.user?.id,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Habilitação rejeitada"
       });
-      
       setRegistrationModalOpen(false);
     } catch (error) {
       console.error('Erro ao rejeitar:', error);
@@ -201,11 +176,8 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       });
     }
   };
-
   const totalPending = pendingBids.length + pendingRegistrations.length;
-  
-  return (
-    <>
+  return <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[80vh] bg-black/95 text-admin-modal-text border-admin-border backdrop-blur-sm">
           <DialogHeader>
@@ -223,7 +195,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                   <Gavel className="h-5 w-5" />
                   Lances Pendentes ({pendingBids.length})
                 </h3>
-                {pendingBids.length > 0 && <Button onClick={handleGoToBids} variant="outline" size="sm" className="border-admin-border text-white">
+                {pendingBids.length > 0 && <Button onClick={handleGoToBids} variant="outline" size="sm" className="border-admin-border text-slate-950">
                     Ver Todos <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>}
               </div>
@@ -278,22 +250,9 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
         </DialogContent>
       </Dialog>
 
-      <BidDetailsModal
-        open={bidModalOpen}
-        onOpenChange={setBidModalOpen}
-        bid={selectedBid}
-        onApprove={handleBidApprove}
-        onReject={handleBidReject}
-      />
+      <BidDetailsModal open={bidModalOpen} onOpenChange={setBidModalOpen} bid={selectedBid} onApprove={handleBidApprove} onReject={handleBidReject} />
 
-      <RegistrationDetailsModal
-        open={registrationModalOpen}
-        onOpenChange={setRegistrationModalOpen}
-        registration={selectedRegistration}
-        onApprove={handleRegistrationApprove}
-        onReject={handleRegistrationReject}
-      />
-    </>
-  );
+      <RegistrationDetailsModal open={registrationModalOpen} onOpenChange={setRegistrationModalOpen} registration={selectedRegistration} onApprove={handleRegistrationApprove} onReject={handleRegistrationReject} />
+    </>;
 };
 export default PendingNotificationModal;
