@@ -24,6 +24,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       '/admin/assinaturas',
       '/admin/cupons',
       '/admin/leiloes',
+      '/admin/integracao',
       '/admin/habilitacoes',
       '/admin/lances',
       '/admin/personalizacao',
