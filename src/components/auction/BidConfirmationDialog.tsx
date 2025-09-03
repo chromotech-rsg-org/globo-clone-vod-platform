@@ -19,7 +19,7 @@ const BidConfirmationDialog = ({
   onConfirm
 }: BidConfirmationDialogProps) => {
   return <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-black border-gray-800">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gavel className="text-primary" size={20} />
