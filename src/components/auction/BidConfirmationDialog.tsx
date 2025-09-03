@@ -30,35 +30,35 @@ const BidConfirmationDialog = ({
 }: BidConfirmationDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-black text-white border-gray-700">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Gavel className="text-primary" size={20} />
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <Gavel className="text-green-500" size={20} />
             Confirmação de Lance
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-400">
             Revise as informações do seu lance antes de confirmar.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <Card>
+          <Card className="bg-gray-900 border-gray-700">
             <CardContent className="p-4 space-y-3">
               <div>
-                <p className="text-sm text-muted-foreground">Leilão</p>
-                <p className="font-semibold">{auction.name}</p>
+                <p className="text-sm text-gray-400">Leilão</p>
+                <p className="font-semibold text-white">{auction.name}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Lance Atual</p>
-                  <p className="font-semibold text-muted-foreground">
+                  <p className="text-sm text-gray-400">Lance Atual</p>
+                  <p className="font-semibold text-gray-300">
                     {formatCurrency(auction.current_bid_value)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Seu Lance</p>
-                  <p className="text-lg font-bold text-primary">
+                  <p className="text-sm text-gray-400">Seu Lance</p>
+                  <p className="text-lg font-bold text-green-400">
                     {formatCurrency(bidValue)}
                   </p>
                 </div>
@@ -66,14 +66,14 @@ const BidConfirmationDialog = ({
             </CardContent>
           </Card>
 
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="text-amber-600 dark:text-amber-400 mt-0.5" size={18} />
+              <AlertTriangle className="text-yellow-400 mt-0.5" size={18} />
               <div className="text-sm">
-                <p className="font-medium text-amber-800 dark:text-amber-200 mb-1">
+                <p className="font-medium text-yellow-300 mb-1">
                   Atenção
                 </p>
-                <p className="text-amber-700 dark:text-amber-300">
+                <p className="text-yellow-200">
                   Seu lance será enviado para análise e aprovação. Você será notificado sobre o resultado.
                 </p>
               </div>
@@ -85,12 +85,13 @@ const BidConfirmationDialog = ({
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
+            className="border-gray-600 text-white hover:bg-gray-800"
           >
             Cancelar
           </Button>
           <Button 
             onClick={onConfirm}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             Confirmar Lance
           </Button>
