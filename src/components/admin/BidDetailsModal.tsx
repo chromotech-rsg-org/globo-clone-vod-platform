@@ -192,7 +192,7 @@ const BidDetailsModal: React.FC<BidDetailsModalProps> = ({
 
         <div className="space-y-6 max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-track-black scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-600">
           {/* Lance Information */}
-          <Card className="p-4 bg-black border-gray-800">
+          <Card className="p-4 bg-black border-gray-800 overflow-y-auto scrollbar-thin scrollbar-track-black scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-600">
             <h3 className="text-lg font-semibold text-white mb-4">Informações do Lance</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
