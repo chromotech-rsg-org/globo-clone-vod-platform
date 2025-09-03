@@ -17,6 +17,7 @@ interface Package {
   vendor_id?: string;
   active: boolean;
   suspension_package: boolean;
+  unique_package: boolean;
   created_at: string;
   updated_at: string;
 }

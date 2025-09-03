@@ -15,6 +15,7 @@ interface Package {
   vendor_id?: string;
   active: boolean;
   suspension_package: boolean;
+  unique_package: boolean;
 }
 
 interface PackageFormDialogProps {
@@ -32,6 +33,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ package: pkg, tri
     vendor_id: '',
     active: true,
     suspension_package: false,
+    unique_package: false,
   });
   const { toast } = useToast();
 
@@ -43,6 +45,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ package: pkg, tri
         vendor_id: pkg.vendor_id || '',
         active: pkg.active ?? true,
         suspension_package: pkg.suspension_package ?? false,
+        unique_package: pkg.unique_package ?? false,
       });
     } else {
       setFormData({
@@ -51,6 +54,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ package: pkg, tri
         vendor_id: '',
         active: true,
         suspension_package: false,
+        unique_package: false,
       });
     }
   }, [pkg, open]);
@@ -80,6 +84,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ package: pkg, tri
             vendor_id: formData.vendor_id?.trim() || null,
             active: formData.active,
             suspension_package: formData.suspension_package,
+            unique_package: formData.unique_package,
             updated_at: new Date().toISOString()
           })
           .eq('id', pkg.id);
@@ -99,7 +104,8 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ package: pkg, tri
             code: formData.code.trim(),
             vendor_id: formData.vendor_id?.trim() || null,
             active: formData.active,
-            suspension_package: formData.suspension_package
+            suspension_package: formData.suspension_package,
+            unique_package: formData.unique_package
           });
 
         if (error) throw error;
@@ -188,6 +194,15 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ package: pkg, tri
               onCheckedChange={(checked) => setFormData(prev => ({ ...prev, suspension_package: checked }))}
             />
             <Label htmlFor="suspension_package" className="text-gray-300">Pacote de Suspensão</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="unique_package"
+              checked={formData.unique_package}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, unique_package: checked }))}
+            />
+            <Label htmlFor="unique_package" className="text-gray-300">Pacote Único</Label>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

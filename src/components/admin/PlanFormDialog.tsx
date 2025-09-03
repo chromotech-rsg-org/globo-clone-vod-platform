@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,6 +22,16 @@ interface Plan {
   free_days: number;
   description?: string;
   benefits?: string[];
+  package_ids?: string[];
+}
+
+interface Package {
+  id: string;
+  name: string;
+  code: string;
+  active: boolean;
+  suspension_package: boolean;
+  unique_package: boolean;
 }
 
 interface PlanFormDialogProps {
@@ -37,6 +48,7 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
   onSuccess,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [packages, setPackages] = useState<Package[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     price: 0,
@@ -48,26 +60,60 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
     free_days: 0,
     description: '',
     benefits: [''],
+    selectedPackages: [] as string[],
   });
   const { toast } = useToast();
 
   const isEditing = !!plan;
 
   useEffect(() => {
+    const fetchPackages = async () => {
+      const { data, error } = await supabase
+        .from('packages')
+        .select('id, name, code, active, suspension_package, unique_package')
+        .eq('active', true)
+        .order('name');
+
+      if (error) {
+        console.error('Erro ao carregar pacotes:', error);
+      } else {
+        setPackages(data || []);
+      }
+    };
+
+    if (open) {
+      fetchPackages();
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (open) {
       if (plan) {
-        setFormData({
-          name: plan.name,
-          price: plan.price,
-          billing_cycle: plan.billing_cycle,
-          payment_type: plan.payment_type,
-          active: plan.active,
-          best_seller: plan.best_seller,
-          priority: plan.priority,
-          free_days: plan.free_days,
-          description: plan.description || '',
-          benefits: plan.benefits?.length ? plan.benefits : [''],
-        });
+        // Carregar pacotes do plano se estiver editando
+        const fetchPlanPackages = async () => {
+          const { data } = await supabase
+            .from('plan_packages')
+            .select('package_id')
+            .eq('plan_id', plan.id);
+          
+          const packageIds = data?.map(pp => pp.package_id) || [];
+          
+          setFormData({
+            name: plan.name,
+            price: plan.price,
+            billing_cycle: plan.billing_cycle,
+            payment_type: plan.payment_type,
+            active: plan.active,
+            best_seller: plan.best_seller,
+            priority: plan.priority,
+            free_days: plan.free_days,
+            description: plan.description || '',
+            benefits: plan.benefits?.length ? plan.benefits : [''],
+            selectedPackages: packageIds,
+          });
+        };
+
+        fetchPlanPackages();
       } else {
         setFormData({
           name: '',
@@ -80,6 +126,7 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
           free_days: 0,
           description: '',
           benefits: [''],
+          selectedPackages: [],
         });
       }
     }
@@ -100,6 +147,15 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
       const newBenefits = formData.benefits.filter((_, i) => i !== index);
       setFormData(prev => ({ ...prev, benefits: newBenefits }));
     }
+  };
+
+  const handlePackageToggle = (packageId: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedPackages: checked
+        ? [...prev.selectedPackages, packageId]
+        : prev.selectedPackages.filter(id => id !== packageId)
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,6 +189,8 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
         updated_at: new Date().toISOString(),
       };
 
+      let planId: string;
+
       if (isEditing) {
         const { error } = await supabase
           .from('plans')
@@ -141,21 +199,50 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
 
         if (error) throw error;
 
+        planId = plan.id;
+
         toast({
           title: "Sucesso",
           description: "Plano atualizado com sucesso"
         });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('plans')
-          .insert([submitData]);
+          .insert([submitData])
+          .select('id')
+          .single();
 
         if (error) throw error;
+
+        planId = data.id;
 
         toast({
           title: "Sucesso",
           description: "Plano criado com sucesso"
         });
+      }
+
+      // Gerenciar relações com pacotes
+      if (isEditing) {
+        // Remover relações existentes
+        await supabase
+          .from('plan_packages')
+          .delete()
+          .eq('plan_id', planId);
+      }
+
+      // Inserir novas relações
+      if (formData.selectedPackages.length > 0) {
+        const planPackages = formData.selectedPackages.map(packageId => ({
+          plan_id: planId,
+          package_id: packageId
+        }));
+
+        const { error: packageError } = await supabase
+          .from('plan_packages')
+          .insert(planPackages);
+
+        if (packageError) throw packageError;
       }
 
       onSuccess();
@@ -310,6 +397,45 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
             >
               + Adicionar Benefício
             </Button>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-white">Pacotes Vinculados</Label>
+            <div className="max-h-40 overflow-y-auto space-y-2 border border-green-600/30 rounded p-3">
+              {packages.length === 0 ? (
+                <p className="text-gray-400 text-sm">Nenhum pacote disponível</p>
+              ) : (
+                packages.map((pkg) => (
+                  <div key={pkg.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`package-${pkg.id}`}
+                      checked={formData.selectedPackages.includes(pkg.id)}
+                      onCheckedChange={(checked) => 
+                        handlePackageToggle(pkg.id, checked as boolean)
+                      }
+                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                    <Label
+                      htmlFor={`package-${pkg.id}`}
+                      className="text-white text-sm cursor-pointer flex-1"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{pkg.name}</span>
+                        <div className="flex gap-2">
+                          <span className="text-xs text-gray-400">({pkg.code})</span>
+                          {pkg.suspension_package && (
+                            <span className="text-xs bg-orange-600 text-white px-1 rounded">Suspensão</span>
+                          )}
+                          {pkg.unique_package && (
+                            <span className="text-xs bg-blue-600 text-white px-1 rounded">Único</span>
+                          )}
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
