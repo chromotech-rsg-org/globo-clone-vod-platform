@@ -86,6 +86,16 @@ const AdminUsers = () => {
     try {
       const { error } = await supabase.from('profiles').delete().eq('id', id);
       if (error) throw error;
+
+      // Queue integration job for user deletion
+      try {
+        const { MotvIntegrationService } = await import('@/services/motvIntegration');
+        await MotvIntegrationService.deleteUser(id);
+      } catch (integrationError) {
+        console.warn('Integration deletion failed:', integrationError);
+        // Don't fail the main operation for integration errors
+      }
+
       toast({
         title: "Sucesso",
         description: "Usuário excluído com sucesso"

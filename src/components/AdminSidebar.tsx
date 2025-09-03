@@ -15,7 +15,8 @@ import {
   Gavel,
   UserCheck,
   HandHeart,
-  Bell
+  Bell,
+  Plug
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
@@ -122,6 +123,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/leiloes', icon: Gavel, label: 'Leilões' },
+    { path: '/admin/integracao', icon: Plug, label: 'Integração MOTV' },
     { 
       path: '/admin/habilitacoes', 
       icon: UserCheck, 

@@ -76,6 +76,21 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
 
         if (error) throw error;
 
+        // Queue integration job for user update
+        try {
+          const { MotvIntegrationService } = await import('@/services/motvIntegration');
+          await MotvIntegrationService.updateUser(user.id, {
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            cpf: formData.cpf.trim(),
+            phone: formData.phone.trim(),
+            role: formData.role
+          });
+        } catch (integrationError) {
+          console.warn('Integration update failed:', integrationError);
+          // Don't fail the main operation for integration errors
+        }
+
         toast({
           title: "Sucesso",
           description: "Usuário atualizado com sucesso"
@@ -106,6 +121,21 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
             });
 
           if (profileError) throw profileError;
+
+          // Queue integration job for user creation
+          try {
+            const { MotvIntegrationService } = await import('@/services/motvIntegration');
+            await MotvIntegrationService.createUser(authData.user.id, {
+              name: formData.name.trim(),
+              email: formData.email.trim(),
+              cpf: formData.cpf.trim(),
+              phone: formData.phone.trim(),
+              role: formData.role
+            });
+          } catch (integrationError) {
+            console.warn('Integration creation failed:', integrationError);
+            // Don't fail the main operation for integration errors
+          }
         }
 
         toast({

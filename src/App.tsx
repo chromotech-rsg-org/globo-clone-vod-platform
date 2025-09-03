@@ -23,6 +23,7 @@ import AdminImages from "./pages/admin/Images";
 import AdminAuctions from "./pages/admin/Auctions";
 import AdminRegistrations from "./pages/admin/Registrations";
 import AdminBids from "./pages/admin/Bids";
+import AdminIntegration from "./pages/admin/Integration";
 import AuctionCreate from "./pages/admin/AuctionCreate";
 import AuctionEdit from "./pages/admin/AuctionEdit";
 import AuctionDetails from "./pages/admin/AuctionDetails";
@@ -247,6 +248,13 @@ function AppContent() {
         <ProtectedRoute requiredRole="admin">
           <AdminLayout>
             <AdminBids />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/integracao" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AdminIntegration />
           </AdminLayout>
         </ProtectedRoute>
       } />

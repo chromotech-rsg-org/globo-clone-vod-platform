@@ -97,12 +97,29 @@ const Checkout = () => {
           const endDate = new Date();
           endDate.setMonth(endDate.getMonth() + (selectedPlan.billing_cycle === 'annually' ? 12 : 1));
 
-          await supabase.from('subscriptions').insert({
-            user_id: authData.user.id,
-            plan_id: selectedPlan.id,
-            status: 'active',
-            end_date: endDate.toISOString()
-          });
+          const { data: subscriptionData, error: subscriptionError } = await supabase
+            .from('subscriptions')
+            .insert({
+              user_id: authData.user.id,
+              plan_id: selectedPlan.id,
+              status: 'active',
+              end_date: endDate.toISOString()
+            })
+            .select()
+            .single();
+
+          if (subscriptionError) {
+            console.error('Error creating subscription:', subscriptionError);
+          } else if (subscriptionData) {
+            // Queue integration job for subscription
+            try {
+              const { MotvIntegrationService } = await import('@/services/motvIntegration');
+              await MotvIntegrationService.subscribeUser(authData.user.id, subscriptionData);
+            } catch (integrationError) {
+              console.warn('Integration subscription failed:', integrationError);
+              // Don't fail the main operation for integration errors
+            }
+          }
         }
 
         navigate('/dashboard');
