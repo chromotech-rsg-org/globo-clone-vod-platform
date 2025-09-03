@@ -9,12 +9,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface RegistrationNotificationRequest {
+interface NotificationRequest {
+  type?: 'registration' | 'bid_update';
   userEmail: string;
   userName: string;
   auctionName: string;
   status: string;
   clientNotes?: string;
+  bidValue?: number;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -23,9 +25,20 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { userEmail, userName, auctionName, status, clientNotes }: RegistrationNotificationRequest = await req.json();
+    const { type = 'registration', userEmail, userName, auctionName, status, clientNotes, bidValue }: NotificationRequest = await req.json();
 
-    const getStatusMessage = (status: string) => {
+    const getStatusMessage = (type: string, status: string) => {
+      if (type === 'bid_update') {
+        switch (status) {
+          case 'approved':
+            return { subject: 'Lance Aprovado', message: 'Seu lance foi aprovado!' };
+          case 'rejected':
+            return { subject: 'Lance Rejeitado', message: 'Infelizmente seu lance foi rejeitado.' };
+          default:
+            return { subject: 'Status do Lance Atualizado', message: 'O status do seu lance foi atualizado.' };
+        }
+      }
+      
       switch (status) {
         case 'approved':
           return { subject: 'Habilitação Aprovada', message: 'Sua habilitação foi aprovada!' };
@@ -36,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     };
 
-    const { subject, message } = getStatusMessage(status);
+    const { subject, message } = getStatusMessage(type, status);
 
     const emailResponse = await resend.emails.send({
       from: "Leilões <onboarding@resend.dev>",
@@ -49,8 +62,9 @@ const handler = async (req: Request): Promise<Response> => {
           <p>${message}</p>
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Detalhes:</h3>
-            <p><strong>Leilão:</strong> ${auctionName}</p>
-            <p><strong>Status:</strong> ${status === 'approved' ? 'Aprovada' : status === 'rejected' ? 'Rejeitada' : 'Atualizada'}</p>
+            <p><strong>${type === 'bid_update' ? 'Leilão' : 'Leilão'}:</strong> ${auctionName}</p>
+            ${type === 'bid_update' && bidValue ? `<p><strong>Valor do Lance:</strong> R$ ${bidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>` : ''}
+            <p><strong>Status:</strong> ${status === 'approved' ? (type === 'bid_update' ? 'Aprovado' : 'Aprovada') : status === 'rejected' ? (type === 'bid_update' ? 'Rejeitado' : 'Rejeitada') : 'Atualizado'}</p>
           </div>
           ${clientNotes ? `
             <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196f3;">
@@ -63,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Registration notification sent successfully:", emailResponse);
+    console.log("Notification sent successfully:", emailResponse);
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,
@@ -73,7 +87,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error in send-registration-notification function:", error);
+    console.error("Error in send-notification function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
