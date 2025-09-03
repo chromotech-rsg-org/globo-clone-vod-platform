@@ -194,9 +194,9 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] bg-admin-modal-bg text-admin-modal-text border-admin-border overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-black text-white border-gray-800 overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-admin-modal-text flex items-center gap-2">
+          <DialogTitle className="text-white flex items-center gap-2">
             <User className="h-5 w-5" />
             Detalhes da Habilitação
           </DialogTitle>
@@ -204,18 +204,18 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
 
         <div className="space-y-6">
           {/* Registration Basic Information */}
-          <div className="bg-admin-card p-4 rounded-lg border border-admin-border">
-            <h3 className="font-semibold mb-4 text-admin-modal-text flex items-center gap-2">
+          <div className="bg-black p-4 rounded-lg border border-gray-800">
+            <h3 className="font-semibold mb-4 text-white flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Informações da Habilitação
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium text-admin-muted-foreground">ID da Habilitação</label>
-                <p className="text-admin-modal-text font-mono text-sm break-all">{registration.id}</p>
+                <label className="text-sm font-medium text-gray-400">ID da Habilitação</label>
+                <p className="text-white font-mono text-sm break-all">{registration.id}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-admin-muted-foreground">Status</label>
+                <label className="text-sm font-medium text-gray-400">Status</label>
                 <div className="mt-1">
                   <Badge variant={getStatusVariant(registration.status)}>
                     {getStatusDisplay(registration.status)}
@@ -223,8 +223,8 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-admin-muted-foreground">Solicitado em</label>
-                <p className="text-admin-modal-text text-sm">
+                <label className="text-sm font-medium text-gray-400">Solicitado em</label>
+                <p className="text-white text-sm">
                   {new Date(registration.created_at).toLocaleString('pt-BR')}
                 </p>
               </div>
@@ -232,15 +232,15 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
-                <label className="text-sm font-medium text-admin-muted-foreground">Atualizado em</label>
-                <p className="text-admin-modal-text text-sm">
+                <label className="text-sm font-medium text-gray-400">Atualizado em</label>
+                <p className="text-white text-sm">
                   {new Date(registration.updated_at).toLocaleString('pt-BR')}
                 </p>
               </div>
               {registration.approved_by && (
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground">Aprovado por</label>
-                  <p className="text-admin-modal-text font-mono text-sm break-all">{registration.approved_by}</p>
+                  <label className="text-sm font-medium text-gray-400">Aprovado por</label>
+                  <p className="text-white font-mono text-sm break-all">{registration.approved_by}</p>
                 </div>
               )}
             </div>
@@ -248,92 +248,92 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
 
           {/* User Information */}
           {loading ? (
-            <div className="bg-admin-card p-4 rounded-lg border border-admin-border">
-              <p className="text-admin-muted-foreground">Carregando dados do usuário...</p>
+            <div className="bg-black p-4 rounded-lg border border-gray-800">
+              <p className="text-gray-400">Carregando dados do usuário...</p>
             </div>
           ) : userProfile ? (
-            <div className="bg-admin-card p-4 rounded-lg border border-admin-border">
-              <h3 className="font-semibold mb-4 text-admin-modal-text flex items-center gap-2">
+            <div className="bg-black p-4 rounded-lg border border-gray-800">
+              <h3 className="font-semibold mb-4 text-white flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Dados do Usuário
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground">Nome</label>
-                  <p className="text-admin-modal-text">{userProfile.name}</p>
+                  <label className="text-sm font-medium text-gray-400">Nome</label>
+                  <p className="text-white">{userProfile.name}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground flex items-center gap-1">
+                  <label className="text-sm font-medium text-gray-400 flex items-center gap-1">
                     <Mail className="h-3 w-3" />
                     Email
                   </label>
-                  <p className="text-admin-modal-text">{userProfile.email}</p>
+                  <p className="text-white">{userProfile.email}</p>
                 </div>
                 {userProfile.cpf && (
                   <div>
-                    <label className="text-sm font-medium text-admin-muted-foreground flex items-center gap-1">
+                    <label className="text-sm font-medium text-gray-400 flex items-center gap-1">
                       <IdCard className="h-3 w-3" />
                       CPF
                     </label>
-                    <p className="text-admin-modal-text">{userProfile.cpf}</p>
+                    <p className="text-white">{userProfile.cpf}</p>
                   </div>
                 )}
                 {userProfile.phone && (
                   <div>
-                    <label className="text-sm font-medium text-admin-muted-foreground flex items-center gap-1">
+                    <label className="text-sm font-medium text-gray-400 flex items-center gap-1">
                       <Phone className="h-3 w-3" />
                       Telefone
                     </label>
-                    <p className="text-admin-modal-text">{userProfile.phone}</p>
+                    <p className="text-white">{userProfile.phone}</p>
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground">Tipo de Usuário</label>
-                  <p className="text-admin-modal-text capitalize">{userProfile.role}</p>
+                  <label className="text-sm font-medium text-gray-400">Tipo de Usuário</label>
+                  <p className="text-white capitalize">{userProfile.role}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground">Cadastrado em</label>
-                  <p className="text-admin-modal-text text-sm">
+                  <label className="text-sm font-medium text-gray-400">Cadastrado em</label>
+                  <p className="text-white text-sm">
                     {new Date(userProfile.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-admin-card p-4 rounded-lg border border-admin-border">
-              <p className="text-admin-muted-foreground">Não foi possível carregar os dados do usuário</p>
+            <div className="bg-black p-4 rounded-lg border border-gray-800">
+              <p className="text-gray-400">Não foi possível carregar os dados do usuário</p>
             </div>
           )}
 
           {/* Auction Information */}
           {auctionData && (
-            <div className="bg-admin-card p-4 rounded-lg border border-admin-border">
-              <h3 className="font-semibold mb-4 text-admin-modal-text flex items-center gap-2">
+            <div className="bg-black p-4 rounded-lg border border-gray-800">
+              <h3 className="font-semibold mb-4 text-white flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Dados do Leilão
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground">Nome do Leilão</label>
-                  <p className="text-admin-modal-text font-medium">{auctionData.name}</p>
+                  <label className="text-sm font-medium text-gray-400">Nome do Leilão</label>
+                  <p className="text-white font-medium">{auctionData.name}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground">Tipo</label>
-                  <p className="text-admin-modal-text capitalize">{auctionData.auction_type}</p>
+                  <label className="text-sm font-medium text-gray-400">Tipo</label>
+                  <p className="text-white capitalize">{auctionData.auction_type}</p>
                 </div>
                 {auctionData.description && (
                   <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-admin-muted-foreground">Descrição</label>
-                    <p className="text-admin-modal-text">{auctionData.description}</p>
+                    <label className="text-sm font-medium text-gray-400">Descrição</label>
+                    <p className="text-white">{auctionData.description}</p>
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground">Status do Leilão</label>
-                  <p className="text-admin-modal-text capitalize">{auctionData.status}</p>
+                  <label className="text-sm font-medium text-gray-400">Status do Leilão</label>
+                  <p className="text-white capitalize">{auctionData.status}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-admin-muted-foreground">Criado em</label>
-                  <p className="text-admin-modal-text text-sm">
+                  <label className="text-sm font-medium text-gray-400">Criado em</label>
+                  <p className="text-white text-sm">
                     {new Date(auctionData.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
@@ -341,14 +341,14 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
             </div>
           )}
 
-          <Separator className="border-admin-border" />
+          <Separator className="border-gray-800" />
 
           {/* Notes Section */}
-          <div className="bg-admin-card p-4 rounded-lg border border-admin-border">
-            <h3 className="font-semibold mb-4 text-admin-modal-text">Observações</h3>
+          <div className="bg-black p-4 rounded-lg border border-gray-800">
+            <h3 className="font-semibold mb-4 text-white">Observações</h3>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="internal-notes" className="text-admin-modal-text">
+                <Label htmlFor="internal-notes" className="text-white">
                   Observação Interna (não será enviada ao cliente)
                 </Label>
                 <Textarea
@@ -356,13 +356,13 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
                   value={internalNotes}
                   onChange={(e) => setInternalNotes(e.target.value)}
                   placeholder="Digite observações internas sobre esta habilitação..."
-                  className="mt-1 bg-admin-content-bg border-admin-border text-admin-modal-text"
+                  className="mt-1 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
                   rows={3}
                 />
               </div>
               
               <div>
-                <Label htmlFor="client-notes" className="text-admin-modal-text">
+                <Label htmlFor="client-notes" className="text-white">
                   Observação para o Cliente (será enviada por email)
                 </Label>
                 <Textarea
@@ -370,7 +370,7 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
                   value={clientNotes}
                   onChange={(e) => setClientNotes(e.target.value)}
                   placeholder="Digite observações que serão enviadas ao cliente por email..."
-                  className="mt-1 bg-admin-content-bg border-admin-border text-admin-modal-text"
+                  className="mt-1 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
                   rows={3}
                 />
               </div>
@@ -378,7 +378,7 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
               <Button
                 onClick={handleSaveNotes}
                 disabled={saving}
-                className="bg-admin-primary hover:bg-admin-primary/90 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {saving ? 'Salvando...' : 'Salvar Observações'}
@@ -387,11 +387,11 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-between pt-4 border-t border-gray-700">
+          <div className="flex justify-between pt-4 border-t border-gray-800">
             <Button 
               variant="outline" 
               onClick={() => onOpenChange(false)}
-              className="border-gray-600 text-black bg-white hover:bg-gray-100"
+              className="border-gray-600 text-white bg-black hover:bg-gray-900"
             >
               Fechar
             </Button>
