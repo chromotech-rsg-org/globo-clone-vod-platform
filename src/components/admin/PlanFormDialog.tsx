@@ -150,12 +150,32 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
   };
 
   const handlePackageToggle = (packageId: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedPackages: checked
-        ? [...prev.selectedPackages, packageId]
-        : prev.selectedPackages.filter(id => id !== packageId)
-    }));
+    const selectedPackage = packages.find(pkg => pkg.id === packageId);
+    
+    setFormData(prev => {
+      if (checked) {
+        let newSelectedPackages = [...prev.selectedPackages, packageId];
+        
+        // Se o pacote selecionado é único, remover outros pacotes únicos
+        if (selectedPackage?.unique_package) {
+          const uniquePackageIds = packages
+            .filter(pkg => pkg.unique_package && pkg.id !== packageId)
+            .map(pkg => pkg.id);
+          
+          newSelectedPackages = newSelectedPackages.filter(id => !uniquePackageIds.includes(id));
+        }
+        
+        return {
+          ...prev,
+          selectedPackages: newSelectedPackages
+        };
+      } else {
+        return {
+          ...prev,
+          selectedPackages: prev.selectedPackages.filter(id => id !== packageId)
+        };
+      }
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
