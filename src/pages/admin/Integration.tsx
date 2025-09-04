@@ -40,6 +40,17 @@ interface IntegrationJob {
   }>;
 }
 
+interface TestResult {
+  id: string;
+  endpoint: string;
+  method: string;
+  requestData: any;
+  response: any;
+  statusCode: number;
+  success: boolean;
+  timestamp: string;
+}
+
 export default function AdminIntegration() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -53,6 +64,9 @@ export default function AdminIntegration() {
   });
   const [jobs, setJobs] = useState<IntegrationJob[]>([]);
   const [testingCustomerCreate, setTestingCustomerCreate] = useState(false);
+  const [testingSubscribe, setTestingSubscribe] = useState(false);
+  const [testingCancel, setTestingCancel] = useState(false);
+  const [testHistory, setTestHistory] = useState<TestResult[]>([]);
   const [customerData, setCustomerData] = useState({
     login: "Alexandre22",
     password: "123456",
@@ -60,6 +74,14 @@ export default function AdminIntegration() {
     email: "alexandre22@alexandre22.comm",
     firstname: "Alexandre22",
     lastname: "Sobrenome"
+  });
+  const [subscribeData, setSubscribeData] = useState({
+    viewers_id: 6869950,
+    products_id: 118
+  });
+  const [cancelData, setCancelData] = useState({
+    viewers_id: 6843842,
+    products_id: 1
   });
 
   useEffect(() => {
@@ -192,23 +214,40 @@ export default function AdminIntegration() {
     return login + ":" + timestamp + ":" + tokenHash;
   };
 
+  const addToTestHistory = (endpoint: string, method: string, requestData: any, response: any, statusCode: number, success: boolean) => {
+    const testResult: TestResult = {
+      id: Date.now().toString(),
+      endpoint,
+      method,
+      requestData,
+      response,
+      statusCode,
+      success,
+      timestamp: new Date().toISOString()
+    };
+    setTestHistory(prev => [testResult, ...prev]);
+  };
+
   const handleTestCustomerCreate = async () => {
     setTestingCustomerCreate(true);
     try {
       const authToken = generateAuthToken();
+      const requestData = { data: customerData };
       
       const response = await fetch(`${settings.api_base_url}/api/integration/createMotvCustomer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Authorization': authToken,
         },
-        body: JSON.stringify({
-          data: customerData
-        }),
+        body: JSON.stringify(requestData),
       });
 
       const result = await response.json();
+      
+      // Adicionar ao histórico
+      addToTestHistory('api/integration/createMotvCustomer', 'POST', requestData, result, response.status, response.ok);
 
       if (response.ok) {
         toast({
@@ -224,6 +263,7 @@ export default function AdminIntegration() {
       }
     } catch (error) {
       console.error('Error creating customer:', error);
+      addToTestHistory('api/integration/createMotvCustomer', 'POST', { data: customerData }, { error: error.message }, 0, false);
       toast({
         title: "Erro no teste",
         description: "Não foi possível testar a criação do usuário. Verifique a configuração da API.",
@@ -231,6 +271,98 @@ export default function AdminIntegration() {
       });
     } finally {
       setTestingCustomerCreate(false);
+    }
+  };
+
+  const handleTestSubscribe = async () => {
+    setTestingSubscribe(true);
+    try {
+      const authToken = generateAuthToken();
+      const requestData = { data: subscribeData };
+      
+      const response = await fetch(`${settings.api_base_url}/api/integration/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authToken,
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      
+      // Adicionar ao histórico
+      addToTestHistory('api/integration/subscribe', 'POST', requestData, result, response.status, response.ok);
+
+      if (response.ok) {
+        toast({
+          title: "Plano criado com sucesso!",
+          description: `Resposta da API: ${JSON.stringify(result)}`,
+        });
+      } else {
+        toast({
+          title: "Erro ao criar plano",
+          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      addToTestHistory('api/integration/subscribe', 'POST', { data: subscribeData }, { error: error.message }, 0, false);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a criação do plano. Verifique a configuração da API.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingSubscribe(false);
+    }
+  };
+
+  const handleTestCancel = async () => {
+    setTestingCancel(true);
+    try {
+      const authToken = generateAuthToken();
+      const requestData = { data: cancelData };
+      
+      const response = await fetch(`${settings.api_base_url}/api/integration/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authToken,
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      
+      // Adicionar ao histórico
+      addToTestHistory('api/integration/cancel', 'POST', requestData, result, response.status, response.ok);
+
+      if (response.ok) {
+        toast({
+          title: "Plano cancelado com sucesso!",
+          description: `Resposta da API: ${JSON.stringify(result)}`,
+        });
+      } else {
+        toast({
+          title: "Erro ao cancelar plano",
+          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error canceling subscription:', error);
+      addToTestHistory('api/integration/cancel', 'POST', { data: cancelData }, { error: error.message }, 0, false);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar o cancelamento do plano. Verifique a configuração da API.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingCancel(false);
     }
   };
 
@@ -267,7 +399,7 @@ export default function AdminIntegration() {
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-admin-card border-admin-border">
+        <TabsList className="grid w-full grid-cols-4 bg-admin-card border-admin-border">
           <TabsTrigger value="settings" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <Settings className="h-4 w-4" />
             Configurações
@@ -276,9 +408,13 @@ export default function AdminIntegration() {
             <User className="h-4 w-4" />
             Testes de API
           </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
+            <Eye className="h-4 w-4" />
+            Histórico de Testes
+          </TabsTrigger>
           <TabsTrigger value="jobs" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <History className="h-4 w-4" />
-            Histórico de Jobs
+            Jobs
           </TabsTrigger>
         </TabsList>
 
@@ -377,88 +513,260 @@ export default function AdminIntegration() {
         </TabsContent>
 
         <TabsContent value="tests">
+          <div className="space-y-6">
+            {/* Customer Create Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Customer Create (Criar usuário)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Teste de criação de usuário via API MOTV
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login" className="text-admin-foreground">Login</Label>
+                      <Input
+                        id="login"
+                        value={customerData.login}
+                        onChange={(e) => setCustomerData(prev => ({ ...prev, login: e.target.value }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-admin-foreground">Password</Label>
+                      <Input
+                        id="password"
+                        value={customerData.password}
+                        onChange={(e) => setCustomerData(prev => ({ ...prev, password: e.target.value }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="profileName" className="text-admin-foreground">Nome do Perfil</Label>
+                    <Input
+                      id="profileName"
+                      value={customerData.profileName}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, profileName: e.target.value }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-admin-foreground">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={customerData.email}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, email: e.target.value }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstname" className="text-admin-foreground">Primeiro Nome</Label>
+                      <Input
+                        id="firstname"
+                        value={customerData.firstname}
+                        onChange={(e) => setCustomerData(prev => ({ ...prev, firstname: e.target.value }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastname" className="text-admin-foreground">Sobrenome</Label>
+                      <Input
+                        id="lastname"
+                        value={customerData.lastname}
+                        onChange={(e) => setCustomerData(prev => ({ ...prev, lastname: e.target.value }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button
+                      onClick={handleTestCustomerCreate}
+                      disabled={testingCustomerCreate || !settings.api_base_url}
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <User className="h-4 w-4" />
+                      {testingCustomerCreate ? "Criando usuário..." : "Testar Criação de Usuário"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Subscribe Plan Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Subscribe Plan (Criar Plano)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Teste de criação de plano via API MOTV
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="subscribe_viewers_id" className="text-admin-foreground">Viewers ID</Label>
+                      <Input
+                        id="subscribe_viewers_id"
+                        type="number"
+                        value={subscribeData.viewers_id}
+                        onChange={(e) => setSubscribeData(prev => ({ ...prev, viewers_id: parseInt(e.target.value) || 0 }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subscribe_products_id" className="text-admin-foreground">Products ID</Label>
+                      <Input
+                        id="subscribe_products_id"
+                        type="number"
+                        value={subscribeData.products_id}
+                        onChange={(e) => setSubscribeData(prev => ({ ...prev, products_id: parseInt(e.target.value) || 0 }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button
+                      onClick={handleTestSubscribe}
+                      disabled={testingSubscribe || !settings.api_base_url}
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <Play className="h-4 w-4" />
+                      {testingSubscribe ? "Criando plano..." : "Testar Criação de Plano"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Cancel Plan Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Cancel Plan (Cancelar Plano)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Teste de cancelamento de plano via API MOTV
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cancel_viewers_id" className="text-admin-foreground">Viewers ID</Label>
+                      <Input
+                        id="cancel_viewers_id"
+                        type="number"
+                        value={cancelData.viewers_id}
+                        onChange={(e) => setCancelData(prev => ({ ...prev, viewers_id: parseInt(e.target.value) || 0 }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cancel_products_id" className="text-admin-foreground">Products ID</Label>
+                      <Input
+                        id="cancel_products_id"
+                        type="number"
+                        value={cancelData.products_id}
+                        onChange={(e) => setCancelData(prev => ({ ...prev, products_id: parseInt(e.target.value) || 0 }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button
+                      onClick={handleTestCancel}
+                      disabled={testingCancel || !settings.api_base_url}
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      {testingCancel ? "Cancelando plano..." : "Testar Cancelamento de Plano"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="history">
           <Card className="bg-admin-card border-admin-border">
             <CardHeader>
-              <CardTitle className="text-admin-foreground">Customer Create (Criar usuário)</CardTitle>
+              <CardTitle className="text-admin-foreground">Histórico de Testes de API</CardTitle>
               <CardDescription className="text-admin-muted-foreground">
-                Teste de criação de usuário via API MOTV
+                Visualize o histórico completo de todos os testes realizados
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login" className="text-admin-foreground">Login</Label>
-                    <Input
-                      id="login"
-                      value={customerData.login}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, login: e.target.value }))}
-                      className="bg-admin-input border-admin-border text-admin-foreground"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-admin-foreground">Password</Label>
-                    <Input
-                      id="password"
-                      value={customerData.password}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, password: e.target.value }))}
-                      className="bg-admin-input border-admin-border text-admin-foreground"
-                    />
-                  </div>
-                </div>
+              <div className="overflow-x-auto">
+                <Table className="bg-admin-table-bg border-admin-border">
+                  <TableHeader>
+                    <TableRow className="bg-admin-table-header border-admin-border">
+                      <TableHead className="text-admin-foreground">Endpoint</TableHead>
+                      <TableHead className="text-admin-foreground">Método</TableHead>
+                      <TableHead className="text-admin-foreground">Status</TableHead>
+                      <TableHead className="text-admin-foreground">Código</TableHead>
+                      <TableHead className="text-admin-foreground">Data/Hora</TableHead>
+                      <TableHead className="text-admin-foreground">Request</TableHead>
+                      <TableHead className="text-admin-foreground">Response</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {testHistory.map((test) => (
+                      <TableRow key={test.id} className="border-admin-border hover:bg-admin-muted/20">
+                        <TableCell className="font-medium text-admin-table-text">
+                          {test.endpoint}
+                        </TableCell>
+                        <TableCell className="text-admin-table-text">
+                          <Badge variant="outline" className="text-xs">
+                            {test.method}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {test.success ? (
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">Sucesso</Badge>
+                          ) : (
+                            <Badge variant="destructive">Falha</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-admin-table-text">
+                          {test.statusCode || 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-admin-table-text">
+                          {formatDate(test.timestamp)}
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="text-xs bg-admin-muted/10 p-2 rounded overflow-auto max-h-20">
+                            <pre className="text-admin-table-text whitespace-pre-wrap">
+                              {JSON.stringify(test.requestData, null, 2)}
+                            </pre>
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="text-xs bg-admin-muted/10 p-2 rounded overflow-auto max-h-20">
+                            <pre className={`whitespace-pre-wrap ${test.success ? 'text-green-600' : 'text-red-400'}`}>
+                              {JSON.stringify(test.response, null, 2)}
+                            </pre>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="profileName" className="text-admin-foreground">Nome do Perfil</Label>
-                  <Input
-                    id="profileName"
-                    value={customerData.profileName}
-                    onChange={(e) => setCustomerData(prev => ({ ...prev, profileName: e.target.value }))}
-                    className="bg-admin-input border-admin-border text-admin-foreground"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-admin-foreground">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={customerData.email}
-                    onChange={(e) => setCustomerData(prev => ({ ...prev, email: e.target.value }))}
-                    className="bg-admin-input border-admin-border text-admin-foreground"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstname" className="text-admin-foreground">Primeiro Nome</Label>
-                    <Input
-                      id="firstname"
-                      value={customerData.firstname}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, firstname: e.target.value }))}
-                      className="bg-admin-input border-admin-border text-admin-foreground"
-                    />
+                {testHistory.length === 0 && (
+                  <div className="text-center py-8 text-admin-muted-foreground">
+                    Nenhum teste realizado ainda
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastname" className="text-admin-foreground">Sobrenome</Label>
-                    <Input
-                      id="lastname"
-                      value={customerData.lastname}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, lastname: e.target.value }))}
-                      className="bg-admin-input border-admin-border text-admin-foreground"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <Button
-                    onClick={handleTestCustomerCreate}
-                    disabled={testingCustomerCreate || !settings.api_base_url}
-                    className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
-                  >
-                    <User className="h-4 w-4" />
-                    {testingCustomerCreate ? "Criando usuário..." : "Testar Criação de Usuário"}
-                  </Button>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
