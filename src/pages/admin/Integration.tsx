@@ -406,11 +406,7 @@ export default function AdminIntegration() {
     try {
       const { data, error } = await supabase
         .from('integration_jobs')
-        .select(`
-          *,
-          profiles(email),
-          integration_logs(*)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -596,10 +592,7 @@ export default function AdminIntegration() {
       // Get paginated data
       const { data, error } = await supabase
         .from('integration_test_results')
-        .select(`
-          *,
-          profiles(email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -618,7 +611,7 @@ export default function AdminIntegration() {
         success: row.success,
         timestamp: row.created_at,
         user_id: row.user_id,
-        user_email: row.profiles?.email || 'Sistema',
+        user_email: 'Sistema', // User email not available without join
       })) as TestResult[];
 
       setTestHistory(mapped);
