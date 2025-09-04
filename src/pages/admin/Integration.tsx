@@ -7,8 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { MotvIntegrationService } from "@/services/motvIntegration";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Settings, History, Play, Eye, EyeOff, Wifi, User } from "lucide-react";
+import { RefreshCw, Settings, History, Play, Eye, EyeOff, Wifi, User, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CryptoJS from "crypto-js";
 
@@ -83,6 +84,8 @@ export default function AdminIntegration() {
     viewers_id: 6843842,
     products_id: 1
   });
+  const [jsonModalOpen, setJsonModalOpen] = useState(false);
+  const [selectedJsonData, setSelectedJsonData] = useState<{request: any, response: any} | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -848,9 +851,21 @@ export default function AdminIntegration() {
                             {requestData.email || requestData.products_id || '-'}
                           </TableCell>
                           <TableCell className="text-admin-table-text max-w-xs">
-                            <div className="truncate" title={responseData.message || JSON.stringify(responseData)}>
-                              {responseData.message || responseData.error || (test.success ? 'Sucesso' : 'Erro')}
-                            </div>
+                            <button 
+                              className="text-left w-full hover:bg-admin-muted/10 p-1 rounded cursor-pointer flex items-center gap-1"
+                              onClick={() => {
+                                setSelectedJsonData({
+                                  request: test.requestData,
+                                  response: test.response
+                                });
+                                setJsonModalOpen(true);
+                              }}
+                            >
+                              <div className="truncate flex-1">
+                                {JSON.stringify(test.response)}
+                              </div>
+                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                            </button>
                           </TableCell>
                         </TableRow>
                       );
@@ -938,6 +953,32 @@ export default function AdminIntegration() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* JSON Modal */}
+      <Dialog open={jsonModalOpen} onOpenChange={setJsonModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] bg-admin-card border-admin-border">
+          <DialogHeader>
+            <DialogTitle className="text-admin-foreground">Detalhes da Requisição</DialogTitle>
+            <DialogDescription className="text-admin-muted-foreground">
+              Visualize os dados completos da requisição e resposta
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
+            <div className="space-y-2">
+              <h4 className="font-semibold text-admin-foreground">Request Data:</h4>
+              <pre className="bg-admin-input p-3 rounded-md text-sm text-admin-foreground overflow-auto max-h-60 border border-admin-border">
+                {JSON.stringify(selectedJsonData?.request || {}, null, 2)}
+              </pre>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-admin-foreground">Response Data:</h4>
+              <pre className="bg-admin-input p-3 rounded-md text-sm text-admin-foreground overflow-auto max-h-60 border border-admin-border">
+                {JSON.stringify(selectedJsonData?.response || {}, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
