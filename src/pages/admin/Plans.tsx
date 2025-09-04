@@ -88,9 +88,31 @@ const AdminPlans = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este plano?')) return;
+    
     try {
+      // Check if there are any subscriptions using this plan
+      const { data: subscriptions, error: checkError } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('plan_id', id)
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      // If there are subscriptions using this plan, prevent deletion
+      if (subscriptions && subscriptions.length > 0) {
+        toast({
+          title: "Não é possível excluir",
+          description: "Este plano possui assinaturas ativas. Desative o plano ao invés de excluí-lo.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // If no subscriptions are using the plan, proceed with deletion
       const { error } = await supabase.from('plans').delete().eq('id', id);
       if (error) throw error;
+      
       toast({
         title: "Sucesso",
         description: "Plano excluído com sucesso"
