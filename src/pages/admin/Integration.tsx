@@ -8,7 +8,8 @@ import { MotvIntegrationService } from "@/services/motvIntegration";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Settings, History, Play, Eye, EyeOff } from "lucide-react";
+import { RefreshCw, Settings, History, Play, Eye, EyeOff, Wifi } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface IntegrationSettings {
   id?: string;
@@ -42,6 +43,7 @@ export default function AdminIntegration() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [processingJobs, setProcessingJobs] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [settings, setSettings] = useState<IntegrationSettings>({
     api_base_url: '',
@@ -135,6 +137,39 @@ export default function AdminIntegration() {
       });
     } finally {
       setProcessingJobs(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('test-api-connection');
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (data.success) {
+        toast({
+          title: "Conexão bem-sucedida!",
+          description: data.message,
+        });
+      } else {
+        toast({
+          title: "Falha na conexão",
+          description: data.message || data.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error testing connection:', error);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a conexão da API. Verifique se as configurações foram salvas.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -255,9 +290,22 @@ export default function AdminIntegration() {
                   </div>
                 </div>
 
-                <Button type="submit" disabled={loading} className="bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90">
-                  {loading ? "Salvando..." : "Salvar Configurações"}
-                </Button>
+                <div className="flex gap-3">
+                  <Button type="submit" disabled={loading} className="bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90">
+                    {loading ? "Salvando..." : "Salvar Configurações"}
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    onClick={handleTestConnection} 
+                    disabled={testingConnection || !settings.api_base_url || !settings.api_login || !settings.api_secret}
+                    variant="outline"
+                    className="gap-2 border-admin-border text-admin-foreground hover:bg-admin-muted"
+                  >
+                    <Wifi className="h-4 w-4" />
+                    {testingConnection ? "Testando..." : "Testar Conexão"}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
