@@ -249,7 +249,7 @@ const AdminPlans = () => {
 
         {/* Plans Table */}
         <Card className="bg-black border-green-600/30">
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-600">
             <Table>
                <TableHeader>
                  <TableRow className="border-gray-700">
