@@ -316,7 +316,8 @@ export default function AdminIntegration() {
         profileName: "Nome Completo",
         email: "alexandre22@alexandre22.comm",
         firstname: "Alexandre22",
-        lastname: "Sobrenome"
+        lastname: "Sobrenome",
+        vendor_id: 6843842
       },
       subscribeData: savedSubscribeData ? JSON.parse(savedSubscribeData) : {
         viewers_id: 6869950,
@@ -1004,7 +1005,8 @@ export default function AdminIntegration() {
       profileName: `${randomName} Completo`,
       email: randomEmail,
       firstname: randomName,
-      lastname: "Teste"
+      lastname: "Teste",
+      vendor_id: 6843842
     });
 
     toast({
@@ -1236,6 +1238,17 @@ export default function AdminIntegration() {
                         className="bg-admin-input border-admin-border text-admin-foreground"
                       />
                     </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="vendor_id" className="text-admin-foreground">Vendor ID</Label>
+                    <Input
+                      id="vendor_id"
+                      type="number"
+                      value={customerData.vendor_id}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, vendor_id: parseInt(e.target.value) || 0 }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
                   </div>
 
                   <div className="pt-4 flex gap-3">
