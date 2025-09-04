@@ -581,6 +581,45 @@ export type Database = {
         }
         Relationships: []
       }
+      motv_api_configs: {
+        Row: {
+          api_base_url: string
+          api_login: string
+          api_secret: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_production: boolean
+          name: string
+          updated_at: string
+          vendor_id: number | null
+        }
+        Insert: {
+          api_base_url: string
+          api_login: string
+          api_secret: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_production?: boolean
+          name: string
+          updated_at?: string
+          vendor_id?: number | null
+        }
+        Update: {
+          api_base_url?: string
+          api_login?: string
+          api_secret?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_production?: boolean
+          name?: string
+          updated_at?: string
+          vendor_id?: number | null
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           active: boolean | null
