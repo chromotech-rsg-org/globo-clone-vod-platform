@@ -431,6 +431,7 @@ export type Database = {
           processed_at: string | null
           status: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           attempts?: number
@@ -445,6 +446,7 @@ export type Database = {
           processed_at?: string | null
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           attempts?: number
@@ -459,6 +461,7 @@ export type Database = {
           processed_at?: string | null
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -546,6 +549,7 @@ export type Database = {
           response_payload: Json | null
           status_code: number | null
           success: boolean
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -556,6 +560,7 @@ export type Database = {
           response_payload?: Json | null
           status_code?: number | null
           success?: boolean
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -566,6 +571,7 @@ export type Database = {
           response_payload?: Json | null
           status_code?: number | null
           success?: boolean
+          user_id?: string | null
         }
         Relationships: []
       }

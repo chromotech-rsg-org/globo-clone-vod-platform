@@ -258,6 +258,8 @@ interface IntegrationJob {
   last_error?: string;
   created_at: string;
   processed_at?: string;
+  user_id?: string;
+  user_email?: string;
   integration_logs: Array<{
     id: string;
     endpoint: string;
@@ -277,6 +279,8 @@ interface TestResult {
   statusCode: number;
   success: boolean;
   timestamp: string;
+  user_id?: string;
+  user_email?: string;
 }
 
 export default function AdminIntegration() {
@@ -358,8 +362,38 @@ export default function AdminIntegration() {
 
   const loadJobsHistory = async () => {
     try {
-      const data = await MotvIntegrationService.getJobsHistory();
-      setJobs(data || []);
+      const { data, error } = await supabase
+        .from('integration_jobs')
+        .select(`
+          *,
+          profiles(email),
+          integration_logs(*)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        console.error('Error loading jobs history:', error);
+        return;
+      }
+
+      const mapped = (data || []).map((row: any) => ({
+        id: row.id,
+        job_type: row.job_type,
+        entity_type: row.entity_type,
+        entity_id: row.entity_id,
+        status: row.status,
+        attempts: row.attempts,
+        max_attempts: row.max_attempts,
+        last_error: row.last_error,
+        created_at: row.created_at,
+        processed_at: row.processed_at,
+        user_id: row.user_id,
+        user_email: row.profiles?.email || 'Sistema',
+        integration_logs: row.integration_logs || [],
+      }));
+
+      setJobs(mapped);
     } catch (error) {
       console.error('Error loading jobs history:', error);
     }
@@ -476,6 +510,7 @@ export default function AdminIntegration() {
     timestamp: string
   ) => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('integration_test_results')
         .insert([{ 
@@ -486,6 +521,7 @@ export default function AdminIntegration() {
           status_code: statusCode || null,
           success,
           created_at: timestamp,
+          user_id: userData?.user?.id || null,
         }]);
       if (error) {
         console.error('Error saving test result:', error);
@@ -500,7 +536,10 @@ export default function AdminIntegration() {
     try {
       const { data, error } = await supabase
         .from('integration_test_results')
-        .select('*')
+        .select(`
+          *,
+          profiles(email)
+        `)
         .order('created_at', { ascending: false })
         .limit(200);
 
@@ -518,6 +557,8 @@ export default function AdminIntegration() {
         statusCode: row.status_code,
         success: row.success,
         timestamp: row.created_at,
+        user_id: row.user_id,
+        user_email: row.profiles?.email || 'Sistema',
       })) as TestResult[];
 
       setTestHistory(mapped);
@@ -560,19 +601,23 @@ export default function AdminIntegration() {
 
       const result = await response.json();
       
+      // Verifica o status da API MOTV ao invés do status HTTP
+      const apiSuccess = result.status === 1 || result.status === '1';
+      
       // Adicionar ao histórico
-      addToTestHistory('api/integration/createMotvCustomer', 'POST', requestData, result, response.status, response.ok);
+      addToTestHistory('api/integration/createMotvCustomer', 'POST', requestData, result, response.status, apiSuccess);
 
-      if (response.ok) {
+      if (apiSuccess) {
         toast({
           title: "Usuário criado com sucesso!",
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
-        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorCode = result.status || result.code || result.status_code || result.error_code;
+        const errorInfo = getErrorDescription(errorCode);
         const errorMessage = errorInfo 
-          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
-          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+          ? `Código ${errorCode}: ${errorInfo.pt}` 
+          : `Erro ${errorCode || 'desconhecido'}: ${result.message || 'Erro desconhecido'}`;
         
         toast({
           title: "Erro ao criar usuário",
@@ -611,19 +656,23 @@ export default function AdminIntegration() {
 
       const result = await response.json();
       
+      // Verifica o status da API MOTV ao invés do status HTTP
+      const apiSuccess = result.status === 1 || result.status === '1';
+      
       // Adicionar ao histórico
-      addToTestHistory('api/integration/subscribe', 'POST', requestData, result, response.status, response.ok);
+      addToTestHistory('api/integration/subscribe', 'POST', requestData, result, response.status, apiSuccess);
 
-      if (response.ok) {
+      if (apiSuccess) {
         toast({
           title: "Plano criado com sucesso!",
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
-        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorCode = result.status || result.code || result.status_code || result.error_code;
+        const errorInfo = getErrorDescription(errorCode);
         const errorMessage = errorInfo 
-          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
-          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+          ? `Código ${errorCode}: ${errorInfo.pt}` 
+          : `Erro ${errorCode || 'desconhecido'}: ${result.message || 'Erro desconhecido'}`;
         
         toast({
           title: "Erro ao criar plano",
@@ -1439,6 +1488,7 @@ export default function AdminIntegration() {
                       <TableHead className="text-admin-foreground">Status</TableHead>
                       <TableHead className="text-admin-foreground">Código</TableHead>
                       <TableHead className="text-admin-foreground">Data/Hora</TableHead>
+                      <TableHead className="text-admin-foreground">Executado por</TableHead>
                       <TableHead className="text-admin-foreground">Login/Viewers ID</TableHead>
                       <TableHead className="text-admin-foreground">Email/Products ID</TableHead>
                       <TableHead className="text-admin-foreground">Código de Erro</TableHead>
@@ -1472,6 +1522,9 @@ export default function AdminIntegration() {
                           </TableCell>
                           <TableCell className="text-admin-table-text">
                             {formatDate(test.timestamp)}
+                          </TableCell>
+                          <TableCell className="text-admin-table-text">
+                            {test.user_email || 'Sistema'}
                           </TableCell>
                           <TableCell className="text-admin-table-text">
                             {requestData.login || requestData.viewers_id || '-'}
@@ -1629,6 +1682,7 @@ export default function AdminIntegration() {
                       <TableHead className="text-admin-foreground">Entidade</TableHead>
                       <TableHead className="text-admin-foreground">Status</TableHead>
                       <TableHead className="text-admin-foreground">Tentativas</TableHead>
+                      <TableHead className="text-admin-foreground">Executado por</TableHead>
                       <TableHead className="text-admin-foreground">Criado em</TableHead>
                       <TableHead className="text-admin-foreground">Processado em</TableHead>
                       <TableHead className="text-admin-foreground">Erro</TableHead>
@@ -1644,6 +1698,9 @@ export default function AdminIntegration() {
                         <TableCell>{getStatusBadge(job.status)}</TableCell>
                         <TableCell className="text-admin-table-text">
                           {job.attempts}/{job.max_attempts}
+                        </TableCell>
+                        <TableCell className="text-admin-table-text">
+                          {job.user_email || 'Sistema'}
                         </TableCell>
                         <TableCell className="text-admin-table-text">{formatDate(job.created_at)}</TableCell>
                         <TableCell className="text-admin-table-text">
