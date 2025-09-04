@@ -301,6 +301,10 @@ export default function AdminIntegration() {
   const [testingSubscribe, setTestingSubscribe] = useState(false);
   const [testingCancel, setTestingCancel] = useState(false);
   const [testHistory, setTestHistory] = useState<TestResult[]>([]);
+  const [testHistoryLoading, setTestHistoryLoading] = useState(false);
+  const [testHistoryPage, setTestHistoryPage] = useState(1);
+  const [testHistoryTotal, setTestHistoryTotal] = useState(0);
+  const ITEMS_PER_PAGE = 20;
   // Load saved test data from localStorage
   const loadSavedTestData = () => {
     const savedCustomerData = localStorage.getItem('motv-test-customerData');
@@ -570,9 +574,26 @@ export default function AdminIntegration() {
     }
   };
 
-  // Load persisted test history from Supabase
-  const loadPersistedTestHistory = async () => {
+  // Load persisted test history from Supabase with pagination
+  const loadPersistedTestHistory = async (page: number = 1) => {
+    setTestHistoryLoading(true);
     try {
+      const from = (page - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      // Get total count
+      const { count, error: countError } = await supabase
+        .from('integration_test_results')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        console.error('Error loading test history count:', countError);
+        return;
+      }
+
+      setTestHistoryTotal(count || 0);
+
+      // Get paginated data
       const { data, error } = await supabase
         .from('integration_test_results')
         .select(`
@@ -580,7 +601,7 @@ export default function AdminIntegration() {
           profiles(email)
         `)
         .order('created_at', { ascending: false })
-        .limit(200);
+        .range(from, to);
 
       if (error) {
         console.error('Error loading test history:', error);
@@ -601,12 +622,15 @@ export default function AdminIntegration() {
       })) as TestResult[];
 
       setTestHistory(mapped);
+      setTestHistoryPage(page);
     } catch (err) {
       console.error('Unexpected error loading test history:', err);
+    } finally {
+      setTestHistoryLoading(false);
     }
   };
 
-  const addToTestHistory = (endpoint: string, method: string, requestData: any, response: any, statusCode: number, success: boolean) => {
+  const addToTestHistory = async (endpoint: string, method: string, requestData: any, response: any, statusCode: number, success: boolean) => {
     const testResult: TestResult = {
       id: Date.now().toString(),
       endpoint,
@@ -617,9 +641,12 @@ export default function AdminIntegration() {
       success,
       timestamp: new Date().toISOString()
     };
-    setTestHistory(prev => [testResult, ...prev]);
-    // Persist asynchronously (fire-and-forget)
-    saveTestResultToDb(endpoint, method, requestData, response, statusCode, success, testResult.timestamp);
+    
+    // Persist to database first
+    await saveTestResultToDb(endpoint, method, requestData, response, statusCode, success, testResult.timestamp);
+    
+    // Reload the first page to show the new test result
+    await loadPersistedTestHistory(1);
   };
 
   const handleTestCustomerCreate = async () => {
@@ -1548,10 +1575,24 @@ export default function AdminIntegration() {
         <TabsContent value="history">
           <Card className="bg-admin-card border-admin-border">
             <CardHeader>
-              <CardTitle className="text-admin-foreground">Histórico de Testes de API</CardTitle>
-              <CardDescription className="text-admin-muted-foreground">
-                Visualize o histórico completo de todos os testes realizados
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-admin-foreground">Histórico de Testes de API</CardTitle>
+                  <CardDescription className="text-admin-muted-foreground">
+                    Visualize o histórico completo de todos os testes realizados ({testHistoryTotal} registros)
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={() => loadPersistedTestHistory(testHistoryPage)}
+                  disabled={testHistoryLoading}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-admin-border text-black hover:bg-black hover:text-white"
+                >
+                  <RefreshCw className={`h-4 w-4 ${testHistoryLoading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -1571,87 +1612,127 @@ export default function AdminIntegration() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {testHistory.map((test) => {
-                      const requestData = test.requestData?.data || {};
-                      const responseData = test.response || {};
-                      
-                      return (
-                        <TableRow key={test.id} className="border-admin-border hover:bg-admin-muted/20">
-                          <TableCell className="font-medium text-admin-table-text">
-                            {test.endpoint}
-                          </TableCell>
-                          <TableCell className="text-admin-table-text">
-                            <Badge variant="outline" className="text-xs border-admin-border text-admin-foreground bg-admin-muted/10">
-                              {test.method}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {test.success ? (
-                              <Badge variant="secondary" className="bg-green-100 text-green-800">Sucesso</Badge>
-                            ) : (
-                              <Badge variant="destructive">Falha</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-admin-table-text">
-                            {test.statusCode || 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-admin-table-text">
-                            {formatDate(test.timestamp)}
-                          </TableCell>
-                          <TableCell className="text-admin-table-text">
-                            {test.user_email || 'Sistema'}
-                          </TableCell>
-                          <TableCell className="text-admin-table-text">
-                            {requestData.login || requestData.viewers_id || '-'}
-                          </TableCell>
-                          <TableCell className="text-admin-table-text">
-                            {requestData.email || requestData.products_id || '-'}
-                          </TableCell>
-                          <TableCell className="text-admin-table-text">
-                            {(() => {
-                              const errorInfo = getErrorDescription(responseData.code || responseData.status_code || responseData.error_code);
-                              if (errorInfo) {
-                                return (
-                                  <div className="space-y-1">
-                                    <Badge variant="outline" className="border-admin-border text-admin-foreground bg-admin-muted/10">
-                                      {errorInfo.code}
-                                    </Badge>
-                                    <div className="text-xs text-admin-muted-foreground">{errorInfo.pt}</div>
-                                  </div>
-                                );
-                              }
-                              return '-';
-                            })()}
-                          </TableCell>
-                          <TableCell className="text-admin-table-text max-w-xs">
-                            <button 
-                              className="text-left w-full hover:bg-admin-muted/10 p-1 rounded cursor-pointer flex items-center gap-1"
-                              onClick={() => {
-                                setSelectedJsonData({
-                                  request: test.requestData,
-                                  response: test.response
-                                });
-                                setJsonModalOpen(true);
-                              }}
-                            >
-                              <div className="truncate flex-1">
-                                {JSON.stringify(test.response)}
-                              </div>
-                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                            </button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {testHistoryLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center py-8 text-admin-muted-foreground">
+                          Carregando histórico...
+                        </TableCell>
+                      </TableRow>
+                    ) : testHistory.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center py-8 text-admin-muted-foreground">
+                          Nenhum teste realizado ainda
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      testHistory.map((test) => {
+                        const requestData = test.requestData?.data || {};
+                        const responseData = test.response || {};
+                        
+                        return (
+                          <TableRow key={test.id} className="border-admin-border hover:bg-admin-muted/20">
+                            <TableCell className="font-medium text-admin-table-text">
+                              {test.endpoint}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text">
+                              <Badge variant="outline" className="text-xs border-admin-border text-admin-foreground bg-admin-muted/10">
+                                {test.method}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {test.success ? (
+                                <Badge variant="secondary" className="bg-green-100 text-green-800">Sucesso</Badge>
+                              ) : (
+                                <Badge variant="destructive">Falha</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text">
+                              {test.statusCode || 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text">
+                              {formatDate(test.timestamp)}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text">
+                              {test.user_email || 'Sistema'}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text">
+                              {requestData.login || requestData.viewers_id || '-'}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text">
+                              {requestData.email || requestData.products_id || '-'}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text">
+                              {(() => {
+                                const errorInfo = getErrorDescription(responseData.code || responseData.status_code || responseData.error_code);
+                                if (errorInfo) {
+                                  return (
+                                    <div className="space-y-1">
+                                      <Badge variant="outline" className="border-admin-border text-admin-foreground bg-admin-muted/10">
+                                        {errorInfo.code}
+                                      </Badge>
+                                      <div className="text-xs text-admin-muted-foreground">{errorInfo.pt}</div>
+                                    </div>
+                                  );
+                                }
+                                return '-';
+                              })()}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text max-w-xs">
+                              <button 
+                                className="text-left w-full hover:bg-admin-muted/10 p-1 rounded cursor-pointer flex items-center gap-1"
+                                onClick={() => {
+                                  setSelectedJsonData({
+                                    request: test.requestData,
+                                    response: test.response
+                                  });
+                                  setJsonModalOpen(true);
+                                }}
+                              >
+                                <div className="truncate flex-1">
+                                  {JSON.stringify(test.response)}
+                                </div>
+                                <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                              </button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
                   </TableBody>
                 </Table>
-                
-                {testHistory.length === 0 && (
-                  <div className="text-center py-8 text-admin-muted-foreground">
-                    Nenhum teste realizado ainda
-                  </div>
-                )}
               </div>
+              
+              {/* Pagination Controls */}
+              {testHistoryTotal > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-between space-x-2 py-4">
+                  <div className="text-sm text-admin-muted-foreground">
+                    Mostrando {((testHistoryPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(testHistoryPage * ITEMS_PER_PAGE, testHistoryTotal)} de {testHistoryTotal} registros
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadPersistedTestHistory(testHistoryPage - 1)}
+                      disabled={testHistoryPage <= 1 || testHistoryLoading}
+                      className="border-admin-border text-black hover:bg-black hover:text-white"
+                    >
+                      Anterior
+                    </Button>
+                    <div className="text-sm text-admin-muted-foreground">
+                      Página {testHistoryPage} de {Math.ceil(testHistoryTotal / ITEMS_PER_PAGE)}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadPersistedTestHistory(testHistoryPage + 1)}
+                      disabled={testHistoryPage >= Math.ceil(testHistoryTotal / ITEMS_PER_PAGE) || testHistoryLoading}
+                      className="border-admin-border text-black hover:bg-black hover:text-white"
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
