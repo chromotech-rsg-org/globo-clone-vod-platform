@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2, Plus, Search } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
@@ -128,6 +128,40 @@ const AdminPlans = () => {
     }
   };
 
+  const handleDuplicate = async (plan: Plan) => {
+    try {
+      const duplicatedPlan = {
+        name: `${plan.name} (Cópia)`,
+        price: plan.price,
+        billing_cycle: plan.billing_cycle,
+        payment_type: plan.payment_type,
+        active: false, // Set as inactive by default
+        best_seller: false, // Remove best seller status
+        priority: 0, // Set lower priority
+        free_days: plan.free_days,
+        description: plan.description,
+        benefits: plan.benefits,
+      };
+
+      const { error } = await supabase.from('plans').insert([duplicatedPlan]);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Plano duplicado com sucesso"
+      });
+      fetchPlans();
+    } catch (error) {
+      console.error('Erro ao duplicar:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível duplicar o plano",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleCreate = () => {
     setEditingPlan(undefined);
     setDialogOpen(true);
@@ -240,28 +274,37 @@ const AdminPlans = () => {
                         {plan.active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleEdit(plan)}
-                          className="text-gray-400 hover:text-white hover:bg-gray-800"
-                          title="Editar"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleDelete(plan.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                     <TableCell>
+                       <div className="flex space-x-2">
+                         <Button 
+                           size="sm" 
+                           variant="ghost" 
+                           onClick={() => handleEdit(plan)}
+                           className="text-gray-400 hover:text-white hover:bg-gray-800"
+                           title="Editar"
+                         >
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                         <Button 
+                           size="sm" 
+                           variant="ghost" 
+                           onClick={() => handleDuplicate(plan)}
+                           className="text-blue-400 hover:text-blue-300 hover:bg-gray-800"
+                           title="Duplicar"
+                         >
+                           <Copy className="h-4 w-4" />
+                         </Button>
+                         <Button 
+                           size="sm" 
+                           variant="ghost" 
+                           onClick={() => handleDelete(plan.id)}
+                           className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                           title="Excluir"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
