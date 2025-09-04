@@ -121,7 +121,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const adminMenuItems: MenuItem[] = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/admin/usuarios', icon: Users, label: 'Usuários' },
-    { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
@@ -141,6 +140,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   ];
 
   const developerConfigItems: MenuItem[] = [
+    { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
     { path: '/admin/integracao', icon: Plug, label: 'Integração MOTV' },
   ];
