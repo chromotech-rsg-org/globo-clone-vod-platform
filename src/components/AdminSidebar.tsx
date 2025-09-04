@@ -16,7 +16,9 @@ import {
   UserCheck,
   HandHeart,
   Bell,
-  Plug
+  Plug,
+  Settings,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
@@ -25,6 +27,7 @@ import NotificationBadge from '@/components/auction/NotificationBadge';
 import PendingNotificationModal from '@/components/auction/PendingNotificationModal';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -123,7 +126,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
     { path: '/admin/cupons', icon: Ticket, label: 'Cupons' },
     { path: '/admin/leiloes', icon: Gavel, label: 'Leilões' },
-    { path: '/admin/integracao', icon: Plug, label: 'Integração MOTV' },
     { 
       path: '/admin/habilitacoes', 
       icon: UserCheck, 
@@ -136,8 +138,11 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       label: 'Lances',
       pendingCount: pendingBids.length
     },
-    // Only show customization menu for developers
-    ...(isDeveloper ? [{ path: '/admin/personalizacao', icon: Palette, label: 'Personalização' }] : []),
+  ];
+
+  const developerConfigItems: MenuItem[] = [
+    { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
+    { path: '/admin/integracao', icon: Plug, label: 'Integração MOTV' },
   ];
 
   const clientMenuItems: MenuItem[] = [
@@ -266,6 +271,79 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
             </button>
           );
         })}
+
+        {/* Developer Configuration Accordion - Only for developers */}
+        {isDeveloper && !isCollapsed && (
+          <div className="mt-4">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="configurations" className="border-admin-border">
+                <AccordionTrigger className="text-admin-muted-foreground hover:text-admin-sidebar-text px-3 py-3 hover:no-underline">
+                  <div className="flex items-center">
+                    <Settings className="h-5 w-5 min-w-[20px] mr-3" />
+                    <span className="font-medium">Configurações</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-0">
+                  <div className="space-y-1 ml-3">
+                    {developerConfigItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      
+                      return (
+                        <button
+                          key={item.path}
+                          onClick={() => handleNavigation(item.path)}
+                          disabled={isNavigating}
+                          className={`group flex items-center w-full px-3 py-2 rounded-lg transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-admin-primary text-admin-primary-foreground shadow-md' 
+                              : 'text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text'
+                          } ${isNavigating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <Icon className={`h-4 w-4 min-w-[16px] transition-transform duration-200 ${
+                            isActive ? 'scale-110' : 'group-hover:scale-105'
+                          }`} />
+                          <span className="ml-3 font-medium text-sm">{item.label}</span>
+                          {isActive && (
+                            <div className="w-2 h-2 bg-admin-primary-foreground rounded-full animate-pulse ml-auto"></div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
+
+        {/* Developer Configuration - Collapsed state */}
+        {isDeveloper && isCollapsed && (
+          <div className="mt-4 space-y-1">
+            {developerConfigItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  disabled={isNavigating}
+                  className={`group flex items-center justify-center w-full px-3 py-3 rounded-lg transition-all duration-200 ${
+                    isActive 
+                      ? 'bg-admin-primary text-admin-primary-foreground shadow-md scale-105' 
+                      : 'text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text hover:scale-102'
+                  } ${isNavigating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title={item.label}
+                >
+                  <Icon className={`h-5 w-5 min-w-[20px] transition-transform duration-200 ${
+                    isActive ? 'scale-110' : 'group-hover:scale-105'
+                  }`} />
+                </button>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       {/* Logout Button */}
