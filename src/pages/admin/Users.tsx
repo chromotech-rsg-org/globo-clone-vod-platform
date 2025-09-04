@@ -44,6 +44,32 @@ const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
+    
+    // Update agro6 user with motv_user_id if needed
+    const updateAgro6User = async () => {
+      try {
+        const { data: agro6User } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('name', 'agro6')
+          .eq('email', 'agro5@agro5.com')
+          .single();
+          
+        if (agro6User && !agro6User.motv_user_id) {
+          await supabase
+            .from('profiles')
+            .update({ motv_user_id: '7073368' })
+            .eq('id', agro6User.id);
+          
+          // Refresh the users list
+          fetchUsers();
+        }
+      } catch (error) {
+        console.log('User agro6 update attempt:', error);
+      }
+    };
+    
+    updateAgro6User();
   }, [roleFilter, currentPage, pageSize, searchTerm, isDeveloper]);
 
   const fetchUsers = async () => {
