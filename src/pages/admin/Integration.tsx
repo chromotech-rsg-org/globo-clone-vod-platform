@@ -744,50 +744,53 @@ export default function AdminIntegration() {
                       <TableHead className="text-admin-foreground">Status</TableHead>
                       <TableHead className="text-admin-foreground">Código</TableHead>
                       <TableHead className="text-admin-foreground">Data/Hora</TableHead>
-                      <TableHead className="text-admin-foreground">Request</TableHead>
-                      <TableHead className="text-admin-foreground">Response</TableHead>
+                      <TableHead className="text-admin-foreground">Login/Viewers ID</TableHead>
+                      <TableHead className="text-admin-foreground">Email/Products ID</TableHead>
+                      <TableHead className="text-admin-foreground">Response Message</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {testHistory.map((test) => (
-                      <TableRow key={test.id} className="border-admin-border hover:bg-admin-muted/20">
-                        <TableCell className="font-medium text-admin-table-text">
-                          {test.endpoint}
-                        </TableCell>
-                        <TableCell className="text-admin-table-text">
-                          <Badge variant="outline" className="text-xs">
-                            {test.method}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {test.success ? (
-                            <Badge variant="secondary" className="bg-green-100 text-green-800">Sucesso</Badge>
-                          ) : (
-                            <Badge variant="destructive">Falha</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-admin-table-text">
-                          {test.statusCode || 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-admin-table-text">
-                          {formatDate(test.timestamp)}
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <div className="text-xs bg-admin-muted/10 p-2 rounded overflow-auto max-h-20">
-                            <pre className="text-admin-table-text whitespace-pre-wrap">
-                              {JSON.stringify(test.requestData, null, 2)}
-                            </pre>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <div className="text-xs bg-admin-muted/10 p-2 rounded overflow-auto max-h-20">
-                            <pre className={`whitespace-pre-wrap ${test.success ? 'text-green-600' : 'text-red-400'}`}>
-                              {JSON.stringify(test.response, null, 2)}
-                            </pre>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {testHistory.map((test) => {
+                      const requestData = test.requestData?.data || {};
+                      const responseData = test.response || {};
+                      
+                      return (
+                        <TableRow key={test.id} className="border-admin-border hover:bg-admin-muted/20">
+                          <TableCell className="font-medium text-admin-table-text">
+                            {test.endpoint}
+                          </TableCell>
+                          <TableCell className="text-admin-table-text">
+                            <Badge variant="outline" className="text-xs">
+                              {test.method}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {test.success ? (
+                              <Badge variant="secondary" className="bg-green-100 text-green-800">Sucesso</Badge>
+                            ) : (
+                              <Badge variant="destructive">Falha</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-admin-table-text">
+                            {test.statusCode || 'N/A'}
+                          </TableCell>
+                          <TableCell className="text-admin-table-text">
+                            {formatDate(test.timestamp)}
+                          </TableCell>
+                          <TableCell className="text-admin-table-text">
+                            {requestData.login || requestData.viewers_id || '-'}
+                          </TableCell>
+                          <TableCell className="text-admin-table-text">
+                            {requestData.email || requestData.products_id || '-'}
+                          </TableCell>
+                          <TableCell className="text-admin-table-text max-w-xs">
+                            <div className="truncate" title={responseData.message || JSON.stringify(responseData)}>
+                              {responseData.message || responseData.error || (test.success ? 'Sucesso' : 'Erro')}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
                 
