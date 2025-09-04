@@ -536,6 +536,39 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_test_results: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          method: string
+          request_payload: Json | null
+          response_payload: Json | null
+          status_code: number | null
+          success: boolean
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          method: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status_code?: number | null
+          success?: boolean
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          method?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status_code?: number | null
+          success?: boolean
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           active: boolean | null

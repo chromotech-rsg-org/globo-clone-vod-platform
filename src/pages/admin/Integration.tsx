@@ -87,6 +87,7 @@ export default function AdminIntegration() {
   useEffect(() => {
     loadSettings();
     loadJobsHistory();
+    loadPersistedTestHistory();
   }, []);
 
   const loadSettings = async () => {
@@ -214,6 +215,67 @@ export default function AdminIntegration() {
     return login + ":" + timestamp + ":" + tokenHash;
   };
 
+  // Persist a single test result to Supabase
+  const saveTestResultToDb = async (
+    endpoint: string,
+    method: string,
+    requestData: any,
+    response: any,
+    statusCode: number,
+    success: boolean,
+    timestamp: string
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('integration_test_results')
+        .insert([{ 
+          endpoint,
+          method,
+          request_payload: requestData,
+          response_payload: response,
+          status_code: statusCode || null,
+          success,
+          created_at: timestamp,
+        }]);
+      if (error) {
+        console.error('Error saving test result:', error);
+      }
+    } catch (err) {
+      console.error('Unexpected error saving test result:', err);
+    }
+  };
+
+  // Load persisted test history from Supabase
+  const loadPersistedTestHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('integration_test_results')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (error) {
+        console.error('Error loading test history:', error);
+        return;
+      }
+
+      const mapped = (data || []).map((row: any) => ({
+        id: row.id,
+        endpoint: row.endpoint,
+        method: row.method,
+        requestData: row.request_payload,
+        response: row.response_payload,
+        statusCode: row.status_code,
+        success: row.success,
+        timestamp: row.created_at,
+      })) as TestResult[];
+
+      setTestHistory(mapped);
+    } catch (err) {
+      console.error('Unexpected error loading test history:', err);
+    }
+  };
+
   const addToTestHistory = (endpoint: string, method: string, requestData: any, response: any, statusCode: number, success: boolean) => {
     const testResult: TestResult = {
       id: Date.now().toString(),
@@ -226,6 +288,8 @@ export default function AdminIntegration() {
       timestamp: new Date().toISOString()
     };
     setTestHistory(prev => [testResult, ...prev]);
+    // Persist asynchronously (fire-and-forget)
+    saveTestResultToDb(endpoint, method, requestData, response, statusCode, success, testResult.timestamp);
   };
 
   const handleTestCustomerCreate = async () => {
