@@ -366,6 +366,26 @@ export default function AdminIntegration() {
     }
   };
 
+  const generateRandomCustomerData = () => {
+    const randomId = Math.floor(Math.random() * 10000);
+    const randomName = `Usuario${randomId}`;
+    const randomEmail = `usuario${randomId}@teste.com`;
+    
+    setCustomerData({
+      login: randomName,
+      password: "123456",
+      profileName: `${randomName} Completo`,
+      email: randomEmail,
+      firstname: randomName,
+      lastname: "Teste"
+    });
+
+    toast({
+      title: "Dados gerados!",
+      description: "Os dados foram preenchidos automaticamente.",
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -587,7 +607,16 @@ export default function AdminIntegration() {
                     </div>
                   </div>
 
-                  <div className="pt-4">
+                  <div className="pt-4 flex gap-3">
+                    <Button
+                      onClick={generateRandomCustomerData}
+                      variant="outline"
+                      className="gap-2 border-admin-border text-admin-foreground hover:bg-admin-muted hover:text-admin-foreground"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Gerar Dados
+                    </Button>
+                    
                     <Button
                       onClick={handleTestCustomerCreate}
                       disabled={testingCustomerCreate || !settings.api_base_url}
