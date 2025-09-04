@@ -691,6 +691,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          motv_user_id: string | null
           name: string
           phone: string | null
           plan_id: string | null
@@ -702,6 +703,7 @@ export type Database = {
           created_at?: string | null
           email: string
           id: string
+          motv_user_id?: string | null
           name: string
           phone?: string | null
           plan_id?: string | null
@@ -713,6 +715,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          motv_user_id?: string | null
           name?: string
           phone?: string | null
           plan_id?: string | null

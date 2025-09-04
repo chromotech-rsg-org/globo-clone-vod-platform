@@ -18,6 +18,7 @@ interface User {
   cpf?: string;
   phone?: string;
   role: string;
+  motv_user_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -202,14 +203,15 @@ const AdminUsers = () => {
         <Card className="bg-black border-green-600/30">
           <CardContent className="p-0">
             <Table>
-              <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-300">Nome</TableHead>
-                  <TableHead className="text-gray-300">Email</TableHead>
-                  <TableHead className="text-gray-300">Função</TableHead>
-                  <TableHead className="text-gray-300">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
+               <TableHeader>
+                 <TableRow className="border-gray-700">
+                   <TableHead className="text-gray-300">Nome</TableHead>
+                   <TableHead className="text-gray-300">Email</TableHead>
+                   <TableHead className="text-gray-300">Função</TableHead>
+                   <TableHead className="text-gray-300">ID MOTV</TableHead>
+                   <TableHead className="text-gray-300">Ações</TableHead>
+                 </TableRow>
+               </TableHeader>
               <TableBody>
                 {users
                   .filter(user => {
@@ -221,40 +223,49 @@ const AdminUsers = () => {
                   })
                   .map(user => (
                   <TableRow key={user.id} className="border-gray-700">
-                    <TableCell className="text-white">{user.name}</TableCell>
-                    <TableCell className="text-white">{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        user.role === 'admin' ? 'admin-success' :
-                        user.role === 'desenvolvedor' ? 'admin-warning' :
-                          'admin-muted'
-                      }>
-                        {user.role === 'admin' ? 'Administrador' : 
-                         user.role === 'desenvolvedor' ? 'Desenvolvedor' : 'Usuário'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleEdit(user)}
-                          className="text-gray-400 hover:text-white hover:bg-gray-800"
-                          title="Editar"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleDelete(user.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                     <TableCell className="text-white">{user.name}</TableCell>
+                     <TableCell className="text-white">{user.email}</TableCell>
+                     <TableCell>
+                       <Badge variant={
+                         user.role === 'admin' ? 'admin-success' :
+                         user.role === 'desenvolvedor' ? 'admin-warning' :
+                           'admin-muted'
+                       }>
+                         {user.role === 'admin' ? 'Administrador' : 
+                          user.role === 'desenvolvedor' ? 'Desenvolvedor' : 'Usuário'}
+                       </Badge>
+                     </TableCell>
+                     <TableCell className="text-white">
+                       {user.motv_user_id ? (
+                         <Badge variant="outline" className="text-xs font-mono">
+                           {user.motv_user_id}
+                         </Badge>
+                       ) : (
+                         <span className="text-gray-500">-</span>
+                       )}
+                     </TableCell>
+                     <TableCell>
+                       <div className="flex space-x-2">
+                         <Button 
+                           size="sm" 
+                           variant="ghost" 
+                           onClick={() => handleEdit(user)}
+                           className="text-gray-400 hover:text-white hover:bg-gray-800"
+                           title="Editar"
+                         >
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                         <Button 
+                           size="sm" 
+                           variant="ghost" 
+                           onClick={() => handleDelete(user.id)}
+                           className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                           title="Excluir"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
