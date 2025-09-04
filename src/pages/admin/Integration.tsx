@@ -9,9 +9,51 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Settings, History, Play, Eye, EyeOff, Wifi, User, ExternalLink } from "lucide-react";
+import { RefreshCw, Settings, History, Play, Eye, EyeOff, Wifi, User, ExternalLink, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CryptoJS from "crypto-js";
+
+// Error codes mapping
+const ERROR_CODES = {
+  '-4': { pt: 'Pré-cálculo desconhecido', en: 'Unknown pre-calculation' },
+  '-1': { pt: 'Exceção da classe pai', en: 'Parent class exception' },
+  '0': { pt: 'Ocorreu um erro desconhecido, entre em contato com a equipe Jacon para resolução', en: 'Unknown error occurred, contact Jacon team for resolution' },
+  '1': { pt: 'Sucesso', en: 'Success' },
+  '3': { pt: 'Falta de direito para determinada ação/método', en: 'Lack of right for certain action/method' },
+  '4': { pt: 'Módulo desconhecido usado', en: 'Unknown module used' },
+  '5': { pt: 'Método desconhecido', en: 'Unknown method' },
+  '6': { pt: 'Parâmetro ausente, mais informações sobre o parâmetro ausente estão na resposta', en: 'Missing parameter, more info about missing parameter is in response' },
+  '7': { pt: 'Dados de solicitação inválidos - JSON inválido', en: 'Invalid request data - invalid JSON' },
+  '8': { pt: 'Exceção de limite de memória do aplicativo', en: 'Application memory limit exception' },
+  '9': { pt: 'Direito desconhecido', en: 'Unknown right' },
+  '10': { pt: 'Tipo de parâmetro incorreto (por exemplo, o método que aceita inteiro recebeu uma string)', en: 'Incorrect parameter type (e.g., method accepting integer received string)' },
+  '11': { pt: 'Erro no banco de dados, tente novamente. Caso o problema persista, entre em contato com a equipe do moTV.eu para resolução.', en: 'Database error, try again. If problem persists, contact moTV.eu team for resolution.' },
+  '12': { pt: 'Valor de parâmetro inválido', en: 'Invalid parameter value' },
+  '14': { pt: '`users_login` e `users_password` são necessários para criar o usuário', en: '`users_login` and `users_password` are required to create user' },
+  '15': { pt: 'Exceção de erro de banco de dados', en: 'Database error exception' },
+  '20': { pt: 'Formato de cabeçalho de autorização inválido, consulte a documentação para saber como o cabeçalho deve ser', en: 'Invalid authorization header format, check documentation for proper header format' },
+  '21': { pt: 'Combinação incorreta de nome de usuário ou senha', en: 'Incorrect username or password combination' },
+  '22': { pt: 'O usuário está em estado desativado', en: 'User is in disabled state' },
+  '23': { pt: 'A função está em estado desativado', en: 'Function is in disabled state' },
+  '24': { pt: 'O token de autorização expirou, calcule um novo', en: 'Authorization token expired, calculate a new one' },
+  '25': { pt: 'Exceção de não logado', en: 'Not logged in exception' },
+  '27': { pt: 'Exceção de revendedor inativo por login', en: 'Inactive reseller by login exception' },
+  '28': { pt: 'Falta o direito para a ação/método fornecido (somente interno)', en: 'Missing right for provided action/method (internal only)' },
+  '29': { pt: 'Ocorreu uma exceção no banco de dados durante a execução da consulta', en: 'Database exception occurred during query execution' },
+  '30': { pt: 'Onde a seleção analisa a exceção', en: 'Where selection parses exception' }
+};
+
+const getErrorDescription = (code: number | string): { code: string, pt: string, en: string } | null => {
+  const errorCode = ERROR_CODES[code.toString()];
+  if (errorCode) {
+    return {
+      code: code.toString(),
+      pt: errorCode.pt,
+      en: errorCode.en
+    };
+  }
+  return null;
+};
 
 interface IntegrationSettings {
   id?: string;
@@ -104,6 +146,7 @@ export default function AdminIntegration() {
   const [testingAuthenticate, setTestingAuthenticate] = useState(false);
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
   const [selectedJsonData, setSelectedJsonData] = useState<{request: any, response: any} | null>(null);
+  const [errorCodesModalOpen, setErrorCodesModalOpen] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -340,9 +383,14 @@ export default function AdminIntegration() {
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
+        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorMessage = errorInfo 
+          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
+          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+        
         toast({
           title: "Erro ao criar usuário",
-          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -386,9 +434,14 @@ export default function AdminIntegration() {
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
+        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorMessage = errorInfo 
+          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
+          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+        
         toast({
           title: "Erro ao criar plano",
-          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -432,9 +485,14 @@ export default function AdminIntegration() {
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
+        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorMessage = errorInfo 
+          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
+          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+        
         toast({
           title: "Erro ao cancelar plano",
-          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -477,9 +535,14 @@ export default function AdminIntegration() {
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
+        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorMessage = errorInfo 
+          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
+          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+        
         toast({
           title: "Erro ao obter dados do cliente",
-          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -522,9 +585,14 @@ export default function AdminIntegration() {
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
+        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorMessage = errorInfo 
+          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
+          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+        
         toast({
           title: "Erro ao obter histórico de planos",
-          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -567,9 +635,14 @@ export default function AdminIntegration() {
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
+        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorMessage = errorInfo 
+          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
+          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+        
         toast({
           title: "Erro ao obter lista de planos",
-          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -612,9 +685,14 @@ export default function AdminIntegration() {
           description: `Resposta da API: ${JSON.stringify(result)}`,
         });
       } else {
+        const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
+        const errorMessage = errorInfo 
+          ? `Código ${errorInfo.code}: ${errorInfo.pt}` 
+          : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
+        
         toast({
           title: "Erro na autenticação",
-          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -684,7 +762,7 @@ export default function AdminIntegration() {
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-admin-card border-admin-border">
+        <TabsList className="grid w-full grid-cols-5 bg-admin-card border-admin-border">
           <TabsTrigger value="settings" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <Settings className="h-4 w-4" />
             Configurações
@@ -696,6 +774,10 @@ export default function AdminIntegration() {
           <TabsTrigger value="history" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <Eye className="h-4 w-4" />
             Histórico de Testes
+          </TabsTrigger>
+          <TabsTrigger value="error-codes" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
+            <BookOpen className="h-4 w-4" />
+            Códigos de Erro
           </TabsTrigger>
           <TabsTrigger value="jobs" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <History className="h-4 w-4" />
@@ -1173,6 +1255,7 @@ export default function AdminIntegration() {
                       <TableHead className="text-admin-foreground">Data/Hora</TableHead>
                       <TableHead className="text-admin-foreground">Login/Viewers ID</TableHead>
                       <TableHead className="text-admin-foreground">Email/Products ID</TableHead>
+                      <TableHead className="text-admin-foreground">Código de Erro</TableHead>
                       <TableHead className="text-admin-foreground">Response Message</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1210,6 +1293,22 @@ export default function AdminIntegration() {
                           <TableCell className="text-admin-table-text">
                             {requestData.email || requestData.products_id || '-'}
                           </TableCell>
+                          <TableCell className="text-admin-table-text">
+                            {(() => {
+                              const errorInfo = getErrorDescription(responseData.code || responseData.status_code || responseData.error_code);
+                              if (errorInfo) {
+                                return (
+                                  <div className="space-y-1">
+                                    <Badge variant="outline" className="border-admin-border text-admin-foreground bg-admin-muted/10">
+                                      {errorInfo.code}
+                                    </Badge>
+                                    <div className="text-xs text-admin-muted-foreground">{errorInfo.pt}</div>
+                                  </div>
+                                );
+                              }
+                              return '-';
+                            })()}
+                          </TableCell>
                           <TableCell className="text-admin-table-text max-w-xs">
                             <button 
                               className="text-left w-full hover:bg-admin-muted/10 p-1 rounded cursor-pointer flex items-center gap-1"
@@ -1238,6 +1337,47 @@ export default function AdminIntegration() {
                     Nenhum teste realizado ainda
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="error-codes">
+          <Card className="bg-admin-card border-admin-border">
+            <CardHeader>
+              <CardTitle className="text-admin-foreground">Códigos de Erro da API MOTV</CardTitle>
+              <CardDescription className="text-admin-muted-foreground">
+                Consulte os códigos de erro retornados pela API MOTV e suas descrições
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="bg-admin-table-bg border-admin-border">
+                  <TableHeader>
+                    <TableRow className="bg-admin-table-header border-admin-border">
+                      <TableHead className="text-admin-foreground">Código</TableHead>
+                      <TableHead className="text-admin-foreground">Descrição (Português)</TableHead>
+                      <TableHead className="text-admin-foreground">Description (English)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(ERROR_CODES).map(([code, descriptions]) => (
+                      <TableRow key={code} className="border-admin-border hover:bg-admin-muted/20">
+                        <TableCell className="font-medium text-admin-table-text">
+                          <Badge variant="outline" className="border-admin-border text-admin-foreground bg-admin-muted/10">
+                            {code}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-admin-table-text max-w-md">
+                          {descriptions.pt}
+                        </TableCell>
+                        <TableCell className="text-admin-table-text max-w-md">
+                          {descriptions.en}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
