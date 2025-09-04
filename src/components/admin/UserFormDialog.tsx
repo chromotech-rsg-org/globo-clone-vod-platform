@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCustomizations } from '@/hooks/useCustomizations';
 
 interface User {
   id: string;
@@ -37,6 +38,8 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { customizations } = useCustomizations('home');
+  const projectName = customizations['global_global_site_name'] || 'MOTV';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +171,8 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
         cpf: '',
         phone: '',
         role: 'user',
-        password: ''
+        password: '',
+        motv_user_id: ''
       });
       onClose();
     }
@@ -275,7 +279,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
 
           {user && user.motv_user_id && (
             <div className="space-y-2">
-              <Label htmlFor="motv_user_id" className="text-gray-300">ID MOTV</Label>
+              <Label htmlFor="motv_user_id" className="text-gray-300">{`ID ${projectName}`}</Label>
               <Input
                 id="motv_user_id"
                 type="text"

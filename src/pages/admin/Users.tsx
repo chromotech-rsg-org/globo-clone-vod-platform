@@ -56,26 +56,13 @@ const AdminUsers = () => {
           .maybeSingle();
           
         if (agro6User && !agro6User.motv_user_id) {
-          // Force update using direct SQL
-          const { error: updateError } = await supabase.rpc('update_user_motv_id', {
-            user_id: agro6User.id,
-            new_motv_id: '7073368'
-          });
+          const { error } = await supabase
+            .from('profiles')
+            .update({ motv_user_id: '7073368', updated_at: new Date().toISOString() })
+            .eq('id', agro6User.id);
           
-          if (updateError) {
-            // Fallback to manual update
-            console.log('RPC failed, trying direct update');
-            const { error } = await supabase
-              .from('profiles')
-              .update({ motv_user_id: '7073368' })
-              .eq('id', agro6User.id);
-            
-            if (!error) {
-              console.log('Direct update successful');
-              setTimeout(() => fetchUsers(), 1000);
-            }
-          } else {
-            setTimeout(() => fetchUsers(), 1000);
+          if (!error) {
+            setTimeout(() => fetchUsers(), 500);
           }
         }
       } catch (error) {
