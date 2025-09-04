@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { MotvIntegrationService } from "@/services/motvIntegration";
+import { UserRegistrationFlowService, RegistrationData } from "@/services/userRegistrationFlow";
+import UserRegistrationDemo from "@/components/admin/UserRegistrationDemo";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -1219,6 +1221,9 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
 
         <TabsContent value="tests">
           <div className="space-y-6">
+            {/* User Registration Flow Demo */}
+            <UserRegistrationDemo />
+            
             {/* Customer Create Test */}
             <Card className="bg-admin-card border-admin-border">
               <CardHeader>
