@@ -611,7 +611,7 @@ export default function AdminIntegration() {
                     <Button
                       onClick={generateRandomCustomerData}
                       variant="outline"
-                      className="gap-2 border-admin-border text-admin-foreground hover:bg-admin-muted hover:text-admin-foreground"
+                      className="gap-2 border-admin-border text-admin-foreground hover:bg-admin-foreground hover:text-admin-card"
                     >
                       <RefreshCw className="h-4 w-4" />
                       Gerar Dados
