@@ -245,6 +245,7 @@ interface IntegrationSettings {
   api_base_url: string;
   api_login: string;
   api_secret: string;
+  vendor_id?: number;
 }
 
 interface IntegrationJob {
@@ -293,6 +294,7 @@ export default function AdminIntegration() {
     api_base_url: '',
     api_login: '',
     api_secret: '',
+    vendor_id: 6843842,
   });
   const [jobs, setJobs] = useState<IntegrationJob[]>([]);
   const [testingCustomerCreate, setTestingCustomerCreate] = useState(false);
@@ -316,8 +318,7 @@ export default function AdminIntegration() {
         profileName: "Nome Completo",
         email: "alexandre22@alexandre22.comm",
         firstname: "Alexandre22",
-        lastname: "Sobrenome",
-        vendor_id: 6843842
+        lastname: "Sobrenome"
       },
       subscribeData: savedSubscribeData ? JSON.parse(savedSubscribeData) : {
         viewers_id: 6869950,
@@ -367,12 +368,12 @@ export default function AdminIntegration() {
   const [errorCodesModalOpen, setErrorCodesModalOpen] = useState(false);
   const [errorCodeSearch, setErrorCodeSearch] = useState('');
 
-  // Sync vendor_id from customerData to authenticateData
+  // Sync vendor_id from settings to authenticateData
   useEffect(() => {
-    if (customerData.vendor_id) {
-      setAuthenticateData(prev => ({ ...prev, vendors_id: customerData.vendor_id }));
+    if (settings.vendor_id) {
+      setAuthenticateData(prev => ({ ...prev, vendors_id: settings.vendor_id }));
     }
-  }, [customerData.vendor_id]);
+  }, [settings.vendor_id]);
 
   useEffect(() => {
     loadSettings();
@@ -389,6 +390,7 @@ export default function AdminIntegration() {
           api_base_url: data.api_base_url,
           api_login: data.api_login,
           api_secret: data.api_secret,
+          vendor_id: data.vendor_id || 6843842,
         });
       }
     } catch (error) {
@@ -444,6 +446,7 @@ export default function AdminIntegration() {
         api_base_url: settings.api_base_url,
         api_login: settings.api_login,
         api_secret: settings.api_secret,
+        vendor_id: settings.vendor_id,
       });
 
       toast({
@@ -1012,8 +1015,7 @@ export default function AdminIntegration() {
       profileName: `${randomName} Completo`,
       email: randomEmail,
       firstname: randomName,
-      lastname: "Teste",
-      vendor_id: 6843842
+      lastname: "Teste"
     });
 
     toast({
@@ -1150,6 +1152,21 @@ export default function AdminIntegration() {
                     </Button>
                   </div>
                 </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="vendor_id" className="text-admin-foreground">Vendor ID</Label>
+                  <Input
+                    id="vendor_id"
+                    type="number"
+                    placeholder="6843842"
+                    value={settings.vendor_id || ''}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev, 
+                      vendor_id: parseInt(e.target.value) || 0
+                    }))}
+                    className="bg-admin-input border-admin-border text-admin-foreground placeholder:text-admin-muted-foreground focus:ring-admin-primary focus:border-admin-primary"
+                  />
+                </div>
 
                 <div className="flex gap-3">
                   <Button type="submit" disabled={loading} className="bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90">
@@ -1245,17 +1262,6 @@ export default function AdminIntegration() {
                         className="bg-admin-input border-admin-border text-admin-foreground"
                       />
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="vendor_id" className="text-admin-foreground">Vendor ID</Label>
-                    <Input
-                      id="vendor_id"
-                      type="number"
-                      value={customerData.vendor_id}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, vendor_id: parseInt(e.target.value) || 0 }))}
-                      className="bg-admin-input border-admin-border text-admin-foreground"
-                    />
                   </div>
 
                   <div className="pt-4 flex gap-3">
