@@ -307,7 +307,7 @@ const AdminSubscriptions = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel 
-              className="bg-admin-card border-admin-border text-admin-foreground hover:bg-admin-muted"
+              className="bg-admin-card border-admin-border text-admin-foreground hover:bg-white hover:text-black"
               onClick={() => {
                 setDeleteConfirmOpen(false);
                 setSubscriptionToDelete(null);
