@@ -238,15 +238,16 @@ const AdminPlans = () => {
         <Card className="bg-black border-green-600/30">
           <CardContent className="p-0">
             <Table>
-              <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-300">Nome</TableHead>
-                  <TableHead className="text-gray-300">Preço</TableHead>
-                  <TableHead className="text-gray-300">Ciclo</TableHead>
-                  <TableHead className="text-gray-300">Status</TableHead>
-                  <TableHead className="text-gray-300">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
+               <TableHeader>
+                 <TableRow className="border-gray-700">
+                   <TableHead className="text-gray-300">Nome</TableHead>
+                   <TableHead className="text-gray-300">Preço</TableHead>
+                   <TableHead className="text-gray-300">Ciclo</TableHead>
+                   <TableHead className="text-gray-300">Tipo de Pagamento</TableHead>
+                   <TableHead className="text-gray-300">Status</TableHead>
+                   <TableHead className="text-gray-300">Ações</TableHead>
+                 </TableRow>
+               </TableHeader>
               <TableBody>
                 {plans.map(plan => (
                   <TableRow key={plan.id} className="border-gray-700">
@@ -263,17 +264,23 @@ const AdminPlans = () => {
                     <TableCell className="text-white">
                       R$ {plan.price.toFixed(2)}
                     </TableCell>
-                    <TableCell className="text-white">
-                      {plan.billing_cycle === 'monthly' ? 'Mensal' : 
-                       plan.billing_cycle === 'yearly' ? 'Anual' : plan.billing_cycle}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        plan.active ? 'admin-success' : 'admin-muted'
-                      }>
-                        {plan.active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
+                     <TableCell className="text-white">
+                       {plan.billing_cycle === 'monthly' ? 'Mensal' : 
+                        plan.billing_cycle === 'yearly' ? 'Anual' : plan.billing_cycle}
+                     </TableCell>
+                     <TableCell className="text-white">
+                       {plan.payment_type === 'credit_card' ? 'Cartão de Crédito' : 
+                        plan.payment_type === 'debit_card' ? 'Cartão de Débito' :
+                        plan.payment_type === 'pix' ? 'PIX' :
+                        plan.payment_type === 'bank_slip' ? 'Boleto' : plan.payment_type}
+                     </TableCell>
+                     <TableCell>
+                       <Badge variant={
+                         plan.active ? 'admin-success' : 'admin-muted'
+                       }>
+                         {plan.active ? 'Ativo' : 'Inativo'}
+                       </Badge>
+                     </TableCell>
                      <TableCell>
                        <div className="flex space-x-2">
                          <Button 
