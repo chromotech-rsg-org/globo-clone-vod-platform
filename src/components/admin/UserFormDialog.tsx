@@ -15,6 +15,7 @@ interface User {
   cpf?: string;
   phone?: string;
   role: string;
+  motv_user_id?: string;
 }
 
 interface UserFormDialogProps {
@@ -31,7 +32,8 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
     cpf: user?.cpf || '',
     phone: user?.phone || '',
     role: user?.role || 'user',
-    password: ''
+    password: '',
+    motv_user_id: user?.motv_user_id || ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -267,6 +269,20 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
                 disabled={isLoading}
                 minLength={6}
                 required
+              />
+            </div>
+          )}
+
+          {user && user.motv_user_id && (
+            <div className="space-y-2">
+              <Label htmlFor="motv_user_id" className="text-gray-300">ID MOTV</Label>
+              <Input
+                id="motv_user_id"
+                type="text"
+                value={user.motv_user_id}
+                className="bg-gray-800 border-gray-600 text-gray-400 cursor-not-allowed"
+                disabled={true}
+                readOnly
               />
             </div>
           )}
