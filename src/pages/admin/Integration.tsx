@@ -44,6 +44,10 @@ const ERROR_CODES = {
 };
 
 const getErrorDescription = (code: number | string): { code: string, pt: string, en: string } | null => {
+  if (code === null || code === undefined) {
+    return null;
+  }
+  
   const errorCode = ERROR_CODES[code.toString()];
   if (errorCode) {
     return {
