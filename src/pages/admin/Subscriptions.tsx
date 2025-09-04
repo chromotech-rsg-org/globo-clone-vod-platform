@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,6 +40,8 @@ const AdminSubscriptions = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState<Subscription | undefined>();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [subscriptionToDelete, setSubscriptionToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -93,11 +96,18 @@ const AdminSubscriptions = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta assinatura?')) return;
+  const handleDeleteClick = (id: string) => {
+    setSubscriptionToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!subscriptionToDelete) return;
+    
     try {
-      const { error } = await supabase.from('subscriptions').delete().eq('id', id);
+      const { error } = await supabase.from('subscriptions').delete().eq('id', subscriptionToDelete);
       if (error) throw error;
+      
       toast({
         title: "Sucesso",
         description: "Assinatura excluída com sucesso"
@@ -110,6 +120,9 @@ const AdminSubscriptions = () => {
         description: "Não foi possível excluir a assinatura",
         variant: "destructive"
       });
+    } finally {
+      setDeleteConfirmOpen(false);
+      setSubscriptionToDelete(null);
     }
   };
 
@@ -239,15 +252,15 @@ const AdminSubscriptions = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleDelete(subscription.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                         <Button 
+                           size="sm" 
+                           variant="ghost" 
+                           onClick={() => handleDeleteClick(subscription.id)}
+                           className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                           title="Excluir"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -281,6 +294,35 @@ const AdminSubscriptions = () => {
         subscription={editingSubscription}
         onSuccess={handleDialogSuccess}
       />
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent className="bg-black border-admin-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription className="text-admin-muted-foreground">
+              Tem certeza que deseja excluir esta assinatura? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="bg-admin-card border-admin-border text-admin-foreground hover:bg-admin-muted"
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setSubscriptionToDelete(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={handleDeleteConfirm}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
