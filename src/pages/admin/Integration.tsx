@@ -367,6 +367,13 @@ export default function AdminIntegration() {
   const [errorCodesModalOpen, setErrorCodesModalOpen] = useState(false);
   const [errorCodeSearch, setErrorCodeSearch] = useState('');
 
+  // Sync vendor_id from customerData to authenticateData
+  useEffect(() => {
+    if (customerData.vendor_id) {
+      setAuthenticateData(prev => ({ ...prev, vendors_id: customerData.vendor_id }));
+    }
+  }, [customerData.vendor_id]);
+
   useEffect(() => {
     loadSettings();
     loadJobsHistory();
