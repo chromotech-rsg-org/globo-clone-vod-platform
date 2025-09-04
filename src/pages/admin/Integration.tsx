@@ -8,7 +8,7 @@ import { MotvIntegrationService } from "@/services/motvIntegration";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Settings, History, Play } from "lucide-react";
+import { RefreshCw, Settings, History, Play, Eye, EyeOff } from "lucide-react";
 
 interface IntegrationSettings {
   id?: string;
@@ -42,6 +42,7 @@ export default function AdminIntegration() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [processingJobs, setProcessingJobs] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [settings, setSettings] = useState<IntegrationSettings>({
     api_base_url: '',
     api_login: '',
@@ -225,18 +226,33 @@ export default function AdminIntegration() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="api_secret" className="text-admin-foreground">Chave Secreta</Label>
-                  <Input
-                    id="api_secret"
-                    type="password"
-                    placeholder="chave_secreta_api"
-                    value={settings.api_secret}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev, 
-                      api_secret: e.target.value
-                    }))}
-                    required
-                    className="bg-admin-input border-admin-border text-admin-foreground placeholder:text-admin-muted-foreground focus:ring-admin-primary focus:border-admin-primary"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="api_secret"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="chave_secreta_api"
+                      value={settings.api_secret}
+                      onChange={(e) => setSettings(prev => ({
+                        ...prev, 
+                        api_secret: e.target.value
+                      }))}
+                      required
+                      className="bg-admin-input border-admin-border text-admin-foreground placeholder:text-admin-muted-foreground focus:ring-admin-primary focus:border-admin-primary pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute inset-y-0 right-0 px-3 flex items-center hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-admin-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-admin-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
 
                 <Button type="submit" disabled={loading} className="bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90">
