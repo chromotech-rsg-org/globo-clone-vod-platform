@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Edit, Trash2, Plus, Search, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +37,8 @@ const AdminPlans = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -86,15 +89,20 @@ const AdminPlans = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este plano?')) return;
+  const handleDeleteClick = (id: string) => {
+    setPlanToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!planToDelete) return;
     
     try {
       // Check if there are any subscriptions using this plan
       const { data: subscriptions, error: checkError } = await supabase
         .from('subscriptions')
         .select('id')
-        .eq('plan_id', id)
+        .eq('plan_id', planToDelete)
         .limit(1);
 
       if (checkError) throw checkError;
@@ -106,11 +114,13 @@ const AdminPlans = () => {
           description: "Este plano possui assinaturas ativas. Desative o plano ao invés de excluí-lo.",
           variant: "destructive"
         });
+        setDeleteConfirmOpen(false);
+        setPlanToDelete(null);
         return;
       }
 
       // If no subscriptions are using the plan, proceed with deletion
-      const { error } = await supabase.from('plans').delete().eq('id', id);
+      const { error } = await supabase.from('plans').delete().eq('id', planToDelete);
       if (error) throw error;
       
       toast({
@@ -125,6 +135,9 @@ const AdminPlans = () => {
         description: "Não foi possível excluir o plano",
         variant: "destructive"
       });
+    } finally {
+      setDeleteConfirmOpen(false);
+      setPlanToDelete(null);
     }
   };
 
@@ -301,15 +314,15 @@ const AdminPlans = () => {
                          >
                            <Copy className="h-4 w-4" />
                          </Button>
-                         <Button 
-                           size="sm" 
-                           variant="ghost" 
-                           onClick={() => handleDelete(plan.id)}
-                           className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                           title="Excluir"
-                         >
-                           <Trash2 className="h-4 w-4" />
-                         </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleDeleteClick(plan.id)}
+                            className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                        </div>
                      </TableCell>
                   </TableRow>
@@ -345,6 +358,35 @@ const AdminPlans = () => {
         plan={editingPlan}
         onSuccess={handleDialogSuccess}
       />
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent className="bg-black border-admin-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription className="text-admin-muted-foreground">
+              Tem certeza que deseja excluir este plano? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="bg-admin-card border-admin-border text-admin-foreground hover:bg-admin-muted"
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setPlanToDelete(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={handleDeleteConfirm}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
