@@ -84,6 +84,24 @@ export default function AdminIntegration() {
     viewers_id: 6843842,
     products_id: 1
   });
+  const [customerFindData, setCustomerFindData] = useState({
+    viewers_id: 7073359
+  });
+  const [planHistoryData, setPlanHistoryData] = useState({
+    viewers_id: 7073359
+  });
+  const [planListData, setPlanListData] = useState({
+    viewers_id: 7073359
+  });
+  const [authenticateData, setAuthenticateData] = useState({
+    vendors_id: 6843842,
+    login: "alexandre4564@alexandre.com",
+    password: "a@123454655"
+  });
+  const [testingCustomerFind, setTestingCustomerFind] = useState(false);
+  const [testingPlanHistory, setTestingPlanHistory] = useState(false);
+  const [testingPlanList, setTestingPlanList] = useState(false);
+  const [testingAuthenticate, setTestingAuthenticate] = useState(false);
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
   const [selectedJsonData, setSelectedJsonData] = useState<{request: any, response: any} | null>(null);
 
@@ -430,6 +448,186 @@ export default function AdminIntegration() {
       });
     } finally {
       setTestingCancel(false);
+    }
+  };
+
+  const handleTestCustomerFind = async () => {
+    setTestingCustomerFind(true);
+    try {
+      const authToken = generateAuthToken();
+      const requestData = { data: customerFindData };
+      
+      const response = await fetch(`${settings.api_base_url}/api/customer/getDataV2`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authToken,
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      
+      addToTestHistory('api/customer/getDataV2', 'POST', requestData, result, response.status, response.ok);
+
+      if (response.ok) {
+        toast({
+          title: "Dados do cliente obtidos com sucesso!",
+          description: `Resposta da API: ${JSON.stringify(result)}`,
+        });
+      } else {
+        toast({
+          title: "Erro ao obter dados do cliente",
+          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error getting customer data:', error);
+      addToTestHistory('api/customer/getDataV2', 'POST', { data: customerFindData }, { error: error.message }, 0, false);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a obtenção dos dados do cliente. Verifique a configuração da API.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingCustomerFind(false);
+    }
+  };
+
+  const handleTestPlanHistory = async () => {
+    setTestingPlanHistory(true);
+    try {
+      const authToken = generateAuthToken();
+      const requestData = { data: planHistoryData };
+      
+      const response = await fetch(`${settings.api_base_url}/api/subscription/getCustomerSubscriptionInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authToken,
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      
+      addToTestHistory('api/subscription/getCustomerSubscriptionInfo', 'POST', requestData, result, response.status, response.ok);
+
+      if (response.ok) {
+        toast({
+          title: "Histórico de planos obtido com sucesso!",
+          description: `Resposta da API: ${JSON.stringify(result)}`,
+        });
+      } else {
+        toast({
+          title: "Erro ao obter histórico de planos",
+          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error getting plan history:', error);
+      addToTestHistory('api/subscription/getCustomerSubscriptionInfo', 'POST', { data: planHistoryData }, { error: error.message }, 0, false);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a obtenção do histórico de planos. Verifique a configuração da API.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingPlanHistory(false);
+    }
+  };
+
+  const handleTestPlanList = async () => {
+    setTestingPlanList(true);
+    try {
+      const authToken = generateAuthToken();
+      const requestData = { data: planListData };
+      
+      const response = await fetch(`${settings.api_base_url}/api/sales/getAllowedProductsForCustomer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authToken,
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      
+      addToTestHistory('api/sales/getAllowedProductsForCustomer', 'POST', requestData, result, response.status, response.ok);
+
+      if (response.ok) {
+        toast({
+          title: "Lista de planos obtida com sucesso!",
+          description: `Resposta da API: ${JSON.stringify(result)}`,
+        });
+      } else {
+        toast({
+          title: "Erro ao obter lista de planos",
+          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error getting plan list:', error);
+      addToTestHistory('api/sales/getAllowedProductsForCustomer', 'POST', { data: planListData }, { error: error.message }, 0, false);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a obtenção da lista de planos. Verifique a configuração da API.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingPlanList(false);
+    }
+  };
+
+  const handleTestAuthenticate = async () => {
+    setTestingAuthenticate(true);
+    try {
+      const authToken = generateAuthToken();
+      const requestData = { data: authenticateData };
+      
+      const response = await fetch(`${settings.api_base_url}/api/devices/motv/apiLoginV2`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authToken,
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      
+      addToTestHistory('api/devices/motv/apiLoginV2', 'POST', requestData, result, response.status, response.ok);
+
+      if (response.ok) {
+        toast({
+          title: "Autenticação realizada com sucesso!",
+          description: `Resposta da API: ${JSON.stringify(result)}`,
+        });
+      } else {
+        toast({
+          title: "Erro na autenticação",
+          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error authenticating:', error);
+      addToTestHistory('api/devices/motv/apiLoginV2', 'POST', { data: authenticateData }, { error: error.message }, 0, false);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a autenticação. Verifique a configuração da API.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingAuthenticate(false);
     }
   };
 
@@ -785,6 +983,168 @@ export default function AdminIntegration() {
                     >
                       <RefreshCw className="h-4 w-4" />
                       {testingCancel ? "Cancelando plano..." : "Testar Cancelamento de Plano"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Customer Find Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Customer Find (Buscar Cliente)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Teste de busca de dados do cliente via API MOTV
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="customer_find_viewers_id" className="text-admin-foreground">Viewers ID</Label>
+                    <Input
+                      id="customer_find_viewers_id"
+                      type="number"
+                      value={customerFindData.viewers_id}
+                      onChange={(e) => setCustomerFindData(prev => ({ ...prev, viewers_id: parseInt(e.target.value) || 0 }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+
+                  <div className="pt-4">
+                    <Button
+                      onClick={handleTestCustomerFind}
+                      disabled={testingCustomerFind || !settings.api_base_url}
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <User className="h-4 w-4" />
+                      {testingCustomerFind ? "Buscando cliente..." : "Testar Busca de Cliente"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Plan History Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Plan History (Histórico de Planos)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Teste de obtenção do histórico de planos do cliente via API MOTV
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="plan_history_viewers_id" className="text-admin-foreground">Viewers ID</Label>
+                    <Input
+                      id="plan_history_viewers_id"
+                      type="number"
+                      value={planHistoryData.viewers_id}
+                      onChange={(e) => setPlanHistoryData(prev => ({ ...prev, viewers_id: parseInt(e.target.value) || 0 }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+
+                  <div className="pt-4">
+                    <Button
+                      onClick={handleTestPlanHistory}
+                      disabled={testingPlanHistory || !settings.api_base_url}
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <History className="h-4 w-4" />
+                      {testingPlanHistory ? "Obtendo histórico..." : "Testar Histórico de Planos"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Plan List Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Plan List (Lista de Planos)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Teste de obtenção da lista de produtos permitidos para o cliente via API MOTV
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="plan_list_viewers_id" className="text-admin-foreground">Viewers ID</Label>
+                    <Input
+                      id="plan_list_viewers_id"
+                      type="number"
+                      value={planListData.viewers_id}
+                      onChange={(e) => setPlanListData(prev => ({ ...prev, viewers_id: parseInt(e.target.value) || 0 }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+
+                  <div className="pt-4">
+                    <Button
+                      onClick={handleTestPlanList}
+                      disabled={testingPlanList || !settings.api_base_url}
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <Play className="h-4 w-4" />
+                      {testingPlanList ? "Obtendo lista..." : "Testar Lista de Planos"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Authenticate Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Authenticate (Autenticar)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Teste de autenticação via API MOTV
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="auth_vendors_id" className="text-admin-foreground">Vendors ID</Label>
+                    <Input
+                      id="auth_vendors_id"
+                      type="number"
+                      value={authenticateData.vendors_id}
+                      onChange={(e) => setAuthenticateData(prev => ({ ...prev, vendors_id: parseInt(e.target.value) || 0 }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="auth_login" className="text-admin-foreground">Login</Label>
+                      <Input
+                        id="auth_login"
+                        value={authenticateData.login}
+                        onChange={(e) => setAuthenticateData(prev => ({ ...prev, login: e.target.value }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="auth_password" className="text-admin-foreground">Password</Label>
+                      <Input
+                        id="auth_password"
+                        type="password"
+                        value={authenticateData.password}
+                        onChange={(e) => setAuthenticateData(prev => ({ ...prev, password: e.target.value }))}
+                        className="bg-admin-input border-admin-border text-admin-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button
+                      onClick={handleTestAuthenticate}
+                      disabled={testingAuthenticate || !settings.api_base_url}
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <Wifi className="h-4 w-4" />
+                      {testingAuthenticate ? "Autenticando..." : "Testar Autenticação"}
                     </Button>
                   </div>
                 </div>
