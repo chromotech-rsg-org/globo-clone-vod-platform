@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -40,6 +39,21 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
   const { toast } = useToast();
   const { customizations } = useCustomizations('home');
   const projectName = customizations['global_global_site_name'] || 'MOTV';
+
+  // Update form data when user prop changes
+  React.useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        cpf: user.cpf || '',
+        phone: user.phone || '',
+        role: user.role || 'user',
+        password: '',
+        motv_user_id: user.motv_user_id || ''
+      });
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
