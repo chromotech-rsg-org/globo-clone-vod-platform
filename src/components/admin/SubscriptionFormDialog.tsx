@@ -39,6 +39,7 @@ interface SubscriptionFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   subscription?: Subscription;
+  preSelectedUserId?: string; // Add support for pre-selecting user
   onSuccess: () => void;
 }
 
@@ -46,6 +47,7 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
   open,
   onOpenChange,
   subscription,
+  preSelectedUserId, // Add the new parameter
   onSuccess,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -62,12 +64,19 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
 
   const isEditing = !!subscription;
 
+  // Separate effect for loading data when dialog opens
   useEffect(() => {
     if (open) {
       fetchUsers();
       fetchPlans();
-      
+    }
+  }, [open]);
+
+  // Separate effect for setting form data after data is loaded
+  useEffect(() => {
+    if (open && users.length > 0 && plans.length > 0) {
       if (subscription) {
+        // Editing mode - load subscription data
         setFormData({
           user_id: subscription.user_id,
           plan_id: subscription.plan_id || '',
@@ -76,8 +85,9 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           end_date: subscription.end_date ? new Date(subscription.end_date).toISOString().split('T')[0] : '',
         });
       } else {
+        // New subscription mode - use preSelectedUserId if provided
         setFormData({
-          user_id: '',
+          user_id: preSelectedUserId || '',
           plan_id: '',
           status: 'active',
           start_date: new Date().toISOString().split('T')[0],
@@ -85,7 +95,7 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         });
       }
     }
-  }, [open, subscription]);
+  }, [open, subscription, preSelectedUserId, users.length, plans.length]);
 
   const fetchUsers = async () => {
     try {
