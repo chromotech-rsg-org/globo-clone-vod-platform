@@ -40,7 +40,188 @@ const ERROR_CODES = {
   '27': { pt: 'Exceção de revendedor inativo por login', en: 'Inactive reseller by login exception' },
   '28': { pt: 'Falta o direito para a ação/método fornecido (somente interno)', en: 'Missing right for provided action/method (internal only)' },
   '29': { pt: 'Ocorreu uma exceção no banco de dados durante a execução da consulta', en: 'Database exception occurred during query execution' },
-  '30': { pt: 'Onde a seleção analisa a exceção', en: 'Where selection parses exception' }
+  '30': { pt: 'Onde a seleção analisa a exceção', en: 'Where selection parses exception' },
+  '40': { pt: 'Exceção de imagem desconhecida da galeria', en: 'Unknown gallery image exception' },
+  '41': { pt: 'Exceção de arquivo de imagem de galeria não encontrado', en: 'Gallery image file not found exception' },
+  '60': { pt: 'Exceção de revendedor desconhecido', en: 'Unknown reseller exception' },
+  '61': { pt: 'Exceção de nome do revendedor não exclusivo', en: 'Non-unique reseller name exception' },
+  '62': { pt: 'O revendedor não tem crédito suficiente para deduzir a exceção', en: 'Reseller does not have sufficient credit to deduct exception' },
+  '63': { pt: 'O revendedor não tem crédito suficiente para adicionar uma exceção', en: 'Reseller does not have sufficient credit to add exception' },
+  '64': { pt: 'O revendedor não pode ter exceção de crédito infinito', en: 'Reseller cannot have infinite credit exception' },
+  '65': { pt: 'O dealer não pode visualizar nenhuma exceção de carta', en: 'Dealer cannot view any card exception' },
+  '66': { pt: 'Exceção dos pais da circular do revendedor', en: 'Reseller circular parent exception' },
+  '67': { pt: 'Exceção de não remoção do revendedor', en: 'Reseller non-removal exception' },
+  '72': { pt: 'Exceção de função de mesmo pai', en: 'Same parent function exception' },
+  '73': { pt: 'Exceção circular de função pai', en: 'Parent function circular exception' },
+  '74': { pt: 'Exceção de função não pode ser removida', en: 'Function cannot be removed exception' },
+  '80': { pt: 'Categoria exceção de categoria desconhecida', en: 'Unknown category exception' },
+  '100': { pt: 'Exceção de cliente desconhecido', en: 'Unknown customer exception' },
+  '101': { pt: 'Exceção de arquivo desconhecido do cliente', en: 'Unknown customer file exception' },
+  '102': { pt: 'Exceção de critérios de pesquisa selvagem do cliente', en: 'Customer wildcard search criteria exception' },
+  '103': { pt: 'O cliente pesquisa muitas exceções', en: 'Customer searches too many exceptions' },
+  '104': { pt: 'Exceção de erro de validação de atualização do cliente', en: 'Customer update validation error exception' },
+  '105': { pt: 'Exceção de contato desconhecido do cliente', en: 'Unknown customer contact exception' },
+  '106': { pt: 'Exceção de endereço desconhecido do cliente', en: 'Unknown customer address exception' },
+  '107': { pt: 'Exceção de nota de cliente desconhecida', en: 'Unknown customer note exception' },
+  '108': { pt: 'Nota do cliente faltando exceção correta', en: 'Customer note missing correct exception' },
+  '109': { pt: 'Exceção de muitos endereços encontrados pelo cliente', en: 'Too many addresses found by customer exception' },
+  '200': { pt: 'Relatar exceção de relatório desconhecida', en: 'Unknown report exception' },
+  '201': { pt: 'Relatar exceção de erro de consulta', en: 'Report query error exception' },
+  '202': { pt: 'Relatar exceção de arquivo de relatório desconhecido', en: 'Unknown report file exception' },
+  '203': { pt: 'Exceção de arquivo de relatório não encontrado', en: 'Report file not found exception' },
+  '204': { pt: 'Relatar exceção não autorizada', en: 'Unauthorized report exception' },
+  '220': { pt: 'Solicitação de exceção de solicitação desconhecida', en: 'Unknown request exception' },
+  '250': { pt: 'Exceção de fatura desconhecida', en: 'Unknown invoice exception' },
+  '251': { pt: 'Exceção de fatura já cancelada', en: 'Invoice already cancelled exception' },
+  '252': { pt: 'Exceção de fatura não pode ser revertida', en: 'Invoice cannot be reversed exception' },
+  '260': { pt: 'Exceção de produto desconhecido', en: 'Unknown product exception' },
+  '261': { pt: 'O preço inicial do produto deve ser maior que 0 exceção', en: 'Product initial price must be greater than 0 exception' },
+  '262': { pt: 'O produto para assinatura de autocuidado não pode ter duração em minutos, exceto', en: 'Product for self-care subscription cannot have duration in minutes exception' },
+  '263': { pt: 'Exceção desconhecida do produto TVOD', en: 'Unknown TVOD product exception' },
+  '264': { pt: 'Exceção de preço de produto desconhecido nesta moeda', en: 'Unknown product price in this currency exception' },
+  '265': { pt: 'Exceção do produto não pode ser removido', en: 'Product cannot be removed exception' },
+  '270': { pt: 'Buquê desconhecido exceção de buquê', en: 'Unknown bouquet exception' },
+  '271': { pt: 'Exceção de duplicata de buquê do cliente', en: 'Customer bouquet duplicate exception' },
+  '272': { pt: 'Exceção: o buquê não pode ser removido', en: 'Bouquet cannot be removed exception' },
+  '280': { pt: 'Exceção de grupo desconhecido', en: 'Unknown group exception' },
+  '290': { pt: 'Modelo de exceção de modelo desconhecido', en: 'Unknown template exception' },
+  '291': { pt: 'Erro de modelo preenchendo exceção', en: 'Template filling error exception' },
+  '300': { pt: 'Exceção de bilhete desconhecido', en: 'Unknown ticket exception' },
+  '301': { pt: 'Exceção de erro de status do tíquete', en: 'Ticket status error exception' },
+  '302': { pt: 'Exceção de arquivo de ticket desconhecido', en: 'Unknown ticket file exception' },
+  '310': { pt: 'Categoria de ingresso desconhecida exceção de categoria de ingresso', en: 'Unknown ticket category exception' },
+  '311': { pt: 'Exceção pai circular da categoria de ingresso', en: 'Ticket category circular parent exception' },
+  '320': { pt: 'Departamento de ingressos desconhecido exceção do departamento de ingressos', en: 'Unknown ticket department exception' },
+  '325': { pt: 'Exceção de status de tíquete desconhecido', en: 'Unknown ticket status exception' },
+  '330': { pt: 'Prioridade do tíquete desconhecida exceção de prioridade do tíquete', en: 'Unknown ticket priority exception' },
+  '360': { pt: 'Ação de grupo desconhecida exceção de ação de grupo', en: 'Unknown group action exception' },
+  '361': { pt: 'Exceção de ação de grupo não autorizada', en: 'Unauthorized group action exception' },
+  '362': { pt: 'Exceção de erro de tradução de ação de grupo', en: 'Group action translation error exception' },
+  '363': { pt: 'Apenas uma exceção da Ação de grupo ou Ação de grupo predefinida deve ser preenchida', en: 'Only one group action or predefined group action should be filled exception' },
+  '364': { pt: 'Ação de grupo ou ação de grupo predefinida deve ser preenchida exceção', en: 'Group action or predefined group action must be filled exception' },
+  '380': { pt: 'Agendar exceção de agendamento desconhecida', en: 'Unknown schedule exception' },
+  '382': { pt: 'Exceção de token de agendamento não definido', en: 'Schedule token not defined exception' },
+  '400': { pt: 'Exceção do revendedor de crédito insuficiente na fatura', en: 'Insufficient credit reseller in invoice exception' },
+  '401': { pt: 'Exceção de seleção de produto na fatura', en: 'Product selection in invoice exception' },
+  '403': { pt: 'Exceção de cliente com crédito insuficiente na fatura', en: 'Customer with insufficient credit in invoice exception' },
+  '404': { pt: 'Exceção de produto faturado não permitido', en: 'Billed product not allowed exception' },
+  '420': { pt: 'Exceção de valor desconhecido de configuração', en: 'Unknown configuration value exception' },
+  '421': { pt: 'Exceção de servidor smtp desconhecida de configuração', en: 'Unknown SMTP server configuration exception' },
+  '422': { pt: 'Exceção de servidor IMAP desconhecida', en: 'Unknown IMAP server exception' },
+  '430': { pt: 'Exceção de log desconhecida', en: 'Unknown log exception' },
+  '431': { pt: 'Exceção de modelo de log desconhecido', en: 'Unknown log template exception' },
+  '454': { pt: 'Exceção de erro do sistema rabbitmq', en: 'RabbitMQ system error exception' },
+  '455': { pt: 'Exceção de supervisor de sistema não habilitado', en: 'System supervisor not enabled exception' },
+  '456': { pt: 'Exceção de backup do sistema não habilitado', en: 'System backup not enabled exception' },
+  '457': { pt: 'Exceção de backup do sistema não encontrado', en: 'System backup not found exception' },
+  '458': { pt: 'Exceção de falha do supervisor do sistema', en: 'System supervisor failure exception' },
+  '480': { pt: 'Exceção de dispositivo desconhecido', en: 'Unknown device exception' },
+  '481': { pt: 'Exceção de produto incompatível com dispositivo', en: 'Device incompatible product exception' },
+  '482': { pt: 'Exceção de dispositivo nenhum dispositivo encontrado', en: 'Device no device found exception' },
+  '483': { pt: 'Exceção de muitos dispositivos encontrados no dispositivo', en: 'Too many devices found on device exception' },
+  '484': { pt: 'Exceção de dispositivo incompatível', en: 'Incompatible device exception' },
+  '500': { pt: 'Exceção de assinatura desconhecida', en: 'Unknown subscription exception' },
+  '501': { pt: 'Exceção de suspensão de assinatura desconhecida', en: 'Unknown subscription suspension exception' },
+  '502': { pt: 'A assinatura não pode suspender a exceção', en: 'Subscription cannot suspend exception' },
+  '503': { pt: 'A assinatura não pode ser cancelada (já cancelada)', en: 'Subscription cannot be cancelled (already cancelled)' },
+  '520': { pt: 'Exceção de erro de venda', en: 'Sale error exception' },
+  '550': { pt: 'Notificações de tickets exceção de notificação desconhecida', en: 'Unknown ticket notification exception' },
+  '551': { pt: 'Exceção de erro de e-mail de notificação de tickets', en: 'Ticket notification email error exception' },
+  '600': { pt: 'Exceção de notificação desconhecida de notificações do usuário', en: 'Unknown user notification exception' },
+  '1100': { pt: 'Papel desconhecido', en: 'Unknown role' },
+  '1101': { pt: 'Nome da função duplicada', en: 'Duplicate role name' },
+  '1500': { pt: 'Exceção epg desconhecida epg', en: 'Unknown EPG exception' },
+  '1501': { pt: 'Exceção de formato de data não suportado pelo EPG', en: 'EPG unsupported date format exception' },
+  '1502': { pt: 'Exceção de arquivo não suportado do EPG', en: 'EPG unsupported file exception' },
+  '1503': { pt: 'Exceção de conjunto de exceção do Epg', en: 'EPG exception set exception' },
+  '1504': { pt: 'Exceção de erro fatal do EPG XML', en: 'EPG XML fatal error exception' },
+  '1505': { pt: 'Exceção de arquivo inválido do EPG', en: 'EPG invalid file exception' },
+  '1506': { pt: 'Exceção de erro do Excel EPG', en: 'EPG Excel error exception' },
+  '1507': { pt: 'Exceção de erro de inserção de EPG', en: 'EPG insertion error exception' },
+  '1508': { pt: 'Exceção de evento desconhecido Epg', en: 'Unknown EPG event exception' },
+  '1509': { pt: 'Exceção de serviço desconhecida do EPG', en: 'Unknown EPG service exception' },
+  '1510': { pt: 'Exceção de transponder desconhecido EPG', en: 'Unknown EPG transponder exception' },
+  '1511': { pt: 'Exceção de download de software desconhecido do EPG', en: 'Unknown EPG software download exception' },
+  '1512': { pt: 'Exceção de coluna desconhecida do Epg', en: 'Unknown EPG column exception' },
+  '1517': { pt: 'Exceção de imagem de evento desconhecido do Epg', en: 'Unknown EPG event image exception' },
+  '1518': { pt: 'Exceção de inserção desconhecida do Epg', en: 'Unknown EPG insertion exception' },
+  '1519': { pt: 'Exceção de rede desconhecida EPG', en: 'Unknown EPG network exception' },
+  '1520': { pt: 'Exceção de erro de download do EPG SW', en: 'EPG SW download error exception' },
+  '1522': { pt: 'Exceção de valor ausente na configuração do EPG', en: 'Missing value in EPG configuration exception' },
+  '1524': { pt: 'Exceção de categoria desconhecida Epg', en: 'Unknown EPG category exception' },
+  '1800': { pt: 'Usuário desconhecido', en: 'Unknown user' },
+  '1801': { pt: 'E-mail de usuário duplicado', en: 'Duplicate user email' },
+  '3000': { pt: 'Exceção de fornecedor desconhecido', en: 'Unknown vendor exception' },
+  '4400': { pt: 'Entidade fornecida não encontrada', en: 'Provided entity not found' },
+  '4401': { pt: 'Documentação exceção de nome de API desconhecida', en: 'Unknown API name documentation exception' },
+  '4402': { pt: 'Enum fornecido não encontrado', en: 'Provided enum not found' },
+  '4403': { pt: 'Modelo fornecido não encontrado', en: 'Provided model not found' },
+  '5500': { pt: 'Exceção da API do Conselho', en: 'Council API exception' },
+  '12529': { pt: 'Exceção de zona desconhecida', en: 'Unknown zone exception' },
+  '12530': { pt: 'Bloqueia exceção desconhecida', en: 'Unknown block exception' },
+  '12531': { pt: 'Exceção desconhecida do Amplifire', en: 'Unknown Amplifire exception' },
+  '12532': { pt: 'Exceção de nó desconhecido', en: 'Unknown node exception' },
+  '12533': { pt: 'Exceção desconhecida de acompanhamento de ticket', en: 'Unknown ticket tracking exception' },
+  '12534': { pt: 'Comentário de tickets exceção desconhecida', en: 'Unknown ticket comment exception' },
+  '12535': { pt: 'Plano de preços exceção desconhecida', en: 'Unknown pricing plan exception' },
+  '12536': { pt: 'Exceção desconhecida de limite de sessão', en: 'Unknown session limit exception' },
+  '12537': { pt: 'Exceção desconhecida de limite de dispositivo', en: 'Unknown device limit exception' },
+  '13000': { pt: 'Exceção de ordem desconhecida PSM', en: 'Unknown PSM order exception' },
+  '13001': { pt: 'Exceção de pedido PSM já processado', en: 'PSM order already processed exception' },
+  '13002': { pt: 'Exceção de falha do PSM Ooredoo', en: 'PSM Ooredoo failure exception' },
+  '13200': { pt: 'Exceção de cartão inteligente duplicado Cryptoguard', en: 'Cryptoguard duplicate smart card exception' },
+  '13201': { pt: 'Exceção de set-topbox duplicado do Cryptoguard', en: 'Cryptoguard duplicate set-top box exception' },
+  '13202': { pt: 'Exceção de cartão inteligente duplicado Cryptoguard sem cartão', en: 'Cryptoguard duplicate smart card without card exception' },
+  '13203': { pt: 'Exceção de cartão inteligente inválido Cryptoguard', en: 'Cryptoguard invalid smart card exception' },
+  '14000': { pt: 'Exceção de login duplicado da conta Motv', en: 'Motv account duplicate login exception' },
+  '14001': { pt: 'Exceção de nome de usuário e senha incorretos do Motv', en: 'Motv incorrect username and password exception' },
+  '14003': { pt: 'Exceção de token de registro desconhecido do Motv', en: 'Motv unknown registration token exception' },
+  '14004': { pt: 'Exceção de login desconhecida do Motv', en: 'Motv unknown login exception' },
+  '14005': { pt: 'Exceção de token de senha perdida desconhecida do Motv', en: 'Motv unknown lost password token exception' },
+  '14006': { pt: 'Exceção de erro de validação do Motv', en: 'Motv validation error exception' },
+  '14007': { pt: 'Exceção de portal desconhecido Motv', en: 'Motv unknown portal exception' },
+  '14008': { pt: 'Exceção de formato de senha inválida do Motv', en: 'Motv invalid password format exception' },
+  '14009': { pt: 'Exceção de acesso ao portal de usuário duplicado do Motv', en: 'Motv duplicate user portal access exception' },
+  '14011': { pt: 'Exceção de erro desconhecido do Motv', en: 'Motv unknown error exception' },
+  '14012': { pt: 'Exceção de dispositivo desconhecido Motv', en: 'Motv unknown device exception' },
+  '14013': { pt: 'Motv erro desconhecido tente novamente exceção', en: 'Motv unknown error try again exception' },
+  '14014': { pt: 'Exceção de VOD desconhecido Motv', en: 'Motv unknown VOD exception' },
+  '16000': { pt: 'Exceção de token desconhecido do Google', en: 'Google unknown token exception' },
+  '16001': { pt: 'Exceção de login desconhecido do Google', en: 'Google unknown login exception' },
+  '16002': { pt: 'Exceção de dispositivo desconhecido do Google', en: 'Google unknown device exception' },
+  '16501': { pt: 'Exceção de página desconhecida do Motv', en: 'Motv unknown page exception' },
+  '17500': { pt: 'Exceção de resposta desconhecida do Facebook', en: 'Facebook unknown response exception' },
+  '17502': { pt: 'Exceção de login desconhecido do Facebook', en: 'Facebook unknown login exception' },
+  '17503': { pt: 'Exceção de dispositivo desconhecido do Facebook', en: 'Facebook unknown device exception' },
+  '18000': { pt: 'Exceção serial duplicada Irdeto', en: 'Irdeto duplicate serial exception' },
+  '19000': { pt: 'Exceção de login desconhecido da Apple', en: 'Apple unknown login exception' },
+  '19001': { pt: 'Exceção de e-mail ausente no registro da Apple', en: 'Apple missing email in registration exception' },
+  '19002': { pt: 'Exceção de decodificação de token de identidade com falha no registro da Apple', en: 'Apple identity token decoding failed in registration exception' },
+  '19003': { pt: 'Exceção de dispositivo desconhecido da Apple', en: 'Apple unknown device exception' },
+  '20000': { pt: 'Exceção Digicel', en: 'Digicel exception' },
+  '20100': { pt: 'Exceção da GUI', en: 'GUI exception' },
+  '20200': { pt: 'Exceção de parada de cancelamento do gerador de solicitação', en: 'Request generator cancellation stop exception' },
+  '20300': { pt: 'Exceção de árvore', en: 'Tree exception' },
+  '20500': { pt: 'Exceção de país desconhecido', en: 'Unknown country exception' },
+  '20600': { pt: 'Ordem de autocuidado exceção desconhecida', en: 'Unknown self-care order exception' },
+  '20601': { pt: 'Exceção de falha na ordem de autocuidado', en: 'Self-care order failure exception' },
+  '20602': { pt: 'Autocuidado não é permitido em exceção', en: 'Self-care not allowed exception' },
+  '20603': { pt: 'Gateway de pagamento desconhecido para autocuidado', en: 'Unknown payment gateway for self-care' },
+  '20604': { pt: 'Exceção desconhecida do gateway de pagamento de autoatendimento', en: 'Unknown self-service payment gateway exception' },
+  '20605': { pt: 'Exceção desconhecida de assinatura de autoatendimento', en: 'Unknown self-service subscription exception' },
+  '20606': { pt: 'Exceção de produto não permitido para autocuidado', en: 'Product not allowed for self-care exception' },
+  '20607': { pt: 'Clientes gerados automaticamente não podem usar a exceção de autoatendimento', en: 'Automatically generated customers cannot use self-service exception' },
+  '20608': { pt: 'A ordem de autocuidado não pode ser criada como exceção', en: 'Self-care order cannot be created exception' },
+  '20609': { pt: 'Exceção de duplicata de assinatura de autoatendimento', en: 'Self-service subscription duplicate exception' },
+  '20700': { pt: 'Exceção de moeda desconhecida', en: 'Unknown currency exception' },
+  '20701': { pt: 'Exceção de moeda não pode ser desativada', en: 'Currency cannot be disabled exception' },
+  '20800': { pt: 'Exceção desconhecida do pacote de dados', en: 'Unknown data package exception' },
+  '20900': { pt: 'formulário de inscrição moTV tipo de endereço desconhecido exceção', en: 'moTV registration form unknown address type exception' },
+  '20901': { pt: 'Tipo de controle duplicado do formulário de registro do moTV.', en: 'moTV registration form duplicate control type' },
+  '20902': { pt: 'formulário de inscrição moTV exceção desconhecida', en: 'moTV registration form unknown exception' },
+  '20903': { pt: 'formulário de registro moTV controle exceção desconhecida', en: 'moTV registration form unknown control exception' },
+  '20904': { pt: 'O tipo de contato do formulário de inscrição do moTV não pode ser excluído, exceção', en: 'moTV registration form contact type cannot be deleted exception' },
+  '20905': { pt: 'O tipo de endereço do formulário de registro do moTV não pode ser excluído, exceção', en: 'moTV registration form address type cannot be deleted exception' }
 };
 
 const getErrorDescription = (code: number | string): { code: string, pt: string, en: string } | null => {
@@ -151,6 +332,7 @@ export default function AdminIntegration() {
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
   const [selectedJsonData, setSelectedJsonData] = useState<{request: any, response: any} | null>(null);
   const [errorCodesModalOpen, setErrorCodesModalOpen] = useState(false);
+  const [errorCodeSearch, setErrorCodeSearch] = useState('');
 
   useEffect(() => {
     loadSettings();
@@ -1355,6 +1537,14 @@ export default function AdminIntegration() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-4">
+                <Input
+                  placeholder="Buscar por código ou descrição..."
+                  value={errorCodeSearch}
+                  onChange={(e) => setErrorCodeSearch(e.target.value)}
+                  className="bg-admin-input border-admin-border text-admin-foreground placeholder:text-admin-muted-foreground focus:ring-admin-primary focus:border-admin-primary"
+                />
+              </div>
               <div className="overflow-x-auto">
                 <Table className="bg-admin-table-bg border-admin-border">
                   <TableHeader>
@@ -1365,7 +1555,17 @@ export default function AdminIntegration() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {Object.entries(ERROR_CODES).map(([code, descriptions]) => (
+                    {Object.entries(ERROR_CODES)
+                      .filter(([code, descriptions]) => {
+                        if (!errorCodeSearch) return true;
+                        const search = errorCodeSearch.toLowerCase();
+                        return (
+                          code.includes(search) ||
+                          descriptions.pt.toLowerCase().includes(search) ||
+                          descriptions.en.toLowerCase().includes(search)
+                        );
+                      })
+                      .map(([code, descriptions]) => (
                       <TableRow key={code} className="border-admin-border hover:bg-admin-muted/20">
                         <TableCell className="font-medium text-admin-table-text">
                           <Badge variant="outline" className="border-admin-border text-admin-foreground bg-admin-muted/10">
@@ -1382,6 +1582,20 @@ export default function AdminIntegration() {
                     ))}
                   </TableBody>
                 </Table>
+                
+                {Object.entries(ERROR_CODES).filter(([code, descriptions]) => {
+                  if (!errorCodeSearch) return true;
+                  const search = errorCodeSearch.toLowerCase();
+                  return (
+                    code.includes(search) ||
+                    descriptions.pt.toLowerCase().includes(search) ||
+                    descriptions.en.toLowerCase().includes(search)
+                  );
+                }).length === 0 && errorCodeSearch && (
+                  <div className="text-center py-8 text-admin-muted-foreground">
+                    Nenhum código de erro encontrado para "{errorCodeSearch}"
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
