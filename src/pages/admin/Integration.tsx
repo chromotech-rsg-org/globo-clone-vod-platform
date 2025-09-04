@@ -1187,7 +1187,7 @@ export default function AdminIntegration() {
                             {test.endpoint}
                           </TableCell>
                           <TableCell className="text-admin-table-text">
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs border-admin-border text-admin-foreground bg-admin-muted/10">
                               {test.method}
                             </Badge>
                           </TableCell>
