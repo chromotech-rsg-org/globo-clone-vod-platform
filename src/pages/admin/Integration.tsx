@@ -300,7 +300,7 @@ export default function AdminIntegration() {
                     onClick={handleTestConnection} 
                     disabled={testingConnection || !settings.api_base_url || !settings.api_login || !settings.api_secret}
                     variant="outline"
-                    className="gap-2 border-admin-border text-admin-foreground hover:bg-admin-muted"
+                    className="gap-2 border-admin-border text-admin-foreground hover:bg-white hover:text-black"
                   >
                     <Wifi className="h-4 w-4" />
                     {testingConnection ? "Testando..." : "Testar Conexão"}
