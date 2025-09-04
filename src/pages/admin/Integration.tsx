@@ -1,3 +1,4 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -304,7 +305,9 @@ export default function AdminIntegration() {
   const [testHistoryLoading, setTestHistoryLoading] = useState(false);
   const [testHistoryPage, setTestHistoryPage] = useState(1);
   const [testHistoryTotal, setTestHistoryTotal] = useState(0);
-  const ITEMS_PER_PAGE = 20;
+  const [testHistoryItemsPerPage, setTestHistoryItemsPerPage] = useState(5);
+const ITEMS_PER_PAGE_OPTIONS = [5, 10, 20, 50];
+const DEFAULT_ITEMS_PER_PAGE = 5;
   // Load saved test data from localStorage
   const loadSavedTestData = () => {
     const savedCustomerData = localStorage.getItem('motv-test-customerData');
@@ -571,11 +574,11 @@ export default function AdminIntegration() {
   };
 
   // Load persisted test history from Supabase with pagination
-  const loadPersistedTestHistory = async (page: number = 1) => {
+  const loadPersistedTestHistory = async (page: number = 1, itemsPerPage: number = testHistoryItemsPerPage) => {
     setTestHistoryLoading(true);
     try {
-      const from = (page - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const from = (page - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
 
       // Get total count
       const { count, error: countError } = await supabase
@@ -1575,16 +1578,39 @@ export default function AdminIntegration() {
                     Visualize o histórico completo de todos os testes realizados ({testHistoryTotal} registros)
                   </CardDescription>
                 </div>
-                <Button
-                  onClick={() => loadPersistedTestHistory(testHistoryPage)}
-                  disabled={testHistoryLoading}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 border-admin-border text-black hover:bg-black hover:text-white"
-                >
-                  <RefreshCw className={`h-4 w-4 ${testHistoryLoading ? 'animate-spin' : ''}`} />
-                  Atualizar
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={testHistoryItemsPerPage.toString()}
+                    onValueChange={(value) => {
+                      const newItemsPerPage = parseInt(value);
+                      setTestHistoryItemsPerPage(newItemsPerPage);
+                      setTestHistoryPage(1);
+                      loadPersistedTestHistory(1, newItemsPerPage);
+                    }}
+                  >
+                    <SelectTrigger className="w-24 bg-admin-input border-admin-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ITEMS_PER_PAGE_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option.toString()}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-admin-muted-foreground">por página</span>
+                  <Button
+                    onClick={() => loadPersistedTestHistory(testHistoryPage, testHistoryItemsPerPage)}
+                    disabled={testHistoryLoading}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-admin-border text-black hover:bg-black hover:text-white"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${testHistoryLoading ? 'animate-spin' : ''}`} />
+                    Atualizar
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -1696,29 +1722,29 @@ export default function AdminIntegration() {
               </div>
               
               {/* Pagination Controls */}
-              {testHistoryTotal > ITEMS_PER_PAGE && (
+              {testHistoryTotal > testHistoryItemsPerPage && (
                 <div className="flex items-center justify-between space-x-2 py-4">
                   <div className="text-sm text-admin-muted-foreground">
-                    Mostrando {((testHistoryPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(testHistoryPage * ITEMS_PER_PAGE, testHistoryTotal)} de {testHistoryTotal} registros
+                    Mostrando {((testHistoryPage - 1) * testHistoryItemsPerPage) + 1} a {Math.min(testHistoryPage * testHistoryItemsPerPage, testHistoryTotal)} de {testHistoryTotal} registros
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => loadPersistedTestHistory(testHistoryPage - 1)}
+                      onClick={() => loadPersistedTestHistory(testHistoryPage - 1, testHistoryItemsPerPage)}
                       disabled={testHistoryPage <= 1 || testHistoryLoading}
                       className="border-admin-border text-black hover:bg-black hover:text-white"
                     >
                       Anterior
                     </Button>
                     <div className="text-sm text-admin-muted-foreground">
-                      Página {testHistoryPage} de {Math.ceil(testHistoryTotal / ITEMS_PER_PAGE)}
+                      Página {testHistoryPage} de {Math.ceil(testHistoryTotal / testHistoryItemsPerPage)}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => loadPersistedTestHistory(testHistoryPage + 1)}
-                      disabled={testHistoryPage >= Math.ceil(testHistoryTotal / ITEMS_PER_PAGE) || testHistoryLoading}
+                      onClick={() => loadPersistedTestHistory(testHistoryPage + 1, testHistoryItemsPerPage)}
+                      disabled={testHistoryPage >= Math.ceil(testHistoryTotal / testHistoryItemsPerPage) || testHistoryLoading}
                       className="border-admin-border text-black hover:bg-black hover:text-white"
                     >
                       Próxima
