@@ -208,6 +208,7 @@ export class MotvIntegrationService {
     api_base_url: string;
     api_login: string;
     api_secret: string;
+    vendor_id?: number;
   }) {
     // First, deactivate all existing settings
     await supabase
@@ -222,6 +223,7 @@ export class MotvIntegrationService {
         api_base_url: settings.api_base_url,
         api_login: settings.api_login,
         api_secret: settings.api_secret,
+        vendor_id: settings.vendor_id,
         active: true,
       })
       .select()
