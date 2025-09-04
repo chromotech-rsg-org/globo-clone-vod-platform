@@ -299,36 +299,64 @@ export default function AdminIntegration() {
   const [testingSubscribe, setTestingSubscribe] = useState(false);
   const [testingCancel, setTestingCancel] = useState(false);
   const [testHistory, setTestHistory] = useState<TestResult[]>([]);
-  const [customerData, setCustomerData] = useState({
-    login: "Alexandre22",
-    password: "123456",
-    profileName: "Nome Completo",
-    email: "alexandre22@alexandre22.comm",
-    firstname: "Alexandre22",
-    lastname: "Sobrenome"
-  });
-  const [subscribeData, setSubscribeData] = useState({
-    viewers_id: 6869950,
-    products_id: 118
-  });
-  const [cancelData, setCancelData] = useState({
-    viewers_id: 6843842,
-    products_id: 1
-  });
-  const [customerFindData, setCustomerFindData] = useState({
-    viewers_id: 7073359
-  });
-  const [planHistoryData, setPlanHistoryData] = useState({
-    viewers_id: 7073359
-  });
-  const [planListData, setPlanListData] = useState({
-    viewers_id: 7073359
-  });
-  const [authenticateData, setAuthenticateData] = useState({
-    vendors_id: 6843842,
-    login: "alexandre4564@alexandre.com",
-    password: "a@123454655"
-  });
+  // Load saved test data from localStorage
+  const loadSavedTestData = () => {
+    const savedCustomerData = localStorage.getItem('motv-test-customerData');
+    const savedSubscribeData = localStorage.getItem('motv-test-subscribeData');
+    const savedCancelData = localStorage.getItem('motv-test-cancelData');
+    const savedCustomerFindData = localStorage.getItem('motv-test-customerFindData');
+    const savedPlanHistoryData = localStorage.getItem('motv-test-planHistoryData');
+    const savedPlanListData = localStorage.getItem('motv-test-planListData');
+    const savedAuthenticateData = localStorage.getItem('motv-test-authenticateData');
+
+    return {
+      customerData: savedCustomerData ? JSON.parse(savedCustomerData) : {
+        login: "Alexandre22",
+        password: "123456",
+        profileName: "Nome Completo",
+        email: "alexandre22@alexandre22.comm",
+        firstname: "Alexandre22",
+        lastname: "Sobrenome"
+      },
+      subscribeData: savedSubscribeData ? JSON.parse(savedSubscribeData) : {
+        viewers_id: 6869950,
+        products_id: 118
+      },
+      cancelData: savedCancelData ? JSON.parse(savedCancelData) : {
+        viewers_id: 6843842,
+        products_id: 1
+      },
+      customerFindData: savedCustomerFindData ? JSON.parse(savedCustomerFindData) : {
+        viewers_id: 7073359
+      },
+      planHistoryData: savedPlanHistoryData ? JSON.parse(savedPlanHistoryData) : {
+        viewers_id: 7073359
+      },
+      planListData: savedPlanListData ? JSON.parse(savedPlanListData) : {
+        viewers_id: 7073359
+      },
+      authenticateData: savedAuthenticateData ? JSON.parse(savedAuthenticateData) : {
+        vendors_id: 6843842,
+        login: "alexandre4564@alexandre.com",
+        password: "a@123454655"
+      }
+    };
+  };
+
+  // Save test data to localStorage
+  const saveTestDataToStorage = (dataType: string, data: any) => {
+    localStorage.setItem(`motv-test-${dataType}`, JSON.stringify(data));
+  };
+
+  const savedTestData = loadSavedTestData();
+  
+  const [customerData, setCustomerData] = useState(savedTestData.customerData);
+  const [subscribeData, setSubscribeData] = useState(savedTestData.subscribeData);
+  const [cancelData, setCancelData] = useState(savedTestData.cancelData);
+  const [customerFindData, setCustomerFindData] = useState(savedTestData.customerFindData);
+  const [planHistoryData, setPlanHistoryData] = useState(savedTestData.planHistoryData);
+  const [planListData, setPlanListData] = useState(savedTestData.planListData);
+  const [authenticateData, setAuthenticateData] = useState(savedTestData.authenticateData);
   const [testingCustomerFind, setTestingCustomerFind] = useState(false);
   const [testingPlanHistory, setTestingPlanHistory] = useState(false);
   const [testingPlanList, setTestingPlanList] = useState(false);
@@ -585,6 +613,9 @@ export default function AdminIntegration() {
 
   const handleTestCustomerCreate = async () => {
     setTestingCustomerCreate(true);
+    // Save current test data to localStorage
+    saveTestDataToStorage('customerData', customerData);
+    
     try {
       const authToken = generateAuthToken();
       const requestData = { data: customerData };
@@ -640,6 +671,9 @@ export default function AdminIntegration() {
 
   const handleTestSubscribe = async () => {
     setTestingSubscribe(true);
+    // Save current test data to localStorage
+    saveTestDataToStorage('subscribeData', subscribeData);
+    
     try {
       const authToken = generateAuthToken();
       const requestData = { data: subscribeData };
@@ -695,6 +729,9 @@ export default function AdminIntegration() {
 
   const handleTestCancel = async () => {
     setTestingCancel(true);
+    // Save current test data to localStorage
+    saveTestDataToStorage('cancelData', cancelData);
+    
     try {
       const authToken = generateAuthToken();
       const requestData = { data: cancelData };
@@ -746,6 +783,9 @@ export default function AdminIntegration() {
 
   const handleTestCustomerFind = async () => {
     setTestingCustomerFind(true);
+    // Save current test data to localStorage
+    saveTestDataToStorage('customerFindData', customerFindData);
+    
     try {
       const authToken = generateAuthToken();
       const requestData = { data: customerFindData };
@@ -796,6 +836,9 @@ export default function AdminIntegration() {
 
   const handleTestPlanHistory = async () => {
     setTestingPlanHistory(true);
+    // Save current test data to localStorage
+    saveTestDataToStorage('planHistoryData', planHistoryData);
+    
     try {
       const authToken = generateAuthToken();
       const requestData = { data: planHistoryData };
@@ -846,6 +889,9 @@ export default function AdminIntegration() {
 
   const handleTestPlanList = async () => {
     setTestingPlanList(true);
+    // Save current test data to localStorage
+    saveTestDataToStorage('planListData', planListData);
+    
     try {
       const authToken = generateAuthToken();
       const requestData = { data: planListData };
@@ -896,6 +942,9 @@ export default function AdminIntegration() {
 
   const handleTestAuthenticate = async () => {
     setTestingAuthenticate(true);
+    // Save current test data to localStorage
+    saveTestDataToStorage('authenticateData', authenticateData);
+    
     try {
       const authToken = generateAuthToken();
       const requestData = { data: authenticateData };
