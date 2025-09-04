@@ -274,13 +274,13 @@ export default function AdminIntegration() {
     }
   };
 
-  const generateAuthToken = () => {
-    const login = "gentv.api";
-    const secret = "cvehyx0cx43kmqmcwiclq4ajroe2ar0yt10q6y3n";
+  const generateAuthToken = (login?: string, secret?: string) => {
+    const apiLogin = login || settings.api_login || "gentv.api";
+    const apiSecret = secret || settings.api_secret || "cvehyx0cx43kmqmcwiclq4ajroe2ar0yt10q6y3n";
     const timestamp = Math.floor(Date.now() / 1000);
-    const stringToHash = timestamp + login + secret;
+    const stringToHash = timestamp + apiLogin + apiSecret;
     const tokenHash = CryptoJS.SHA1(stringToHash).toString();
-    return login + ":" + timestamp + ":" + tokenHash;
+    return apiLogin + ":" + timestamp + ":" + tokenHash;
   };
 
   // Persist a single test result to Supabase
