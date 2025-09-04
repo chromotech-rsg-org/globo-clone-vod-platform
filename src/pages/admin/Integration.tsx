@@ -294,7 +294,7 @@ export default function AdminIntegration() {
   const [showPassword, setShowPassword] = useState(false);
   const [settings, setSettings] = useState<IntegrationSettings>({
     api_base_url: '',
-    api_login: '',
+    api_login: 'agroplay.api',
     api_secret: '',
     vendor_id: 6843842,
   });
@@ -396,7 +396,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
         setSettings({
           id: data.id,
           api_base_url: data.api_base_url,
-          api_login: data.api_login,
+          api_login: data.api_login || 'agroplay.api',
           api_secret: data.api_secret,
           vendor_id: data.vendor_id || 6843842,
         });
@@ -566,7 +566,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
           success,
           created_at: timestamp,
           user_id: userData?.user?.id || null,
-          api_login: apiLogin || null
+          api_login: apiLogin || settings.api_login || 'agroplay.api'
         }]);
       if (error) {
         console.error('Error saving test result:', error);
@@ -618,7 +618,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
         timestamp: row.created_at,
         user_id: row.user_id,
         user_email: 'Sistema', // User email not available without join
-        api_login: row.api_login || 'N/A', // New API login column
+        api_login: row.api_login || settings.api_login || 'agroplay.api', // New API login column
       })) as TestResult[];
 
       setTestHistory(mapped);
@@ -640,11 +640,11 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       statusCode,
       success,
       timestamp: new Date().toISOString(),
-      api_login: apiLogin || 'N/A'
+      api_login: apiLogin || settings.api_login || 'agroplay.api'
     };
     
     // Persist to database first
-    await saveTestResultToDb(endpoint, method, requestData, response, statusCode, success, testResult.timestamp, apiLogin);
+    await saveTestResultToDb(endpoint, method, requestData, response, statusCode, success, testResult.timestamp, apiLogin || settings.api_login || 'agroplay.api');
     
     // Reload the first page to show the new test result
     await loadPersistedTestHistory(1, testHistoryItemsPerPage);
