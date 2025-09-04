@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import DataTablePagination from '@/components/admin/DataTablePagination';
 import UserFormDialog from '@/components/admin/UserFormDialog';
+import { useCustomizations } from '@/hooks/useCustomizations';
 
 interface User {
   id: string;
@@ -35,6 +36,9 @@ const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+  const { customizations } = useCustomizations('home');
+
+  const projectName = customizations['global_global_site_name'] || 'MOTV';
 
   const isDeveloper = currentUser?.role === 'desenvolvedor';
 
@@ -205,11 +209,11 @@ const AdminUsers = () => {
             <Table>
                <TableHeader>
                  <TableRow className="border-gray-700">
-                   <TableHead className="text-gray-300">Nome</TableHead>
-                   <TableHead className="text-gray-300">Email</TableHead>
-                   <TableHead className="text-gray-300">Função</TableHead>
-                   <TableHead className="text-gray-300">ID MOTV</TableHead>
-                   <TableHead className="text-gray-300">Ações</TableHead>
+                    <TableHead className="text-gray-300">Nome</TableHead>
+                    <TableHead className="text-gray-300">Email</TableHead>
+                    <TableHead className="text-gray-300">Função</TableHead>
+                    <TableHead className="text-gray-300">ID {projectName}</TableHead>
+                    <TableHead className="text-gray-300">Ações</TableHead>
                  </TableRow>
                </TableHeader>
               <TableBody>
