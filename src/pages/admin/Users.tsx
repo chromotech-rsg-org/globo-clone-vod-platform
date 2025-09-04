@@ -211,7 +211,15 @@ const AdminUsers = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map(user => (
+                {users
+                  .filter(user => {
+                    // Additional UI-level security: hide developer users from non-developers
+                    if (user.role === 'desenvolvedor' && !isDeveloper) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map(user => (
                   <TableRow key={user.id} className="border-gray-700">
                     <TableCell className="text-white">{user.name}</TableCell>
                     <TableCell className="text-white">{user.email}</TableCell>
