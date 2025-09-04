@@ -268,6 +268,7 @@ const AdminSubscriptions = () => {
               </TableBody>
             </Table>
             
+            {/* Always show pagination controls */}
             <DataTablePagination
               currentPage={currentPage}
               totalPages={totalPages}
