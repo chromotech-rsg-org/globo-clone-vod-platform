@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import DataTablePagination from '@/components/admin/DataTablePagination';
 import UserFormDialog from '@/components/admin/UserFormDialog';
 
@@ -32,10 +33,13 @@ const AdminUsers = () => {
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+
+  const isDeveloper = currentUser?.role === 'desenvolvedor';
 
   useEffect(() => {
     fetchUsers();
-  }, [roleFilter, currentPage, pageSize, searchTerm]);
+  }, [roleFilter, currentPage, pageSize, searchTerm, isDeveloper]);
 
   const fetchUsers = async () => {
     try {
@@ -45,6 +49,11 @@ const AdminUsers = () => {
         .from('profiles')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
+
+      // If the current user is not a developer, exclude developer users
+      if (!isDeveloper) {
+        query = query.neq('role', 'desenvolvedor');
+      }
 
       if (roleFilter !== 'all') {
         query = query.eq('role', roleFilter);
@@ -185,7 +194,7 @@ const AdminUsers = () => {
             <option value="all">Todas as Funções</option>
             <option value="user">Usuário</option>
             <option value="admin">Administrador</option>
-            <option value="desenvolvedor">Desenvolvedor</option>
+            {isDeveloper && <option value="desenvolvedor">Desenvolvedor</option>}
           </select>
         </div>
 
