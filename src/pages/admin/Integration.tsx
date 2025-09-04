@@ -8,8 +8,9 @@ import { MotvIntegrationService } from "@/services/motvIntegration";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Settings, History, Play, Eye, EyeOff, Wifi } from "lucide-react";
+import { RefreshCw, Settings, History, Play, Eye, EyeOff, Wifi, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import CryptoJS from "crypto-js";
 
 interface IntegrationSettings {
   id?: string;
@@ -51,6 +52,15 @@ export default function AdminIntegration() {
     api_secret: '',
   });
   const [jobs, setJobs] = useState<IntegrationJob[]>([]);
+  const [testingCustomerCreate, setTestingCustomerCreate] = useState(false);
+  const [customerData, setCustomerData] = useState({
+    login: "Alexandre22",
+    password: "123456",
+    profileName: "Nome Completo",
+    email: "alexandre22@alexandre22.comm",
+    firstname: "Alexandre22",
+    lastname: "Sobrenome"
+  });
 
   useEffect(() => {
     loadSettings();
@@ -173,6 +183,57 @@ export default function AdminIntegration() {
     }
   };
 
+  const generateAuthToken = () => {
+    const login = "gentv.api";
+    const secret = "cvehyx0cx43kmqmcwiclq4ajroe2ar0yt10q6y3n";
+    const timestamp = Math.floor(Date.now() / 1000);
+    const stringToHash = timestamp + login + secret;
+    const tokenHash = CryptoJS.SHA1(stringToHash).toString();
+    return login + ":" + timestamp + ":" + tokenHash;
+  };
+
+  const handleTestCustomerCreate = async () => {
+    setTestingCustomerCreate(true);
+    try {
+      const authToken = generateAuthToken();
+      
+      const response = await fetch(`${settings.api_base_url}/api/integration/createMotvCustomer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authToken,
+        },
+        body: JSON.stringify({
+          data: customerData
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Usuário criado com sucesso!",
+          description: `Resposta da API: ${JSON.stringify(result)}`,
+        });
+      } else {
+        toast({
+          title: "Erro ao criar usuário",
+          description: `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a criação do usuário. Verifique a configuração da API.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingCustomerCreate(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -206,10 +267,14 @@ export default function AdminIntegration() {
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-admin-card border-admin-border">
+        <TabsList className="grid w-full grid-cols-3 bg-admin-card border-admin-border">
           <TabsTrigger value="settings" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <Settings className="h-4 w-4" />
             Configurações
+          </TabsTrigger>
+          <TabsTrigger value="tests" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
+            <User className="h-4 w-4" />
+            Testes de API
           </TabsTrigger>
           <TabsTrigger value="jobs" className="gap-2 text-admin-foreground data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground">
             <History className="h-4 w-4" />
@@ -307,6 +372,94 @@ export default function AdminIntegration() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tests">
+          <Card className="bg-admin-card border-admin-border">
+            <CardHeader>
+              <CardTitle className="text-admin-foreground">Customer Create (Criar usuário)</CardTitle>
+              <CardDescription className="text-admin-muted-foreground">
+                Teste de criação de usuário via API MOTV
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login" className="text-admin-foreground">Login</Label>
+                    <Input
+                      id="login"
+                      value={customerData.login}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, login: e.target.value }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-admin-foreground">Password</Label>
+                    <Input
+                      id="password"
+                      value={customerData.password}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, password: e.target.value }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="profileName" className="text-admin-foreground">Nome do Perfil</Label>
+                  <Input
+                    id="profileName"
+                    value={customerData.profileName}
+                    onChange={(e) => setCustomerData(prev => ({ ...prev, profileName: e.target.value }))}
+                    className="bg-admin-input border-admin-border text-admin-foreground"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-admin-foreground">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={customerData.email}
+                    onChange={(e) => setCustomerData(prev => ({ ...prev, email: e.target.value }))}
+                    className="bg-admin-input border-admin-border text-admin-foreground"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstname" className="text-admin-foreground">Primeiro Nome</Label>
+                    <Input
+                      id="firstname"
+                      value={customerData.firstname}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, firstname: e.target.value }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastname" className="text-admin-foreground">Sobrenome</Label>
+                    <Input
+                      id="lastname"
+                      value={customerData.lastname}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, lastname: e.target.value }))}
+                      className="bg-admin-input border-admin-border text-admin-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    onClick={handleTestCustomerCreate}
+                    disabled={testingCustomerCreate || !settings.api_base_url}
+                    className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                  >
+                    <User className="h-4 w-4" />
+                    {testingCustomerCreate ? "Criando usuário..." : "Testar Criação de Usuário"}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
