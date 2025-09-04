@@ -283,6 +283,7 @@ interface TestResult {
   timestamp: string;
   user_id?: string;
   user_email?: string;
+  api_login?: string;
 }
 
 export default function AdminIntegration() {
@@ -549,7 +550,8 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
     response: any,
     statusCode: number,
     success: boolean,
-    timestamp: string
+    timestamp: string,
+    apiLogin?: string
   ) => {
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -564,6 +566,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
           success,
           created_at: timestamp,
           user_id: userData?.user?.id || null,
+          api_login: apiLogin || null
         }]);
       if (error) {
         console.error('Error saving test result:', error);
@@ -615,6 +618,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
         timestamp: row.created_at,
         user_id: row.user_id,
         user_email: 'Sistema', // User email not available without join
+        api_login: row.api_login || 'N/A', // New API login column
       })) as TestResult[];
 
       setTestHistory(mapped);
@@ -626,7 +630,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
     }
   };
 
-  const addToTestHistory = async (endpoint: string, method: string, requestData: any, response: any, statusCode: number, success: boolean) => {
+  const addToTestHistory = async (endpoint: string, method: string, requestData: any, response: any, statusCode: number, success: boolean, apiLogin?: string) => {
     const testResult: TestResult = {
       id: Date.now().toString(),
       endpoint,
@@ -635,14 +639,15 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       response,
       statusCode,
       success,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      api_login: apiLogin || 'N/A'
     };
     
     // Persist to database first
-    await saveTestResultToDb(endpoint, method, requestData, response, statusCode, success, testResult.timestamp);
+    await saveTestResultToDb(endpoint, method, requestData, response, statusCode, success, testResult.timestamp, apiLogin);
     
     // Reload the first page to show the new test result
-    await loadPersistedTestHistory(1);
+    await loadPersistedTestHistory(1, testHistoryItemsPerPage);
   };
 
   const handleTestCustomerCreate = async () => {
@@ -670,7 +675,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       const apiSuccess = result.status === 1 || result.status === '1';
       
       // Adicionar ao histórico
-      addToTestHistory('api/integration/createMotvCustomer', 'POST', requestData, result, response.status, apiSuccess);
+      addToTestHistory('api/integration/createMotvCustomer', 'POST', requestData, result, response.status, apiSuccess, settings.api_login);
 
       if (apiSuccess) {
         toast({
@@ -692,7 +697,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       }
     } catch (error) {
       console.error('Error creating customer:', error);
-      addToTestHistory('api/integration/createMotvCustomer', 'POST', { data: customerData }, { error: error.message }, 0, false);
+      addToTestHistory('api/integration/createMotvCustomer', 'POST', { data: customerData }, { error: error.message }, 0, false, settings.api_login);
       toast({
         title: "Erro no teste",
         description: "Não foi possível testar a criação do usuário. Verifique a configuração da API.",
@@ -728,7 +733,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       const apiSuccess = result.status === 1 || result.status === '1';
       
       // Adicionar ao histórico
-      addToTestHistory('api/integration/subscribe', 'POST', requestData, result, response.status, apiSuccess);
+      addToTestHistory('api/integration/subscribe', 'POST', requestData, result, response.status, apiSuccess, settings.api_login);
 
       if (apiSuccess) {
         toast({
@@ -750,7 +755,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       }
     } catch (error) {
       console.error('Error creating subscription:', error);
-      addToTestHistory('api/integration/subscribe', 'POST', { data: subscribeData }, { error: error.message }, 0, false);
+      addToTestHistory('api/integration/subscribe', 'POST', { data: subscribeData }, { error: error.message }, 0, false, settings.api_login);
       toast({
         title: "Erro no teste",
         description: "Não foi possível testar a criação do plano. Verifique a configuração da API.",
@@ -783,7 +788,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       const result = await response.json();
       
       // Adicionar ao histórico
-      addToTestHistory('api/integration/cancel', 'POST', requestData, result, response.status, response.ok);
+      addToTestHistory('api/integration/cancel', 'POST', requestData, result, response.status, response.ok, settings.api_login);
 
       if (response.ok) {
         toast({
@@ -804,7 +809,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       }
     } catch (error) {
       console.error('Error canceling subscription:', error);
-      addToTestHistory('api/integration/cancel', 'POST', { data: cancelData }, { error: error.message }, 0, false);
+      addToTestHistory('api/integration/cancel', 'POST', { data: cancelData }, { error: error.message }, 0, false, settings.api_login);
       toast({
         title: "Erro no teste",
         description: "Não foi possível testar o cancelamento do plano. Verifique a configuração da API.",
@@ -836,7 +841,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
 
       const result = await response.json();
       
-      addToTestHistory('api/customer/getDataV2', 'POST', requestData, result, response.status, response.ok);
+      addToTestHistory('api/customer/getDataV2', 'POST', requestData, result, response.status, response.ok, settings.api_login);
 
       if (response.ok) {
         toast({
@@ -857,7 +862,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       }
     } catch (error) {
       console.error('Error getting customer data:', error);
-      addToTestHistory('api/customer/getDataV2', 'POST', { data: customerFindData }, { error: error.message }, 0, false);
+      addToTestHistory('api/customer/getDataV2', 'POST', { data: customerFindData }, { error: error.message }, 0, false, settings.api_login);
       toast({
         title: "Erro no teste",
         description: "Não foi possível testar a obtenção dos dados do cliente. Verifique a configuração da API.",
@@ -889,7 +894,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
 
       const result = await response.json();
       
-      addToTestHistory('api/subscription/getCustomerSubscriptionInfo', 'POST', requestData, result, response.status, response.ok);
+      addToTestHistory('api/subscription/getCustomerSubscriptionInfo', 'POST', requestData, result, response.status, response.ok, settings.api_login);
 
       if (response.ok) {
         toast({
@@ -910,7 +915,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       }
     } catch (error) {
       console.error('Error getting plan history:', error);
-      addToTestHistory('api/subscription/getCustomerSubscriptionInfo', 'POST', { data: planHistoryData }, { error: error.message }, 0, false);
+      addToTestHistory('api/subscription/getCustomerSubscriptionInfo', 'POST', { data: planHistoryData }, { error: error.message }, 0, false, settings.api_login);
       toast({
         title: "Erro no teste",
         description: "Não foi possível testar a obtenção do histórico de planos. Verifique a configuração da API.",
@@ -942,7 +947,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
 
       const result = await response.json();
       
-      addToTestHistory('api/sales/getAllowedProductsForCustomer', 'POST', requestData, result, response.status, response.ok);
+      addToTestHistory('api/sales/getAllowedProductsForCustomer', 'POST', requestData, result, response.status, response.ok, settings.api_login);
 
       if (response.ok) {
         toast({
@@ -963,7 +968,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       }
     } catch (error) {
       console.error('Error getting plan list:', error);
-      addToTestHistory('api/sales/getAllowedProductsForCustomer', 'POST', { data: planListData }, { error: error.message }, 0, false);
+      addToTestHistory('api/sales/getAllowedProductsForCustomer', 'POST', { data: planListData }, { error: error.message }, 0, false, settings.api_login);
       toast({
         title: "Erro no teste",
         description: "Não foi possível testar a obtenção da lista de planos. Verifique a configuração da API.",
@@ -995,7 +1000,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
 
       const result = await response.json();
       
-      addToTestHistory('api/devices/motv/apiLoginV2', 'POST', requestData, result, response.status, response.ok);
+      addToTestHistory('api/devices/motv/apiLoginV2', 'POST', requestData, result, response.status, response.ok, settings.api_login);
 
       if (response.ok) {
         toast({
@@ -1016,7 +1021,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
       }
     } catch (error) {
       console.error('Error authenticating:', error);
-      addToTestHistory('api/devices/motv/apiLoginV2', 'POST', { data: authenticateData }, { error: error.message }, 0, false);
+      addToTestHistory('api/devices/motv/apiLoginV2', 'POST', { data: authenticateData }, { error: error.message }, 0, false, settings.api_login);
       toast({
         title: "Erro no teste",
         description: "Não foi possível testar a autenticação. Verifique a configuração da API.",
@@ -1623,6 +1628,7 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
                       <TableHead className="text-admin-foreground">Status</TableHead>
                       <TableHead className="text-admin-foreground">Código</TableHead>
                       <TableHead className="text-admin-foreground">Data/Hora</TableHead>
+                      <TableHead className="text-admin-foreground">Login da API</TableHead>
                       <TableHead className="text-admin-foreground">Executado por</TableHead>
                       <TableHead className="text-admin-foreground">Login/Viewers ID</TableHead>
                       <TableHead className="text-admin-foreground">Email/Products ID</TableHead>
@@ -1633,13 +1639,13 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
                   <TableBody>
                     {testHistoryLoading ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-admin-muted-foreground">
+                        <TableCell colSpan={11} className="text-center py-8 text-admin-muted-foreground">
                           Carregando histórico...
                         </TableCell>
                       </TableRow>
                     ) : testHistory.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-admin-muted-foreground">
+                        <TableCell colSpan={11} className="text-center py-8 text-admin-muted-foreground">
                           Nenhum teste realizado ainda
                         </TableCell>
                       </TableRow>
@@ -1670,6 +1676,9 @@ const DEFAULT_ITEMS_PER_PAGE = 5;
                             </TableCell>
                             <TableCell className="text-admin-table-text">
                               {formatDate(test.timestamp)}
+                            </TableCell>
+                            <TableCell className="text-admin-table-text">
+                              {test.api_login || 'N/A'}
                             </TableCell>
                             <TableCell className="text-admin-table-text">
                               {test.user_email || 'Sistema'}

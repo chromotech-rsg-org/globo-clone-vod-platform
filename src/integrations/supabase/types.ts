@@ -544,6 +544,7 @@ export type Database = {
       }
       integration_test_results: {
         Row: {
+          api_login: string | null
           created_at: string
           endpoint: string
           id: string
@@ -555,6 +556,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          api_login?: string | null
           created_at?: string
           endpoint: string
           id?: string
@@ -566,6 +568,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          api_login?: string | null
           created_at?: string
           endpoint?: string
           id?: string
