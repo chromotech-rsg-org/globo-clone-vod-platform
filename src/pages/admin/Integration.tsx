@@ -163,7 +163,7 @@ export default function AdminIntegration() {
           onClick={loadJobsHistory}
           variant="outline"
           size="sm"
-          className="gap-2 border-admin-border text-black hover:bg-admin-muted"
+          className="gap-2 border-admin-border text-black hover:bg-black hover:text-white"
         >
           <RefreshCw className="h-4 w-4" />
           Atualizar
