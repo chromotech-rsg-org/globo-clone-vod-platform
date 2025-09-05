@@ -485,9 +485,9 @@ export const CustomerTester: React.FC<CustomerTesterProps> = ({ environment, api
         </div>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <h4 className="font-medium text-amber-800">Dicas Importantes:</h4>
-        <ul className="text-sm text-amber-700 mt-2 space-y-1">
+      <div className="bg-admin-card border border-admin-border rounded-lg p-4">
+        <h4 className="font-medium text-admin-primary">Dicas Importantes:</h4>
+        <ul className="text-sm text-admin-muted-foreground mt-2 space-y-1">
           <li>• Verifique se não há clientes duplicados antes de criar</li>
           <li>• Se informar o CEP, não informe cidade, estado e endereço</li>
           <li>• Use seus próprios dados para testes em sandbox</li>
