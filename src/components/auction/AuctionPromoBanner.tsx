@@ -95,16 +95,18 @@ const AuctionPromoBanner = () => {
             </div>
           </div>
           
-          <Button 
-            asChild 
-            size="lg" 
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-primary/20"
-          >
-            <Link to="/auctions" className="flex items-center space-x-2">
-              <span>Ver Todos os Leilões</span>
-              <TrendingUp className="h-4 w-4" />
-            </Link>
-          </Button>
+          {isHomePage && (
+            <Button 
+              asChild 
+              size="lg" 
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-primary/20"
+            >
+              <Link to="/auctions" className="flex items-center space-x-2">
+                <span>Ver Todos os Leilões</span>
+                <TrendingUp className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
         </div>
 
         {/* Stats Grid - more compact */}
