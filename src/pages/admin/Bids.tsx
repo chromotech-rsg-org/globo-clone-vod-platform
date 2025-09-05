@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Search, Edit, Check, X } from 'lucide-react';
+import { Trash2, Search, Edit, Check, X, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
@@ -183,6 +183,32 @@ const AdminBids = () => {
     }
   };
 
+  const handleSetWinner = async (bidId: string) => {
+    if (!confirm('Tem certeza que deseja marcar este lance como vencedor?')) return;
+    
+    try {
+      const { error } = await supabase.rpc('set_bid_winner', { 
+        p_bid_id: bidId 
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Lance marcado como vencedor"
+      });
+      
+      fetchBids();
+    } catch (error) {
+      console.error('Erro ao marcar como vencedor:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível marcar o lance como vencedor",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -232,6 +258,7 @@ const AdminBids = () => {
                   <TableHead className="text-admin-muted-foreground">Usuário ID</TableHead>
                   <TableHead className="text-admin-muted-foreground">Valor</TableHead>
                   <TableHead className="text-admin-muted-foreground">Status</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Vencedor</TableHead>
                   <TableHead className="text-admin-muted-foreground">Data</TableHead>
                   <TableHead className="text-admin-muted-foreground">Ações</TableHead>
                 </TableRow>
@@ -247,6 +274,16 @@ const AdminBids = () => {
                       <Badge variant={getStatusVariant(bid.status)}>
                         {getStatusDisplay(bid.status)}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {bid.is_winner ? (
+                        <Badge variant="admin-success" className="bg-yellow-500 text-black">
+                          <Trophy className="h-3 w-3 mr-1" />
+                          Vencedor
+                        </Badge>
+                      ) : (
+                        <span className="text-admin-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-admin-table-text">
                       {new Date(bid.created_at).toLocaleDateString()}
@@ -283,6 +320,17 @@ const AdminBids = () => {
                               <X className="h-4 w-4" />
                             </Button>
                           </>
+                        )}
+                        {bid.status === 'approved' && !bid.is_winner && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleSetWinner(bid.id)}
+                            className="text-yellow-400 hover:text-yellow-300 hover:bg-gray-800"
+                            title="Marcar como Vencedor"
+                          >
+                            <Trophy className="h-4 w-4" />
+                          </Button>
                         )}
                         <Button 
                           size="sm" 
