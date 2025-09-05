@@ -182,7 +182,7 @@ const PlansSection = () => {
                 <div className="text-4xl font-bold text-white mb-2">
                   {formatPrice(plan.price, plan.billing_cycle)}
                 </div>
-                {plan.free_days && plan.free_days > 0 && (
+                {plan.free_days !== null && plan.free_days !== undefined && plan.free_days > 0 && (
                   <p className="text-blue-400 text-sm">
                     {plan.free_days} dias grátis
                   </p>
