@@ -23,7 +23,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   useEffect(() => {
     const adminPaths = [
       '/dashboard',
-      '/admin/usuarios', 
+      '/admin/usuarios',
       '/admin/pacotes',
       '/admin/planos',
       '/admin/assinaturas',
@@ -33,12 +33,13 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       '/admin/habilitacoes',
       '/admin/lances',
       '/admin/personalizacao',
+      '/admin/asaas-api-tester',
       '/profile',
       '/subscription'
     ];
     
-    // Check if current path starts with any admin path (to handle query params)
-    const isValidPath = adminPaths.some(path => location.pathname === path);
+    // Consider path prefixes (e.g., query params or nested routes)
+    const isValidPath = adminPaths.some(path => location.pathname.startsWith(path));
     
     if (!isValidPath) {
       console.log('⚠️ Invalid admin route detected:', location.pathname);
