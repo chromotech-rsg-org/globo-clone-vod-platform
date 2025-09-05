@@ -9,15 +9,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border bg-admin-input text-admin-foreground border-admin-border hover:bg-admin-muted hover:text-admin-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-admin-muted text-admin-foreground hover:bg-admin-muted/80",
+        ghost: "hover:bg-admin-muted hover:text-admin-foreground",
+        link: "text-admin-primary underline-offset-4 hover:underline",
         admin: "bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90",
         "admin-success": "bg-admin-success text-admin-success-foreground hover:bg-admin-success/90",
         "admin-danger": "bg-admin-danger text-admin-danger-foreground hover:bg-admin-danger/90",

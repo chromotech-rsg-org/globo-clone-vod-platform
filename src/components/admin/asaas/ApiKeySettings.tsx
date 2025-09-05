@@ -182,7 +182,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
               <Copy className="w-4 h-4" />
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-admin-muted-foreground mt-2">
             Configure esta URL no painel do Asaas para receber notificações de eventos.
           </p>
         </CardContent>
@@ -203,9 +203,9 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
       </div>
 
       {environment === 'sandbox' && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-medium text-yellow-800">Dicas para Sandbox:</h4>
-          <ul className="text-sm text-yellow-700 mt-2 space-y-1">
+        <div className="bg-admin-card border border-admin-border rounded-lg p-4">
+          <h4 className="font-medium text-admin-primary">Dicas para Sandbox:</h4>
+          <ul className="text-sm text-admin-muted-foreground mt-2 space-y-1">
             <li>• Use seus próprios e-mails e telefones para testes</li>
             <li>• Evite números aleatórios como (51) 9999-9999</li>
             <li>• CPF de teste: 24971563792</li>
