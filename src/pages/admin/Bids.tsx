@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, Search, Edit, Check, X, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,6 +55,8 @@ const AdminBids = () => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [winnerFilter, setWinnerFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
@@ -63,7 +66,7 @@ const AdminBids = () => {
 
   useEffect(() => {
     fetchBids();
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, searchTerm, statusFilter, winnerFilter]);
 
   const fetchBids = async () => {
     try {
@@ -78,8 +81,25 @@ const AdminBids = () => {
         `, { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter - search across multiple fields
       if (searchTerm) {
-        query = query.or(`id.ilike.%${searchTerm}%`);
+        query = query.or(`
+          id.ilike.%${searchTerm}%,
+          auctions.name.ilike.%${searchTerm}%,
+          profiles.name.ilike.%${searchTerm}%
+        `);
+      }
+
+      // Apply status filter
+      if (statusFilter && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      // Apply winner filter
+      if (winnerFilter === 'winner') {
+        query = query.eq('is_winner', true);
+      } else if (winnerFilter === 'not_winner') {
+        query = query.eq('is_winner', false);
       }
 
       const { data, error, count } = await query
@@ -236,6 +256,23 @@ const AdminBids = () => {
     setCurrentPage(1);
   };
 
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleWinnerFilterChange = (value: string) => {
+    setWinnerFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setWinnerFilter('all');
+    setCurrentPage(1);
+  };
+
   const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
@@ -247,16 +284,58 @@ const AdminBids = () => {
       </header>
 
       <div className="p-6">
-        {/* Search */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar lances..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
-            />
+        {/* Search and Filters */}
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Buscar por ID, leilão ou usuário..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="pl-10 bg-admin-content-bg border-admin-border text-admin-table-text"
+              />
+            </div>
+            
+            {/* Status Filter */}
+            <div className="w-full lg:w-48">
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent className="bg-admin-card border-admin-border">
+                  <SelectItem value="all">Todos os Status</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="approved">Aprovado</SelectItem>
+                  <SelectItem value="rejected">Rejeitado</SelectItem>
+                  <SelectItem value="superseded">Superado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Winner Filter */}
+            <div className="w-full lg:w-48">
+              <Select value={winnerFilter} onValueChange={handleWinnerFilterChange}>
+                <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
+                  <SelectValue placeholder="Vencedor" />
+                </SelectTrigger>
+                <SelectContent className="bg-admin-card border-admin-border">
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="winner">Apenas Vencedores</SelectItem>
+                  <SelectItem value="not_winner">Não Vencedores</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Clear Filters */}
+            <Button
+              variant="outline"
+              onClick={handleClearFilters}
+              className="border-admin-border text-admin-table-text hover:bg-admin-hover"
+            >
+              Limpar Filtros
+            </Button>
           </div>
         </div>
 
