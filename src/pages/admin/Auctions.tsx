@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ const AdminAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -26,6 +27,16 @@ const AdminAuctions = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(inputValue);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [inputValue]);
 
   useEffect(() => {
     fetchAuctions();
@@ -131,8 +142,7 @@ const AdminAuctions = () => {
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
+    setInputValue(e.target.value);
   };
 
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -158,9 +168,9 @@ const AdminAuctions = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Buscar leilões..."
-              value={searchTerm}
+              value={inputValue}
               onChange={handleSearchChange}
-              className="pl-10 bg-black border-green-600/30 text-white"
+              className="pl-10 bg-admin-input border-admin-border text-admin-foreground placeholder:text-admin-muted-foreground focus-visible:ring-admin-primary"
             />
           </div>
           <Button onClick={handleCreate} variant="admin">
