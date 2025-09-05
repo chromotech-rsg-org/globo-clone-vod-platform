@@ -18,7 +18,8 @@ import {
   Bell,
   Plug,
   Settings,
-  ChevronDown
+  ChevronDown,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
@@ -230,6 +231,62 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
       {/* Navigation */}
       <nav className="mt-2 flex-1 overflow-y-auto px-3 space-y-1">
+        {/* External Links Section */}
+        {!isCollapsed && (
+          <div className="mb-4">
+            <div className="text-xs text-admin-muted-foreground uppercase tracking-wide font-semibold px-3 py-2 mb-2">
+              Navegação Externa
+            </div>
+            <div className="space-y-1">
+              <button
+                onClick={() => window.open('/', '_blank')}
+                className="group flex items-center w-full px-3 py-3 text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text transition-all duration-200 rounded-lg"
+                title="Abrir Home em nova aba"
+              >
+                <Home className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+                <span className="ml-3 font-medium">Ir para Home</span>
+                <ExternalLink className="h-4 w-4 ml-auto opacity-50" />
+              </button>
+              <button
+                onClick={() => window.open('/auctions', '_blank')}
+                className="group flex items-center w-full px-3 py-3 text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text transition-all duration-200 rounded-lg"
+                title="Abrir Leilões em nova aba"
+              >
+                <Gavel className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+                <span className="ml-3 font-medium">Ver Leilões</span>
+                <ExternalLink className="h-4 w-4 ml-auto opacity-50" />
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Collapsed External Links */}
+        {isCollapsed && (
+          <div className="mb-4 space-y-1">
+            <button
+              onClick={() => window.open('/', '_blank')}
+              className="group flex items-center justify-center w-full px-3 py-3 text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text transition-all duration-200 rounded-lg hover:scale-102"
+              title="Ir para Home (nova aba)"
+            >
+              <Home className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+            </button>
+            <button
+              onClick={() => window.open('/auctions', '_blank')}
+              className="group flex items-center justify-center w-full px-3 py-3 text-admin-muted-foreground hover:bg-admin-muted hover:text-admin-sidebar-text transition-all duration-200 rounded-lg hover:scale-102"
+              title="Ver Leilões (nova aba)"
+            >
+              <Gavel className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+            </button>
+          </div>
+        )}
+
+        {/* Admin Menu Items */}
+        {!isCollapsed && (
+          <div className="text-xs text-admin-muted-foreground uppercase tracking-wide font-semibold px-3 py-2 mb-2">
+            Painel Administrativo
+          </div>
+        )}
+        
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
