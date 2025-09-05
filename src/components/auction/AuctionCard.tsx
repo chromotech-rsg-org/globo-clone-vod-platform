@@ -127,12 +127,12 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
                       <div className="flex items-center gap-1.5 min-w-0">
                         <Clock size={10} />
                         <span className="font-medium text-gray-300 truncate">
-                          {new Date(auction.start_date).toLocaleDateString('pt-BR')}
+                          {new Date(auction.start_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                         </span>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <div className="text-xs text-gray-400">
-                          {new Date(auction.start_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {new Date(auction.end_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(auction.start_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })} - {new Date(auction.end_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
                         </div>
                       </div>
                     </div>
@@ -172,9 +172,9 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
                     })()}
                   </>
                 ) : auction.start_date ? (
-                  <div className="truncate">Início: {new Date(auction.start_date).toLocaleString('pt-BR')}</div>
+                  <div className="truncate">Início: {new Date(auction.start_date).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>
                 ) : auction.end_date ? (
-                  <div className="truncate">Fim: {new Date(auction.end_date).toLocaleString('pt-BR')}</div>
+                  <div className="truncate">Fim: {new Date(auction.end_date).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>
                 ) : null}
               </div>
             ) : (

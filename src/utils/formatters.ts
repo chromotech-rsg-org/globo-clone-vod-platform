@@ -27,7 +27,8 @@ export const formatDate = (dateString: string): string => {
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo'
     });
   } catch (error) {
     return dateString;
@@ -51,9 +52,27 @@ export const formatDateTime = (dateString: string): string => {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
     });
   } catch (error) {
     return dateString;
+  }
+};
+
+export const formatDateTimeForInput = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  
+  try {
+    // Convert UTC datetime to Brazil timezone for form input
+    const date = new Date(dateString);
+    // Adjust for Brazil timezone (UTC-3)
+    const brazilOffset = -3 * 60; // minutes
+    const utcOffset = date.getTimezoneOffset();
+    const adjustedDate = new Date(date.getTime() + (brazilOffset - utcOffset) * 60000);
+    
+    return adjustedDate.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm format
+  } catch (error) {
+    return '';
   }
 };

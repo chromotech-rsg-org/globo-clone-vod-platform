@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import CurrencyInput from '@/components/ui/currency-input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Auction } from '@/types/auction';
+import { formatDateTimeForInput } from '@/utils/formatters';
 
 const AuctionEdit = () => {
   const { id } = useParams();
@@ -22,7 +24,6 @@ const AuctionEdit = () => {
     description: '',
     youtube_url: '',
     initial_bid_value: 0,
-    current_bid_value: 0,
     bid_increment: 0,
     start_date: '',
     end_date: '',
@@ -54,6 +55,8 @@ const AuctionEdit = () => {
       if (data) {
         setAuction({
           ...data,
+          start_date: formatDateTimeForInput(data.start_date),
+          end_date: formatDateTimeForInput(data.end_date),
           registration_wait_unit: data.registration_wait_unit as 'minutes' | 'hours' | 'days',
           status: data.status as 'active' | 'inactive',
           auction_type: data.auction_type as 'rural' | 'judicial'
@@ -84,8 +87,8 @@ const AuctionEdit = () => {
         initial_bid_value: auction.initial_bid_value,
         current_bid_value: auction.current_bid_value,
         bid_increment: auction.bid_increment,
-        start_date: auction.start_date,
-        end_date: auction.end_date,
+        start_date: auction.start_date ? new Date(auction.start_date + ':00.000Z').toISOString() : null,
+        end_date: auction.end_date ? new Date(auction.end_date + ':00.000Z').toISOString() : null,
         registration_wait_value: auction.registration_wait_value,
         registration_wait_unit: auction.registration_wait_unit,
         status: auction.status,
@@ -179,37 +182,21 @@ const AuctionEdit = () => {
 
                 <div>
                   <Label htmlFor="initial_bid_value" className="text-admin-table-text">Valor Inicial</Label>
-                  <Input
-                    id="initial_bid_value"
-                    type="number"
-                    step="0.01"
-                    value={auction.initial_bid_value}
-                    onChange={(e) => setAuction({ ...auction, initial_bid_value: parseFloat(e.target.value) || 0 })}
+                  <CurrencyInput
+                    value={auction.initial_bid_value || 0}
+                    onChange={(value) => setAuction({ ...auction, initial_bid_value: value })}
                     className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                    placeholder="R$ 0,00"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="current_bid_value" className="text-admin-table-text">Valor Atual</Label>
-                  <Input
-                    id="current_bid_value"
-                    type="number"
-                    step="0.01"
-                    value={auction.current_bid_value}
-                    onChange={(e) => setAuction({ ...auction, current_bid_value: parseFloat(e.target.value) || 0 })}
+                  <Label htmlFor="bid_increment" className="text-admin-table-text">Incremento de Lance</Label>
+                  <CurrencyInput
+                    value={auction.bid_increment || 0}
+                    onChange={(value) => setAuction({ ...auction, bid_increment: value })}
                     className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="bid_increment" className="text-admin-table-text">Incremento</Label>
-                  <Input
-                    id="bid_increment"
-                    type="number"
-                    step="0.01"
-                    value={auction.bid_increment}
-                    onChange={(e) => setAuction({ ...auction, bid_increment: parseFloat(e.target.value) || 0 })}
-                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                    placeholder="R$ 0,00"
                   />
                 </div>
 

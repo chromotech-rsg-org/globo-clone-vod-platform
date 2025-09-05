@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import CurrencyInput from '@/components/ui/currency-input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -17,13 +18,8 @@ interface AuctionFormData {
   bid_increment: number;
   start_date?: string;
   end_date?: string;
-  registration_wait_value: number;
-  registration_wait_unit: 'minutes' | 'hours' | 'days';
   status: 'active' | 'inactive';
   auction_type: 'rural' | 'judicial';
-  increment_mode: string;
-  min_custom_bid?: number;
-  max_custom_bid?: number;
 }
 
 const AuctionCreate = () => {
@@ -38,13 +34,8 @@ const AuctionCreate = () => {
     bid_increment: 100,
     start_date: '',
     end_date: '',
-    registration_wait_value: 5,
-    registration_wait_unit: 'minutes',
     status: 'inactive',
     auction_type: 'rural',
-    increment_mode: 'fixed',
-    min_custom_bid: 0,
-    max_custom_bid: 0,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,10 +45,12 @@ const AuctionCreate = () => {
     try {
       const insertData = {
         ...formData,
-        start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
-        end_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
+        start_date: formData.start_date ? new Date(formData.start_date + ':00.000Z').toISOString() : null,
+        end_date: formData.end_date ? new Date(formData.end_date + ':00.000Z').toISOString() : null,
         current_bid_value: formData.initial_bid_value,
         is_live: false,
+        registration_wait_value: 5,
+        registration_wait_unit: 'minutes',
       };
 
       const { error } = await supabase
@@ -158,54 +151,26 @@ const AuctionCreate = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Valor Inicial (R$)
+                    Valor Inicial *
                   </label>
-                  <Input
-                    type="number"
+                  <CurrencyInput
                     value={formData.initial_bid_value}
-                    onChange={(e) => handleInputChange('initial_bid_value', parseFloat(e.target.value) || 0)}
+                    onChange={(value) => handleInputChange('initial_bid_value', value)}
                     className="bg-gray-900 border-gray-700 text-white"
-                    min="0"
-                    step="0.01"
+                    placeholder="R$ 0,00"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Incremento (R$)
+                    Incremento de Lance *
                   </label>
-                  <Input
-                    type="number"
+                  <CurrencyInput
                     value={formData.bid_increment}
-                    onChange={(e) => handleInputChange('bid_increment', parseFloat(e.target.value) || 0)}
+                    onChange={(value) => handleInputChange('bid_increment', value)}
                     className="bg-gray-900 border-gray-700 text-white"
-                    min="0"
-                    step="0.01"
+                    placeholder="R$ 0,00"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Tempo de Espera
-                  </label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      value={formData.registration_wait_value}
-                      onChange={(e) => handleInputChange('registration_wait_value', parseInt(e.target.value) || 0)}
-                      className="bg-gray-900 border-gray-700 text-white flex-1"
-                      min="1"
-                    />
-                    <select
-                      value={formData.registration_wait_unit}
-                      onChange={(e) => handleInputChange('registration_wait_unit', e.target.value)}
-                      className="px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded"
-                    >
-                      <option value="minutes">Minutos</option>
-                      <option value="hours">Horas</option>
-                      <option value="days">Dias</option>
-                    </select>
-                  </div>
                 </div>
 
                 <div>
