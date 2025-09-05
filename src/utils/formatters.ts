@@ -8,8 +8,10 @@ export const formatPhone = (value: string): string => {
 
 export const formatBillingCycle = (cycle: string): string => {
   switch (cycle) {
-    case 'monthly': return 'Mensal';
-    case 'annually': return 'Anual';
+    case 'monthly': return 'Mês';
+    case 'annually': 
+    case 'annual': 
+    case 'yearly': return 'Ano';
     case 'quarterly': return 'Trimestral';
     case 'biannually': return 'Semestral';
     case 'weekly': return 'Semanal';
