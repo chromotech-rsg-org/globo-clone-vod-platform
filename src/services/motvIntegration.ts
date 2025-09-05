@@ -130,38 +130,45 @@ export class MotvIntegrationService {
 
   // Subscription integration methods
   static async subscribeUser(userId: string, subscriptionData: any) {
-    // Get user's packages from database
-    const { data: packages, error } = await supabase
+    // Get user's profile and subscription details
+    const { data: userProfile, error: userError } = await supabase
       .from('profiles')
-      .select(`
-        id,
-        name,
-        email,
-        cpf,
-        phone,
-        subscriptions!inner (
-          id,
-          plan_id,
-          plans!inner (
-            id,
-            name,
-            code,
-            package_id,
-            packages (
-              id,
-              name,
-              code,
-              vendor_id
-            )
-          )
-        )
-      `)
+      .select('id, name, email, cpf, phone, motv_user_id')
       .eq('id', userId)
       .single();
 
-    if (error) {
-      console.error('Error fetching user packages:', error);
-      throw error;
+    if (userError) {
+      console.error('Error fetching user profile:', userError);
+      throw userError;
+    }
+
+    // Get subscription with plan and package details
+    const { data: subscriptionDetails, error: subError } = await supabase
+      .from('subscriptions')
+      .select(`
+        id,
+        plan_id,
+        status,
+        start_date,
+        end_date,
+        plans!inner (
+          id,
+          name,
+          package_id,
+          packages (
+            id,
+            name,
+            code,
+            vendor_id
+          )
+        )
+      `)
+      .eq('id', subscriptionData.id)
+      .single();
+
+    if (subError) {
+      console.error('Error fetching subscription details:', subError);
+      throw subError;
     }
 
     const payload = {
@@ -170,18 +177,74 @@ export class MotvIntegrationService {
       entityId: subscriptionData.id,
       data: {
         userId: userId,
-        userEmail: packages.email,
-        userName: packages.name,
-        cpf: packages.cpf,
-        phone: packages.phone,
-        packages: packages.subscriptions.map((sub: any) => ({
-          packageCode: sub.plans.packages?.code,
-          planName: sub.plans.name,
-          vendorId: sub.plans.packages?.vendor_id
-        })),
+        userEmail: userProfile.email,
+        userName: userProfile.name,
+        cpf: userProfile.cpf,
+        phone: userProfile.phone,
+        motvUserId: userProfile.motv_user_id,
+        packageCode: subscriptionDetails.plans.packages?.code,
+        packageName: subscriptionDetails.plans.packages?.name,
+        planName: subscriptionDetails.plans.name,
+        vendorId: subscriptionDetails.plans.packages?.vendor_id,
         subscriptionId: subscriptionData.id,
         startDate: subscriptionData.start_date,
         endDate: subscriptionData.end_date,
+        status: subscriptionData.status
+      }
+    };
+
+    return this.queueJob(payload);
+  }
+
+  // Método específico para criar plano no MOTV
+  static async createPlanInMotv(userId: string, planId: string) {
+    // Buscar detalhes do usuário e plano
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('id, name, email, motv_user_id')
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user for plan creation:', userError);
+      throw userError;
+    }
+
+    const { data: planDetails, error: planError } = await supabase
+      .from('plans')
+      .select(`
+        id,
+        name,
+        package_id,
+        packages (
+          id,
+          name,
+          code,
+          vendor_id
+        )
+      `)
+      .eq('id', planId)
+      .single();
+
+    if (planError) {
+      console.error('Error fetching plan details:', planError);
+      throw planError;
+    }
+
+    const payload = {
+      jobType: 'subscribe' as const,
+      entityType: 'user' as const,
+      entityId: userId,
+      data: {
+        userId: userId,
+        userEmail: userProfile.email,
+        userName: userProfile.name,
+        motvUserId: userProfile.motv_user_id,
+        packageCode: planDetails.packages?.code,
+        packageName: planDetails.packages?.name,
+        planName: planDetails.name,
+        vendorId: planDetails.packages?.vendor_id,
+        action: 'create_plan'
       }
     };
 

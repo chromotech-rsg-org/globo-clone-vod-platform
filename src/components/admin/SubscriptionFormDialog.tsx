@@ -150,6 +150,8 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         updated_at: new Date().toISOString(),
       };
 
+      let subscriptionId: string;
+
       if (isEditing) {
         const { error } = await supabase
           .from('subscriptions')
@@ -157,21 +159,85 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           .eq('id', subscription.id);
 
         if (error) throw error;
+        subscriptionId = subscription.id;
 
         toast({
           title: "Sucesso",
           description: "Assinatura atualizada com sucesso"
         });
       } else {
-        const { error } = await supabase
+        // Criar nova assinatura
+        const { data: newSubscription, error } = await supabase
           .from('subscriptions')
-          .insert([submitData]);
+          .insert([submitData])
+          .select()
+          .single();
 
         if (error) throw error;
+        subscriptionId = newSubscription.id;
+
+        // Buscar plano selecionado para obter o pacote MOTV
+        const { data: planData, error: planError } = await supabase
+          .from('plans')
+          .select(`
+            *,
+            packages (
+              id,
+              name,
+              code,
+              vendor_id
+            )
+          `)
+          .eq('id', formData.plan_id)
+          .single();
+
+        if (planError) {
+          console.error('Erro ao buscar plano:', planError);
+        } else if (planData?.packages) {
+          // Associar o pacote ao plano se não estiver associado
+          if (!planData.package_id) {
+            await supabase
+              .from('plans')
+              .update({ package_id: planData.packages.id })
+              .eq('id', formData.plan_id);
+          }
+        } else {
+          // Se não há pacote associado ao plano, buscar um pacote MOTV padrão
+          const { data: defaultPackage } = await supabase
+            .from('packages')
+            .select('id, name, code, vendor_id')
+            .eq('active', true)
+            .eq('suspension_package', false)
+            .limit(1)
+            .single();
+
+          if (defaultPackage) {
+            await supabase
+              .from('plans')
+              .update({ package_id: defaultPackage.id })
+              .eq('id', formData.plan_id);
+          }
+        }
+
+        // Chamar integração MOTV para criar/atualizar plano do usuário
+        try {
+          const { MotvIntegrationService } = await import('@/services/motvIntegration');
+          await MotvIntegrationService.subscribeUser(formData.user_id, {
+            id: subscriptionId,
+            start_date: submitData.start_date,
+            end_date: submitData.end_date,
+            status: submitData.status
+          });
+          
+          console.log('Integração MOTV iniciada com sucesso');
+        } catch (integrationError) {
+          console.warn('Erro na integração MOTV:', integrationError);
+          // Não falhar a operação principal por causa da integração
+        }
 
         toast({
           title: "Sucesso",
-          description: "Assinatura criada com sucesso"
+          description: "Assinatura criada com sucesso e pacote MOTV atribuído"
         });
       }
 
