@@ -115,7 +115,6 @@ const AuctionUserActions = ({
                   <div className="text-center">
                     <p className="font-bold">Leilão Finalizado</p>
                     <p>Lance vencedor: {formatCurrency(anyWinner.bid_value)}</p>
-                    <p className="text-sm">Vencedor: {anyWinner.user_name || 'Usuário'}</p>
                   </div>
                 </AlertDescription>
               </Alert>
