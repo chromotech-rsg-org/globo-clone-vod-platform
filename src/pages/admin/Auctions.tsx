@@ -202,32 +202,38 @@ const AdminAuctions = () => {
           </Button>
         </div>
 
-        <div className="flex gap-4 mb-6">
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded"
-          >
-            <option value="all">Todos os Status</option>
-            <option value="active">Ativo</option>
-            <option value="inactive">Inativo</option>
-          </select>
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div className="flex flex-col">
+            <label className="text-sm text-admin-muted-foreground mb-1">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded"
+            >
+              <option value="all">Todos os Status</option>
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+            </select>
+          </div>
           
-          <select
-            value={liveFilter}
-            onChange={(e) => {
-              setLiveFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded"
-          >
-            <option value="all">Todos Ao Vivo</option>
-            <option value="live">Ao Vivo</option>
-            <option value="not-live">Não Ao Vivo</option>
-          </select>
+          <div className="flex flex-col">
+            <label className="text-sm text-admin-muted-foreground mb-1">Transmissão</label>
+            <select
+              value={liveFilter}
+              onChange={(e) => {
+                setLiveFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded"
+            >
+              <option value="all">Todos</option>
+              <option value="live">Ao Vivo</option>
+              <option value="not-live">Offline</option>
+            </select>
+          </div>
         </div>
 
         {/* Auctions Table */}
