@@ -19,6 +19,7 @@ const AdminAuctions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [liveFilter, setLiveFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
@@ -40,7 +41,7 @@ const AdminAuctions = () => {
 
   useEffect(() => {
     fetchAuctions();
-  }, [statusFilter, currentPage, pageSize, searchTerm]);
+  }, [statusFilter, liveFilter, currentPage, pageSize, searchTerm]);
 
   const fetchAuctions = async () => {
     try {
@@ -53,6 +54,10 @@ const AdminAuctions = () => {
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
+      }
+
+      if (liveFilter !== 'all') {
+        query = query.eq('is_live', liveFilter === 'live');
       }
 
       if (searchTerm) {
@@ -186,11 +191,24 @@ const AdminAuctions = () => {
               setStatusFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 bg-black border border-green-600/30 text-white rounded"
+            className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded"
           >
             <option value="all">Todos os Status</option>
             <option value="active">Ativo</option>
             <option value="inactive">Inativo</option>
+          </select>
+          
+          <select
+            value={liveFilter}
+            onChange={(e) => {
+              setLiveFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded"
+          >
+            <option value="all">Todos Ao Vivo</option>
+            <option value="live">Ao Vivo</option>
+            <option value="not-live">Não Ao Vivo</option>
           </select>
         </div>
 
@@ -202,6 +220,7 @@ const AdminAuctions = () => {
                 <TableRow className="border-gray-700">
                   <TableHead className="text-gray-300">Nome</TableHead>
                   <TableHead className="text-gray-300">Status</TableHead>
+                  <TableHead className="text-gray-300">Ao Vivo</TableHead>
                   <TableHead className="text-gray-300">Data de Início</TableHead>
                   <TableHead className="text-gray-300">Data de Encerramento</TableHead>
                   <TableHead className="text-gray-300">Ações</TableHead>
@@ -217,6 +236,13 @@ const AdminAuctions = () => {
                           'admin-muted'
                       }>
                         {auction.status === 'active' ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        auction.is_live ? 'admin-success' : 'admin-muted'
+                      }>
+                        {auction.is_live ? 'Ao Vivo' : 'Offline'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-white">
