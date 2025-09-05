@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,8 +26,17 @@ const AdminAuctions = () => {
   const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Function to remove accents for search
+  const removeAccents = (str: string) => {
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  };
 
   // Debounce search input
   useEffect(() => {
@@ -61,7 +70,9 @@ const AdminAuctions = () => {
       }
 
       if (searchTerm) {
-        query = query.ilike('name', `%${searchTerm}%`);
+        // Use unaccent function for PostgreSQL if available, fallback to ilike
+        const normalizedSearch = removeAccents(searchTerm);
+        query = query.or(`name.ilike.%${searchTerm}%,name.ilike.%${normalizedSearch}%`);
       }
 
       const { data, error, count } = await query
@@ -83,6 +94,12 @@ const AdminAuctions = () => {
       });
     } finally {
       setLoading(false);
+      // Restore focus to input after search
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 100);
+      }
     }
   };
 
@@ -172,6 +189,7 @@ const AdminAuctions = () => {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
+              ref={inputRef}
               placeholder="Buscar leilões..."
               value={inputValue}
               onChange={handleSearchChange}
