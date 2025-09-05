@@ -17,14 +17,14 @@ const AsaasApiTester = () => {
   });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-admin-content-bg min-h-full">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <CreditCard className="w-5 h-5 text-primary" />
+        <div className="w-10 h-10 rounded-lg bg-admin-primary/20 border border-admin-border flex items-center justify-center">
+          <CreditCard className="w-5 h-5 text-admin-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Integração Asaas</h1>
-          <p className="text-muted-foreground">Ferramenta para testar e integrar com a API de pagamentos do Asaas</p>
+          <h1 className="text-2xl font-bold text-admin-foreground">Integração Asaas</h1>
+          <p className="text-admin-muted-foreground">Ferramenta para testar e integrar com a API de pagamentos do Asaas</p>
         </div>
       </div>
 
