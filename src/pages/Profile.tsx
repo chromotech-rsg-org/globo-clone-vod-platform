@@ -169,7 +169,7 @@ const Profile = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" value={formData.email} disabled className="bg-gray-100 dark:bg-gray-800" />
+                <Input id="email" name="email" type="email" value={formData.email} disabled className="bg-black text-gray-400 border-gray-600" />
                 <p className="text-sm text-gray-500">
                   O email não pode ser alterado
                 </p>
@@ -177,7 +177,7 @@ const Profile = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="cpf">CPF</Label>
-                <Input id="cpf" name="cpf" type="text" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" maxLength={securityConfig.maxLengths.cpf} className={validationErrors.cpf ? "border-red-500" : ""} />
+                <Input id="cpf" name="cpf" type="text" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" maxLength={securityConfig.maxLengths.cpf} className={`bg-black text-white border-green-600/30 focus:border-green-500 ${validationErrors.cpf ? "border-red-500" : ""}`} />
                 {validationErrors.cpf && <div className="text-sm text-red-600">
                     {validationErrors.cpf.map((error, index) => <p key={index}>{error}</p>)}
                   </div>}
@@ -185,7 +185,7 @@ const Profile = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} placeholder="(00) 00000-0000" maxLength={securityConfig.maxLengths.phone} className={validationErrors.phone ? "border-red-500" : ""} />
+                <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} placeholder="(00) 00000-0000" maxLength={securityConfig.maxLengths.phone} className={`bg-black text-white border-green-600/30 focus:border-green-500 ${validationErrors.phone ? "border-red-500" : ""}`} />
                 {validationErrors.phone && <div className="text-sm text-red-600">
                     {validationErrors.phone.map((error, index) => <p key={index}>{error}</p>)}
                   </div>}
