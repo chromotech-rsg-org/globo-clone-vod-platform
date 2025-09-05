@@ -161,7 +161,7 @@ const Profile = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>
-                <Input id="name" name="name" type="text" value={formData.name} onChange={handleInputChange} placeholder="Seu nome completo" maxLength={securityConfig.maxLengths.name} className={validationErrors.name ? "border-red-500" : ""} />
+                <Input id="name" name="name" type="text" value={formData.name} onChange={handleInputChange} placeholder="Seu nome completo" maxLength={securityConfig.maxLengths.name} className={`bg-black text-white border-green-600/30 focus:border-green-500 ${validationErrors.name ? "border-red-500" : ""}`} />
                 {validationErrors.name && <div className="text-sm text-red-600">
                     {validationErrors.name.map((error, index) => <p key={index}>{error}</p>)}
                   </div>}
