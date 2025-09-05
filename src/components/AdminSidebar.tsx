@@ -144,7 +144,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     { path: '/admin/pacotes', icon: Package, label: 'Pacotes' },
     { path: '/admin/personalizacao', icon: Palette, label: 'Personalização' },
     { path: '/admin/integracao', icon: Plug, label: 'Integração MOTV' },
-    { path: '/admin/asaas-api-tester', icon: CreditCard, label: 'Asaas API Tester' },
+    { path: '/admin/asaas-api-tester', icon: CreditCard, label: 'Integração Asaas' },
   ];
 
   const clientMenuItems: MenuItem[] = [

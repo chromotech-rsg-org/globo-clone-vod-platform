@@ -23,7 +23,7 @@ const AsaasApiTester = () => {
           <CreditCard className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Asaas API Tester</h1>
+          <h1 className="text-2xl font-bold text-foreground">Integração Asaas</h1>
           <p className="text-muted-foreground">Ferramenta para testar e integrar com a API de pagamentos do Asaas</p>
         </div>
       </div>

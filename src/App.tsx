@@ -28,6 +28,7 @@ import AdminAuctions from "./pages/admin/Auctions";
 import AdminRegistrations from "./pages/admin/Registrations";
 import AdminBids from "./pages/admin/Bids";
 import AdminIntegration from "./pages/admin/Integration";
+import AsaasApiTester from "./pages/admin/AsaasApiTester";
 import AuctionCreate from "./pages/admin/AuctionCreate";
 import AuctionEdit from "./pages/admin/AuctionEdit";
 import AuctionDetails from "./pages/admin/AuctionDetails";
@@ -274,6 +275,13 @@ function AppContent() {
         <ProtectedRoute requiredRole="admin">
           <AdminLayout>
             <AdminIntegration />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/asaas-api-tester" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <AsaasApiTester />
           </AdminLayout>
         </ProtectedRoute>
       } />
