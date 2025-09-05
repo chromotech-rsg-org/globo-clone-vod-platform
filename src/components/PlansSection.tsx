@@ -139,11 +139,20 @@ const PlansSection = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {/* Plans Grid */}
+        <div className={`gap-8 max-w-5xl mx-auto ${
+          filteredPlans.length === 1 
+            ? 'flex justify-center'
+            : filteredPlans.length === 2 
+            ? 'grid grid-cols-1 md:grid-cols-2 justify-items-center max-w-4xl'
+            : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        }`}>
           {filteredPlans.map((plan) => (
             <div 
               key={plan.id}
-              className="rounded-xl p-8 relative flex flex-col"
+              className={`rounded-xl p-8 relative flex flex-col ${
+                filteredPlans.length === 1 ? 'w-full max-w-sm' : 'w-full'
+              }`}
               style={{
                 backgroundColor: planCardBgColor,
                 border: plan.best_seller 
