@@ -61,18 +61,19 @@ const Checkout = () => {
   }, [planId, navigate, toast]);
 
   const handleFormSubmit = async (formData: any) => {
-    if (!selectedPlan) return;
+    const { selectedPlan: currentPlan } = formData;
+    if (!currentPlan) return;
     
     setIsLoading(true);
 
     try {
       // Calculate final price with coupon discount
-      let finalPrice = selectedPlan.price;
+      let finalPrice = currentPlan.price;
       let discountAmount = 0;
       
       if (formData.coupon) {
-        discountAmount = (selectedPlan.price * formData.coupon.discount_percentage) / 100;
-        finalPrice = selectedPlan.price - discountAmount;
+        discountAmount = (currentPlan.price * formData.coupon.discount_percentage) / 100;
+        finalPrice = currentPlan.price - discountAmount;
       }
 
       // Use UserRegistrationFlowService to handle complete registration
@@ -82,7 +83,7 @@ const Checkout = () => {
         password: formData.password,
         cpf: formData.cpf || '',
         phone: formData.phone || '',
-        selectedPlanId: selectedPlan.id
+        selectedPlanId: currentPlan.id
       });
 
       if (!registrationResult.success) {
@@ -110,7 +111,7 @@ const Checkout = () => {
       
       const successMessage = formData.coupon 
         ? `Conta criada com sucesso! Desconto aplicado: R$ ${discountAmount.toFixed(2)}`
-        : registrationResult.message || `Bem-vindo ao ${selectedPlan.name}`;
+        : registrationResult.message || `Bem-vindo ao ${currentPlan.name}`;
         
       toast({
         title: "Conta criada com sucesso!",
@@ -142,7 +143,7 @@ const Checkout = () => {
       <div className="max-w-6xl mx-auto px-4">
         <CheckoutHeader />
         <CheckoutSteps 
-          plan={selectedPlan} 
+          initialPlan={selectedPlan} 
           onSubmit={handleFormSubmit} 
           onPlanChange={() => navigate('/', { replace: true })}
           isLoading={isLoading} 

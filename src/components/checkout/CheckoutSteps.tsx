@@ -18,14 +18,15 @@ interface Plan {
 }
 
 interface CheckoutStepsProps {
-  plan: Plan;
+  initialPlan: Plan;
   onSubmit: (formData: any) => void;
   onPlanChange: () => void;
   isLoading: boolean;
 }
 
-const CheckoutSteps = ({ plan, onSubmit, onPlanChange, isLoading }: CheckoutStepsProps) => {
+const CheckoutSteps = ({ initialPlan, onSubmit, onPlanChange, isLoading }: CheckoutStepsProps) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedPlan, setSelectedPlan] = useState(initialPlan);
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
@@ -58,10 +59,14 @@ const CheckoutSteps = ({ plan, onSubmit, onPlanChange, isLoading }: CheckoutStep
   };
 
   const handleStepSubmit = (stepData: any) => {
-    setFormData({ ...formData, ...stepData });
+    const updatedFormData = { ...formData, ...stepData };
+    setFormData(updatedFormData);
     
     if (currentStep === 4) {
-      onSubmit({ ...formData, ...stepData });
+      onSubmit({ 
+        ...updatedFormData, 
+        selectedPlan: selectedPlan 
+      });
     } else {
       handleNext();
     }
@@ -77,10 +82,14 @@ const CheckoutSteps = ({ plan, onSubmit, onPlanChange, isLoading }: CheckoutStep
     handleNext();
   };
 
+  const handlePlanChange = (newPlan: Plan) => {
+    setSelectedPlan(newPlan);
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <CheckoutPlanStep plan={plan} onNext={handleNext} onPlanChange={onPlanChange} />;
+        return <CheckoutPlanStep plan={selectedPlan} onNext={handleNext} onPlanChange={handlePlanChange} />;
       case 2:
         return <CheckoutPersonalStep initialData={formData} onSubmit={handleStepSubmit} />;
       case 3:
