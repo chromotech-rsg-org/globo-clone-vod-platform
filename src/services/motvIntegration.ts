@@ -257,12 +257,23 @@ export class MotvIntegrationService {
       .from('integration_settings')
       .select('*')
       .eq('active', true)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') { // Not found is OK
+    if (error) {
       console.error('Error fetching integration settings:', error);
       throw error;
     }
+
+    if (!data) {
+      console.warn('No active integration settings found');
+      return null;
+    }
+
+    console.log('Integration settings loaded:', { 
+      api_base_url: data.api_base_url, 
+      api_login: data.api_login,
+      has_secret: !!data.api_secret 
+    });
 
     return data;
   }

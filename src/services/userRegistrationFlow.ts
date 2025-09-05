@@ -46,6 +46,14 @@ export class UserRegistrationFlowService {
   private static async loadSettings() {
     if (!this.settings) {
       this.settings = await MotvIntegrationService.getIntegrationSettings();
+      
+      if (!this.settings) {
+        throw new Error('Configurações de integração MOTV não encontradas. Verifique as configurações no painel administrativo.');
+      }
+
+      if (!this.settings.api_base_url) {
+        throw new Error('URL da API MOTV não configurada. Verifique as configurações no painel administrativo.');
+      }
     }
     return this.settings;
   }
@@ -64,6 +72,13 @@ export class UserRegistrationFlowService {
   private static async checkUserExistsInMotv(email: string): Promise<MotvUserData | null> {
     try {
       const settings = await this.loadSettings();
+      
+      if (!settings || !settings.api_base_url) {
+        throw new Error('Configurações da API MOTV não estão disponíveis');
+      }
+
+      console.log('Checking user in MOTV:', email);
+      
       const authToken = this.generateAuthToken();
       
       const response = await fetch(`${settings.api_base_url}/api/customer/getDataV2`, {
