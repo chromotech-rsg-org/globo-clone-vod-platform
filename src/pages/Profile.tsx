@@ -160,7 +160,7 @@ const Profile = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome Completo</Label>
+                <Label htmlFor="name" className="text-white">Nome Completo</Label>
                 <Input id="name" name="name" type="text" value={formData.name} onChange={handleInputChange} placeholder="Seu nome completo" maxLength={securityConfig.maxLengths.name} className={`bg-black text-white border-green-600/30 focus:border-green-500 ${validationErrors.name ? "border-red-500" : ""}`} />
                 {validationErrors.name && <div className="text-sm text-red-600">
                     {validationErrors.name.map((error, index) => <p key={index}>{error}</p>)}
@@ -168,15 +168,15 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-white">Email</Label>
                 <Input id="email" name="email" type="email" value={formData.email} disabled className="bg-black text-gray-400 border-gray-600" />
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-300">
                   O email não pode ser alterado
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cpf">CPF</Label>
+                <Label htmlFor="cpf" className="text-white">CPF</Label>
                 <Input id="cpf" name="cpf" type="text" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" maxLength={securityConfig.maxLengths.cpf} className={`bg-black text-white border-green-600/30 focus:border-green-500 ${validationErrors.cpf ? "border-red-500" : ""}`} />
                 {validationErrors.cpf && <div className="text-sm text-red-600">
                     {validationErrors.cpf.map((error, index) => <p key={index}>{error}</p>)}
@@ -184,7 +184,7 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
+                <Label htmlFor="phone" className="text-white">Telefone</Label>
                 <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} placeholder="(00) 00000-0000" maxLength={securityConfig.maxLengths.phone} className={`bg-black text-white border-green-600/30 focus:border-green-500 ${validationErrors.phone ? "border-red-500" : ""}`} />
                 {validationErrors.phone && <div className="text-sm text-red-600">
                     {validationErrors.phone.map((error, index) => <p key={index}>{error}</p>)}
