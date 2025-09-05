@@ -155,23 +155,35 @@ const Header = () => {
               <div className="flex items-center space-x-4">
                 <Link 
                   to="/dashboard" 
-                  className="hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
-                  style={{ 
-                    backgroundColor: headerHoverColor,
-                    color: '#ffffff'
-                  }}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  {user.name || user.email}
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="hover:opacity-90 transition-opacity p-2 rounded-md"
+                  className="hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-sm font-medium"
                   style={{ color: headerTextColor }}
-                  title="Sair"
+                  onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
+                  onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
                 >
-                  <LogOut className="h-4 w-4" />
-                </button>
+                  Dashboard
+                </Link>
+                <Link 
+                  to="/profile" 
+                  className="hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-sm font-medium"
+                  style={{ color: headerTextColor }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
+                  onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
+                >
+                  Perfil
+                </Link>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm" style={{ color: headerTextColor }}>
+                    Olá, {user.name || user.email}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="hover:opacity-90 transition-opacity p-2 rounded-md"
+                    style={{ color: headerTextColor }}
+                    title="Sair"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ) : (
               <Link 
@@ -275,19 +287,32 @@ const Header = () => {
                 <div className="mt-4 space-y-2">
                   <Link 
                     to="/dashboard" 
-                    className="block hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
-                    style={{ 
-                      backgroundColor: headerHoverColor,
-                      color: '#ffffff'
-                    }}
+                    className="block hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-left"
+                    style={{ color: headerTextColor }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <User className="h-4 w-4 mr-2" />
-                    {user.name || user.email}
+                    Dashboard
                   </Link>
+                  <Link 
+                    to="/profile" 
+                    className="block hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-left"
+                    style={{ color: headerTextColor }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Perfil
+                  </Link>
+                  <div className="px-3 py-2">
+                    <span className="text-sm" style={{ color: headerTextColor }}>
+                      Olá, {user.name || user.email}
+                    </span>
+                  </div>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left hover:opacity-90 transition-opacity px-4 py-2 rounded-md flex items-center"
+                    className="block w-full text-left hover:opacity-90 transition-opacity px-3 py-2 rounded-md flex items-center"
                     style={{ 
                       color: headerTextColor,
                       backgroundColor: 'rgba(255,255,255,0.1)'
