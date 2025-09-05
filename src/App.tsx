@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
+import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
 import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
 import AdminUsers from "./pages/admin/Users";
@@ -112,6 +113,11 @@ function AppContent() {
       <Route path="/reset-password" element={
         <PublicRoute>
           <ResetPassword />
+        </PublicRoute>
+      } />
+      <Route path="/reset-password/confirm" element={
+        <PublicRoute>
+          <ResetPasswordConfirm />
         </PublicRoute>
       } />
       <Route path="/checkout" element={

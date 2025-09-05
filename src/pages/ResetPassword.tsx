@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomizations } from "@/hooks/useCustomizations";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthRedirectUrl } from "@/utils/authConfig";
 import { Loader2, Lock, Mail, Info } from "lucide-react";
 
 export default function ResetPassword() {
@@ -65,7 +66,7 @@ export default function ResetPassword() {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password/confirm`,
+        redirectTo: getAuthRedirectUrl('/reset-password/confirm'),
       });
       
       if (error) {

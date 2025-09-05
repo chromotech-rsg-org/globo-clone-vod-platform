@@ -3,6 +3,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/auth';
 import { performDomainHealthCheck, logDomainInfo, isCustomDomain } from '@/utils/domainHealth';
+import { getAuthRedirectUrl } from '@/utils/authConfig';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -102,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: userData.email,
         password: userData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: getAuthRedirectUrl('/'),
           data: {
             name: userData.name,
             cpf: userData.cpf || '',

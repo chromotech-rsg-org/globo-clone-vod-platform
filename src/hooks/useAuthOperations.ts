@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { RegisterData } from '@/types/auth';
+import { getAuthRedirectUrl } from '@/utils/authConfig';
 import { 
   validateEmailSecurity, 
   validatePassword, 
@@ -134,7 +135,7 @@ export const useAuthOperations = () => {
         email: sanitizedData.email,
         password: sanitizedData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: getAuthRedirectUrl('/'),
           data: {
             name: sanitizedData.name,
             cpf: sanitizedData.cpf,
