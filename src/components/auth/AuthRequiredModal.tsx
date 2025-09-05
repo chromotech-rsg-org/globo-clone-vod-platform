@@ -125,7 +125,7 @@ const AuthRequiredModal = ({
       <div className="text-center">
         <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-        <p className="text-muted-foreground mt-2">{message}</p>
+        <p className="text-muted-foreground mt-2">Você pode continuar navegando como visitante em nosso site ou fazer login para participar dos leilões.</p>
       </div>
       
       <div className="space-y-3">
@@ -139,7 +139,7 @@ const AuthRequiredModal = ({
         </Button>
         
         <Button 
-          onClick={() => setMode('register')}
+          onClick={() => window.location.href = '/checkout'}
           variant="outline"
           className="w-full"
           size="lg"
@@ -149,7 +149,10 @@ const AuthRequiredModal = ({
         </Button>
         
         <Button 
-          onClick={onContinueAsGuest}
+          onClick={() => {
+            onContinueAsGuest();
+            window.location.href = '/';
+          }}
           variant="ghost"
           className="w-full text-muted-foreground"
         >
@@ -158,7 +161,7 @@ const AuthRequiredModal = ({
       </div>
       
       <p className="text-xs text-muted-foreground text-center">
-        Como visitante você pode visualizar os leilões, mas não pode dar lances.
+        Como visitante você pode navegar pelo site, mas não pode participar dos leilões.
       </p>
     </div>
   );
@@ -329,7 +332,7 @@ const AuthRequiredModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-background/95 backdrop-blur-sm border border-border/50 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="sr-only">
             {mode === 'options' ? 'Escolha uma opção' : 
