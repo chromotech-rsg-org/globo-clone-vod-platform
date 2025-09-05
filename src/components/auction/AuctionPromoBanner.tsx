@@ -1,13 +1,18 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Gavel, Clock, TrendingUp, Users, Award } from 'lucide-react';
+import { Gavel, Clock, TrendingUp, Users, Award, Home, User, LogOut } from 'lucide-react';
 import { useAuctions } from '@/hooks/useAuctions';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AuctionPromoBanner = () => {
   const { auctions, loading } = useAuctions();
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  
+  const isHomePage = location.pathname === '/';
   
   const liveAuctions = auctions.filter(auction => auction.is_live);
   const totalAuctions = auctions.length;
@@ -31,6 +36,46 @@ const AuctionPromoBanner = () => {
       <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(22,163,74,0.05)_50%,transparent_75%)]"></div>
       
       <CardContent className="relative z-10 p-6">
+        {/* Navigation Menu - only show when not on home page */}
+        {!isHomePage && (
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-6">
+              <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
+                <Link to="/" className="flex items-center space-x-2">
+                  <Home className="h-4 w-4" />
+                  <span>Início</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
+                <Link to="/dashboard" className="flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
+                <Link to="/profile" className="flex items-center space-x-2">
+                  <User className="h-4 w-4" />
+                  <span>Perfil</span>
+                </Link>
+              </Button>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {user && (
+                <span className="text-gray-300">Olá, {user.name || user.email}</span>
+              )}
+              <Button 
+                onClick={logout}
+                variant="ghost" 
+                className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Header Section - more compact */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0 mb-6">
           <div className="flex items-center space-x-4">
