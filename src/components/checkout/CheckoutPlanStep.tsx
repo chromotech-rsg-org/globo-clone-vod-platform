@@ -89,7 +89,7 @@ const CheckoutPlanStep = ({ plan, onNext, onPlanChange }: CheckoutPlanStepProps)
                 R$ {plan.price.toFixed(2)}
               </span>
               <span className="text-gray-400 text-lg">
-                / {formatBillingCycle(plan.billing_cycle).toLowerCase()}
+                por {formatBillingCycle(plan.billing_cycle).toLowerCase()}
               </span>
             </div>
 
@@ -159,7 +159,7 @@ const CheckoutPlanStep = ({ plan, onNext, onPlanChange }: CheckoutPlanStepProps)
                         R$ {otherPlan.price.toFixed(2)}
                       </span>
                       <span className="text-gray-400 text-sm">
-                        / {formatBillingCycle(otherPlan.billing_cycle).toLowerCase()}
+                        por {formatBillingCycle(otherPlan.billing_cycle).toLowerCase()}
                       </span>
                     </div>
                   </div>
