@@ -66,7 +66,7 @@ const CheckoutPlanStep = ({ plan, onNext, onPlanChange }: CheckoutPlanStepProps)
 
       {/* Plano Selecionado */}
       <div className="relative">
-        <div className="border-2 border-green-500/50 rounded-xl p-6 bg-gradient-to-br from-gray-900/80 to-gray-800/90 backdrop-blur-sm shadow-2xl">
+        <div className="border-2 border-green-500/50 rounded-xl p-6 bg-gray-800 backdrop-blur-sm shadow-2xl">
           <div className="absolute top-4 right-4">
             <div className="bg-green-500 text-black px-3 py-1 rounded-full text-xs font-bold">
               SELECIONADO
