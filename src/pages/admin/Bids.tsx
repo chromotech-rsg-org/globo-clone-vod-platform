@@ -23,6 +23,8 @@ interface Bid {
   is_winner: boolean;
   internal_notes?: string;
   client_notes?: string;
+  auction_name?: string;
+  user_name?: string;
 }
 
 const getStatusDisplay = (status: string) => {
@@ -69,18 +71,29 @@ const AdminBids = () => {
       
       let query = supabase
         .from('bids')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          auctions!auction_id(name),
+          profiles!user_id(name)
+        `, { count: 'exact' })
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
-        query = query.or(`id.ilike.%${searchTerm}%,user_id.ilike.%${searchTerm}%`);
+        query = query.or(`id.ilike.%${searchTerm}%`);
       }
 
       const { data, error, count } = await query
         .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
       
       if (error) throw error;
-      setBids(data as Bid[] || []);
+      
+      const bidsWithNames = (data || []).map(bid => ({
+        ...bid,
+        auction_name: bid.auctions?.name,
+        user_name: bid.profiles?.name
+      }));
+      
+      setBids(bidsWithNames as Bid[]);
       setTotalItems(count || 0);
     } catch (error) {
       console.error('Erro ao buscar lances:', error);
@@ -253,9 +266,9 @@ const AdminBids = () => {
             <Table>
               <TableHeader>
                 <TableRow className="border-admin-border">
-                  <TableHead className="text-admin-muted-foreground">ID</TableHead>
-                  <TableHead className="text-admin-muted-foreground">Leilão ID</TableHead>
-                  <TableHead className="text-admin-muted-foreground">Usuário ID</TableHead>
+                  <TableHead className="text-admin-muted-foreground">ID do Lance</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Leilão</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Usuário</TableHead>
                   <TableHead className="text-admin-muted-foreground">Valor</TableHead>
                   <TableHead className="text-admin-muted-foreground">Status</TableHead>
                   <TableHead className="text-admin-muted-foreground">Vencedor</TableHead>
@@ -267,8 +280,8 @@ const AdminBids = () => {
                 {bids.map(bid => (
                   <TableRow key={bid.id} className="border-admin-border">
                     <TableCell className="text-admin-table-text">{bid.id.slice(0, 8)}...</TableCell>
-                    <TableCell className="text-admin-table-text">{bid.auction_id.slice(0, 8)}...</TableCell>
-                    <TableCell className="text-admin-table-text">{bid.user_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.auction_name || '-'}</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.user_name || '-'}</TableCell>
                     <TableCell className="text-admin-table-text">R$ {bid.bid_value}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(bid.status)}>
