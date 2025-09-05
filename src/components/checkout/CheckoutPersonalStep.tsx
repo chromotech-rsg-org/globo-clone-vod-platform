@@ -97,7 +97,7 @@ const CheckoutPersonalStep = ({ initialData, onSubmit }: CheckoutPersonalStepPro
             type="text"
             value={formData.name}
             onChange={handleInputChange}
-            className="bg-gray-700 border-gray-600 text-white"
+            className="bg-gray-900 border-green-600/30 text-white focus:border-green-500"
             placeholder="Digite seu nome completo"
           />
           {errors.name && (
@@ -113,7 +113,7 @@ const CheckoutPersonalStep = ({ initialData, onSubmit }: CheckoutPersonalStepPro
             type="text"
             value={formData.cpf}
             onChange={handleInputChange}
-            className="bg-gray-700 border-gray-600 text-white"
+            className="bg-gray-900 border-green-600/30 text-white focus:border-green-500"
             placeholder="000.000.000-00"
             maxLength={14}
           />
@@ -130,7 +130,7 @@ const CheckoutPersonalStep = ({ initialData, onSubmit }: CheckoutPersonalStepPro
             type="tel"
             value={formData.phone}
             onChange={handleInputChange}
-            className="bg-gray-700 border-gray-600 text-white"
+            className="bg-gray-900 border-green-600/30 text-white focus:border-green-500"
             placeholder="(00) 00000-0000"
             maxLength={15}
           />
@@ -142,7 +142,7 @@ const CheckoutPersonalStep = ({ initialData, onSubmit }: CheckoutPersonalStepPro
         <div className="pt-4">
           <Button 
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-full bg-green-600 hover:bg-green-700 text-white border-green-500 shadow-lg"
             size="lg"
           >
             Continuar

@@ -20,10 +20,11 @@ interface Plan {
 interface CheckoutStepsProps {
   plan: Plan;
   onSubmit: (formData: any) => void;
+  onPlanChange: () => void;
   isLoading: boolean;
 }
 
-const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
+const CheckoutSteps = ({ plan, onSubmit, onPlanChange, isLoading }: CheckoutStepsProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -79,7 +80,7 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <CheckoutPlanStep plan={plan} onNext={handleNext} />;
+        return <CheckoutPlanStep plan={plan} onNext={handleNext} onPlanChange={onPlanChange} />;
       case 2:
         return <CheckoutPersonalStep initialData={formData} onSubmit={handleStepSubmit} />;
       case 3:
@@ -100,14 +101,14 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
             <div key={step.number} className="flex items-center space-x-2">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
                 step.completed ? 'bg-green-600 border-green-600 text-white' :
-                currentStep === step.number ? 'border-blue-600 text-blue-600' :
+                currentStep === step.number ? 'border-green-500 text-green-500 bg-green-500/20' :
                 'border-gray-600 text-gray-400'
               }`}>
                 {step.completed ? <Check className="w-5 h-5" /> : step.number}
               </div>
               <span className={`text-sm ${
                 step.completed ? 'text-green-400' :
-                currentStep === step.number ? 'text-blue-400' :
+                currentStep === step.number ? 'text-green-400' :
                 'text-gray-400'
               }`}>
                 {step.title}
@@ -118,12 +119,12 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
             </div>
           ))}
         </div>
-        <Progress value={progress} className="w-64 mx-auto" />
+        <Progress value={progress} className="w-64 mx-auto [&>div]:bg-green-500" />
       </div>
 
       {/* Step Content */}
       <div className="max-w-2xl mx-auto">
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-gray-900 border-green-600/30 shadow-xl">
           <CardHeader>
             <CardTitle className="text-white text-center">
               Etapa {currentStep} de 4
@@ -141,9 +142,9 @@ const CheckoutSteps = ({ plan, onSubmit, isLoading }: CheckoutStepsProps) => {
           <Button
             variant="outline"
             onClick={handlePrevious}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 border-green-600/30 text-green-400 hover:bg-green-600/20 hover:text-green-300"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 w-4" />
             <span>Voltar</span>
           </Button>
         </div>

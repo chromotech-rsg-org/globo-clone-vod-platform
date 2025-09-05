@@ -14,9 +14,10 @@ interface Plan {
 interface CheckoutPlanStepProps {
   plan: Plan;
   onNext: () => void;
+  onPlanChange: () => void;
 }
 
-const CheckoutPlanStep = ({ plan, onNext }: CheckoutPlanStepProps) => {
+const CheckoutPlanStep = ({ plan, onNext, onPlanChange }: CheckoutPlanStepProps) => {
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -28,7 +29,7 @@ const CheckoutPlanStep = ({ plan, onNext }: CheckoutPlanStepProps) => {
         </p>
       </div>
 
-      <div className="border border-gray-600 rounded-lg p-6 bg-gray-700">
+      <div className="border border-green-600/30 rounded-lg p-6 bg-gray-800/50 backdrop-blur-sm">
         <div className="text-center space-y-4">
           <h3 className="text-xl font-semibold text-white">
             {plan.name}
@@ -41,7 +42,7 @@ const CheckoutPlanStep = ({ plan, onNext }: CheckoutPlanStepProps) => {
           )}
 
           <div className="text-white">
-            <span className="text-3xl font-bold">
+            <span className="text-3xl font-bold text-green-400">
               R$ {plan.price.toFixed(2)}
             </span>
             <span className="text-gray-400 ml-2">
@@ -54,7 +55,10 @@ const CheckoutPlanStep = ({ plan, onNext }: CheckoutPlanStepProps) => {
               <h4 className="text-white font-medium text-left">Benefícios inclusos:</h4>
               <ul className="text-gray-300 text-sm space-y-1 text-left">
                 {plan.benefits.map((benefit, index) => (
-                  <li key={index}>• {benefit}</li>
+                  <li key={index} className="flex items-center">
+                    <span className="text-green-400 mr-2">•</span> 
+                    {benefit}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -62,13 +66,22 @@ const CheckoutPlanStep = ({ plan, onNext }: CheckoutPlanStepProps) => {
         </div>
       </div>
 
-      <div className="text-center">
+      <div className="space-y-3">
         <Button 
           onClick={onNext}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full bg-green-600 hover:bg-green-700 text-white border-green-500 shadow-lg"
           size="lg"
         >
           Continuar com este plano
+        </Button>
+        
+        <Button 
+          onClick={onPlanChange}
+          variant="outline"
+          className="w-full border-green-600/30 text-green-400 hover:bg-green-600/20 hover:text-green-300"
+          size="lg"
+        >
+          Trocar de plano
         </Button>
       </div>
     </div>

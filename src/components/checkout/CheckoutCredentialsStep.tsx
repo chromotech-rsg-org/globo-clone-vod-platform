@@ -92,7 +92,7 @@ const CheckoutCredentialsStep = ({ initialData, onSubmit, isLoading }: CheckoutC
             type="email"
             value={formData.email}
             onChange={handleInputChange}
-            className="bg-gray-700 border-gray-600 text-white"
+            className="bg-gray-900 border-green-600/30 text-white focus:border-green-500"
             placeholder="seu@email.com"
           />
           {errors.email && (
@@ -108,7 +108,7 @@ const CheckoutCredentialsStep = ({ initialData, onSubmit, isLoading }: CheckoutC
             type="password"
             value={formData.password}
             onChange={handleInputChange}
-            className="bg-gray-700 border-gray-600 text-white"
+            className="bg-gray-900 border-green-600/30 text-white focus:border-green-500"
             placeholder="Digite sua senha"
           />
           {errors.password && (
@@ -124,7 +124,7 @@ const CheckoutCredentialsStep = ({ initialData, onSubmit, isLoading }: CheckoutC
             type="password"
             value={formData.confirmPassword}
             onChange={handleInputChange}
-            className="bg-gray-700 border-gray-600 text-white"
+            className="bg-gray-900 border-green-600/30 text-white focus:border-green-500"
             placeholder="Confirme sua senha"
           />
           {errors.confirmPassword && (

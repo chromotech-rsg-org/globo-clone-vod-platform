@@ -64,7 +64,7 @@ const CheckoutCouponStep = ({
         </p>
       </div>
 
-      <Card className="bg-gray-700 border-gray-600">
+      <Card className="bg-gray-800/50 border-green-600/30 backdrop-blur-sm">
         <CardContent className="p-6">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -73,8 +73,8 @@ const CheckoutCouponStep = ({
                 Código do Cupom
               </Label>
               <div className="flex gap-2">
-                <Input id="coupon" type="text" value={couponCode} onChange={e => setCouponCode(e.target.value.toUpperCase())} onKeyPress={handleKeyPress} className="bg-gray-800 border-gray-500 text-white flex-1" placeholder="Ex: DESCONTO10" disabled={isValidating} />
-                <Button onClick={validateCoupon} disabled={isValidating || !couponCode.trim()} className="bg-blue-600 hover:bg-blue-700">
+                <Input id="coupon" type="text" value={couponCode} onChange={e => setCouponCode(e.target.value.toUpperCase())} onKeyPress={handleKeyPress} className="bg-gray-900 border-green-600/30 text-white flex-1 focus:border-green-500" placeholder="Ex: DESCONTO10" disabled={isValidating} />
+                <Button onClick={validateCoupon} disabled={isValidating || !couponCode.trim()} className="bg-green-600 hover:bg-green-700">
                   {isValidating ? 'Validando...' : 'Validar'}
                 </Button>
               </div>
@@ -100,10 +100,10 @@ const CheckoutCouponStep = ({
       </Card>
 
       <div className="flex gap-4">
-        <Button onClick={onSkip} variant="outline" className="flex-1 border-gray-600 hover:bg-gray-700 text-slate-950">
+        <Button onClick={onSkip} variant="outline" className="flex-1 border-green-600/30 text-green-400 hover:bg-green-600/20 hover:text-green-300">
           Pular
         </Button>
-        <Button onClick={handleApplyCoupon} disabled={!validatedCoupon} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+        <Button onClick={handleApplyCoupon} disabled={!validatedCoupon} className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-600 disabled:text-gray-400">
           {validatedCoupon ? 'Aplicar Cupom' : 'Continuar sem Cupom'}
         </Button>
       </div>

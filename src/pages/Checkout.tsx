@@ -146,19 +146,20 @@ const Checkout = () => {
 
   if (!selectedPlan) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Carregando...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-green-400 animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8">
+    <div className="min-h-screen bg-black py-8">
       <div className="max-w-6xl mx-auto px-4">
         <CheckoutHeader />
         <CheckoutSteps 
           plan={selectedPlan} 
           onSubmit={handleFormSubmit} 
+          onPlanChange={() => navigate('/', { replace: true })}
           isLoading={isLoading} 
         />
         <CheckoutFooter />

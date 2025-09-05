@@ -15,7 +15,7 @@ const CheckoutHeader = () => {
         {logoUrl ? (
           <img src={logoUrl} alt={siteName} className="h-8 w-auto" />
         ) : (
-          <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xl">
+          <div className="bg-green-600 text-white px-3 py-1 rounded font-bold text-xl">
             {siteName.charAt(0).toUpperCase()}
           </div>
         )}
