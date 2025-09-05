@@ -51,7 +51,7 @@ const PlansSection = () => {
       currency: 'BRL'
     });
     
-    return cycle === 'annually' ? `${formattedPrice}/ano` : `${formattedPrice}/mês`;
+    return (cycle === 'annually' || cycle === 'yearly' || cycle === 'annual') ? `${formattedPrice}/ano` : `${formattedPrice}/mês`;
   };
 
   const getCycleLabel = (cycle: string) => {
