@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { UserRegistrationFlowService } from '@/services/userRegistrationFlow';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import CheckoutFooter from '@/components/checkout/CheckoutFooter';
 import CheckoutSteps from '@/components/checkout/CheckoutSteps';
@@ -19,7 +19,6 @@ interface Plan {
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { register } = useAuth();
   const { toast } = useToast();
   
   const planId = location.state?.planId;
@@ -76,64 +75,50 @@ const Checkout = () => {
         finalPrice = selectedPlan.price - discountAmount;
       }
 
-      const { error } = await register({
+      // Use UserRegistrationFlowService to handle complete registration
+      const registrationResult = await UserRegistrationFlowService.registerUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        cpf: formData.cpf,
-        phone: formData.phone
+        cpf: formData.cpf || '',
+        phone: formData.phone || '',
+        selectedPlanId: selectedPlan.id
       });
-      
-      if (error) {
+
+      if (!registrationResult.success) {
         toast({
           title: "Erro",
-          description: error.message || "Erro ao criar conta. Tente novamente.",
+          description: registrationResult.message || "Erro ao criar conta. Tente novamente.",
           variant: "destructive"
         });
-      } else {
-        // Create subscription after successful registration
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData.user) {
-          const endDate = new Date();
-          endDate.setMonth(endDate.getMonth() + (selectedPlan.billing_cycle === 'annually' ? 12 : 1));
-
-          const { data: subscriptionData, error: subscriptionError } = await supabase
-            .from('subscriptions')
-            .insert({
-              user_id: authData.user.id,
-              plan_id: selectedPlan.id,
-              status: 'active',
-              end_date: endDate.toISOString()
-            })
-            .select()
-            .single();
-
-          if (subscriptionError) {
-            console.error('Error creating subscription:', subscriptionError);
-          } else if (subscriptionData) {
-            // Queue integration job for subscription
-            try {
-              const { MotvIntegrationService } = await import('@/services/motvIntegration');
-              await MotvIntegrationService.subscribeUser(authData.user.id, subscriptionData);
-            } catch (integrationError) {
-              console.warn('Integration subscription failed:', integrationError);
-              // Don't fail the main operation for integration errors
-            }
-          }
-        }
-
-        navigate('/dashboard');
-        
-        const successMessage = formData.coupon 
-          ? `Conta criada com sucesso! Desconto aplicado: R$ ${discountAmount.toFixed(2)}`
-          : `Bem-vindo ao ${selectedPlan.name}`;
-          
-        toast({
-          title: "Conta criada com sucesso!",
-          description: successMessage
-        });
+        return;
       }
+
+      // If registration requires password reset, show appropriate message
+      if (registrationResult.requiresPasswordReset) {
+        toast({
+          title: "Atenção",
+          description: registrationResult.message,
+          variant: "destructive"
+        });
+        navigate('/reset-password');
+        return;
+      }
+
+      // Navigate to dashboard on success
+      navigate('/dashboard');
+      
+      const successMessage = formData.coupon 
+        ? `Conta criada com sucesso! Desconto aplicado: R$ ${discountAmount.toFixed(2)}`
+        : registrationResult.message || `Bem-vindo ao ${selectedPlan.name}`;
+        
+      toast({
+        title: "Conta criada com sucesso!",
+        description: successMessage
+      });
+
     } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: "Erro",
         description: "Erro ao criar conta. Tente novamente.",
