@@ -160,7 +160,10 @@ const Dashboard = () => {
     { title: 'Cadastrar Pacotes', href: '/admin/pacotes', description: 'Gerenciar pacotes de conteúdo' },
     { title: 'Cadastrar Planos', href: '/admin/planos', description: 'Configurar planos de assinatura' },
     { title: 'Cupons de Desconto', href: '/admin/cupons', description: 'Criar e gerenciar cupons' },
-    { title: 'Personalização', href: '/admin/personalizacao', description: 'Personalizar aparência do sistema' }
+    // Personalização só para desenvolvedores
+    ...(user.role === 'desenvolvedor' ? [
+      { title: 'Personalização', href: '/admin/personalizacao', description: 'Personalizar aparência do sistema' }
+    ] : [])
   ];
 
   return (
