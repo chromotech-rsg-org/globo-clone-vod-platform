@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import { Menu, X, User, LogOut, Home, BarChart3, Calendar, Gavel } from 'lucide-react';
 import { useCustomizations } from '@/hooks/useCustomizations';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -88,7 +88,7 @@ const Header = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <button 
               onClick={() => scrollToSection('hero')}
-              className="hover:transition-colors" 
+              className="hover:transition-colors flex items-center space-x-2" 
               style={{ 
                 color: headerTextColor,
                 '--hover-color': headerHoverColor
@@ -96,11 +96,12 @@ const Header = () => {
               onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
               onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
             >
-              {menuHome}
+              <Home className="h-4 w-4" />
+              <span>{menuHome}</span>
             </button>
             <button 
               onClick={() => scrollToSection('content')}
-              className="hover:transition-colors"
+              className="hover:transition-colors flex items-center space-x-2"
               style={{ 
                 color: headerTextColor,
                 '--hover-color': headerHoverColor
@@ -108,11 +109,12 @@ const Header = () => {
               onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
               onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
             >
-              {menuContent}
+              <Calendar className="h-4 w-4" />
+              <span>{menuContent}</span>
             </button>
             <button 
               onClick={() => scrollToSection('plans')}
-              className="hover:transition-colors"
+              className="hover:transition-colors flex items-center space-x-2"
               style={{ 
                 color: headerTextColor,
                 '--hover-color': headerHoverColor
@@ -120,11 +122,12 @@ const Header = () => {
               onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
               onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
             >
-              {menuPlans}
+              <BarChart3 className="h-4 w-4" />
+              <span>{menuPlans}</span>
             </button>
             <Link 
               to="/auctions"
-              className="hover:transition-colors"
+              className="hover:transition-colors flex items-center space-x-2"
               style={{ 
                 color: headerTextColor,
                 '--hover-color': headerHoverColor
@@ -132,7 +135,8 @@ const Header = () => {
               onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
               onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
             >
-              Leilões
+              <Gavel className="h-4 w-4" />
+              <span>Leilões</span>
             </Link>
             {customButtonText && (
               <button
@@ -155,33 +159,31 @@ const Header = () => {
               <div className="flex items-center space-x-4">
                 <Link 
                   to="/dashboard" 
-                  className="hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-sm font-medium"
+                  className="hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-2"
                   style={{ color: headerTextColor }}
                   onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
                   onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
                 >
-                  Dashboard
-                </Link>
-                <Link 
-                  to="/profile" 
-                  className="hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-sm font-medium"
-                  style={{ color: headerTextColor }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
-                  onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
-                >
-                  Perfil
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Dashboard</span>
                 </Link>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm" style={{ color: headerTextColor }}>
+                  <Link 
+                    to="/profile"
+                    className="text-sm hover:opacity-90 transition-opacity" 
+                    style={{ color: headerTextColor }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = headerHoverColor}
+                    onMouseLeave={(e) => e.currentTarget.style.color = headerTextColor}
+                  >
                     Olá, {user.name || user.email}
-                  </span>
+                  </Link>
                   <button
                     onClick={handleLogout}
-                    className="hover:opacity-90 transition-opacity p-2 rounded-md"
+                    className="hover:opacity-90 transition-opacity px-2 py-1 rounded-md flex items-center space-x-1"
                     style={{ color: headerTextColor }}
-                    title="Sair"
                   >
                     <LogOut className="h-4 w-4" />
+                    <span className="text-sm">Sair</span>
                   </button>
                 </div>
               </div>
@@ -216,7 +218,7 @@ const Header = () => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               <button 
                 onClick={() => scrollToSection('hero')}
-                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
+                className="block w-full text-left px-3 py-2 rounded-md transition-colors flex items-center space-x-2"
                 style={{ 
                   color: headerTextColor,
                   '--hover-color': headerHoverColor
@@ -224,11 +226,12 @@ const Header = () => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                {menuHome}
+                <Home className="h-4 w-4" />
+                <span>{menuHome}</span>
               </button>
               <button 
                 onClick={() => scrollToSection('content')}
-                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
+                className="block w-full text-left px-3 py-2 rounded-md transition-colors flex items-center space-x-2"
                 style={{ 
                   color: headerTextColor,
                   '--hover-color': headerHoverColor
@@ -236,11 +239,12 @@ const Header = () => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                {menuContent}
+                <Calendar className="h-4 w-4" />
+                <span>{menuContent}</span>
               </button>
               <button 
                 onClick={() => scrollToSection('plans')}
-                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
+                className="block w-full text-left px-3 py-2 rounded-md transition-colors flex items-center space-x-2"
                 style={{ 
                   color: headerTextColor,
                   '--hover-color': headerHoverColor
@@ -248,11 +252,12 @@ const Header = () => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                {menuPlans}
+                <BarChart3 className="h-4 w-4" />
+                <span>{menuPlans}</span>
               </button>
               <Link 
                 to="/auctions"
-                className="block w-full text-left px-3 py-2 rounded-md transition-colors"
+                className="block w-full text-left px-3 py-2 rounded-md transition-colors flex items-center space-x-2"
                 style={{ 
                   color: headerTextColor,
                   '--hover-color': headerHoverColor
@@ -261,7 +266,8 @@ const Header = () => {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Leilões
+                <Gavel className="h-4 w-4" />
+                <span>Leilões</span>
               </Link>
               {customButtonText && (
                 <button
@@ -287,39 +293,33 @@ const Header = () => {
                 <div className="mt-4 space-y-2">
                   <Link 
                     to="/dashboard" 
-                    className="block hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-left"
+                    className="block hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-left flex items-center space-x-2"
                     style={{ color: headerTextColor }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Dashboard
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Dashboard</span>
                   </Link>
-                  <Link 
-                    to="/profile" 
-                    className="block hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-left"
+                  <Link
+                    to="/profile"
+                    className="block px-3 py-2"
                     style={{ color: headerTextColor }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Perfil
+                    Olá, {user.name || user.email}
                   </Link>
-                  <div className="px-3 py-2">
-                    <span className="text-sm" style={{ color: headerTextColor }}>
-                      Olá, {user.name || user.email}
-                    </span>
-                  </div>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left hover:opacity-90 transition-opacity px-3 py-2 rounded-md flex items-center"
+                    className="block w-full text-left hover:opacity-90 transition-opacity px-3 py-2 rounded-md flex items-center space-x-2"
                     style={{ 
                       color: headerTextColor,
                       backgroundColor: 'rgba(255,255,255,0.1)'
                     }}
                   >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sair
+                    <LogOut className="h-4 w-4" />
+                    <span>Sair</span>
                   </button>
                 </div>
               ) : (
