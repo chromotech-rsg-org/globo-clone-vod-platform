@@ -36,13 +36,6 @@ export const forceNotificationRefresh = () => {
                         window.location.hostname.includes('agromercado.tv.br');
   
   if (isVercelDomain) {
-    // Add cache busting parameter
-    const url = new URL(window.location.href);
-    url.searchParams.set('_nc', Date.now().toString());
-    
-    // Update browser history without reloading
-    window.history.replaceState({}, '', url.toString());
-    
     console.log('🔄 Force refresh applied for Vercel domain');
   }
 };

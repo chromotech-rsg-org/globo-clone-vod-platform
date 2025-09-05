@@ -11,13 +11,6 @@ export const clearVercelCache = () => {
     console.log('🧹 Clearing Vercel cache for custom domain');
     
     try {
-      // Add cache-busting query parameter
-      const url = new URL(window.location.href);
-      url.searchParams.set('_vercel_cache_bust', Date.now().toString());
-      
-      // Update browser history without triggering navigation
-      window.history.replaceState({}, '', url.toString());
-      
       // Clear browser caches
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(registrations => {
@@ -87,22 +80,7 @@ export const initializeVercelOptimizations = () => {
   if (isProductionCustomDomain()) {
     console.log('🚀 Initializing Vercel optimizations for custom domain');
     
-    // Enhanced resource preloading with cache busting
-    const timestamp = Date.now();
-    
-    // Preload critical CSS with cache busting
-    const cssLink = document.createElement('link');
-    cssLink.rel = 'preload';
-    cssLink.href = `/assets/index.css?v=${timestamp}`;
-    cssLink.as = 'style';
-    document.head.appendChild(cssLink);
-    
-    // Preload critical JavaScript with cache busting
-    const jsLink = document.createElement('link');
-    jsLink.rel = 'preload';
-    jsLink.href = `/assets/index.js?v=${timestamp}`;
-    jsLink.as = 'script';
-    document.head.appendChild(jsLink);
+    // Resources are handled by Vite's built-in caching
     
     // Set up periodic cache clearing for long sessions
     const clearIntervalId = setInterval(() => {
