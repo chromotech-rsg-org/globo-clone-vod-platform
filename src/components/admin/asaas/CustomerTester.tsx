@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Copy, ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CustomerTesterProps {
   environment: 'sandbox' | 'production';
@@ -141,21 +142,24 @@ export const CustomerTester: React.FC<CustomerTesterProps> = ({ environment, api
 
     setLoading(true);
     try {
-      const baseUrl = environment === 'sandbox' 
-        ? 'https://sandbox.asaas.com/api/v3'
-        : 'https://www.asaas.com/api/v3';
-
-      const response = await fetch(`${baseUrl}/customers`, {
+      // Use Supabase Edge Function to proxy the request
+      const response = await fetch('/functions/v1/asaas-api-proxy', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          method: 'POST',
+          endpoint: '/customers',
+          body: requestBody,
+          apiKey: `Bearer ${apiKey}`,
+          environment
+        })
       });
 
-      const data = await response.json();
-      setResponse({ status: response.status, data });
+      const result = await response.json();
+      setResponse({ status: result.status, data: result.data });
 
       // Save to logs
       const logEntry = {
@@ -164,22 +168,22 @@ export const CustomerTester: React.FC<CustomerTesterProps> = ({ environment, api
         endpoint: '/v3/customers',
         environment,
         requestBody,
-        response: { status: response.status, data }
+        response: { status: result.status, data: result.data }
       };
       
       const logs = JSON.parse(localStorage.getItem('asaas-request-logs') || '[]');
       logs.unshift(logEntry);
       localStorage.setItem('asaas-request-logs', JSON.stringify(logs.slice(0, 100)));
 
-      if (response.ok) {
+      if (result.success) {
         toast({
           title: "Cliente criado com sucesso",
-          description: `ID: ${data.id}`,
+          description: `ID: ${result.data?.id}`,
         });
       } else {
         toast({
           title: "Erro ao criar cliente",
-          description: data.errors?.[0]?.description || "Erro desconhecido",
+          description: result.data?.errors?.[0]?.description || result.error || "Erro desconhecido",
           variant: "destructive"
         });
       }
