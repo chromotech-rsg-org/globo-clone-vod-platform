@@ -234,9 +234,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
         {/* External Links Section */}
         {!isCollapsed && (
           <div className="mb-4">
-            <div className="text-xs text-admin-muted-foreground uppercase tracking-wide font-semibold px-3 py-2 mb-2">
-              Navegação Externa
-            </div>
             <div className="space-y-1">
               <button
                 onClick={() => window.open('/', '_blank')}
