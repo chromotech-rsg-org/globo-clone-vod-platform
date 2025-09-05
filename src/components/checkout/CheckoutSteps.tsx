@@ -151,7 +151,7 @@ const CheckoutSteps = ({ initialPlan, onSubmit, onPlanChange, isLoading }: Check
           <Button
             variant="outline"
             onClick={handlePrevious}
-            className="flex items-center space-x-2 border-green-600/30 text-green-400 hover:bg-green-600/20 hover:text-green-300"
+            className="flex items-center space-x-2 bg-black border-green-600/30 text-green-400 hover:bg-green-600/20 hover:text-green-300"
           >
             <ChevronLeft className="w-4 w-4" />
             <span>Voltar</span>
