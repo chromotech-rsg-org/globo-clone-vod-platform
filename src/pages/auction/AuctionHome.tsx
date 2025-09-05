@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AuctionCard from '@/components/auction/AuctionCard';
 import SubscriptionRequired from '@/components/SubscriptionRequired';
 import AuctionPromoBanner from '@/components/auction/AuctionPromoBanner';
+import GuestModeBanner from '@/components/auction/GuestModeBanner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Gavel, Trophy, Play, Target, TrendingUp, Users, Calendar, Award } from 'lucide-react';
 
@@ -55,6 +56,9 @@ const AuctionHome = () => {
     <div className="min-h-screen bg-black">
       {/* Promo Banner with home menus - more compact */}
       <AuctionPromoBanner />
+
+      {/* Guest Mode Banner - show only if user is not logged in */}
+      {!user && <GuestModeBanner className="container mx-auto px-4 mt-4" />}
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">

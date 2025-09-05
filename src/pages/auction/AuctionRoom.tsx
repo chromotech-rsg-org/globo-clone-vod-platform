@@ -13,6 +13,7 @@ import AuctionRoomHeader from '@/components/auction/AuctionRoomHeader';
 import AuctionVideoPlayer from '@/components/auction/AuctionVideoPlayer';
 import AuctionBidInfo from '@/components/auction/AuctionBidInfo';
 import AuctionUserActions from '@/components/auction/AuctionUserActions';
+import GuestModeBanner from '@/components/auction/GuestModeBanner';
 import { useToast } from '@/components/ui/use-toast';
 
 const AuctionRoom = () => {
@@ -187,6 +188,9 @@ const AuctionRoom = () => {
   return (
     <div className="min-h-screen bg-black">
       <AuctionRoomHeader />
+      
+      {/* Guest Mode Banner - show only if user is not logged in */}
+      {!user && <GuestModeBanner className="container mx-auto px-4 mb-4" />}
       
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

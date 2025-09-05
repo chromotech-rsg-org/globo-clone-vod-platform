@@ -8,6 +8,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AuctionProtectedRoute from './components/auction/AuctionProtectedRoute';
 import PublicRoute from "./components/PublicRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -151,14 +152,14 @@ function AppContent() {
         </ProtectedRoute>
       } />
       <Route path="/auctions" element={
-        <ProtectedRoute>
+        <AuctionProtectedRoute>
           <AuctionHome />
-        </ProtectedRoute>
+        </AuctionProtectedRoute>
       } />
       <Route path="/auctions/:id" element={
-        <ProtectedRoute>
+        <AuctionProtectedRoute>
           <AuctionRoom />
-        </ProtectedRoute>
+        </AuctionProtectedRoute>
       } />
       <Route path="/auction-dashboard/:id" element={
         <ProtectedRoute requiredRole="admin">
