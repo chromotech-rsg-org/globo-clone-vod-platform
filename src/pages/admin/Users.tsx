@@ -267,10 +267,10 @@ const AdminUsers = () => {
                        </Badge>
                      </TableCell>
                      <TableCell className="text-white">
-                       {user.motv_user_id ? (
-                         <Badge variant="outline" className="text-xs font-mono">
-                           {user.motv_user_id}
-                         </Badge>
+                        {user.motv_user_id ? (
+                          <Badge variant="outline" className="text-xs font-mono text-green-400 border-green-500/30 bg-green-500/10">
+                            {user.motv_user_id}
+                          </Badge>
                        ) : (
                          <span className="text-gray-500">-</span>
                        )}
