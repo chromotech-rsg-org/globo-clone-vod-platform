@@ -60,7 +60,12 @@ const PlansSection = () => {
         return 'MENSAL';
       case 'annually':
       case 'annual':
+      case 'yearly':
         return 'ANUAL';
+      case 'quarterly':
+        return 'TRIMESTRAL';
+      case 'weekly':
+        return 'SEMANAL';
       default:
         return cycle?.toUpperCase() || '';
     }
