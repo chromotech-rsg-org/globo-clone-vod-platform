@@ -166,7 +166,7 @@ const CheckoutPlanStep = ({ plan, onNext, onPlanChange }: CheckoutPlanStepProps)
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-green-600/30 text-green-400 hover:bg-green-600/20 hover:text-green-300"
+                    className="bg-black border-green-600/30 text-green-400 hover:bg-green-600/20 hover:text-green-300"
                   >
                     Selecionar
                   </Button>
