@@ -133,13 +133,13 @@ const CheckoutSteps = ({ initialPlan, onSubmit, onPlanChange, isLoading }: Check
 
       {/* Step Content */}
       <div className="max-w-2xl mx-auto">
-        <Card className="bg-gray-900 border-green-600/30 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-white text-center">
+        <Card className="bg-black border-green-500/50 shadow-2xl shadow-green-500/20">
+          <CardHeader className="bg-gradient-to-r from-green-900/20 to-green-800/10 border-b border-green-500/30">
+            <CardTitle className="text-green-400 text-center text-xl font-bold">
               Etapa {currentStep} de 4
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-black/95 backdrop-blur-sm">
             {renderStepContent()}
           </CardContent>
         </Card>
