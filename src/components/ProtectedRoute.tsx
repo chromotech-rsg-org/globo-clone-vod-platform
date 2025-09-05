@@ -32,7 +32,14 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole && user.role !== 'desenvolvedor') {
+  // Developer role has access to everything
+  if (user.role === 'desenvolvedor') {
+    console.log('✅ Developer access granted');
+    return <>{children}</>;
+  }
+
+  // Check specific role requirements
+  if (requiredRole && user.role !== requiredRole) {
     console.log('🚫 Access denied. User role:', user.role, 'Required:', requiredRole);
     return <Navigate to="/dashboard" replace />;
   }
