@@ -261,7 +261,7 @@ const Login = () => {
               {isSubmitting ? 'Entrando...' : loginButtonText}
             </Button>
 
-            <div className="text-center space-y-3">
+            <div className="text-center">
               <Link 
                 to="/reset-password"
                 className="text-sm transition-colors hover:opacity-75 block"
@@ -269,17 +269,6 @@ const Login = () => {
               >
                 {forgotPasswordText}
               </Link>
-              
-              <div className="text-sm">
-                <span className="text-gray-600">Não possui uma conta? </span>
-                <Link 
-                  to="/register"
-                  className="font-semibold transition-colors hover:opacity-75"
-                  style={{ color: primaryColor }}
-                >
-                  Cadastre-se aqui
-                </Link>
-              </div>
             </div>
           </form>
 
