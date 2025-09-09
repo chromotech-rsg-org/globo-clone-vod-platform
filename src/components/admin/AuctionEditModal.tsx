@@ -24,9 +24,6 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
     name: '',
     description: '',
     youtube_url: '',
-    initial_bid_value: 0,
-    current_bid_value: 0,
-    bid_increment: 0,
     start_date: '',
     end_date: '',
     registration_wait_value: 5,
@@ -55,9 +52,6 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
         name: formData.name,
         description: formData.description,
         youtube_url: formData.youtube_url,
-        initial_bid_value: formData.initial_bid_value,
-        current_bid_value: formData.current_bid_value,
-        bid_increment: formData.bid_increment,
         start_date: formData.start_date,
         end_date: formData.end_date,
         registration_wait_value: formData.registration_wait_value,
@@ -127,55 +121,6 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
             </div>
 
             <div>
-              <Label htmlFor="initial_bid_value" className="text-white">Valor Inicial</Label>
-              <Input
-                id="initial_bid_value"
-                type="number"
-                step="0.01"
-                value={formData.initial_bid_value}
-                onChange={(e) => setFormData({ ...formData, initial_bid_value: parseFloat(e.target.value) || 0 })}
-                className="bg-black border-green-600/30 text-white"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="current_bid_value" className="text-white">Valor Atual</Label>
-              <Input
-                id="current_bid_value"
-                type="number"
-                step="0.01"
-                value={formData.current_bid_value}
-                onChange={(e) => setFormData({ ...formData, current_bid_value: parseFloat(e.target.value) || 0 })}
-                className="bg-black border-green-600/30 text-white"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="bid_increment" className="text-white">Incremento</Label>
-              <Input
-                id="bid_increment"
-                type="number"
-                step="0.01"
-                value={formData.bid_increment}
-                onChange={(e) => setFormData({ ...formData, bid_increment: parseFloat(e.target.value) || 0 })}
-                className="bg-black border-green-600/30 text-white"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="status" className="text-white">Status</Label>
-              <select
-                id="status"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                className="w-full px-3 py-2 bg-black border border-green-600/30 text-white rounded"
-              >
-                <option value="inactive">Inativo</option>
-                <option value="active">Ativo</option>
-              </select>
-            </div>
-
-            <div>
               <Label htmlFor="start_date" className="text-white">Data de Início</Label>
               <Input
                 id="start_date"
@@ -196,6 +141,45 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                 className="bg-black border-green-600/30 text-white"
               />
             </div>
+
+            <div>
+              <Label htmlFor="registration_wait_value" className="text-white">Tempo de Espera</Label>
+              <Input
+                id="registration_wait_value"
+                type="number"
+                min="1"
+                value={formData.registration_wait_value}
+                onChange={(e) => setFormData({ ...formData, registration_wait_value: parseInt(e.target.value) || 5 })}
+                className="bg-black border-green-600/30 text-white"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="registration_wait_unit" className="text-white">Unidade</Label>
+              <select
+                id="registration_wait_unit"
+                value={formData.registration_wait_unit}
+                onChange={(e) => setFormData({ ...formData, registration_wait_unit: e.target.value as 'minutes' | 'hours' | 'days' })}
+                className="w-full px-3 py-2 bg-black border border-green-600/30 text-white rounded"
+              >
+                <option value="minutes">Minutos</option>
+                <option value="hours">Horas</option>
+                <option value="days">Dias</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="status" className="text-white">Status</Label>
+              <select
+                id="status"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                className="w-full px-3 py-2 bg-black border border-green-600/30 text-white rounded"
+              >
+                <option value="inactive">Inativo</option>
+                <option value="active">Ativo</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -210,7 +194,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
           </div>
 
           <div>
-            <Label htmlFor="youtube_url" className="text-white">URL do YouTube</Label>
+            <Label htmlFor="youtube_url" className="text-white">Link da Transmissão</Label>
             <Input
               id="youtube_url"
               value={formData.youtube_url}

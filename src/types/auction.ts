@@ -26,6 +26,8 @@ export interface AuctionItem {
   image_url?: string;
   initial_value: number;
   current_value: number;
+  increment?: number;
+  status: 'not_started' | 'in_progress' | 'finished';
   is_current: boolean;
   order_index: number;
   created_at: string;

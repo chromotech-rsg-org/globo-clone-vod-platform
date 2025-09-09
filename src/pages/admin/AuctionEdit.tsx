@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import CurrencyInput from '@/components/ui/currency-input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Auction } from '@/types/auction';
 import { formatDateTimeForInput } from '@/utils/formatters';
+import AuctionLotsManager from '@/components/admin/AuctionLotsManager';
 
 const AuctionEdit = () => {
   const { id } = useParams();
@@ -23,8 +23,6 @@ const AuctionEdit = () => {
     name: '',
     description: '',
     youtube_url: '',
-    initial_bid_value: 0,
-    bid_increment: 0,
     start_date: '',
     end_date: '',
     registration_wait_value: 5,
@@ -84,9 +82,6 @@ const AuctionEdit = () => {
         name: auction.name,
         description: auction.description,
         youtube_url: auction.youtube_url,
-        initial_bid_value: auction.initial_bid_value,
-        current_bid_value: auction.current_bid_value,
-        bid_increment: auction.bid_increment,
         start_date: auction.start_date ? new Date(auction.start_date + ':00.000Z').toISOString() : null,
         end_date: auction.end_date ? new Date(auction.end_date + ':00.000Z').toISOString() : null,
         registration_wait_value: auction.registration_wait_value,
@@ -181,23 +176,41 @@ const AuctionEdit = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="initial_bid_value" className="text-admin-table-text">Valor Inicial</Label>
-                  <CurrencyInput
-                    value={auction.initial_bid_value || 0}
-                    onChange={(value) => setAuction({ ...auction, initial_bid_value: value })}
+                  <Label htmlFor="youtube_url" className="text-admin-table-text">Link da Transmissão</Label>
+                  <Input
+                    id="youtube_url"
+                    value={auction.youtube_url}
+                    onChange={(e) => setAuction({ ...auction, youtube_url: e.target.value })}
                     className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                    placeholder="R$ 0,00"
+                    placeholder="https://www.youtube.com/watch?v=..."
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="bid_increment" className="text-admin-table-text">Incremento de Lance</Label>
-                  <CurrencyInput
-                    value={auction.bid_increment || 0}
-                    onChange={(value) => setAuction({ ...auction, bid_increment: value })}
-                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                    placeholder="R$ 0,00"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="registration_wait_value" className="text-admin-table-text">Tempo de Espera</Label>
+                    <Input
+                      id="registration_wait_value"
+                      type="number"
+                      min="1"
+                      value={auction.registration_wait_value}
+                      onChange={(e) => setAuction({ ...auction, registration_wait_value: parseInt(e.target.value) || 5 })}
+                      className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="registration_wait_unit" className="text-admin-table-text">Unidade</Label>
+                    <select
+                      id="registration_wait_unit"
+                      value={auction.registration_wait_unit}
+                      onChange={(e) => setAuction({ ...auction, registration_wait_unit: e.target.value as 'minutes' | 'hours' | 'days' })}
+                      className="w-full px-3 py-2 bg-admin-content-bg border border-admin-border text-admin-table-text rounded"
+                    >
+                      <option value="minutes">Minutos</option>
+                      <option value="hours">Horas</option>
+                      <option value="days">Dias</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
@@ -248,7 +261,7 @@ const AuctionEdit = () => {
               </div>
 
               <div>
-                <Label htmlFor="youtube_url" className="text-admin-table-text">URL do YouTube</Label>
+                <Label htmlFor="youtube_url" className="text-admin-table-text">Link da Transmissão</Label>
                 <Input
                   id="youtube_url"
                   value={auction.youtube_url}
@@ -287,6 +300,13 @@ const AuctionEdit = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Lot Management - only show if editing existing auction */}
+        {id && (
+          <div className="mt-6">
+            <AuctionLotsManager auctionId={id} />
+          </div>
+        )}
       </div>
     </>
   );
