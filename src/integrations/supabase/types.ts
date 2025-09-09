@@ -22,10 +22,12 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          increment: number | null
           initial_value: number
           is_current: boolean
           name: string
           order_index: number
+          status: string
           updated_at: string
         }
         Insert: {
@@ -35,10 +37,12 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          increment?: number | null
           initial_value?: number
           is_current?: boolean
           name: string
           order_index?: number
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -48,10 +52,12 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          increment?: number | null
           initial_value?: number
           is_current?: boolean
           name?: string
           order_index?: number
+          status?: string
           updated_at?: string
         }
         Relationships: [
