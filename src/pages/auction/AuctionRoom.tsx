@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 import { useAuctionDetails } from '@/hooks/useAuctions';
 import { useAuctionRegistration } from '@/hooks/useAuctionRegistration';
 import { useAuctionBids } from '@/hooks/useAuctionBids';
+import { useAuctionItems } from '@/hooks/useAuctionItems';
 import { useAuth } from '@/contexts/AuthContext';
 import { BidUserState } from '@/types/auction';
-import { Play, Square, User, AlertCircle, CheckCircle, Clock, ArrowLeft, Trophy } from 'lucide-react';
+import { Play, Square, User, AlertCircle, CheckCircle, Clock, ArrowLeft, Trophy, Package } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
 import BidHistory from '@/components/auction/BidHistory';
 import ClientNotifications from '@/components/auction/ClientNotifications';
@@ -14,6 +15,8 @@ import AuctionVideoPlayer from '@/components/auction/AuctionVideoPlayer';
 import AuctionBidInfo from '@/components/auction/AuctionBidInfo';
 import AuctionUserActions from '@/components/auction/AuctionUserActions';
 import GuestModeBanner from '@/components/auction/GuestModeBanner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 
 const AuctionRoom = () => {
@@ -23,6 +26,7 @@ const AuctionRoom = () => {
   const { auction, loading: auctionLoading } = useAuctionDetails(id!);
   const { registration, loading: registrationLoading, requestRegistration } = useAuctionRegistration(id!);
   const { bids, submitBid, submittingBid, pendingBidExists, userPendingBid, loading: bidsLoading } = useAuctionBids(id!);
+  const { items: lots, loading: lotsLoading } = useAuctionItems(id!);
   const [userState, setUserState] = useState<BidUserState>('need_registration');
   const [showBidDialog, setShowBidDialog] = useState(false);
   const [nextBidValue, setNextBidValue] = useState(0);
@@ -195,8 +199,93 @@ const AuctionRoom = () => {
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video Player */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <AuctionVideoPlayer auction={auction} />
+            
+            {/* Lista de Lotes */}
+            <Card className="bg-gray-900 border-green-600/30">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Package className="h-5 w-5 text-green-400" />
+                  Lotes do Leilão ({lots.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {lotsLoading ? (
+                  <div className="text-center py-4 text-gray-400">
+                    Carregando lotes...
+                  </div>
+                ) : lots.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    Nenhum lote cadastrado para este leilão.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {lots.map((lot, index) => (
+                      <div 
+                        key={lot.id} 
+                        className={`bg-gray-800 border rounded-lg p-4 ${
+                          lot.is_current 
+                            ? 'border-green-500 bg-green-900/20' 
+                            : 'border-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-sm font-medium text-gray-400">
+                                Lote {index + 1}
+                              </span>
+                              {lot.is_current && (
+                                <Badge className="bg-green-600 text-white">
+                                  Em Andamento
+                                </Badge>
+                              )}
+                              <Badge 
+                                className={
+                                  lot.status === 'finished' 
+                                    ? 'bg-gray-700 text-gray-300' 
+                                    : lot.status === 'in_progress'
+                                    ? 'bg-green-900/40 text-green-400 border-green-600'
+                                    : 'bg-gray-800 text-gray-300 border-gray-600'
+                                }
+                              >
+                                {lot.status === 'not_started' && 'Não Iniciado'}
+                                {lot.status === 'in_progress' && 'Em Andamento'}
+                                {lot.status === 'finished' && 'Finalizado'}
+                              </Badge>
+                            </div>
+                            <h4 className="font-semibold text-white mb-1">{lot.name}</h4>
+                            {lot.description && (
+                              <p className="text-sm text-gray-300 mb-2">{lot.description}</p>
+                            )}
+                            <div className="text-sm space-y-1 text-gray-300">
+                              <p>
+                                Valor inicial: <span className="text-green-400 font-medium">
+                                  R$ {lot.initial_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </span>
+                              </p>
+                              <p>
+                                Valor atual: <span className="text-green-400 font-medium">
+                                  R$ {lot.current_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </span>
+                              </p>
+                              {lot.increment && (
+                                <p>
+                                  Incremento: <span className="text-green-400 font-medium">
+                                    R$ {lot.increment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Bidding Panel */}
