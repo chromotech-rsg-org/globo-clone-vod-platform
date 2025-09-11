@@ -303,6 +303,7 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
   };
 
   const handleEdit = (item: AuctionItem) => {
+    console.log('Starting edit for item:', item.id);
     setEditingId(item.id);
     setEditData({
       name: item.name,
@@ -311,11 +312,17 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
       increment: item.increment || 100,
       status: item.status
     });
+    console.log('Edit state set, editingId:', item.id);
   };
 
   const handleSave = async () => {
-    if (!editingId) return;
+    console.log('HandleSave called, editingId:', editingId);
+    if (!editingId) {
+      console.log('No editingId, returning');
+      return;
+    }
 
+    console.log('Starting save process...');
     try {
       const { error } = await supabase
         .from('auction_items')
@@ -323,7 +330,7 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
           name: editData.name,
           description: editData.description,
           initial_value: editData.initial_value,
-          current_value: editData.initial_value, // Update current value to match initial
+          current_value: editData.initial_value,
           increment: editData.increment,
           status: editData.status
         })
@@ -331,6 +338,7 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
 
       if (error) throw error;
 
+      console.log('Save successful, clearing edit state');
       setEditingId(null);
       
       toast({
@@ -470,26 +478,36 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
             <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-3">
                 {items.map((item) => (
-                  <SortableItem
-                    key={item.id}
-                    item={item}
-                    isEditing={editingId === item.id}
-                    onEdit={() => handleEdit(item)}
-                    onSave={handleSave}
-                    onCancel={() => {
-                      setEditingId(null);
-                      setEditData({
-                        name: '',
-                        description: '',
-                        initial_value: 0,
-                        increment: 100,
-                        status: 'not_started'
-                      });
-                    }}
-                    onDelete={() => handleDelete(item.id)}
-                    editData={editData}
-                    onEditDataChange={(data) => setEditData({ ...editData, ...data })}
-                  />
+                <SortableItem
+                  key={item.id}
+                  item={item}
+                  isEditing={editingId === item.id}
+                  onEdit={() => {
+                    console.log('Edit button clicked for:', item.id);
+                    handleEdit(item);
+                  }}
+                  onSave={() => {
+                    console.log('Save button clicked');
+                    handleSave();
+                  }}
+                  onCancel={() => {
+                    console.log('Cancel button clicked');
+                    setEditingId(null);
+                    setEditData({
+                      name: '',
+                      description: '',
+                      initial_value: 0,
+                      increment: 100,
+                      status: 'not_started'
+                    });
+                  }}
+                  onDelete={() => handleDelete(item.id)}
+                  editData={editData}
+                  onEditDataChange={(data) => {
+                    console.log('Edit data changing:', data);
+                    setEditData({ ...editData, ...data });
+                  }}
+                />
                 ))}
               </div>
             </SortableContext>
