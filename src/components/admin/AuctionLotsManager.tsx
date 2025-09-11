@@ -45,13 +45,13 @@ interface LotFormData {
 
 const StatusBadge = ({ status }: { status: AuctionItem['status'] }) => {
   const statusConfig = {
-    not_started: { label: 'Não Iniciado', variant: 'secondary' as const },
-    in_progress: { label: 'Em Andamento', variant: 'default' as const },
-    finished: { label: 'Finalizado', variant: 'outline' as const },
+    not_started: { label: 'Não Iniciado', variant: 'secondary' as const, className: 'bg-gray-800 text-gray-300 border-gray-600' },
+    in_progress: { label: 'Em Andamento', variant: 'default' as const, className: 'bg-green-900/40 text-green-400 border-green-600' },
+    finished: { label: 'Finalizado', variant: 'outline' as const, className: 'bg-gray-900 text-white border-gray-500' },
   };
 
   const config = statusConfig[status];
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  return <Badge variant={config.variant} className={config.className}>{config.label}</Badge>;
 };
 
 const SortableItem = ({ 
@@ -87,42 +87,44 @@ const SortableItem = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="bg-card border rounded-lg p-4">
+    <div ref={setNodeRef} style={style} className="bg-gray-900 border border-green-600/30 rounded-lg p-4 hover:border-green-600/50 transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3 flex-1">
           <div {...attributes} {...listeners} className="cursor-grab hover:cursor-grabbing">
-            <GripVertical className="h-5 w-5 text-muted-foreground" />
+            <GripVertical className="h-5 w-5 text-green-400" />
           </div>
           
           {isEditing ? (
             <div className="flex-1 space-y-3">
               <div>
-                <Label htmlFor={`name-${item.id}`}>Nome</Label>
+                <Label htmlFor={`name-${item.id}`} className="text-white">Nome</Label>
                 <Input
                   id={`name-${item.id}`}
                   value={editData.name}
                   onChange={(e) => onEditDataChange({ name: e.target.value })}
+                  className="bg-black border-green-600/30 text-white focus:border-green-500"
                 />
               </div>
               <div>
-                <Label htmlFor={`description-${item.id}`}>Descrição</Label>
+                <Label htmlFor={`description-${item.id}`} className="text-white">Descrição</Label>
                 <Textarea
                   id={`description-${item.id}`}
                   value={editData.description}
                   onChange={(e) => onEditDataChange({ description: e.target.value })}
                   rows={2}
+                  className="bg-black border-green-600/30 text-white focus:border-green-500"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor={`initial-value-${item.id}`}>Valor Inicial</Label>
+                  <Label htmlFor={`initial-value-${item.id}`} className="text-white">Valor Inicial</Label>
                   <CurrencyInput
                     value={editData.initial_value}
                     onChange={(value) => onEditDataChange({ initial_value: value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor={`increment-${item.id}`}>Incremento</Label>
+                  <Label htmlFor={`increment-${item.id}`} className="text-white">Incremento</Label>
                   <CurrencyInput
                     value={editData.increment}
                     onChange={(value) => onEditDataChange({ increment: value })}
@@ -130,15 +132,15 @@ const SortableItem = ({
                 </div>
               </div>
               <div>
-                <Label htmlFor={`status-${item.id}`}>Status</Label>
+                <Label htmlFor={`status-${item.id}`} className="text-white">Status</Label>
                 <Select value={editData.status} onValueChange={(value) => onEditDataChange({ status: value as LotFormData['status'] })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-black border-green-600/30 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="not_started">Não Iniciado</SelectItem>
-                    <SelectItem value="in_progress">Em Andamento</SelectItem>
-                    <SelectItem value="finished">Finalizado</SelectItem>
+                  <SelectContent className="bg-gray-900 border-green-600/30">
+                    <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
+                    <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
+                    <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -146,17 +148,17 @@ const SortableItem = ({
           ) : (
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold">{item.name}</h4>
+                <h4 className="font-semibold text-white">{item.name}</h4>
                 <StatusBadge status={item.status} />
               </div>
               {item.description && (
-                <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
+                <p className="text-sm text-gray-300 mb-2">{item.description}</p>
               )}
-              <div className="text-sm space-y-1">
-                <p>Valor inicial: R$ {item.initial_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                <p>Valor atual: R$ {item.current_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <div className="text-sm space-y-1 text-gray-300">
+                <p>Valor inicial: <span className="text-green-400 font-medium">R$ {item.initial_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
+                <p>Valor atual: <span className="text-green-400 font-medium">R$ {item.current_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
                 {item.increment && (
-                  <p>Incremento: R$ {item.increment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p>Incremento: <span className="text-green-400 font-medium">R$ {item.increment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
                 )}
               </div>
             </div>
@@ -166,19 +168,19 @@ const SortableItem = ({
         <div className="flex items-center gap-2 ml-3">
           {isEditing ? (
             <>
-              <Button size="sm" onClick={onSave}>
+              <Button size="sm" onClick={onSave} className="bg-green-600 hover:bg-green-700 text-white">
                 <Save className="h-4 w-4" />
               </Button>
-              <Button size="sm" variant="outline" onClick={onCancel}>
+              <Button size="sm" variant="outline" onClick={onCancel} className="border-gray-600 text-gray-300 hover:bg-gray-800">
                 <X className="h-4 w-4" />
               </Button>
             </>
           ) : (
             <>
-              <Button size="sm" variant="outline" onClick={onEdit}>
+              <Button size="sm" variant="outline" onClick={onEdit} className="border-green-600/50 text-green-400 hover:bg-green-900/30">
                 <Edit2 className="h-4 w-4" />
               </Button>
-              <Button size="sm" variant="destructive" onClick={onDelete}>
+              <Button size="sm" variant="destructive" onClick={onDelete} className="bg-red-900 hover:bg-red-800 text-white">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </>
@@ -372,53 +374,55 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
   };
 
   if (loading) {
-    return <div className="text-center py-4">Carregando lotes...</div>;
+    return <div className="text-center py-4 text-gray-400">Carregando lotes...</div>;
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="bg-gray-900 border border-green-600/30 rounded-lg">
+      <div className="bg-gray-800 border-b border-green-600/20 px-6 py-4">
         <div className="flex items-center justify-between">
-          <CardTitle>Gerenciar Lotes</CardTitle>
-          <Button onClick={() => setShowForm(true)} disabled={showForm}>
+          <h3 className="text-lg font-semibold text-white">Gerenciar Lotes</h3>
+          <Button onClick={() => setShowForm(true)} disabled={showForm} className="bg-green-600 hover:bg-green-700 text-white">
             <Plus className="h-4 w-4 mr-2" />
             Adicionar Lote
           </Button>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      </div>
+      <div className="p-6 space-y-4">
         {showForm && (
-          <Card className="bg-muted/50">
-            <CardContent className="pt-4 space-y-3">
+          <div className="bg-black/50 border border-green-600/20 rounded-lg p-4">
+            <div className="space-y-3">
               <div>
-                <Label htmlFor="new-name">Nome</Label>
+                <Label htmlFor="new-name" className="text-white">Nome</Label>
                 <Input
                   id="new-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Nome do lote"
+                  className="bg-black border-green-600/30 text-white focus:border-green-500"
                 />
               </div>
               <div>
-                <Label htmlFor="new-description">Descrição</Label>
+                <Label htmlFor="new-description" className="text-white">Descrição</Label>
                 <Textarea
                   id="new-description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Descrição do lote"
                   rows={2}
+                  className="bg-black border-green-600/30 text-white focus:border-green-500"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="new-initial-value">Valor Inicial</Label>
+                  <Label htmlFor="new-initial-value" className="text-white">Valor Inicial</Label>
                   <CurrencyInput
                     value={formData.initial_value}
                     onChange={(value) => setFormData({ ...formData, initial_value: value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="new-increment">Incremento</Label>
+                  <Label htmlFor="new-increment" className="text-white">Incremento</Label>
                   <CurrencyInput
                     value={formData.increment}
                     onChange={(value) => setFormData({ ...formData, increment: value })}
@@ -426,34 +430,34 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
                 </div>
               </div>
               <div>
-                <Label htmlFor="new-status">Status</Label>
+                <Label htmlFor="new-status" className="text-white">Status</Label>
                 <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as LotFormData['status'] })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-black border-green-600/30 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="not_started">Não Iniciado</SelectItem>
-                    <SelectItem value="in_progress">Em Andamento</SelectItem>
-                    <SelectItem value="finished">Finalizado</SelectItem>
+                  <SelectContent className="bg-gray-900 border-green-600/30">
+                    <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
+                    <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
+                    <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleCreate} disabled={!formData.name}>
+                <Button onClick={handleCreate} disabled={!formData.name} className="bg-green-600 hover:bg-green-700 text-white">
                   <Save className="h-4 w-4 mr-2" />
                   Salvar Lote
                 </Button>
-                <Button variant="outline" onClick={() => setShowForm(false)}>
+                <Button variant="outline" onClick={() => setShowForm(false)} className="border-gray-600 text-gray-300 hover:bg-gray-800">
                   <X className="h-4 w-4 mr-2" />
                   Cancelar
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {items.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 text-gray-400">
             Nenhum lote cadastrado para este leilão.
           </div>
         ) : (
@@ -481,8 +485,8 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
             </SortableContext>
           </DndContext>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

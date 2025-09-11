@@ -185,7 +185,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
           </div>
 
           {auction?.id && (
-            <div className="border-t border-green-600/30 pt-6">
+            <div className="border-t border-green-600/30 pt-6 bg-gray-900/50 rounded-lg p-4 -mx-2">
               <h3 className="text-lg font-semibold text-white mb-4">Gerenciar Lotes</h3>
               <AuctionLotsManager auctionId={auction.id} />
             </div>
