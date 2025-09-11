@@ -323,6 +323,7 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
           name: editData.name,
           description: editData.description,
           initial_value: editData.initial_value,
+          current_value: editData.initial_value, // Update current value to match initial
           increment: editData.increment,
           status: editData.status
         })
@@ -475,7 +476,16 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
                     isEditing={editingId === item.id}
                     onEdit={() => handleEdit(item)}
                     onSave={handleSave}
-                    onCancel={() => setEditingId(null)}
+                    onCancel={() => {
+                      setEditingId(null);
+                      setEditData({
+                        name: '',
+                        description: '',
+                        initial_value: 0,
+                        increment: 100,
+                        status: 'not_started'
+                      });
+                    }}
                     onDelete={() => handleDelete(item.id)}
                     editData={editData}
                     onEditDataChange={(data) => setEditData({ ...editData, ...data })}
