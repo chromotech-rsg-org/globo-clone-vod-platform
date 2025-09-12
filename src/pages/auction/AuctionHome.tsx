@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuctions } from '@/hooks/useAuctions';
 import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
 import { useAuth } from '@/contexts/AuthContext';
-import AuctionCard from '@/components/auction/AuctionCard';
+import AuctionChannelCard from '@/components/auction/AuctionChannelCard';
 import SubscriptionRequired from '@/components/SubscriptionRequired';
 import AuctionPromoBanner from '@/components/auction/AuctionPromoBanner';
 import GuestModeBanner from '@/components/auction/GuestModeBanner';
@@ -108,7 +108,7 @@ const AuctionHome = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {liveAuctions.map((auction) => (
-                  <AuctionCard key={auction.id} auction={auction} />
+                  <AuctionChannelCard key={auction.id} auction={auction} />
                 ))}
               </div>
             )}
@@ -132,7 +132,7 @@ const AuctionHome = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {recordedAuctions.map((auction) => (
-                  <AuctionCard key={auction.id} auction={auction} />
+                  <AuctionChannelCard key={auction.id} auction={auction} />
                 ))}
               </div>
             )}

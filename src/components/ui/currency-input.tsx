@@ -27,8 +27,10 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
   };
 
   const parseCurrency = (str: string): number => {
-    const cleanedStr = str.replace(/[^\d,]/g, '').replace(',', '.');
-    return parseFloat(cleanedStr) || 0;
+    // Remove R$, espaços e pontos de separação de milhares, mantém apenas dígitos e vírgula
+    const cleanedStr = str.replace(/[R$\s\.]/g, '').replace(',', '.');
+    const numericValue = parseFloat(cleanedStr) || 0;
+    return numericValue;
   };
 
   useEffect(() => {
@@ -37,9 +39,13 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    const numericValue = parseCurrency(inputValue);
     
-    setDisplayValue(inputValue);
+    // Permite apenas números, vírgula e remove caracteres inválidos
+    const filteredValue = inputValue.replace(/[^0-9,]/g, '');
+    
+    const numericValue = parseCurrency(filteredValue);
+    
+    setDisplayValue(filteredValue);
     onChange(numericValue);
   };
 
