@@ -55,23 +55,28 @@ const AuctionRoom = () => {
   }, [registration, userPendingBid]);
 
   useEffect(() => {
-    if (auction) {
-      setNextBidValue(auction.current_bid_value + auction.bid_increment);
-    }
-  }, [auction]);
+    if (!auction) return;
 
-  // Update next bid value when current bid changes via real-time
-  useEffect(() => {
-    if (auction && bids.length > 0) {
-      const approvedBids = bids.filter(bid => bid.status === 'approved');
-      if (approvedBids.length > 0) {
-        const highestBid = Math.max(...approvedBids.map(bid => bid.bid_value));
-        if (highestBid > auction.current_bid_value) {
-          setNextBidValue(highestBid + auction.bid_increment);
-        }
+    // Encontrar o lote atual (preferindo is_current)
+    const currentLot = (lots || []).find(l => l.is_current) || (lots || []).find(l => l.status === 'in_progress') || null;
+
+    // Incremento segue a mesma regra do banco: COALESCE(lote.increment, leilao.bid_increment)
+    const increment = Number(currentLot?.increment ?? auction.bid_increment);
+
+    // Valor base do lance: valor atual do lote (ou do leilão se não houver lote),
+    // considerando o maior lance aprovado do lote atual
+    let base = Number(currentLot ? currentLot.current_value : auction.current_bid_value);
+
+    const approvedBids = bids.filter(bid => bid.status === 'approved' && (!currentLot || bid.auction_item_id === currentLot.id));
+    if (approvedBids.length > 0) {
+      const highestBid = Math.max(...approvedBids.map(b => Number(b.bid_value)));
+      if (highestBid > base) {
+        base = highestBid;
       }
     }
-  }, [bids, auction]);
+
+    setNextBidValue(base + increment);
+  }, [auction, lots, bids]);
 
   const getUserStateInfo = () => {
     const hasWinner = bids.some(bid => bid.is_winner);
