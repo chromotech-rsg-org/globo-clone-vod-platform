@@ -71,7 +71,7 @@ const BidConfirmationDialog = ({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="text-black border-gray-600 hover:bg-gray-800 hover:text-white">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-gray-600 hover:bg-gray-800 text-zinc-50">
             Cancelar
           </Button>
           <Button onClick={onConfirm} className="bg-green-600 hover:bg-green-700 text-white">
