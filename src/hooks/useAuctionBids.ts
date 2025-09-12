@@ -150,13 +150,18 @@ export const useAuctionBids = (auctionId: string) => {
         return false;
       }
 
-      // Buscar ou criar auction_item para este leilão
-      let auctionItem;
+      // Buscar item atual do leilão (preferindo is_current ou status in_progress)
+      type ExistingItem = { id: string; current_value: number; increment: number | null; status: string; is_current: boolean };
+      let auctionItem: ExistingItem;
+
       const { data: existingItem, error: itemError } = await supabase
         .from('auction_items')
-        .select('id')
+        .select('id, current_value, increment, status, is_current')
         .eq('auction_id', auctionId)
-        .eq('is_current', true)
+        .or('is_current.eq.true,status.eq.in_progress')
+        .order('is_current', { ascending: false })
+        .order('order_index', { ascending: true })
+        .limit(1)
         .maybeSingle();
 
       if (itemError) {
@@ -168,7 +173,7 @@ export const useAuctionBids = (auctionId: string) => {
         // Criar um item padrão se não existir
         const { data: auctionData } = await supabase
           .from('auctions')
-          .select('name, description, initial_bid_value, current_bid_value')
+          .select('name, description, initial_bid_value, current_bid_value, bid_increment')
           .eq('id', auctionId)
           .single();
 
@@ -181,22 +186,42 @@ export const useAuctionBids = (auctionId: string) => {
               description: auctionData.description || 'Item principal do leilão',
               initial_value: auctionData.initial_bid_value,
               current_value: auctionData.current_bid_value,
+              increment: null, // usa incremento do leilão por padrão
               is_current: true,
               order_index: 0
             })
-            .select('id')
+            .select('id, current_value, increment, status, is_current')
             .single();
 
           if (createError) {
             console.error('Error creating auction item:', createError);
             throw new Error('Não foi possível criar o item do leilão');
           }
-          auctionItem = newItem;
+          auctionItem = newItem as ExistingItem;
         } else {
           throw new Error('Leilão não encontrado');
         }
       } else {
-        auctionItem = existingItem;
+        auctionItem = existingItem as ExistingItem;
+      }
+
+      // Validar valor mínimo do lance com dados atualizados do servidor
+      const { data: auctionRow } = await supabase
+        .from('auctions')
+        .select('bid_increment')
+        .eq('id', auctionId)
+        .single();
+
+      const incrementToUse = (auctionItem.increment ?? auctionRow?.bid_increment ?? 0);
+      const minAllowed = Number(auctionItem.current_value) + Number(incrementToUse);
+
+      if (bidValue < minAllowed) {
+        toast({
+          title: "Valor de lance insuficiente",
+          description: `O lance mínimo atual é R$ ${minAllowed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
+          variant: "destructive"
+        });
+        return false;
       }
 
       const { data, error } = await supabase
