@@ -160,6 +160,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
 
         <Button
+          type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
           className="mt-4"

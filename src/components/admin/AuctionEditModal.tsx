@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Auction } from '@/types/auction';
 import { AuctionLotsManager } from './AuctionLotsManager';
-import ImageUpload from '@/components/ui/image-upload';
+
 
 interface AuctionEditModalProps {
   auction: Auction | null;
@@ -33,6 +33,9 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
     is_live: false
   });
 
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+
   useEffect(() => {
     if (auction) {
       setFormData({
@@ -48,11 +51,34 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
     setSaving(true);
 
     try {
+      // If a new image was selected, upload it now (deferred upload)
+      let imageUrl = formData.image_url || '';
+      if (pendingImageFile) {
+        const file = pendingImageFile;
+        const timestamp = Date.now();
+        const fileExt = file.name.split('.').pop();
+        const randomSuffix = Math.random().toString(36).substring(2);
+        const fileName = `${timestamp}-${randomSuffix}.${fileExt}`;
+        const filePath = `auction-images/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('site-images')
+          .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicData } = supabase.storage
+          .from('site-images')
+          .getPublicUrl(uploadData.path);
+
+        imageUrl = publicData.publicUrl;
+      }
+
       const auctionData = {
         name: formData.name,
         description: formData.description,
         youtube_url: formData.youtube_url,
-        image_url: formData.image_url,
+        image_url: imageUrl,
         start_date: formData.start_date,
         end_date: formData.end_date,
         status: formData.status,
@@ -73,6 +99,8 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
       });
 
       onSave();
+      setPendingImageFile(null);
+      setImagePreview('');
     } catch (error) {
       console.error('Erro ao salvar leilão:', error);
       toast({
@@ -189,12 +217,33 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
 
           <div>
             <Label className="text-white">Imagem do Leilão</Label>
-            <ImageUpload
-              onImageUploaded={(url) => setFormData({ ...formData, image_url: url })}
-              onImageDeleted={() => setFormData({ ...formData, image_url: '' })}
-              existingImages={formData.image_url ? [{ url: formData.image_url, path: '', name: 'Imagem do Leilão' }] : []}
-              folder="auction-images"
-            />
+            <div className="mt-2 space-y-3">
+              {(imagePreview || formData.image_url) && (
+                <div className="relative w-48 h-48 bg-gray-900 border border-green-600/30 rounded-lg overflow-hidden">
+                  <img
+                    src={imagePreview || (formData.image_url as string)}
+                    alt="Pré-visualização da imagem do leilão"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setPendingImageFile(file);
+                  if (file) {
+                    const url = URL.createObjectURL(file);
+                    setImagePreview(url);
+                  } else {
+                    setImagePreview('');
+                  }
+                }}
+                className="bg-black border-green-600/30 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white file:cursor-pointer"
+              />
+              <p className="text-xs text-gray-400">A imagem será enviada apenas ao salvar.</p>
+            </div>
           </div>
 
           {auction?.id && (
