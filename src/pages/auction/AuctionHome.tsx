@@ -106,12 +106,19 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-[0.5cm] gap-y-[1cm]">
+              <div className="flex flex-wrap justify-center gap-[0.5cm] px-[0.5cm]">
                 {liveAuctions.map((auction) => (
-                  <div key={auction.id} className="w-full">
-                    <div style={{transform: 'scale(0.4)', transformOrigin: 'top left', width: '432px', height: '768px'}}>
-                      <AuctionChannelCard auction={auction} />
-                    </div>
+                  <div 
+                    key={auction.id} 
+                    className="flex-shrink-0" 
+                    style={{ 
+                      width: 'calc((100% - 1.5cm) / 4)', 
+                      minWidth: '250px',
+                      maxWidth: '350px',
+                      marginBottom: '1cm'
+                    }}
+                  >
+                    <AuctionChannelCard auction={auction} />
                   </div>
                 ))}
               </div>
@@ -134,12 +141,19 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-[0.5cm] gap-y-[1cm]">
+              <div className="flex flex-wrap justify-center gap-[0.5cm] px-[0.5cm]">
                 {recordedAuctions.map((auction) => (
-                  <div key={auction.id} className="w-full">
-                    <div style={{transform: 'scale(0.4)', transformOrigin: 'top left', width: '432px', height: '768px'}}>
-                      <AuctionChannelCard auction={auction} />
-                    </div>
+                  <div 
+                    key={auction.id} 
+                    className="flex-shrink-0" 
+                    style={{ 
+                      width: 'calc((100% - 1.5cm) / 4)', 
+                      minWidth: '250px',
+                      maxWidth: '350px',
+                      marginBottom: '1cm'
+                    }}
+                  >
+                    <AuctionChannelCard auction={auction} />
                   </div>
                 ))}
               </div>
