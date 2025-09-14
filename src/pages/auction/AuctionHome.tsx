@@ -106,10 +106,10 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {liveAuctions.map((auction) => (
-                  <div key={auction.id} className="flex justify-center">
-                    <div style={{transform: 'scale(0.25)', transformOrigin: 'top left', width: '270px', height: '480px'}}>
+                  <div key={auction.id} className="w-full">
+                    <div style={{transform: 'scale(0.4)', transformOrigin: 'top left', width: '432px', height: '768px'}}>
                       <AuctionChannelCard auction={auction} />
                     </div>
                   </div>
@@ -134,10 +134,10 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {recordedAuctions.map((auction) => (
-                  <div key={auction.id} className="flex justify-center">
-                    <div style={{transform: 'scale(0.25)', transformOrigin: 'top left', width: '270px', height: '480px'}}>
+                  <div key={auction.id} className="w-full">
+                    <div style={{transform: 'scale(0.4)', transformOrigin: 'top left', width: '432px', height: '768px'}}>
                       <AuctionChannelCard auction={auction} />
                     </div>
                   </div>

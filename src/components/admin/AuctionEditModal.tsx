@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Auction } from '@/types/auction';
 import { AuctionLotsManager } from './AuctionLotsManager';
+import ImageUpload from '@/components/ui/image-upload';
 
 interface AuctionEditModalProps {
   auction: Auction | null;
@@ -24,6 +25,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
     name: '',
     description: '',
     youtube_url: '',
+    image_url: '',
     start_date: '',
     end_date: '',
     status: 'inactive',
@@ -50,6 +52,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
         name: formData.name,
         description: formData.description,
         youtube_url: formData.youtube_url,
+        image_url: formData.image_url,
         start_date: formData.start_date,
         end_date: formData.end_date,
         status: formData.status,
@@ -181,6 +184,16 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
               onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
               className="bg-black border-green-600/30 text-white"
               placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </div>
+
+          <div>
+            <Label className="text-white">Imagem do Leilão</Label>
+            <ImageUpload
+              onImageUploaded={(url) => setFormData({ ...formData, image_url: url })}
+              onImageDeleted={() => setFormData({ ...formData, image_url: '' })}
+              existingImages={formData.image_url ? [{ url: formData.image_url, path: '', name: 'Imagem do Leilão' }] : []}
+              folder="auction-images"
             />
           </div>
 

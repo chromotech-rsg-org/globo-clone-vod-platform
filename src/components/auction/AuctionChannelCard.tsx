@@ -18,7 +18,7 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
   return (
     <Link to={`/auctions/${auction.id}`} className="block h-full">
-      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50" style={{width: '1080px', height: '1920px'}}>
+      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-3xl" style={{width: '1080px', height: '1920px'}}>
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center transition-all duration-500"
@@ -61,21 +61,21 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                 {auction.auction_type === 'rural' ? '🌾 Rural' : '⚖️ Judicial'}
               </Badge>
               
-              <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-primary transition-colors drop-shadow-lg">
+              <h3 className="text-2xl font-bold text-white line-clamp-2 group-hover:text-primary transition-colors drop-shadow-lg">
                 {auction.name}
               </h3>
               
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1 text-primary drop-shadow-md">
                   <TrendingUp size={14} />
-                  <span className="text-sm font-semibold">
+                  <span className="text-lg font-semibold">
                     {formatCurrency(finalCurrentValue)}
                   </span>
                 </div>
                 {!auction.is_live && (
                   <div className="flex items-center gap-1 text-slate-200 drop-shadow-md">
                     <Square size={12} />
-                    <span className="text-xs">Gravado</span>
+                    <span className="text-sm">Gravado</span>
                   </div>
                 )}
               </div>
