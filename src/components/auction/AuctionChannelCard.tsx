@@ -32,9 +32,9 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
         
         {/* Live Indicator */}
         {auction.is_live && (
-          <div className="absolute top-6 left-6 z-30">
-            <Badge className="bg-red-500 text-white animate-pulse border-red-400 text-lg px-4 py-2 flex items-center gap-2 shadow-lg">
-              <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute top-4 left-4 z-30">
+            <Badge className="bg-red-500 text-white animate-pulse border-red-400 text-sm px-2 py-1 flex items-center gap-1 shadow-lg">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               AO VIVO
             </Badge>
           </div>
@@ -42,9 +42,9 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
         {/* Winner Badge */}
         {hasWinner && (
-          <div className="absolute top-6 right-6 z-30">
-            <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white flex items-center gap-2 animate-pulse text-lg px-4 py-2 shadow-lg">
-              <Trophy size={18} />
+          <div className="absolute top-4 right-4 z-30">
+            <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white flex items-center gap-1 animate-pulse text-sm px-2 py-1 shadow-lg">
+              <Trophy size={14} />
               Finalizado
             </Badge>
           </div>
@@ -56,26 +56,26 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
             <div className="space-y-4">
               <Badge 
                 variant="outline" 
-                className="w-fit border-primary/60 text-primary bg-primary/20 text-lg px-4 py-2 shadow-sm backdrop-blur-sm"
+                className="w-fit border-primary/60 text-primary bg-primary/20 text-base px-3 py-1.5 shadow-sm backdrop-blur-sm"
               >
                 {auction.auction_type === 'rural' ? '🌾 Rural' : '⚖️ Judicial'}
               </Badge>
               
-              <h3 className="text-4xl font-bold text-white line-clamp-2 group-hover:text-primary transition-colors drop-shadow-lg">
+              <h3 className="text-3xl font-bold text-white line-clamp-2 group-hover:text-primary transition-colors drop-shadow-lg">
                 {auction.name}
               </h3>
               
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-primary drop-shadow-md">
-                  <TrendingUp size={24} />
-                  <span className="text-3xl font-semibold">
+                  <TrendingUp size={20} />
+                  <span className="text-2xl font-semibold">
                     {formatCurrency(finalCurrentValue)}
                   </span>
                 </div>
                 {!auction.is_live && (
                   <div className="flex items-center gap-2 text-slate-200 drop-shadow-md">
-                    <Square size={20} />
-                    <span className="text-xl">Gravado</span>
+                    <Square size={18} />
+                    <span className="text-lg">Gravado</span>
                   </div>
                 )}
               </div>
