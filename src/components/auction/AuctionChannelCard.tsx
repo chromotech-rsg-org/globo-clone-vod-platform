@@ -18,22 +18,22 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
   return (
     <Link to={`/auctions/${auction.id}`} className="block h-full">
-      <Card className="group relative h-[280px] overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50">
+      <Card className="group relative h-[360px] overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50">
         {/* Background Image */}
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-50 transition-opacity duration-500"
+          className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-60 transition-opacity duration-500"
           style={{
-            backgroundImage: `url('/assets/auction-channel-bg.jpg')`
+            backgroundImage: `url('/assets/auction-channel-bg-mobile.jpg')`
           }}
         />
         
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30 group-hover:from-black/95 transition-all duration-500" />
+        {/* Strong Gradient Overlay for Text Readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/40 group-hover:from-black/98 transition-all duration-500" />
         
         {/* Live Indicator */}
         {auction.is_live && (
-          <div className="absolute top-3 left-3 z-20">
-            <Badge className="bg-red-500 text-white animate-pulse border-red-400 text-xs px-2 py-1 flex items-center gap-1">
+          <div className="absolute top-3 left-3 z-30">
+            <Badge className="bg-red-500 text-white animate-pulse border-red-400 text-xs px-2 py-1 flex items-center gap-1 shadow-lg">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               AO VIVO
             </Badge>
@@ -42,38 +42,38 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
         {/* Winner Badge */}
         {hasWinner && (
-          <div className="absolute top-3 right-3 z-20">
-            <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white flex items-center gap-1 animate-pulse text-xs px-2 py-1">
+          <div className="absolute top-3 right-3 z-30">
+            <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white flex items-center gap-1 animate-pulse text-xs px-2 py-1 shadow-lg">
               <Trophy size={12} />
               Finalizado
             </Badge>
           </div>
         )}
 
-        <CardContent className="relative z-10 p-0 h-full flex flex-col">
-          {/* Top Section - Always Visible */}
+        <CardContent className="relative z-20 p-0 h-full flex flex-col">
+          {/* Content Always Over Image */}
           <div className="p-4 flex-1 flex flex-col justify-end">
             <div className="space-y-2">
               <Badge 
                 variant="outline" 
-                className="w-fit border-primary/50 text-primary bg-primary/10 text-xs px-2 py-1"
+                className="w-fit border-primary/60 text-primary bg-primary/20 text-xs px-2 py-1 shadow-sm backdrop-blur-sm"
               >
                 {auction.auction_type === 'rural' ? '🌾 Rural' : '⚖️ Judicial'}
               </Badge>
               
-              <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-primary transition-colors">
+              <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-primary transition-colors drop-shadow-lg">
                 {auction.name}
               </h3>
               
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-primary">
+                <div className="flex items-center gap-1 text-primary drop-shadow-md">
                   <TrendingUp size={14} />
                   <span className="text-sm font-semibold">
                     {formatCurrency(finalCurrentValue)}
                   </span>
                 </div>
                 {!auction.is_live && (
-                  <div className="flex items-center gap-1 text-muted-foreground">
+                  <div className="flex items-center gap-1 text-slate-200 drop-shadow-md">
                     <Square size={12} />
                     <span className="text-xs">Gravado</span>
                   </div>
@@ -82,8 +82,8 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
             </div>
           </div>
 
-          {/* Hover Details - Only visible on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/85 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 p-4 flex flex-col justify-end">
+          {/* Hover Details - Enhanced Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/90 to-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 p-4 flex flex-col justify-end backdrop-blur-[1px]">
             <div className="space-y-3">
               {/* Description */}
               {auction.description && (
