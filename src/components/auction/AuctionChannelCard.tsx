@@ -51,133 +51,60 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
         )}
 
         <CardContent className="relative z-20 p-0 h-full flex flex-col">
-          {/* Content Always Over Image */}
-          <div className="p-8 flex-1 flex flex-col justify-end">
+          {/* Hover Details - Enhanced Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/90 to-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 p-6 flex flex-col justify-center backdrop-blur-[1px]">
             <div className="space-y-4">
-              <Badge 
-                variant="outline" 
-                className="w-fit border-primary/60 text-primary bg-primary/20 text-base px-3 py-1.5 shadow-sm backdrop-blur-sm"
-              >
-                {auction.auction_type === 'rural' ? '🌾 Rural' : '⚖️ Judicial'}
-              </Badge>
-              
-              <h3 className="text-3xl font-bold text-white line-clamp-2 group-hover:text-primary transition-colors drop-shadow-lg">
-                {auction.name}
-              </h3>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-primary drop-shadow-md">
-                  <TrendingUp size={20} />
-                  <span className="text-2xl font-semibold">
-                    {formatCurrency(finalCurrentValue)}
+              {/* Date */}
+              {auction.start_date && (
+                <div className="flex items-center justify-center gap-2 text-lg text-white">
+                  <Clock size={18} />
+                  <span>
+                    Início: {new Date(auction.start_date).toLocaleDateString('pt-BR')}
                   </span>
                 </div>
-                {!auction.is_live && (
-                  <div className="flex items-center gap-2 text-slate-200 drop-shadow-md">
-                    <Square size={18} />
-                    <span className="text-lg">Gravado</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Hover Details - Enhanced Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/90 to-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 p-8 flex flex-col justify-end backdrop-blur-[1px]">
-            <div className="space-y-6">
-              {/* Description */}
-              {auction.description && (
-                <p className="text-lg text-muted-foreground line-clamp-2">
-                  {auction.description}
-                </p>
               )}
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-background/20 backdrop-blur-sm rounded-lg p-4 border border-border/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target size={16} />
-                    <span className="text-sm text-muted-foreground">Inicial</span>
+              {/* Stats Grid - Adjusted for better fit */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-background/20 backdrop-blur-sm rounded-lg p-3 border border-border/20">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Target size={14} />
+                    <span className="text-xs text-muted-foreground">Inicial</span>
                   </div>
-                  <p className="text-lg font-medium text-white">
+                  <p className="text-sm font-medium text-white truncate">
                     {formatCurrency(auction.initial_bid_value)}
                   </p>
                 </div>
                 
-                <div className="bg-primary/20 backdrop-blur-sm rounded-lg p-4 border border-primary/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp size={16} />
-                    <span className="text-sm text-primary">
-                      {hasWinner ? 'Arrematado' : 'Atual'}
+                <div className="bg-primary/20 backdrop-blur-sm rounded-lg p-3 border border-primary/30">
+                  <div className="flex items-center gap-1 mb-1">
+                    <TrendingUp size={14} />
+                    <span className="text-xs text-primary">
+                      {hasWinner ? 'Final' : 'Atual'}
                     </span>
                   </div>
-                  <p className="text-lg font-bold text-primary">
+                  <p className="text-sm font-bold text-primary truncate">
                     {formatCurrency(finalCurrentValue)}
                   </p>
                 </div>
                 
-                <div className="bg-background/20 backdrop-blur-sm rounded-lg p-4 border border-border/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap size={16} />
-                    <span className="text-sm text-muted-foreground">Lances</span>
+                <div className="bg-background/20 backdrop-blur-sm rounded-lg p-3 border border-border/20">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Zap size={14} />
+                    <span className="text-xs text-muted-foreground">Lances</span>
                   </div>
-                  <p className="text-lg font-medium text-white">
+                  <p className="text-sm font-medium text-white">
                     {loading ? '...' : (stats?.totalBids || 0)}
                   </p>
                 </div>
               </div>
 
-              {/* Date and Progress */}
-              {auction.start_date && auction.end_date && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-base text-muted-foreground">
-                    <Clock size={16} />
-                    <span>
-                      {new Date(auction.start_date).toLocaleDateString('pt-BR')} - {new Date(auction.end_date).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                  
-                  {(() => {
-                    const now = new Date().getTime();
-                    const start = new Date(auction.start_date).getTime();
-                    const end = new Date(auction.end_date).getTime();
-                    const totalDuration = end - start;
-                    const elapsed = Math.max(0, now - start);
-                    const progress = Math.min(100, (elapsed / totalDuration) * 100);
-                    
-                    return (
-                      <div className="space-y-2">
-                        <div className="w-full bg-background/30 rounded-full h-2 overflow-hidden">
-                          <div 
-                            className={`h-2 rounded-full transition-all duration-500 ${
-                              now < start ? 'bg-blue-500' : 
-                              now > end ? 'bg-muted-foreground' : 
-                              'bg-primary'
-                            }`}
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                        <div className="text-center text-base">
-                          {now < start ? (
-                            <span className="text-blue-400">Não iniciado</span>
-                          ) : now > end ? (
-                            <span className="text-muted-foreground">Finalizado</span>
-                          ) : (
-                            <span className="text-primary">{Math.round(progress)}% concluído</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
               {/* Action Button */}
-              <div className="pt-4">
-                <div className="w-full bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-lg py-4 px-6 text-center group-hover:bg-primary/30 transition-colors">
-                  <div className="flex items-center justify-center gap-3 text-primary">
-                    <Play size={20} />
-                    <span className="text-lg font-medium">Acessar Leilão</span>
+              <div className="pt-2">
+                <div className="w-full bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-lg py-3 px-4 text-center group-hover:bg-primary/30 transition-colors">
+                  <div className="flex items-center justify-center gap-2 text-primary">
+                    <Play size={18} />
+                    <span className="text-base font-medium">Acessar Leilão</span>
                   </div>
                 </div>
               </div>
