@@ -18,17 +18,17 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
   return (
     <Link to={`/auctions/${auction.id}`} className="block h-full">
-      <Card className="group relative h-[360px] overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50">
+      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50" style={{width: '1080px', height: '1920px'}}>
         {/* Background Image */}
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+          className="absolute inset-0 bg-cover bg-center transition-all duration-500"
           style={{
-            backgroundImage: `url('/assets/auction-channel-bg-mobile.jpg')`
+            backgroundImage: `url('${auction.image_url || '/assets/auction-channel-bg-mobile.jpg'}')`
           }}
         />
         
-        {/* Strong Gradient Overlay for Text Readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/40 group-hover:from-black/98 transition-all duration-500" />
+        {/* Light gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent group-hover:from-black/80 transition-all duration-500" />
         
         {/* Live Indicator */}
         {auction.is_live && (

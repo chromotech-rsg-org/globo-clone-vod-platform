@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import ImageUpload from '@/components/ui/image-upload';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AuctionLotsManager } from './AuctionLotsManager';
@@ -24,6 +25,7 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
     name: '',
     description: '',
     youtube_url: '',
+    image_url: '',
     initial_bid_value: 0,
     current_bid_value: 0,
     bid_increment: 100,
@@ -43,6 +45,7 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
         name: formData.name,
         description: formData.description,
         youtube_url: formData.youtube_url,
+        image_url: formData.image_url,
         initial_bid_value: formData.initial_bid_value,
         current_bid_value: formData.current_bid_value || formData.initial_bid_value,
         bid_increment: formData.bid_increment,
@@ -86,6 +89,7 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
       name: '',
       description: '',
       youtube_url: '',
+      image_url: '',
       initial_bid_value: 0,
       current_bid_value: 0,
       bid_increment: 100,
@@ -194,6 +198,19 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
               onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
               className="bg-black border-green-600/30 text-white"
               placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </div>
+
+          <div>
+            <Label className="text-white">Imagem do Leilão</Label>
+            <ImageUpload 
+              onImageUploaded={(url) => setFormData({ ...formData, image_url: url })}
+              folder="auction-images"
+              existingImages={formData.image_url ? [{ 
+                url: formData.image_url, 
+                path: formData.image_url.split('/').pop() || '', 
+                name: 'Imagem do Leilão' 
+              }] : []}
             />
           </div>
 

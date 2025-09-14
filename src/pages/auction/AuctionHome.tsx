@@ -106,9 +106,13 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {liveAuctions.map((auction) => (
-                  <AuctionChannelCard key={auction.id} auction={auction} />
+                  <div key={auction.id} className="flex justify-center">
+                    <div style={{transform: 'scale(0.25)', transformOrigin: 'top left', width: '270px', height: '480px'}}>
+                      <AuctionChannelCard auction={auction} />
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -130,9 +134,13 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {recordedAuctions.map((auction) => (
-                  <AuctionChannelCard key={auction.id} auction={auction} />
+                  <div key={auction.id} className="flex justify-center">
+                    <div style={{transform: 'scale(0.25)', transformOrigin: 'top left', width: '270px', height: '480px'}}>
+                      <AuctionChannelCard auction={auction} />
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

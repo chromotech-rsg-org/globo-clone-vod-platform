@@ -140,6 +140,7 @@ export type Database = {
           description: string | null
           end_date: string | null
           id: string
+          image_url: string | null
           increment_mode: string
           initial_bid_value: number
           is_live: boolean
@@ -161,6 +162,7 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
+          image_url?: string | null
           increment_mode?: string
           initial_bid_value?: number
           is_live?: boolean
@@ -182,6 +184,7 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
+          image_url?: string | null
           increment_mode?: string
           initial_bid_value?: number
           is_live?: boolean

@@ -4,6 +4,7 @@ export interface Auction {
   name: string;
   description?: string;
   youtube_url?: string;
+  image_url?: string;
   initial_bid_value: number;
   current_bid_value: number;
   bid_increment: number;
