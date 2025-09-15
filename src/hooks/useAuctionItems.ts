@@ -46,7 +46,7 @@ export const useAuctionItems = (auctionId: string | undefined) => {
     if (!auctionId) return;
 
     const channel = supabase
-      .channel('auction_items_changes')
+      .channel(`auction_items_changes_${auctionId}_${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {
