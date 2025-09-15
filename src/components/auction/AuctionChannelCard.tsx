@@ -25,11 +25,12 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
       <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-3xl w-full aspect-[9/16]">
         {/* Background Image - Full coverage */}
         <div 
-          className="absolute inset-0 bg-cover bg-center transition-all duration-500"
+          className="absolute inset-0 transition-all duration-500"
           style={{
             backgroundImage: `url('${auction.image_url || '/assets/auction-channel-bg-mobile.jpg'}')`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
           }}
         />
         
@@ -97,49 +98,76 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
             </div>
           )}
 
-          {/* Stats Grid - Better spacing and sizing */}
-          <div className="grid grid-cols-1 gap-4 mb-6 flex-1 justify-center items-center">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center">
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  <Target size={16} className="text-gray-300" />
-                  <span className="text-sm text-gray-300">Inicial</span>
+          {/* Stats - Vertical layout for better visibility */}
+          <div className="flex-1 flex flex-col justify-center space-y-4 mb-6">
+            <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-2">
+                    <Target size={14} className="text-gray-300" />
+                    <span className="text-xs text-gray-300 uppercase font-semibold">Inicial</span>
+                  </div>
+                  <p className="text-sm font-bold text-white">
+                    {formatCurrency(auction.initial_bid_value)}
+                  </p>
                 </div>
-                <p className="text-base font-bold text-white">
-                  {formatCurrency(auction.initial_bid_value)}
-                </p>
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-2">
+                    <Zap size={14} className="text-gray-300" />
+                    <span className="text-xs text-gray-300 uppercase font-semibold">Lances</span>
+                  </div>
+                  <p className="text-sm font-bold text-white">
+                    {loading ? '...' : (stats?.totalBids || 0)}
+                  </p>
+                </div>
               </div>
-              
-              <div className="bg-primary/30 backdrop-blur-sm rounded-xl p-4 border border-primary/40 text-center">
+            </div>
+
+            <div className="bg-primary/40 backdrop-blur-sm rounded-2xl p-4 border border-primary/50">
+              <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-2">
-                  <TrendingUp size={16} className="text-primary" />
-                  <span className="text-sm text-primary">
+                  <TrendingUp size={14} className="text-primary-foreground" />
+                  <span className="text-xs text-primary-foreground uppercase font-semibold">
                     {hasWinner ? 'Final' : 'Atual'}
                   </span>
                 </div>
-                <p className="text-base font-bold text-primary">
+                <p className="text-lg font-bold text-primary-foreground">
                   {formatCurrency(finalCurrentValue)}
                 </p>
               </div>
-              
-              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center">
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  <Zap size={16} className="text-gray-300" />
-                  <span className="text-sm text-gray-300">Lances</span>
-                </div>
-                <p className="text-base font-bold text-white">
-                  {loading ? '...' : (stats?.totalBids || 0)}
-                </p>
-              </div>
             </div>
+
+            {/* Timeline */}
+            {auction.start_date && (
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1">
+                    <Clock size={12} className="text-blue-400" />
+                    <span className="text-gray-300">Programação</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                    <span className="text-blue-400 font-semibold">
+                      {new Date(auction.start_date).toLocaleDateString('pt-BR', { 
+                        day: '2-digit', 
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action Button */}
           <div className="mt-auto">
-            <div className="w-full bg-primary/30 backdrop-blur-sm border border-primary/50 rounded-xl py-4 px-6 text-center hover:bg-primary/40 transition-colors">
-              <div className="flex items-center justify-center gap-3 text-primary">
-                <Play size={20} />
-                <span className="text-lg font-semibold">Acessar Leilão</span>
+            <div className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary backdrop-blur-sm border border-primary/30 rounded-2xl py-4 px-6 text-center transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25">
+              <div className="flex items-center justify-center gap-3 text-primary-foreground">
+                <Play size={18} fill="currentColor" />
+                <span className="text-base font-bold">Acessar Leilão</span>
               </div>
             </div>
           </div>
