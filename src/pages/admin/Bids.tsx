@@ -26,6 +26,7 @@ interface Bid {
   client_notes?: string;
   auction_name?: string;
   user_name?: string;
+  lot_name?: string;
 }
 
 const getStatusDisplay = (status: string) => {
@@ -77,7 +78,8 @@ const AdminBids = () => {
         .select(`
           *,
           auctions!auction_id(name),
-          profiles!user_id(name)
+          profiles!user_id(name),
+          auction_items!auction_item_id(name)
         `, { count: 'exact' })
         .order('created_at', { ascending: false });
 
@@ -110,7 +112,8 @@ const AdminBids = () => {
       const bidsWithNames = (data || []).map(bid => ({
         ...bid,
         auction_name: bid.auctions?.name,
-        user_name: bid.profiles?.name
+        user_name: bid.profiles?.name,
+        lot_name: bid.auction_items?.name
       }));
       
       setBids(bidsWithNames as Bid[]);
@@ -230,6 +233,50 @@ const AdminBids = () => {
         title: "Sucesso",
         description: "Lance marcado como vencedor"
       });
+
+      // Ask if user wants to start next lot
+      const shouldStartNext = confirm('Deseja iniciar o próximo lote automaticamente?');
+      if (shouldStartNext) {
+        // Find current bid to get auction_item_id
+        const currentBid = bids.find(bid => bid.id === bidId);
+        if (currentBid) {
+          // Get auction items to find next lot
+          const { data: items } = await supabase
+            .from('auction_items')
+            .select('*')
+            .eq('auction_id', currentBid.auction_id)
+            .order('order_index');
+
+          if (items && items.length > 0) {
+            const currentItemIndex = items.findIndex(item => item.id === currentBid.auction_item_id);
+            const nextItem = items[currentItemIndex + 1];
+            
+            if (nextItem) {
+              // Update current item to finished
+              await supabase
+                .from('auction_items')
+                .update({ status: 'finished', is_current: false })
+                .eq('id', currentBid.auction_item_id);
+              
+              // Update next item to in_progress
+              await supabase
+                .from('auction_items')
+                .update({ status: 'in_progress', is_current: true })
+                .eq('id', nextItem.id);
+                
+              toast({
+                title: "Sucesso",
+                description: `Próximo lote "${nextItem.name}" foi iniciado`
+              });
+            } else {
+              toast({
+                title: "Informação",
+                description: "Não há mais lotes para iniciar"
+              });
+            }
+          }
+        }
+      }
       
       fetchBids();
     } catch (error) {
@@ -347,6 +394,7 @@ const AdminBids = () => {
                 <TableRow className="border-admin-border">
                   <TableHead className="text-admin-muted-foreground">ID do Lance</TableHead>
                   <TableHead className="text-admin-muted-foreground">Leilão</TableHead>
+                  <TableHead className="text-admin-muted-foreground">Lote</TableHead>
                   <TableHead className="text-admin-muted-foreground">Usuário</TableHead>
                   <TableHead className="text-admin-muted-foreground">Valor</TableHead>
                   <TableHead className="text-admin-muted-foreground">Status</TableHead>
@@ -360,6 +408,7 @@ const AdminBids = () => {
                   <TableRow key={bid.id} className="border-admin-border">
                     <TableCell className="text-admin-table-text">{bid.id.slice(0, 8)}...</TableCell>
                     <TableCell className="text-admin-table-text">{bid.auction_name || '-'}</TableCell>
+                    <TableCell className="text-admin-table-text">{bid.lot_name || '-'}</TableCell>
                     <TableCell className="text-admin-table-text">{bid.user_name || '-'}</TableCell>
                     <TableCell className="text-admin-table-text">R$ {bid.bid_value}</TableCell>
                     <TableCell>

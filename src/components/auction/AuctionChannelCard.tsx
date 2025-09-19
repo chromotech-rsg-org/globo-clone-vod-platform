@@ -28,7 +28,7 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
           className="absolute inset-0 transition-all duration-500"
           style={{
             backgroundImage: `url('${auction.image_url || '/assets/auction-channel-bg-mobile.jpg'}')`,
-            backgroundSize: 'cover',
+            backgroundSize: 'contain',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat'
           }}

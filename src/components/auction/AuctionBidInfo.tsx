@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
 import { Auction, Bid } from '@/types/auction';
 
@@ -34,12 +35,31 @@ const AuctionBidInfo = ({ auction, bids, nextBidValue }: AuctionBidInfoProps) =>
     return nextBidValue;
   };
 
+  const hasWinner = bids.some(bid => bid.is_winner);
+
   return (
-    <Card className="bg-black border-green-600/30">
+    <Card className={`bg-black border-green-600/30 ${hasWinner ? 'border-yellow-500/50 bg-yellow-900/20' : ''}`}>
       <CardHeader>
-        <CardTitle className="text-lg text-white">Informações do Lance</CardTitle>
+        <CardTitle className="text-lg text-white flex items-center gap-2">
+          Informações do Lance
+          {hasWinner && (
+            <Badge className="bg-yellow-500 text-black">
+              FINALIZADO
+            </Badge>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {hasWinner && (
+          <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 mb-4">
+            <p className="text-yellow-400 text-center font-bold">
+              🏆 Lote Arrematado! 🏆
+            </p>
+            <p className="text-white text-center text-sm mt-1">
+              Parabéns ao arrematante!
+            </p>
+          </div>
+        )}
         <div>
           <p className="text-sm text-gray-400 uppercase tracking-wide">
             Lance Atual
@@ -60,7 +80,7 @@ const AuctionBidInfo = ({ auction, bids, nextBidValue }: AuctionBidInfoProps) =>
           <p className="text-sm text-gray-400 uppercase tracking-wide">
             {getNextBidLabel()}
           </p>
-          <p className="text-xl font-semibold text-white">
+          <p className={`text-xl font-semibold ${hasWinner ? 'text-yellow-400' : 'text-white'}`}>
             {formatCurrency(getNextBidValue())}
           </p>
         </div>

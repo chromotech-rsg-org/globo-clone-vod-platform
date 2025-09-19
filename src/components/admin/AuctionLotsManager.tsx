@@ -303,7 +303,8 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
   };
 
   const handleEdit = (item: AuctionItem) => {
-    console.log('Starting edit for item:', item.id);
+    if (editingId === item.id) return; // Prevent re-editing same item
+    
     setEditingId(item.id);
     setEditData({
       name: item.name,
@@ -312,17 +313,11 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
       increment: item.increment || 100,
       status: item.status
     });
-    console.log('Edit state set, editingId:', item.id);
   };
 
   const handleSave = async () => {
-    console.log('HandleSave called, editingId:', editingId);
-    if (!editingId) {
-      console.log('No editingId, returning');
-      return;
-    }
+    if (!editingId) return;
 
-    console.log('Starting save process...');
     try {
       const { error } = await supabase
         .from('auction_items')
@@ -338,7 +333,6 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
 
       if (error) throw error;
 
-      console.log('Save successful, clearing edit state');
       setEditingId(null);
       
       toast({
