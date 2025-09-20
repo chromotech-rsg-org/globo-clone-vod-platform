@@ -171,31 +171,42 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
             </div>
 
             {/* Current Lot Details */}
-            {currentLot && (
-              <div className="bg-green-900/30 backdrop-blur-sm rounded-lg p-3 border border-green-600/50">
-                <div className="flex items-center gap-2 mb-2">
-                  <Play size={14} className="text-green-400" />
-                  <span className="text-green-400 font-semibold text-sm">Lote Atual:</span>
-                  <span className="text-white font-semibold text-sm truncate flex-1">{currentLot.name}</span>
+            <div className="bg-green-900/30 backdrop-blur-sm rounded-lg p-3 border border-green-600/50">
+              {currentLot ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Play size={14} className="text-green-400" />
+                    <span className="text-green-400 font-semibold text-sm">Lote Atual:</span>
+                    <span className="text-white font-semibold text-sm truncate flex-1">{currentLot.name}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="text-center">
+                      <div className="text-gray-300">Inicial</div>
+                      <div className="text-white font-medium">{formatCurrency(currentLot.initial_value)}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-gray-300">Atual</div>
+                      <div className="text-green-400 font-bold">{formatCurrency(currentLot.current_value)}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-gray-300">Lances</div>
+                      <div className="text-white font-medium">{loading ? '...' : (stats?.totalBids || 0)}</div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Play size={14} className="text-gray-400" />
+                    <span className="text-gray-400 font-semibold text-sm">Nenhum lote iniciado</span>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    Aguardando início do primeiro lote
+                  </div>
                 </div>
-                
-                
-                <div className="flex justify-between items-center text-xs">
-                  <div className="text-center">
-                    <div className="text-gray-300">Inicial</div>
-                    <div className="text-white font-medium">{formatCurrency(currentLot.initial_value)}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-gray-300">Atual</div>
-                    <div className="text-green-400 font-bold">{formatCurrency(currentLot.current_value)}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-gray-300">Lances</div>
-                    <div className="text-white font-medium">{loading ? '...' : (stats?.totalBids || 0)}</div>
-                  </div>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Finished Lots */}
             <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg p-3 border border-gray-600/30">
