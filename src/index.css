@@ -254,4 +254,12 @@
     background: linear-gradient(135deg, hsl(var(--admin-card)) 0%, hsl(var(--admin-primary)) 100%);
     border: 1px solid hsl(var(--admin-border));
   }
+
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
 }

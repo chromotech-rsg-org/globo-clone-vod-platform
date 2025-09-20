@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Auction, AuctionItem } from '@/types/auction';
-import { Calendar, Clock, Package } from 'lucide-react';
+import { Calendar, Clock, Package, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface AuctionHeaderProps {
   auction: Auction;
@@ -10,6 +11,8 @@ interface AuctionHeaderProps {
 }
 
 const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  
   const activeLots = lots.filter(lot => lot.status === 'in_progress' || lot.is_current);
   const finishedLots = lots.filter(lot => lot.status === 'finished');
   const notStartedLots = lots.filter(lot => lot.status === 'not_started');
@@ -23,7 +26,38 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-white mb-2">{auction.name}</h1>
               {auction.description && (
-                <p className="text-gray-300 text-lg leading-relaxed">{auction.description}</p>
+                <div className="space-y-2">
+                  <p 
+                    className={`text-gray-300 text-lg leading-relaxed cursor-pointer transition-all duration-200 ${
+                      !isDescriptionExpanded 
+                        ? 'line-clamp-1 hover:text-white' 
+                        : ''
+                    }`}
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  >
+                    {auction.description}
+                  </p>
+                  {auction.description.length > 80 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                      className="p-0 h-auto text-gray-400 hover:text-white text-sm"
+                    >
+                      {isDescriptionExpanded ? (
+                        <>
+                          <ChevronUp className="h-4 w-4 mr-1" />
+                          Mostrar menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4 mr-1" />
+                          Mostrar mais
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
             <div className="flex flex-col gap-2 ml-6">
