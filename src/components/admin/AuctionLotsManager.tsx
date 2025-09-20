@@ -350,7 +350,26 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
   const handleCreate = async () => {
     try {
       const maxOrder = Math.max(...items.map(item => item.order_index), 0);
+      const targetOrder = formData.order_index || maxOrder + 1;
       
+      // Check if the target order already exists
+      const existingItem = items.find(item => item.order_index === targetOrder);
+      
+      if (existingItem && formData.order_index > 0) {
+        // Reorder all items that have order_index >= the target order
+        const itemsToReorder = items.filter(item => 
+          item.order_index >= targetOrder
+        );
+
+        // Update all conflicting items first
+        for (const item of itemsToReorder) {
+          await supabase
+            .from('auction_items')
+            .update({ order_index: item.order_index + 1 })
+            .eq('id', item.id);
+        }
+      }
+
       const { error } = await supabase
         .from('auction_items')
         .insert({
@@ -362,7 +381,7 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
           increment: formData.increment,
           status: formData.status,
           image_url: formData.image_url,
-          order_index: formData.order_index || maxOrder + 1
+          order_index: targetOrder
         });
 
       if (error) throw error;
@@ -380,7 +399,9 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
       
       toast({
         title: "Lote criado",
-        description: "O lote foi criado com sucesso.",
+        description: existingItem && formData.order_index > 0 
+          ? "O lote foi criado e outros lotes foram reordenados automaticamente."
+          : "O lote foi criado com sucesso.",
       });
 
       refetch();
@@ -411,6 +432,32 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
     if (!editingId) return;
 
     try {
+      const currentItem = items.find(item => item.id === editingId);
+      if (!currentItem) return;
+
+      // Check if the new order_index is different and already exists
+      if (editData.order_index !== currentItem.order_index) {
+        const existingItem = items.find(item => 
+          item.id !== editingId && item.order_index === editData.order_index
+        );
+
+        if (existingItem) {
+          // Reorder all items that have order_index >= the new order_index
+          const itemsToReorder = items.filter(item => 
+            item.id !== editingId && item.order_index >= editData.order_index
+          );
+
+          // Update all conflicting items first
+          for (const item of itemsToReorder) {
+            await supabase
+              .from('auction_items')
+              .update({ order_index: item.order_index + 1 })
+              .eq('id', item.id);
+          }
+        }
+      }
+
+      // Now update the current item
       const { error } = await supabase
         .from('auction_items')
         .update({
@@ -430,7 +477,7 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
       
       toast({
         title: "Lote atualizado",
-        description: "O lote foi atualizado com sucesso.",
+        description: "O lote foi atualizado e outros lotes foram reordenados automaticamente.",
       });
 
       refetch();
