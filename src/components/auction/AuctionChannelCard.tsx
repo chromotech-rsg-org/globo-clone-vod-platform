@@ -231,21 +231,6 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
               );
             })()}
 
-            {/* General Stats */}
-            <div className="bg-primary/40 backdrop-blur-sm rounded-xl p-4 border border-primary/50">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  <TrendingUp size={14} className="text-primary-foreground" />
-                  <span className="text-xs text-primary-foreground uppercase font-semibold">
-                    {hasWinner ? 'Valor Final' : 'Valor Atual'}
-                  </span>
-                </div>
-                <p className="text-lg font-bold text-primary-foreground">
-                  {formatCurrency(finalCurrentValue)}
-                </p>
-              </div>
-            </div>
-
             {/* Timeline with Progress Bar */}
             {auction.start_date && (
               <div className="bg-black/60 backdrop-blur-sm rounded-xl p-4 border border-white/20">
