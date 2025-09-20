@@ -62,16 +62,11 @@ export const formatDateTime = (dateString: string): string => {
 
 export const formatDateTimeForInput = (dateString: string | null | undefined): string => {
   if (!dateString) return '';
-  
   try {
-    // Convert UTC datetime to Brazil timezone for form input
     const date = new Date(dateString);
-    // Adjust for Brazil timezone (UTC-3)
-    const brazilOffset = -3 * 60; // minutes
-    const utcOffset = date.getTimezoneOffset();
-    const adjustedDate = new Date(date.getTime() + (brazilOffset - utcOffset) * 60000);
-    
-    return adjustedDate.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm format
+    // Convert to local time string expected by datetime-local input (no timezone)
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
   } catch (error) {
     return '';
   }

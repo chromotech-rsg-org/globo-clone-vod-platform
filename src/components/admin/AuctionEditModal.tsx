@@ -36,36 +36,19 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
 
-  // Helper function to convert UTC date to Brazil timezone for display
+  // Helper function to format UTC date to local for datetime-local input
   const formatDateForInput = (isoString: string | null): string => {
     if (!isoString) return '';
-    
     const date = new Date(isoString);
-    // Convert to Brazil timezone (UTC-3)
-    const brasilOffset = -3 * 60; // -3 hours in minutes
-    const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
-    const brasilTime = new Date(utc + (brasilOffset * 60000));
-    
-    // Format as YYYY-MM-DDTHH:MM for datetime-local input
-    const year = brasilTime.getFullYear();
-    const month = String(brasilTime.getMonth() + 1).padStart(2, '0');
-    const day = String(brasilTime.getDate()).padStart(2, '0');
-    const hours = String(brasilTime.getHours()).padStart(2, '0');
-    const minutes = String(brasilTime.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    // Convert to local time string (YYYY-MM-DDTHH:mm) expected by datetime-local
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
   };
 
-  // Helper function to convert Brazil timezone to UTC for database
-  const convertToUTC = (brasilDateString: string): string => {
-    if (!brasilDateString) return '';
-    
-    // Parse the Brasil time as local
-    const brasilTime = new Date(brasilDateString);
-    // Add 3 hours to convert Brasil time to UTC
-    const utcTime = new Date(brasilTime.getTime() + (3 * 60 * 60 * 1000));
-    
-    return utcTime.toISOString();
+  // Helper function to convert local datetime (from input) to UTC ISO for database
+  const convertToUTC = (localDateString: string): string => {
+    if (!localDateString) return '';
+    return new Date(localDateString).toISOString();
   };
 
   useEffect(() => {

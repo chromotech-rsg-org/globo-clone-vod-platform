@@ -37,15 +37,10 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
   });
 
   // Helper function to convert Brazil timezone to UTC for database
-  const convertToUTC = (brasilDateString: string): string => {
-    if (!brasilDateString) return '';
-    
-    // Parse the Brasil time as local
-    const brasilTime = new Date(brasilDateString);
-    // Add 3 hours to convert Brasil time to UTC
-    const utcTime = new Date(brasilTime.getTime() + (3 * 60 * 60 * 1000));
-    
-    return utcTime.toISOString();
+  const convertToUTC = (localDateString: string): string => {
+    if (!localDateString) return '';
+    // Interpret the datetime-local as local time and convert to UTC ISO
+    return new Date(localDateString).toISOString();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

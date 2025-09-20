@@ -45,8 +45,8 @@ const AuctionCreate = () => {
     try {
       const insertData = {
         ...formData,
-        start_date: formData.start_date ? new Date(formData.start_date + ':00.000Z').toISOString() : null,
-        end_date: formData.end_date ? new Date(formData.end_date + ':00.000Z').toISOString() : null,
+         start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
+         end_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
         current_bid_value: formData.initial_bid_value,
         is_live: false,
         registration_wait_value: 5,
