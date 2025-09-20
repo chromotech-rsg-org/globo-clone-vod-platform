@@ -28,22 +28,30 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
     const now = new Date();
     const diffMs = now.getTime() - startDate.getTime();
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const remainingMinutes = diffMinutes % 60;
     
     if (hasWinner) {
-      return { progress: 100, timeText: 'Finalizado', isFinished: true };
+      const timeText = diffHours > 0 ? `${diffHours}h ${remainingMinutes}min` : `${diffMinutes}min`;
+      return { progress: 100, timeText: `Finalizado em ${timeText}`, isFinished: true };
     }
     
     if (diffMinutes < 0) {
-      return { progress: 0, timeText: `Inicia em ${Math.abs(diffMinutes)} min`, isFinished: false };
+      const absMinutes = Math.abs(diffMinutes);
+      const absHours = Math.floor(absMinutes / 60);
+      const absRemainingMinutes = absMinutes % 60;
+      const timeText = absHours > 0 ? `${absHours}h ${absRemainingMinutes}min` : `${absMinutes}min`;
+      return { progress: 0, timeText: `Inicia em ${timeText}`, isFinished: false };
     }
     
     // Assume 120 minutes duration for progress calculation
     const assumedDuration = 120;
     const progress = Math.min((diffMinutes / assumedDuration) * 100, 100);
+    const timeText = diffHours > 0 ? `${diffHours}h ${remainingMinutes}min` : `${diffMinutes}min`;
     
     return { 
       progress, 
-      timeText: `${diffMinutes} min em execução`, 
+      timeText: `${timeText} em execução`, 
       isFinished: false 
     };
   };
@@ -53,12 +61,12 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
   return (
     <Link to={`/auctions/${auction.id}`} className="block h-full">
       <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-3xl w-full aspect-[3/4]">
-        {/* Background Image - Full coverage */}
+        {/* Background Image - Full coverage with rounded corners */}
         <div 
-          className="absolute inset-0 transition-all duration-500"
+          className="absolute inset-0 transition-all duration-500 rounded-3xl overflow-hidden"
           style={{
             backgroundImage: `url('${auction.image_url || '/assets/auction-channel-bg-mobile.jpg'}')`,
-            backgroundSize: 'contain',
+            backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat'
           }}
@@ -98,16 +106,30 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
               {auction.name}
             </h3>
             
-            {/* Lot info */}
-            <div className="flex items-center justify-center gap-4 text-white/90 text-sm">
-              <div className="flex items-center gap-1">
-                <Package size={16} />
-                <span>{totalLots} {totalLots === 1 ? 'Lote' : 'Lotes'}</span>
-              </div>
-              {currentLot && (
+            {/* Lot info with current lot details */}
+            <div className="flex flex-col items-center gap-2 text-white/90 text-sm mb-2">
+              <div className="flex items-center justify-center gap-4">
                 <div className="flex items-center gap-1">
-                  <Play size={16} className="text-green-400" />
-                  <span className="text-green-400">Lote: {currentLot.name}</span>
+                  <Package size={16} />
+                  <span>{totalLots} {totalLots === 1 ? 'Lote' : 'Lotes'}</span>
+                </div>
+                {currentLot && (
+                  <div className="flex items-center gap-1">
+                    <Play size={16} className="text-green-400" />
+                    <span className="text-green-400">Em andamento</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Current lot name and bid info */}
+              {currentLot && (
+                <div className="text-center bg-black/40 rounded-lg px-3 py-2 backdrop-blur-sm border border-white/20">
+                  <div className="text-green-400 font-semibold mb-1">
+                    Lote Atual: {currentLot.name}
+                  </div>
+                  <div className="text-xs text-white/80">
+                    Valor Atual: {formatCurrency(currentLot.current_value)}
+                  </div>
                 </div>
               )}
             </div>
@@ -196,7 +218,7 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                     hour: '2-digit',
                     minute: '2-digit'
                   })}</span>
-                  <span>{Math.round(timeInfo.progress)}%</span>
+                  <span>{timeInfo.timeText}</span>
                 </div>
               </div>
             )}
