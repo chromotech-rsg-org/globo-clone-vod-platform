@@ -24,8 +24,9 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
   const calculateTimeProgress = () => {
     if (!auction.start_date) return { progress: 0, timeText: 'Sem programação', isFinished: hasWinner };
     
-    const startDate = new Date(auction.start_date);
-    const endDate = auction.end_date ? new Date(auction.end_date) : null;
+    // Create dates and handle Brazil timezone properly
+    const startDate = new Date(auction.start_date + (auction.start_date.includes('T') ? '' : 'T00:00:00'));
+    const endDate = auction.end_date ? new Date(auction.end_date + (auction.end_date.includes('T') ? '' : 'T00:00:00')) : null;
     const now = new Date();
     
     // Calculate elapsed time from start
@@ -252,9 +253,20 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                 {/* Progress Bar */}
                 {(() => {
                   // Create dates with proper timezone handling
-                  const startDate = new Date(auction.start_date);
-                  const endDate = auction.end_date ? new Date(auction.end_date) : null;
+                  const startDate = new Date(auction.start_date + (auction.start_date.includes('T') ? '' : 'T00:00:00'));
+                  const endDate = auction.end_date ? new Date(auction.end_date + (auction.end_date.includes('T') ? '' : 'T00:00:00')) : null;
                   const now = new Date();
+                  
+                  // Debug logging
+                  console.log('Auction times:', {
+                    original_start: auction.start_date,
+                    original_end: auction.end_date,
+                    parsed_start: startDate.toString(),
+                    parsed_end: endDate?.toString(),
+                    now: now.toString(),
+                    elapsed_ms: now.getTime() - startDate.getTime(),
+                    elapsed_minutes: Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60))
+                  });
                   
                   let progress = 0;
                   let timeDisplay = '';
