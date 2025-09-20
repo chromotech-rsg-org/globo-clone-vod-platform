@@ -213,27 +213,36 @@ const AuctionRoom = () => {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Coluna Principal - Video e Lote Atual/Status */}
           <div className="xl:col-span-2 space-y-6">
-            {/* Video Player */}
-            <AuctionVideoPlayer auction={auction} />
-            
-            {/* Lote Atual ou Status Summary */}
+            {/* Video e Lote Atual lado a lado */}
             {hasActiveLot && currentLot ? (
-              <CurrentLotDisplay
-                currentLot={currentLot}
-                auction={auction}
-                bids={bids}
-                customIncrement={customIncrement}
-                onIncrementChange={updateCustomIncrement}
-                nextBidValue={nextBidValue}
-                onBidClick={() => setShowBidDialog(true)}
-                canBid={canBid}
-              />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Video Player */}
+                <AuctionVideoPlayer auction={auction} />
+                
+                {/* Lote Atual */}
+                <CurrentLotDisplay
+                  currentLot={currentLot}
+                  auction={auction}
+                  bids={bids}
+                  customIncrement={customIncrement}
+                  onIncrementChange={updateCustomIncrement}
+                  nextBidValue={nextBidValue}
+                  onBidClick={() => setShowBidDialog(true)}
+                  canBid={canBid}
+                />
+              </div>
             ) : (
-              <AuctionStatusSummary
-                lots={lots}
-                bids={bids}
-                currentUserId={user?.id}
-              />
+              <div className="space-y-6">
+                {/* Video Player */}
+                <AuctionVideoPlayer auction={auction} />
+                
+                {/* Status Summary quando não há lote ativo */}
+                <AuctionStatusSummary
+                  lots={lots}
+                  bids={bids}
+                  currentUserId={user?.id}
+                />
+              </div>
             )}
 
             {/* Lista de Todos os Lotes */}
