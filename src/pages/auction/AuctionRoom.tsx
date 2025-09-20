@@ -230,8 +230,8 @@ const AuctionRoom = () => {
 
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
           <div className="space-y-6">
-            {/* Card do Lote Atual - Acima de tudo */}
-            {hasActiveLot && currentLot && (
+            {/* Card do Lote Atual com Informações de Habilitação */}
+            {hasActiveLot && currentLot && stateInfo && (
               <CurrentLotDisplay
                 currentLot={currentLot}
                 auction={auction}
@@ -241,12 +241,17 @@ const AuctionRoom = () => {
                 nextBidValue={nextBidValue}
                 onBidClick={() => setShowBidDialog(true)}
                 canBid={canBid}
+                userState={userState}
+                stateInfo={stateInfo}
+                submittingBid={submittingBid}
+                userPendingBid={userPendingBid}
+                userId={user?.id}
+                onRequestRegistration={requestRegistration}
               />
             )}
 
-            {/* Ações do Usuário */}
-            {/* User Action Panel */}
-            {stateInfo && (
+            {/* Ações do Usuário - apenas quando não há lote ativo */}
+            {(!hasActiveLot || !currentLot) && stateInfo && (
               <AuctionUserActions
                 auction={auction}
                 bids={bids}
