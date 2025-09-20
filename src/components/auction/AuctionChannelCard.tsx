@@ -251,6 +251,7 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
                 {/* Progress Bar */}
                 {(() => {
+                  // Create dates with proper timezone handling
                   const startDate = new Date(auction.start_date);
                   const endDate = auction.end_date ? new Date(auction.end_date) : null;
                   const now = new Date();
@@ -318,10 +319,12 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                     <span className="text-white text-xs">
                       {new Date(auction.start_date).toLocaleDateString('pt-BR', { 
                         day: '2-digit', 
-                        month: '2-digit'
+                        month: '2-digit',
+                        timeZone: 'America/Sao_Paulo'
                       })} {new Date(auction.start_date).toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        timeZone: 'America/Sao_Paulo'
                       })}
                     </span>
                   </div>
@@ -333,10 +336,12 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                       <span className={`text-xs ${timeInfo.isFinished ? 'text-green-400' : 'text-white'}`}>
                         {new Date(auction.end_date).toLocaleDateString('pt-BR', { 
                           day: '2-digit', 
-                          month: '2-digit'
+                          month: '2-digit',
+                          timeZone: 'America/Sao_Paulo'
                         })} {new Date(auction.end_date).toLocaleTimeString('pt-BR', {
                           hour: '2-digit',
-                          minute: '2-digit'
+                          minute: '2-digit',
+                          timeZone: 'America/Sao_Paulo'
                         })}
                       </span>
                     </div>
