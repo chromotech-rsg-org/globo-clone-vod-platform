@@ -473,11 +473,9 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
 
       if (error) throw error;
 
-      setEditingId(null);
-      
       toast({
         title: "Lote atualizado",
-        description: "O lote foi atualizado e outros lotes foram reordenados automaticamente.",
+        description: "O lote foi atualizado com sucesso.",
       });
 
       refetch();
