@@ -132,38 +132,36 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
         </div>
 
         {/* Hover Content - Full info */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 p-6 flex flex-col">
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 p-4 flex flex-col">
           {/* Header with auction name */}
-          <div className="text-center mb-4">
-            <h3 className="text-white text-xl font-bold mb-2 leading-tight">
+          <div className="text-center mb-3">
+            <h3 className="text-white text-lg font-bold leading-tight">
               {auction.name}
             </h3>
           </div>
 
           {/* Comprehensive Lot Information */}
-          <div className="flex-1 space-y-3 mb-4">
+          <div className="flex-1 space-y-2 mb-3">
             {/* Lot Summary */}
-            <div className="bg-black/60 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Package size={16} className="text-blue-400" />
-                  <span className="text-white font-semibold">Resumo dos Lotes</span>
-                </div>
+            <div className="bg-black/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Package size={14} className="text-blue-400" />
+                <span className="text-white font-semibold text-sm">Resumo dos Lotes</span>
               </div>
               
-              <div className="grid grid-cols-3 gap-3 text-center mb-3">
+              <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="text-blue-400 font-bold text-lg">{totalLots}</div>
+                  <div className="text-blue-400 font-bold text-base">{totalLots}</div>
                   <div className="text-xs text-gray-300">Total</div>
                 </div>
                 <div>
-                  <div className="text-green-400 font-bold text-lg">
+                  <div className="text-green-400 font-bold text-base">
                     {lots?.filter(lot => lot.status === 'finished').length || 0}
                   </div>
                   <div className="text-xs text-gray-300">Finalizados</div>
                 </div>
                 <div>
-                  <div className="text-yellow-400 font-bold text-lg">
+                  <div className="text-yellow-400 font-bold text-base">
                     {lots?.filter(lot => lot.status === 'in_progress').length || 0}
                   </div>
                   <div className="text-xs text-gray-300">Em Andamento</div>
@@ -173,43 +171,39 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
             {/* Current Lot Details */}
             {currentLot && (
-              <div className="bg-green-900/30 backdrop-blur-sm rounded-xl p-3 border border-green-600/50">
+              <div className="bg-green-900/30 backdrop-blur-sm rounded-lg p-3 border border-green-600/50">
                 <div className="flex items-center gap-2 mb-2">
                   <Play size={14} className="text-green-400" />
-                  <span className="text-green-400 font-semibold text-sm">Lote Atual</span>
+                  <span className="text-green-400 font-semibold text-sm">Lote Atual:</span>
+                  <span className="text-white font-semibold text-sm truncate flex-1">{currentLot.name}</span>
                 </div>
                 
-                <div className="text-white mb-2">
-                  <div className="font-semibold text-sm">{currentLot.name}</div>
-                  {currentLot.description && (
-                    <div className="text-xs text-gray-300 mt-1 line-clamp-1">{currentLot.description}</div>
-                  )}
-                </div>
+                {currentLot.description && (
+                  <div className="text-xs text-gray-300 mb-2 line-clamp-1">{currentLot.description}</div>
+                )}
                 
-                <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                  <div>
-                    <div className="text-gray-300">Valor Inicial</div>
+                <div className="flex justify-between items-center text-xs">
+                  <div className="text-center">
+                    <div className="text-gray-300">Inicial</div>
                     <div className="text-white font-medium">{formatCurrency(currentLot.initial_value)}</div>
                   </div>
-                  <div>
-                    <div className="text-gray-300">Valor Atual</div>
+                  <div className="text-center">
+                    <div className="text-gray-300">Atual</div>
                     <div className="text-green-400 font-bold">{formatCurrency(currentLot.current_value)}</div>
                   </div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-gray-300 text-xs">
-                    Lances: <span className="text-white font-medium">{loading ? '...' : (stats?.totalBids || 0)}</span>
+                  <div className="text-center">
+                    <div className="text-gray-300">Lances</div>
+                    <div className="text-white font-medium">{loading ? '...' : (stats?.totalBids || 0)}</div>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Finished Lots */}
-            <div className="bg-gray-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-600/30">
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy size={16} className="text-yellow-400" />
-                <span className="text-yellow-400 font-semibold">Lotes Finalizados</span>
+            <div className="bg-gray-900/40 backdrop-blur-sm rounded-lg p-3 border border-gray-600/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy size={14} className="text-yellow-400" />
+                <span className="text-yellow-400 font-semibold text-sm">Lotes Finalizados</span>
               </div>
               
               {(() => {
@@ -217,8 +211,8 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                 
                 if (finishedLots.length === 0) {
                   return (
-                    <div className="text-center py-2">
-                      <div className="text-gray-400 text-sm">
+                    <div className="text-center py-1">
+                      <div className="text-gray-400 text-xs">
                         Nenhum lote finalizado ainda
                       </div>
                     </div>
@@ -226,9 +220,9 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                 }
                 
                 return (
-                  <div className="space-y-2 max-h-24 overflow-y-auto">
+                  <div className="space-y-1 max-h-16 overflow-y-auto">
                     {finishedLots.map((lot) => (
-                      <div key={lot.id} className="flex justify-between items-center text-sm">
+                      <div key={lot.id} className="flex justify-between items-center text-xs">
                         <div className="text-white font-medium truncate flex-1 mr-2">
                           {lot.name}
                         </div>
@@ -244,11 +238,11 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
             {/* Timeline with Progress Bar */}
             {auction.start_date && (
-              <div className="bg-black/60 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center justify-between mb-3">
+              <div className="bg-black/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-blue-400" />
-                    <span className="text-white font-semibold">Programação</span>
+                    <Clock size={14} className="text-blue-400" />
+                    <span className="text-white font-semibold text-sm">Programação</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${timeInfo.isFinished ? 'bg-green-400' : 'bg-blue-400 animate-pulse'}`}></div>
@@ -268,7 +262,6 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                   let timeDisplay = '';
                   
                   if (timeInfo.isFinished) {
-                    // Show complete bar with execution time
                     progress = 100;
                     if (endDate) {
                       const executionMs = endDate.getTime() - startDate.getTime();
@@ -282,7 +275,6 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                       timeDisplay = executionHours > 0 ? `${executionHours}h ${executionMinutes}min` : `${executionMinutes}min`;
                     }
                   } else {
-                    // Show current progress with time running
                     const elapsedMs = now.getTime() - startDate.getTime();
                     const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
                     const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -292,15 +284,14 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                       const totalDurationMs = endDate.getTime() - startDate.getTime();
                       progress = totalDurationMs > 0 ? Math.min((elapsedMs / totalDurationMs) * 100, 100) : 0;
                     } else {
-                      // Assume 2-hour duration for display purposes
-                      const assumedDuration = 2 * 60 * 60 * 1000; // 2 hours in ms
+                      const assumedDuration = 2 * 60 * 60 * 1000;
                       progress = Math.min((elapsedMs / assumedDuration) * 100, 90);
                     }
                   }
                   
                   return (
                     <>
-                      <div className="w-full bg-gray-700 rounded-full h-3 mb-3 overflow-hidden">
+                      <div className="w-full bg-gray-700 rounded-full h-2 mb-2 overflow-hidden">
                         <div 
                           className={`h-full transition-all duration-500 ${
                             timeInfo.isFinished 
@@ -311,12 +302,12 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                         />
                       </div>
                       
-                      <div className="text-center mb-3">
-                        <div className="text-gray-300 text-xs mb-1">
-                          {timeInfo.isFinished ? 'Tempo total de execução:' : 'Tempo decorrido:'}
-                        </div>
-                        <div className={`font-bold text-lg ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
-                          {timeDisplay}
+                      <div className="text-center mb-2">
+                        <div className="text-gray-300 text-xs">
+                          {timeInfo.isFinished ? 'Tempo total:' : 'Decorrido:'} 
+                          <span className={`font-bold ml-1 ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
+                            {timeDisplay}
+                          </span>
                         </div>
                       </div>
                     </>
@@ -324,16 +315,14 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                 })()}
                 
                 {/* Programming dates and times */}
-                <div className="space-y-2 text-xs">
+                <div className="space-y-1 text-xs">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Início:</span>
-                    <span className="text-white font-medium">
+                    <span className="text-white text-xs">
                       {new Date(auction.start_date).toLocaleDateString('pt-BR', { 
-                        weekday: 'short',
                         day: '2-digit', 
-                        month: '2-digit',
-                        year: 'numeric'
-                      })} às {new Date(auction.start_date).toLocaleTimeString('pt-BR', {
+                        month: '2-digit'
+                      })} {new Date(auction.start_date).toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
@@ -342,15 +331,13 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                   {auction.end_date && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-300">
-                        {timeInfo.isFinished ? 'Finalizou:' : 'Previsão fim:'}
+                        {timeInfo.isFinished ? 'Fim:' : 'Prev.:'}
                       </span>
-                      <span className={`font-medium ${timeInfo.isFinished ? 'text-green-400' : 'text-white'}`}>
+                      <span className={`text-xs ${timeInfo.isFinished ? 'text-green-400' : 'text-white'}`}>
                         {new Date(auction.end_date).toLocaleDateString('pt-BR', { 
-                          weekday: 'short',
                           day: '2-digit', 
-                          month: '2-digit',
-                          year: 'numeric'
-                        })} às {new Date(auction.end_date).toLocaleTimeString('pt-BR', {
+                          month: '2-digit'
+                        })} {new Date(auction.end_date).toLocaleTimeString('pt-BR', {
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
@@ -362,20 +349,12 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
             )}
           </div>
 
-          {/* Date */}
-          {auction.start_date && (
-            <div className="flex items-center justify-center gap-2 text-white text-sm mb-4">
-              <Clock size={16} />
-              <span>Início: {new Date(auction.start_date).toLocaleDateString('pt-BR')}</span>
-            </div>
-          )}
-
           {/* Action Button */}
           <div className="mt-auto">
-            <div className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary backdrop-blur-sm border border-primary/30 rounded-2xl py-4 px-6 text-center transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25">
-              <div className="flex items-center justify-center gap-3 text-primary-foreground">
-                <Play size={18} fill="currentColor" />
-                <span className="text-base font-bold">Acessar Leilão</span>
+            <div className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary backdrop-blur-sm border border-primary/30 rounded-xl py-3 px-4 text-center transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25">
+              <div className="flex items-center justify-center gap-2 text-primary-foreground">
+                <Play size={16} fill="currentColor" />
+                <span className="text-sm font-bold">Acessar Leilão</span>
               </div>
             </div>
           </div>
