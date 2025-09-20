@@ -211,44 +211,40 @@ const AuctionRoom = () => {
         <AuctionHeader auction={auction} lots={lots} />
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Coluna Principal - Video e Lote Atual/Status */}
-          <div className="xl:col-span-2 space-y-6">
-            {/* Video e Lote Atual lado a lado */}
-            {hasActiveLot && currentLot ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Video Player */}
-                <AuctionVideoPlayer auction={auction} />
-                
-                {/* Lote Atual */}
-                <CurrentLotDisplay
-                  currentLot={currentLot}
-                  auction={auction}
-                  bids={bids}
-                  customIncrement={customIncrement}
-                  onIncrementChange={updateCustomIncrement}
-                  nextBidValue={nextBidValue}
-                  onBidClick={() => setShowBidDialog(true)}
-                  canBid={canBid}
-                />
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Video Player */}
-                <AuctionVideoPlayer auction={auction} />
-                
-                {/* Status Summary quando não há lote ativo */}
+          {/* Coluna Principal - Transmissão (2/3 da tela) */}
+          <div className="xl:col-span-2">
+            {/* Video Player */}
+            <AuctionVideoPlayer auction={auction} />
+            
+            {/* Status Summary quando não há lote ativo */}
+            {!hasActiveLot || !currentLot ? (
+              <div className="mt-6">
                 <AuctionStatusSummary
                   lots={lots}
                   bids={bids}
                   currentUserId={user?.id}
                 />
               </div>
-            )}
-
+            ) : null}
           </div>
 
-          {/* Coluna Lateral - Ações do Usuário e Histórico */}
+          {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
           <div className="space-y-6">
+            {/* Card do Lote Atual - Acima de tudo */}
+            {hasActiveLot && currentLot && (
+              <CurrentLotDisplay
+                currentLot={currentLot}
+                auction={auction}
+                bids={bids}
+                customIncrement={customIncrement}
+                onIncrementChange={updateCustomIncrement}
+                nextBidValue={nextBidValue}
+                onBidClick={() => setShowBidDialog(true)}
+                canBid={canBid}
+              />
+            )}
+
+            {/* Ações do Usuário e Histórico */}
             {/* User Action Panel */}
             {stateInfo && (
               <AuctionUserActions
