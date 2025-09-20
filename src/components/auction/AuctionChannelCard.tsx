@@ -138,76 +138,106 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
             <h3 className="text-white text-xl font-bold mb-2 leading-tight">
               {auction.name}
             </h3>
-            
-            {/* Lot info with current lot details */}
-            <div className="flex flex-col items-center gap-2 text-white/90 text-sm mb-2">
-              <div className="flex items-center justify-center gap-4">
-                <div className="flex items-center gap-1">
-                  <Package size={16} />
-                  <span>{totalLots} {totalLots === 1 ? 'Lote' : 'Lotes'}</span>
-                </div>
-                {currentLot && (
-                  <div className="flex items-center gap-1">
-                    <Play size={16} className="text-green-400" />
-                    <span className="text-green-400">Em andamento</span>
-                  </div>
-                )}
-              </div>
-              
-              {/* Current lot name and bid info */}
-              {currentLot && (
-                <div className="text-center bg-black/40 rounded-lg px-3 py-2 backdrop-blur-sm border border-white/20">
-                  <div className="text-green-400 font-semibold mb-1">
-                    Lote Atual: {currentLot.name}
-                  </div>
-                  <div className="text-xs text-white/80">
-                    Valor Atual: {formatCurrency(currentLot.current_value)}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
-          {/* Date */}
-          {auction.start_date && (
-            <div className="flex items-center justify-center gap-2 text-white text-base mb-6">
-              <Clock size={18} />
-              <span>Início: {new Date(auction.start_date).toLocaleDateString('pt-BR')}</span>
-            </div>
-          )}
-
-          {/* Stats - Vertical layout for better visibility */}
-          <div className="flex-1 flex flex-col justify-center space-y-4 mb-6">
-            <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-2">
-                    <Target size={14} className="text-gray-300" />
-                    <span className="text-xs text-gray-300 uppercase font-semibold">Inicial</span>
-                  </div>
-                  <p className="text-sm font-bold text-white">
-                    {formatCurrency(auction.initial_bid_value)}
-                  </p>
+          {/* Comprehensive Lot Information */}
+          <div className="flex-1 space-y-3 mb-4">
+            {/* Lot Summary */}
+            <div className="bg-black/60 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Package size={16} className="text-blue-400" />
+                  <span className="text-white font-semibold">Resumo dos Lotes</span>
                 </div>
-                
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-2">
-                    <Zap size={14} className="text-gray-300" />
-                    <span className="text-xs text-gray-300 uppercase font-semibold">Lances</span>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-3 text-center mb-3">
+                <div>
+                  <div className="text-blue-400 font-bold text-lg">{totalLots}</div>
+                  <div className="text-xs text-gray-300">Total</div>
+                </div>
+                <div>
+                  <div className="text-green-400 font-bold text-lg">
+                    {lots?.filter(lot => lot.status === 'finished').length || 0}
                   </div>
-                  <p className="text-sm font-bold text-white">
-                    {loading ? '...' : (stats?.totalBids || 0)}
-                  </p>
+                  <div className="text-xs text-gray-300">Finalizados</div>
+                </div>
+                <div>
+                  <div className="text-yellow-400 font-bold text-lg">
+                    {lots?.filter(lot => lot.status === 'in_progress').length || 0}
+                  </div>
+                  <div className="text-xs text-gray-300">Em Andamento</div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-primary/40 backdrop-blur-sm rounded-2xl p-4 border border-primary/50">
+            {/* Current Lot Details */}
+            {currentLot && (
+              <div className="bg-green-900/30 backdrop-blur-sm rounded-xl p-4 border border-green-600/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <Play size={16} className="text-green-400" />
+                  <span className="text-green-400 font-semibold">Lote Atual</span>
+                </div>
+                
+                <div className="text-white mb-2">
+                  <div className="font-semibold">{currentLot.name}</div>
+                  <div className="text-sm text-gray-300 mt-1">{currentLot.description}</div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-gray-300">Valor Inicial</div>
+                    <div className="text-white font-medium">{formatCurrency(currentLot.initial_value)}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-300">Valor Atual</div>
+                    <div className="text-green-400 font-bold">{formatCurrency(currentLot.current_value)}</div>
+                  </div>
+                </div>
+                
+                <div className="mt-2 text-center">
+                  <div className="text-gray-300 text-xs">
+                    Lances recebidos: <span className="text-white font-medium">{loading ? '...' : (stats?.totalBids || 0)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Finished Lots */}
+            {(() => {
+              const finishedLots = lots?.filter(lot => lot.status === 'finished') || [];
+              if (finishedLots.length === 0) return null;
+              
+              return (
+                <div className="bg-gray-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-600/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Trophy size={16} className="text-yellow-400" />
+                    <span className="text-yellow-400 font-semibold">Lotes Finalizados</span>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-24 overflow-y-auto">
+                    {finishedLots.map((lot) => (
+                      <div key={lot.id} className="flex justify-between items-center text-sm">
+                        <div className="text-white font-medium truncate flex-1 mr-2">
+                          {lot.name}
+                        </div>
+                        <div className="text-yellow-400 font-bold">
+                          {formatCurrency(lot.current_value)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* General Stats */}
+            <div className="bg-primary/40 backdrop-blur-sm rounded-xl p-4 border border-primary/50">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-2">
                   <TrendingUp size={14} className="text-primary-foreground" />
                   <span className="text-xs text-primary-foreground uppercase font-semibold">
-                    {hasWinner ? 'Final' : 'Atual'}
+                    {hasWinner ? 'Valor Final' : 'Valor Atual'}
                   </span>
                 </div>
                 <p className="text-lg font-bold text-primary-foreground">
@@ -215,114 +245,15 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                 </p>
               </div>
             </div>
-
-            {/* Timeline with Progress Bar */}
-            {auction.start_date && (
-              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <div className="flex items-center gap-1">
-                    <Clock size={12} className="text-blue-400" />
-                    <span className="text-gray-300">Programação</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${timeInfo.isFinished ? 'bg-green-400' : 'bg-blue-400 animate-pulse'}`}></div>
-                    <span className={`font-semibold ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
-                      {timeInfo.isFinished ? 'Finalizado' : 'Em Andamento'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                {(() => {
-                  const startDate = new Date(auction.start_date);
-                  const endDate = auction.end_date ? new Date(auction.end_date) : null;
-                  const now = new Date();
-                  
-                  let progress = 0;
-                  let timeDisplay = '';
-                  
-                  if (timeInfo.isFinished) {
-                    // Show complete bar with execution time
-                    progress = 100;
-                    if (endDate) {
-                      const executionMs = endDate.getTime() - startDate.getTime();
-                      const executionHours = Math.floor(executionMs / (1000 * 60 * 60));
-                      const executionMinutes = Math.floor((executionMs % (1000 * 60 * 60)) / (1000 * 60));
-                      timeDisplay = executionHours > 0 ? `${executionHours}h ${executionMinutes}min` : `${executionMinutes}min`;
-                    } else {
-                      const executionMs = now.getTime() - startDate.getTime();
-                      const executionHours = Math.floor(executionMs / (1000 * 60 * 60));
-                      const executionMinutes = Math.floor((executionMs % (1000 * 60 * 60)) / (1000 * 60));
-                      timeDisplay = executionHours > 0 ? `${executionHours}h ${executionMinutes}min` : `${executionMinutes}min`;
-                    }
-                  } else {
-                    // Show current progress with time running
-                    const elapsedMs = now.getTime() - startDate.getTime();
-                    const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
-                    const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
-                    timeDisplay = elapsedHours > 0 ? `${elapsedHours}h ${elapsedMinutes}min` : `${elapsedMinutes}min`;
-                    
-                    if (endDate) {
-                      const totalDurationMs = endDate.getTime() - startDate.getTime();
-                      progress = totalDurationMs > 0 ? Math.min((elapsedMs / totalDurationMs) * 100, 100) : 0;
-                    } else {
-                      // Assume 2-hour duration for display purposes
-                      const assumedDuration = 2 * 60 * 60 * 1000; // 2 hours in ms
-                      progress = Math.min((elapsedMs / assumedDuration) * 100, 90);
-                    }
-                  }
-                  
-                  return (
-                    <>
-                      <div className="w-full bg-gray-700 rounded-full h-2 mb-2 overflow-hidden">
-                        <div 
-                          className={`h-full transition-all duration-500 ${
-                            timeInfo.isFinished 
-                              ? 'bg-gradient-to-r from-green-500 to-green-400' 
-                              : 'bg-gradient-to-r from-blue-500 to-blue-400'
-                          }`}
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                      
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-400">
-                          {timeInfo.isFinished ? 'Tempo de execução:' : 'Tempo decorrido:'}
-                        </span>
-                        <span className={`font-semibold ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
-                          {timeDisplay}
-                        </span>
-                      </div>
-                    </>
-                  );
-                })()}
-                
-                {/* Programming times */}
-                <div className="flex flex-col gap-1 text-xs text-gray-300 mt-2 pt-2 border-t border-white/10">
-                  <div className="flex justify-between">
-                    <span>Início:</span>
-                    <span>{new Date(auction.start_date).toLocaleDateString('pt-BR', { 
-                      day: '2-digit', 
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}</span>
-                  </div>
-                  {auction.end_date && (
-                    <div className="flex justify-between">
-                      <span>Fim:</span>
-                      <span>{new Date(auction.end_date).toLocaleDateString('pt-BR', { 
-                        day: '2-digit', 
-                        month: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Date */}
+          {auction.start_date && (
+            <div className="flex items-center justify-center gap-2 text-white text-sm mb-4">
+              <Clock size={16} />
+              <span>Início: {new Date(auction.start_date).toLocaleDateString('pt-BR')}</span>
+            </div>
+          )}
 
           {/* Action Button */}
           <div className="mt-auto">
