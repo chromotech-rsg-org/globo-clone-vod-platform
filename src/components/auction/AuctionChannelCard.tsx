@@ -243,9 +243,49 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                     <span className="text-white font-semibold text-sm">Programação</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${timeInfo.isFinished ? 'bg-green-400' : 'bg-blue-400 animate-pulse'}`}></div>
-                    <span className={`font-semibold text-xs ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
-                      {timeInfo.isFinished ? 'Finalizado' : 'Em Andamento'}
+                    <div className={`w-2 h-2 rounded-full ${
+                      (() => {
+                        const now = new Date();
+                        const startDate = new Date(auction.start_date + (auction.start_date.includes('T') ? '' : 'T00:00:00'));
+                        const elapsedMs = now.getTime() - startDate.getTime();
+                        
+                        if (elapsedMs < 0) {
+                          return 'bg-gray-400';
+                        } else if (timeInfo.isFinished) {
+                          return 'bg-green-400';
+                        } else {
+                          return 'bg-blue-400 animate-pulse';
+                        }
+                      })()
+                    }`}></div>
+                    <span className={`font-semibold text-xs ${
+                      (() => {
+                        const now = new Date();
+                        const startDate = new Date(auction.start_date + (auction.start_date.includes('T') ? '' : 'T00:00:00'));
+                        const elapsedMs = now.getTime() - startDate.getTime();
+                        
+                        if (elapsedMs < 0) {
+                          return 'text-gray-400';
+                        } else if (timeInfo.isFinished) {
+                          return 'text-green-400';
+                        } else {
+                          return 'text-blue-400';
+                        }
+                      })()
+                    }`}>
+                      {(() => {
+                        const now = new Date();
+                        const startDate = new Date(auction.start_date + (auction.start_date.includes('T') ? '' : 'T00:00:00'));
+                        const elapsedMs = now.getTime() - startDate.getTime();
+                        
+                        if (elapsedMs < 0) {
+                          return 'Não iniciado';
+                        } else if (timeInfo.isFinished) {
+                          return 'Finalizado';
+                        } else {
+                          return 'Em Andamento';
+                        }
+                      })()}
                     </span>
                   </div>
                 </div>
@@ -271,7 +311,17 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                   let progress = 0;
                   let timeDisplay = '';
                   
-                  if (timeInfo.isFinished) {
+                  // Check if auction hasn't started yet
+                  const elapsedMs = now.getTime() - startDate.getTime();
+                  
+                  if (elapsedMs < 0) {
+                    // Auction hasn't started yet
+                    progress = 0;
+                    const absMs = Math.abs(elapsedMs);
+                    const absHours = Math.floor(absMs / (1000 * 60 * 60));
+                    const absMinutes = Math.floor((absMs % (1000 * 60 * 60)) / (1000 * 60));
+                    timeDisplay = absHours > 0 ? `${absHours}h ${absMinutes}min` : `${absMinutes}min`;
+                  } else if (timeInfo.isFinished) {
                     progress = 100;
                     if (endDate) {
                       const executionMs = endDate.getTime() - startDate.getTime();
@@ -285,7 +335,6 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                       timeDisplay = executionHours > 0 ? `${executionHours}h ${executionMinutes}min` : `${executionMinutes}min`;
                     }
                   } else {
-                    const elapsedMs = now.getTime() - startDate.getTime();
                     const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
                     const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
                     timeDisplay = elapsedHours > 0 ? `${elapsedHours}h ${elapsedMinutes}min` : `${elapsedMinutes}min`;
@@ -304,9 +353,19 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                       <div className="w-full bg-gray-700 rounded-full h-2 mb-2 overflow-hidden">
                         <div 
                           className={`h-full transition-all duration-500 ${
-                            timeInfo.isFinished 
-                              ? 'bg-gradient-to-r from-green-500 to-green-400' 
-                              : 'bg-gradient-to-r from-blue-500 to-blue-400'
+                            (() => {
+                              const now = new Date();
+                              const startDate = new Date(auction.start_date + (auction.start_date.includes('T') ? '' : 'T00:00:00'));
+                              const elapsedMs = now.getTime() - startDate.getTime();
+                              
+                              if (elapsedMs < 0) {
+                                return 'bg-gray-400'; // Not started yet
+                              } else if (timeInfo.isFinished) {
+                                return 'bg-gradient-to-r from-green-500 to-green-400';
+                              } else {
+                                return 'bg-gradient-to-r from-blue-500 to-blue-400';
+                              }
+                            })()
                           }`}
                           style={{ width: `${progress}%` }}
                         />
@@ -327,7 +386,21 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                                return 'Em Andamento:';
                              }
                            })()} 
-                           <span className={`font-bold ml-1 ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
+                           <span className={`font-bold ml-1 ${
+                             (() => {
+                               const now = new Date();
+                               const startDate = new Date(auction.start_date + (auction.start_date.includes('T') ? '' : 'T00:00:00'));
+                               const elapsedMs = now.getTime() - startDate.getTime();
+                               
+                               if (elapsedMs < 0) {
+                                 return 'text-gray-400';
+                               } else if (timeInfo.isFinished) {
+                                 return 'text-green-400';
+                               } else {
+                                 return 'text-blue-400';
+                               }
+                             })()
+                           }`}>
                              {timeDisplay}
                            </span>
                          </div>
