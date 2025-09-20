@@ -244,7 +244,7 @@ const AuctionRoom = () => {
               />
             )}
 
-            {/* Ações do Usuário e Histórico */}
+            {/* Ações do Usuário */}
             {/* User Action Panel */}
             {stateInfo && (
               <AuctionUserActions
@@ -259,17 +259,19 @@ const AuctionRoom = () => {
                 onRequestRegistration={requestRegistration}
               />
             )}
-
-            {/* Histórico de Lances com Filtros */}
-            <BidHistoryWithFilters
-              bids={bids}
-              lots={lots}
-              loading={bidsLoading}
-              currentUserId={user?.id}
-            />
           </div>
         </div>
+
+        {/* Histórico de Lances com Filtros - Largura Total */}
+        <div className="mt-6">
+          <BidHistoryWithFilters
+            bids={bids}
+            lots={lots}
+            loading={bidsLoading}
+            currentUserId={user?.id}
+          />
         </div>
+      </div>
 
         {/* Lista de Todos os Lotes - Largura Total */}
         {!lotsLoading && (
