@@ -20,34 +20,67 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
   const currentLot = lots?.find(lot => lot.is_current) || lots?.find(lot => lot.status === 'in_progress') || null;
   const totalLots = lots?.length || 0;
 
-  // Calculate time progress
+  // Calculate time progress based on start and end dates
   const calculateTimeProgress = () => {
     if (!auction.start_date) return { progress: 0, timeText: 'Sem programação', isFinished: hasWinner };
     
     const startDate = new Date(auction.start_date);
+    const endDate = auction.end_date ? new Date(auction.end_date) : null;
     const now = new Date();
-    const diffMs = now.getTime() - startDate.getTime();
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMinutes / 60);
-    const remainingMinutes = diffMinutes % 60;
     
-    if (hasWinner) {
-      const timeText = diffHours > 0 ? `${diffHours}h ${remainingMinutes}min` : `${diffMinutes}min`;
-      return { progress: 100, timeText: `Finalizado em ${timeText}`, isFinished: true };
-    }
+    // Calculate elapsed time from start
+    const elapsedMs = now.getTime() - startDate.getTime();
+    const elapsedMinutes = Math.floor(elapsedMs / (1000 * 60));
+    const elapsedHours = Math.floor(elapsedMinutes / 60);
+    const remainingMinutes = elapsedMinutes % 60;
     
-    if (diffMinutes < 0) {
-      const absMinutes = Math.abs(diffMinutes);
+    // If auction hasn't started yet
+    if (elapsedMinutes < 0) {
+      const absMinutes = Math.abs(elapsedMinutes);
       const absHours = Math.floor(absMinutes / 60);
       const absRemainingMinutes = absMinutes % 60;
       const timeText = absHours > 0 ? `${absHours}h ${absRemainingMinutes}min` : `${absMinutes}min`;
       return { progress: 0, timeText: `Inicia em ${timeText}`, isFinished: false };
     }
     
-    // Assume 120 minutes duration for progress calculation
-    const assumedDuration = 120;
-    const progress = Math.min((diffMinutes / assumedDuration) * 100, 100);
-    const timeText = diffHours > 0 ? `${diffHours}h ${remainingMinutes}min` : `${diffMinutes}min`;
+    // If there's an end date, calculate based on total duration
+    if (endDate) {
+      const totalDurationMs = endDate.getTime() - startDate.getTime();
+      const totalDurationMinutes = Math.floor(totalDurationMs / (1000 * 60));
+      
+      // Check if auction time has passed
+      const isTimeFinished = now.getTime() >= endDate.getTime();
+      
+      if (isTimeFinished || hasWinner) {
+        const timeText = elapsedHours > 0 ? `${elapsedHours}h ${remainingMinutes}min` : `${elapsedMinutes}min`;
+        return { 
+          progress: 100, 
+          timeText: hasWinner ? `Finalizado em ${timeText}` : `Tempo encerrado (${timeText})`, 
+          isFinished: true 
+        };
+      }
+      
+      // Calculate progress percentage
+      const progress = totalDurationMinutes > 0 ? Math.min((elapsedMinutes / totalDurationMinutes) * 100, 100) : 0;
+      const timeText = elapsedHours > 0 ? `${elapsedHours}h ${remainingMinutes}min` : `${elapsedMinutes}min`;
+      
+      return { 
+        progress, 
+        timeText: `${timeText} em execução`, 
+        isFinished: false 
+      };
+    }
+    
+    // If no end date, assume ongoing and use elapsed time
+    if (hasWinner) {
+      const timeText = elapsedHours > 0 ? `${elapsedHours}h ${remainingMinutes}min` : `${elapsedMinutes}min`;
+      return { progress: 100, timeText: `Finalizado em ${timeText}`, isFinished: true };
+    }
+    
+    // For ongoing auctions without end date, show as 50% progress after 2 hours
+    const assumedDuration = 120; // 2 hours
+    const progress = Math.min((elapsedMinutes / assumedDuration) * 100, 90); // Max 90% for ongoing
+    const timeText = elapsedHours > 0 ? `${elapsedHours}h ${remainingMinutes}min` : `${elapsedMinutes}min`;
     
     return { 
       progress, 
@@ -60,7 +93,7 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
   return (
     <Link to={`/auctions/${auction.id}`} className="block h-full">
-      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-3xl w-full aspect-[3/4]">
+      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-3xl w-full aspect-[4/5]">
         {/* Background Image - Full coverage with rounded corners */}
         <div 
           className="absolute inset-0 transition-all duration-500 rounded-3xl overflow-hidden"
