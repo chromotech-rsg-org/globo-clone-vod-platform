@@ -106,15 +106,15 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="flex flex-wrap justify-center gap-[0.5cm] px-[0.5cm]">
+              <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
                 {liveAuctions.map((auction) => (
                   <div 
                     key={auction.id} 
                     className="flex-shrink-0" 
                     style={{ 
-                      width: 'calc((100% - 1.5cm) / 4)', 
-                      minWidth: '250px',
-                      maxWidth: '350px',
+                      width: 'calc((100% - 2.4cm) / 3)', 
+                      minWidth: '280px',
+                      maxWidth: '420px',
                       marginBottom: '1cm'
                     }}
                   >
@@ -141,15 +141,15 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="flex flex-wrap justify-center gap-[0.5cm] px-[0.5cm]">
+              <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
                 {recordedAuctions.map((auction) => (
                   <div 
                     key={auction.id} 
                     className="flex-shrink-0" 
                     style={{ 
-                      width: 'calc((100% - 1.5cm) / 4)', 
-                      minWidth: '250px',
-                      maxWidth: '350px',
+                      width: 'calc((100% - 2.4cm) / 3)', 
+                      minWidth: '280px',
+                      maxWidth: '420px',
                       marginBottom: '1cm'
                     }}
                   >
