@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, GripVertical, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Plus, GripVertical, Edit2, Trash2, Save, X, ArrowUpDown } from 'lucide-react';
+import ImageUpload from '@/components/ui/image-upload';
 import { useAuctionItems } from '@/hooks/useAuctionItems';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +42,8 @@ interface LotFormData {
   initial_value: number;
   increment: number;
   status: 'not_started' | 'in_progress' | 'finished';
+  image_url: string;
+  order_index: number;
 }
 
 const StatusBadge = ({ status }: { status: AuctionItem['status'] }) => {
@@ -115,7 +118,7 @@ const SortableItem = ({
                   className="bg-black border-green-600/30 text-white focus:border-green-500"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label htmlFor={`initial-value-${item.id}`} className="text-white">Valor Inicial</Label>
                   <CurrencyInput
@@ -128,6 +131,17 @@ const SortableItem = ({
                   <CurrencyInput
                     value={editData.increment}
                     onChange={(value) => onEditDataChange({ increment: value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`order-${item.id}`} className="text-white">Ordem</Label>
+                  <Input
+                    id={`order-${item.id}`}
+                    type="number"
+                    value={editData.order_index}
+                    onChange={(e) => onEditDataChange({ order_index: parseInt(e.target.value) || 0 })}
+                    className="bg-black border-green-600/30 text-white focus:border-green-500"
+                    min="1"
                   />
                 </div>
               </div>
@@ -144,22 +158,49 @@ const SortableItem = ({
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label className="text-white">Imagem do Lote</Label>
+                <ImageUpload 
+                  onImageUploaded={(url) => onEditDataChange({ image_url: url })}
+                  folder="auction-items"
+                  existingImages={editData.image_url ? [{ 
+                    url: editData.image_url, 
+                    path: editData.image_url.split('/').pop() || '', 
+                    name: 'Imagem do Lote' 
+                  }] : []}
+                />
+              </div>
             </div>
           ) : (
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-semibold text-white">{item.name}</h4>
-                <StatusBadge status={item.status} />
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-blue-900/40 text-blue-400 border-blue-600 text-xs">
+                    #{item.order_index}
+                  </Badge>
+                  <StatusBadge status={item.status} />
+                </div>
               </div>
               {item.description && (
                 <p className="text-sm text-gray-300 mb-2">{item.description}</p>
               )}
-              <div className="text-sm space-y-1 text-gray-300">
-                <p>Valor inicial: <span className="text-green-400 font-medium">R$ {item.initial_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
-                <p>Valor atual: <span className="text-green-400 font-medium">R$ {item.current_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
-                {item.increment && (
-                  <p>Incremento: <span className="text-green-400 font-medium">R$ {item.increment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
+              <div className="flex items-center gap-4 mb-2">
+                {item.image_url && (
+                  <div className="w-16 h-16 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
+                    <img 
+                      src={item.image_url} 
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 )}
+                <div className="text-sm space-y-1 text-gray-300">
+                  <p>Valor inicial: <span className="text-green-400 font-medium">R$ {item.initial_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
+                  {item.increment && (
+                    <p>Incremento: <span className="text-green-400 font-medium">R$ {item.increment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -201,14 +242,18 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
     description: '',
     initial_value: 0,
     increment: 100,
-    status: 'not_started'
+    status: 'not_started',
+    image_url: '',
+    order_index: 0
   });
   const [formData, setFormData] = useState<LotFormData>({
     name: '',
     description: '',
     initial_value: 0,
     increment: 100,
-    status: 'not_started'
+    status: 'not_started',
+    image_url: '',
+    order_index: 0
   });
 
   const sensors = useSensors(
@@ -217,6 +262,39 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Auto-order function
+  const handleAutoOrder = async () => {
+    try {
+      const sortedItems = [...items].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      
+      const updates = sortedItems.map((item, index) => ({
+        id: item.id,
+        order_index: index + 1
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from('auction_items')
+          .update({ order_index: update.order_index })
+          .eq('id', update.id);
+      }
+
+      toast({
+        title: "Ordem reorganizada",
+        description: "Os lotes foram reorganizados automaticamente com base nos números de ordem.",
+      });
+
+      refetch();
+    } catch (error: any) {
+      console.error('Error auto-ordering:', error);
+      toast({
+        title: "Erro ao reorganizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
@@ -272,7 +350,8 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
           current_value: formData.initial_value,
           increment: formData.increment,
           status: formData.status,
-          order_index: maxOrder + 1
+          image_url: formData.image_url,
+          order_index: formData.order_index || maxOrder + 1
         });
 
       if (error) throw error;
@@ -282,7 +361,9 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
         description: '',
         initial_value: 0,
         increment: 100,
-        status: 'not_started'
+        status: 'not_started',
+        image_url: '',
+        order_index: 0
       });
       setShowForm(false);
       
@@ -303,15 +384,15 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
   };
 
   const handleEdit = (item: AuctionItem) => {
-    if (editingId === item.id) return; // Prevent re-editing same item
-    
     setEditingId(item.id);
     setEditData({
       name: item.name,
       description: item.description || '',
       initial_value: item.initial_value,
       increment: item.increment || 100,
-      status: item.status
+      status: item.status,
+      image_url: item.image_url || '',
+      order_index: item.order_index
     });
   };
 
@@ -325,9 +406,10 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
           name: editData.name,
           description: editData.description,
           initial_value: editData.initial_value,
-          current_value: editData.initial_value,
           increment: editData.increment,
-          status: editData.status
+          status: editData.status,
+          image_url: editData.image_url,
+          order_index: editData.order_index
         })
         .eq('id', editingId);
 
@@ -385,10 +467,20 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
       <div className="bg-gray-800 border-b border-green-600/20 px-6 py-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Gerenciar Lotes</h3>
-          <Button onClick={() => setShowForm(true)} disabled={showForm} className="bg-green-600 hover:bg-green-700 text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Lote
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleAutoOrder} 
+              variant="outline"
+              className="border-green-600/50 text-green-400 hover:bg-green-900/30"
+            >
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              Auto-Ordenar
+            </Button>
+            <Button onClick={() => setShowForm(true)} disabled={showForm} className="bg-green-600 hover:bg-green-700 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Lote
+            </Button>
+          </div>
         </div>
       </div>
       <div className="p-6 space-y-4">
@@ -416,7 +508,7 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
                   className="bg-black border-green-600/30 text-white focus:border-green-500"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label htmlFor="new-initial-value" className="text-white">Valor Inicial</Label>
                   <CurrencyInput
@@ -429,6 +521,18 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
                   <CurrencyInput
                     value={formData.increment}
                     onChange={(value) => setFormData({ ...formData, increment: value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-order" className="text-white">Ordem</Label>
+                  <Input
+                    id="new-order"
+                    type="number"
+                    value={formData.order_index}
+                    onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
+                    placeholder="Número da ordem"
+                    className="bg-black border-green-600/30 text-white focus:border-green-500"
+                    min="1"
                   />
                 </div>
               </div>
@@ -444,6 +548,18 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
                     <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label className="text-white">Imagem do Lote</Label>
+                <ImageUpload 
+                  onImageUploaded={(url) => setFormData({ ...formData, image_url: url })}
+                  folder="auction-items"
+                  existingImages={formData.image_url ? [{ 
+                    url: formData.image_url, 
+                    path: formData.image_url.split('/').pop() || '', 
+                    name: 'Imagem do Lote' 
+                  }] : []}
+                />
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleCreate} disabled={!formData.name} className="bg-green-600 hover:bg-green-700 text-white">
@@ -484,17 +600,19 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
                     console.log('Save button clicked');
                     handleSave();
                   }}
-                  onCancel={() => {
-                    console.log('Cancel button clicked');
-                    setEditingId(null);
-                    setEditData({
-                      name: '',
-                      description: '',
-                      initial_value: 0,
-                      increment: 100,
-                      status: 'not_started'
-                    });
-                  }}
+                   onCancel={() => {
+                     console.log('Cancel button clicked');
+                     setEditingId(null);
+                     setEditData({
+                       name: '',
+                       description: '',
+                       initial_value: 0,
+                       increment: 100,
+                       status: 'not_started',
+                       image_url: '',
+                       order_index: 0
+                     });
+                   }}
                   onDelete={() => handleDelete(item.id)}
                   editData={editData}
                   onEditDataChange={(data) => {
