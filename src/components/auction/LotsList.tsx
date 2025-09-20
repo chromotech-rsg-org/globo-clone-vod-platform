@@ -124,30 +124,33 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Imagem do Lote */}
-                    <div className="md:col-span-1">
+                  <div className="flex gap-6">
+                    {/* Imagem do Lote - Maior e mais proeminente */}
+                    <div className="flex-shrink-0">
                       {lot.image_url ? (
-                        <img 
-                          src={lot.image_url} 
-                          alt={lot.name}
-                          className="w-full h-32 object-cover rounded border border-gray-600/30"
-                        />
+                        <div className="relative">
+                          <img 
+                            src={lot.image_url} 
+                            alt={lot.name}
+                            className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-lg border-2 border-gray-600/50 shadow-lg"
+                          />
+                          <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/20 to-transparent" />
+                        </div>
                       ) : (
-                        <div className="w-full h-32 bg-gray-700/50 rounded border border-gray-600/30 flex items-center justify-center">
-                          <Package className="h-8 w-8 text-gray-400" />
+                        <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-700/50 rounded-lg border-2 border-gray-600/50 flex items-center justify-center">
+                          <Package className="h-12 w-12 text-gray-400" />
                         </div>
                       )}
                     </div>
 
                     {/* Informações do Lote */}
-                    <div className="md:col-span-2 space-y-3">
+                    <div className="flex-1 space-y-3">
                       <div>
                         <h4 className="text-lg font-bold text-white mb-1">{lot.name}</h4>
                         {lot.description && (
                           <p className="text-sm text-gray-300 leading-relaxed">{lot.description}</p>
                         )}
-                      </div>
+                        </div>
 
                       {/* Valores */}
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

@@ -245,15 +245,6 @@ const AuctionRoom = () => {
               </div>
             )}
 
-            {/* Lista de Todos os Lotes */}
-            {!lotsLoading && (
-              <LotsList
-                lots={lots}
-                bids={bids}
-                currentUserId={user?.id}
-                currentLotId={currentLotId}
-              />
-            )}
           </div>
 
           {/* Coluna Lateral - Ações do Usuário e Histórico */}
@@ -282,10 +273,22 @@ const AuctionRoom = () => {
             />
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Bid Confirmation Dialog */}
-      <BidConfirmationDialog
+        {/* Lista de Todos os Lotes - Largura Total */}
+        {!lotsLoading && (
+          <div className="mt-8">
+            <LotsList
+              lots={lots}
+              bids={bids}
+              currentUserId={user?.id}
+              currentLotId={currentLotId}
+            />
+          </div>
+        )}
+
+        {/* Bid Confirmation Dialog */}
+        <BidConfirmationDialog
         open={showBidDialog}
         onOpenChange={setShowBidDialog}
         auction={auction}
