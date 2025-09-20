@@ -114,6 +114,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
       });
 
       onSave();
+      onClose(); // Close modal after successful save
       setPendingImageFile(null);
       setImagePreview('');
     } catch (error) {
