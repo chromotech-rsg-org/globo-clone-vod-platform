@@ -91,11 +91,13 @@ const SortableItem = ({
 
   return (
     <div ref={setNodeRef} style={style} className="bg-gray-900 border border-green-600/30 rounded-lg p-4 hover:border-green-600/50 transition-colors">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3 flex-1">
-          <div {...attributes} {...listeners} className="cursor-grab hover:cursor-grabbing">
-            <GripVertical className="h-5 w-5 text-green-400" />
-          </div>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3 flex-1">
+            {!isEditing && (
+              <div {...attributes} {...listeners} className="cursor-grab hover:cursor-grabbing">
+                <GripVertical className="h-5 w-5 text-green-400" />
+              </div>
+            )}
           
           {isEditing ? (
             <div className="flex-1 space-y-3">
@@ -218,7 +220,16 @@ const SortableItem = ({
             </>
           ) : (
             <>
-              <Button size="sm" variant="outline" onClick={onEdit} className="border-green-600/50 text-green-400 hover:bg-green-900/30">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onEdit();
+                }} 
+                className="border-green-600/50 text-green-400 hover:bg-green-900/30"
+              >
                 <Edit2 className="h-4 w-4" />
               </Button>
               <Button size="sm" variant="destructive" onClick={onDelete} className="bg-red-900 hover:bg-red-800 text-white">
