@@ -36,12 +36,44 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
 
+  // Helper function to convert UTC date to Brazil timezone for display
+  const formatDateForInput = (isoString: string | null): string => {
+    if (!isoString) return '';
+    
+    const date = new Date(isoString);
+    // Convert to Brazil timezone (UTC-3)
+    const brasilOffset = -3 * 60; // -3 hours in minutes
+    const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+    const brasilTime = new Date(utc + (brasilOffset * 60000));
+    
+    // Format as YYYY-MM-DDTHH:MM for datetime-local input
+    const year = brasilTime.getFullYear();
+    const month = String(brasilTime.getMonth() + 1).padStart(2, '0');
+    const day = String(brasilTime.getDate()).padStart(2, '0');
+    const hours = String(brasilTime.getHours()).padStart(2, '0');
+    const minutes = String(brasilTime.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // Helper function to convert Brazil timezone to UTC for database
+  const convertToUTC = (brasilDateString: string): string => {
+    if (!brasilDateString) return '';
+    
+    // Parse the Brasil time as local
+    const brasilTime = new Date(brasilDateString);
+    // Add 3 hours to convert Brasil time to UTC
+    const utcTime = new Date(brasilTime.getTime() + (3 * 60 * 60 * 1000));
+    
+    return utcTime.toISOString();
+  };
+
   useEffect(() => {
     if (auction) {
       setFormData({
         ...auction,
-        start_date: auction.start_date ? auction.start_date.slice(0, -1) : '',
-        end_date: auction.end_date ? auction.end_date.slice(0, -1) : ''
+        start_date: formatDateForInput(auction.start_date),
+        end_date: formatDateForInput(auction.end_date)
       });
     }
   }, [auction]);
@@ -79,8 +111,8 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
         description: formData.description,
         youtube_url: formData.youtube_url,
         image_url: imageUrl,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
+        start_date: formData.start_date ? convertToUTC(formData.start_date) : null,
+        end_date: formData.end_date ? convertToUTC(formData.end_date) : null,
         status: formData.status,
         auction_type: formData.auction_type,
         is_live: formData.is_live
@@ -151,7 +183,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
             </div>
 
             <div>
-              <Label htmlFor="start_date" className="text-white">Data de Início</Label>
+              <Label htmlFor="start_date" className="text-white">Data de Início (Horário de Brasília)</Label>
               <Input
                 id="start_date"
                 type="datetime-local"
@@ -162,7 +194,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
             </div>
 
             <div>
-              <Label htmlFor="end_date" className="text-white">Data de Fim</Label>
+              <Label htmlFor="end_date" className="text-white">Data de Fim (Horário de Brasília)</Label>
               <Input
                 id="end_date"
                 type="datetime-local"

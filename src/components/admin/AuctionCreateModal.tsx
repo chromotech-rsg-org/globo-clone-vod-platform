@@ -36,6 +36,18 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
     is_live: false
   });
 
+  // Helper function to convert Brazil timezone to UTC for database
+  const convertToUTC = (brasilDateString: string): string => {
+    if (!brasilDateString) return '';
+    
+    // Parse the Brasil time as local
+    const brasilTime = new Date(brasilDateString);
+    // Add 3 hours to convert Brasil time to UTC
+    const utcTime = new Date(brasilTime.getTime() + (3 * 60 * 60 * 1000));
+    
+    return utcTime.toISOString();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -49,8 +61,8 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
         initial_bid_value: formData.initial_bid_value,
         current_bid_value: formData.current_bid_value || formData.initial_bid_value,
         bid_increment: formData.bid_increment,
-        start_date: formData.start_date || null,
-        end_date: formData.end_date || null,
+        start_date: formData.start_date ? convertToUTC(formData.start_date) : null,
+        end_date: formData.end_date ? convertToUTC(formData.end_date) : null,
         status: formData.status ? 'active' : 'inactive',
         auction_type: formData.auction_type,
         is_live: formData.is_live
@@ -137,7 +149,7 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
             </div>
 
             <div>
-              <Label htmlFor="start_date" className="text-white">Data de Início</Label>
+              <Label htmlFor="start_date" className="text-white">Data de Início (Horário de Brasília)</Label>
               <Input
                 id="start_date"
                 type="datetime-local"
@@ -148,7 +160,7 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
             </div>
 
             <div>
-              <Label htmlFor="end_date" className="text-white">Data de Fim</Label>
+              <Label htmlFor="end_date" className="text-white">Data de Fim (Horário de Brasília)</Label>
               <Input
                 id="end_date"
                 type="datetime-local"
