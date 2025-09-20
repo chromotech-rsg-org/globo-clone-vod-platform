@@ -40,12 +40,20 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Permite apenas números, vírgula e remove caracteres inválidos
-    const filteredValue = inputValue.replace(/[^0-9,]/g, '');
+    // Remove tudo que não for número
+    const numbersOnly = inputValue.replace(/\D/g, '');
     
-    const numericValue = parseCurrency(filteredValue);
+    if (numbersOnly === '') {
+      setDisplayValue('');
+      onChange(0);
+      return;
+    }
     
-    setDisplayValue(filteredValue);
+    // Converte para centavos (últimos 2 dígitos são centavos)
+    const numericValue = parseInt(numbersOnly) / 100;
+    
+    // Atualiza o valor formatado
+    setDisplayValue(formatCurrency(numericValue));
     onChange(numericValue);
   };
 
