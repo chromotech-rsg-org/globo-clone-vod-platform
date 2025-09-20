@@ -15,6 +15,7 @@ import AuctionCreateModal from '@/components/admin/AuctionCreateModal';
 
 const AdminAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [auctionLotCounts, setAuctionLotCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [inputValue, setInputValue] = useState('');
@@ -70,7 +71,6 @@ const AdminAuctions = () => {
       }
 
       if (searchTerm) {
-        // Use unaccent function for PostgreSQL if available, fallback to ilike
         const normalizedSearch = removeAccents(searchTerm);
         query = query.or(`name.ilike.%${searchTerm}%,name.ilike.%${normalizedSearch}%`);
       }
@@ -85,6 +85,23 @@ const AdminAuctions = () => {
 
       setAuctions(data as Auction[] || []);
       setTotalItems(count || 0);
+
+      // Fetch lot counts separately
+      if (data && data.length > 0) {
+        const auctionIds = data.map(auction => auction.id);
+        const { data: lotCounts, error: lotCountError } = await supabase
+          .from('auction_items')
+          .select('auction_id')
+          .in('auction_id', auctionIds);
+
+        if (!lotCountError && lotCounts) {
+          const counts: Record<string, number> = {};
+          lotCounts.forEach(lot => {
+            counts[lot.auction_id] = (counts[lot.auction_id] || 0) + 1;
+          });
+          setAuctionLotCounts(counts);
+        }
+      }
     } catch (error: any) {
       console.error('Erro ao buscar leilões:', error);
       toast({
@@ -94,7 +111,6 @@ const AdminAuctions = () => {
       });
     } finally {
       setLoading(false);
-      // Restore focus to input after search
       if (inputRef.current && document.activeElement !== inputRef.current) {
         setTimeout(() => {
           inputRef.current?.focus();
@@ -245,8 +261,9 @@ const AdminAuctions = () => {
                   <TableHead className="text-gray-300">Nome</TableHead>
                   <TableHead className="text-gray-300">Status</TableHead>
                   <TableHead className="text-gray-300">Ao Vivo</TableHead>
-                  <TableHead className="text-gray-300">Data de Início</TableHead>
-                  <TableHead className="text-gray-300">Data de Encerramento</TableHead>
+                  <TableHead className="text-gray-300">Hora Início</TableHead>
+                  <TableHead className="text-gray-300">Hora Fim</TableHead>
+                  <TableHead className="text-gray-300">Qtd. Lotes</TableHead>
                   <TableHead className="text-gray-300">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -270,10 +287,35 @@ const AdminAuctions = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-white">
-                      {auction.start_date ? new Date(auction.start_date).toLocaleDateString('pt-BR') : '-'}
+                      {auction.start_date ? (
+                        <>
+                          <div>{new Date(auction.start_date).toLocaleDateString('pt-BR')}</div>
+                          <div className="text-sm text-gray-400">
+                            {new Date(auction.start_date).toLocaleTimeString('pt-BR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </div>
+                        </>
+                      ) : '-'}
                     </TableCell>
                     <TableCell className="text-white">
-                      {auction.end_date ? new Date(auction.end_date).toLocaleDateString('pt-BR') : '-'}
+                      {auction.end_date ? (
+                        <>
+                          <div>{new Date(auction.end_date).toLocaleDateString('pt-BR')}</div>
+                          <div className="text-sm text-gray-400">
+                            {new Date(auction.end_date).toLocaleTimeString('pt-BR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </div>
+                        </>
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell className="text-white">
+                      <Badge variant="outline" className="bg-blue-900/30 text-blue-400 border-blue-600">
+                        {auctionLotCounts[auction.id] || 0} lotes
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
