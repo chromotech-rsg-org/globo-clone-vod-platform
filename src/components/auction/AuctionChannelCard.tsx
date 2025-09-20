@@ -227,31 +227,33 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${timeInfo.isFinished ? 'bg-green-400' : 'bg-blue-400 animate-pulse'}`}></div>
                     <span className={`font-semibold ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
-                      {timeInfo.timeText}
+                      {timeInfo.isFinished ? 'Finalizado' : 'Em Andamento'}
                     </span>
                   </div>
                 </div>
                 
-                {/* Progress Bar */}
-                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${
-                      timeInfo.isFinished 
-                        ? 'bg-gradient-to-r from-green-500 to-green-400' 
-                        : 'bg-gradient-to-r from-blue-500 to-blue-400'
-                    }`}
-                    style={{ width: `${timeInfo.progress}%` }}
-                  />
-                </div>
-                
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>Início: {new Date(auction.start_date).toLocaleDateString('pt-BR', { 
-                    day: '2-digit', 
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}</span>
-                  <span>{timeInfo.timeText}</span>
+                {/* Programming times */}
+                <div className="flex flex-col gap-1 text-xs text-gray-300">
+                  <div className="flex justify-between">
+                    <span>Início:</span>
+                    <span>{new Date(auction.start_date).toLocaleDateString('pt-BR', { 
+                      day: '2-digit', 
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</span>
+                  </div>
+                  {auction.end_date && (
+                    <div className="flex justify-between">
+                      <span>Fim:</span>
+                      <span>{new Date(auction.end_date).toLocaleDateString('pt-BR', { 
+                        day: '2-digit', 
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
