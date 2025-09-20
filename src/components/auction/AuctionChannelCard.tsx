@@ -173,18 +173,20 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
             {/* Current Lot Details */}
             {currentLot && (
-              <div className="bg-green-900/30 backdrop-blur-sm rounded-xl p-4 border border-green-600/50">
-                <div className="flex items-center gap-2 mb-3">
-                  <Play size={16} className="text-green-400" />
-                  <span className="text-green-400 font-semibold">Lote Atual</span>
+              <div className="bg-green-900/30 backdrop-blur-sm rounded-xl p-3 border border-green-600/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <Play size={14} className="text-green-400" />
+                  <span className="text-green-400 font-semibold text-sm">Lote Atual</span>
                 </div>
                 
                 <div className="text-white mb-2">
-                  <div className="font-semibold">{currentLot.name}</div>
-                  <div className="text-sm text-gray-300 mt-1">{currentLot.description}</div>
+                  <div className="font-semibold text-sm">{currentLot.name}</div>
+                  {currentLot.description && (
+                    <div className="text-xs text-gray-300 mt-1 line-clamp-1">{currentLot.description}</div>
+                  )}
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-xs mb-2">
                   <div>
                     <div className="text-gray-300">Valor Inicial</div>
                     <div className="text-white font-medium">{formatCurrency(currentLot.initial_value)}</div>
@@ -195,9 +197,9 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                   </div>
                 </div>
                 
-                <div className="mt-2 text-center">
+                <div className="text-center">
                   <div className="text-gray-300 text-xs">
-                    Lances recebidos: <span className="text-white font-medium">{loading ? '...' : (stats?.totalBids || 0)}</span>
+                    Lances: <span className="text-white font-medium">{loading ? '...' : (stats?.totalBids || 0)}</span>
                   </div>
                 </div>
               </div>
