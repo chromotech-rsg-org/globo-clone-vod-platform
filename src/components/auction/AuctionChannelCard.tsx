@@ -312,14 +312,26 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                         />
                       </div>
                       
-                      <div className="text-center mb-2">
-                        <div className="text-gray-300 text-xs">
-                          {timeInfo.isFinished ? 'Tempo total:' : 'Decorrido:'} 
-                          <span className={`font-bold ml-1 ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
-                            {timeDisplay}
-                          </span>
-                        </div>
-                      </div>
+                       <div className="text-center mb-2">
+                         <div className="text-gray-300 text-xs">
+                           {(() => {
+                             const now = new Date();
+                             const startDate = new Date(auction.start_date + (auction.start_date.includes('T') ? '' : 'T00:00:00'));
+                             const elapsedMs = now.getTime() - startDate.getTime();
+                             
+                             if (elapsedMs < 0) {
+                               return 'Começa em:';
+                             } else if (timeInfo.isFinished) {
+                               return 'Tempo de transmissão:';
+                             } else {
+                               return 'Em Andamento:';
+                             }
+                           })()} 
+                           <span className={`font-bold ml-1 ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
+                             {timeDisplay}
+                           </span>
+                         </div>
+                       </div>
                     </>
                   );
                 })()}
