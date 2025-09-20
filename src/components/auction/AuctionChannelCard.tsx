@@ -20,6 +20,36 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
   const currentLot = lots?.find(lot => lot.is_current) || lots?.find(lot => lot.status === 'in_progress') || null;
   const totalLots = lots?.length || 0;
 
+  // Calculate time progress
+  const calculateTimeProgress = () => {
+    if (!auction.start_date) return { progress: 0, timeText: 'Sem programação', isFinished: hasWinner };
+    
+    const startDate = new Date(auction.start_date);
+    const now = new Date();
+    const diffMs = now.getTime() - startDate.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    
+    if (hasWinner) {
+      return { progress: 100, timeText: 'Finalizado', isFinished: true };
+    }
+    
+    if (diffMinutes < 0) {
+      return { progress: 0, timeText: `Inicia em ${Math.abs(diffMinutes)} min`, isFinished: false };
+    }
+    
+    // Assume 120 minutes duration for progress calculation
+    const assumedDuration = 120;
+    const progress = Math.min((diffMinutes / assumedDuration) * 100, 100);
+    
+    return { 
+      progress, 
+      timeText: `${diffMinutes} min em execução`, 
+      isFinished: false 
+    };
+  };
+
+  const timeInfo = calculateTimeProgress();
+
   return (
     <Link to={`/auctions/${auction.id}`} className="block h-full">
       <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-3xl w-full aspect-[9/16]">
@@ -28,7 +58,7 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
           className="absolute inset-0 transition-all duration-500"
           style={{
             backgroundImage: `url('${auction.image_url || '/assets/auction-channel-bg-mobile.jpg'}')`,
-            backgroundSize: 'contain',
+            backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat'
           }}
@@ -58,13 +88,6 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
               </Badge>
             </div>
           )}
-
-          {/* Auction name at bottom */}
-          <div className="absolute bottom-4 left-4 right-4">
-            <h3 className="text-white text-lg font-bold truncate drop-shadow-lg">
-              {auction.name}
-            </h3>
-          </div>
         </div>
 
         {/* Hover Content - Full info */}
@@ -138,25 +161,42 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
               </div>
             </div>
 
-            {/* Timeline */}
+            {/* Timeline with Progress Bar */}
             {auction.start_date && (
               <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-xs mb-2">
                   <div className="flex items-center gap-1">
                     <Clock size={12} className="text-blue-400" />
                     <span className="text-gray-300">Programação</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                    <span className="text-blue-400 font-semibold">
-                      {new Date(auction.start_date).toLocaleDateString('pt-BR', { 
-                        day: '2-digit', 
-                        month: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                    <div className={`w-2 h-2 rounded-full ${timeInfo.isFinished ? 'bg-green-400' : 'bg-blue-400 animate-pulse'}`}></div>
+                    <span className={`font-semibold ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
+                      {timeInfo.timeText}
                     </span>
                   </div>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-500 ${
+                      timeInfo.isFinished 
+                        ? 'bg-gradient-to-r from-green-500 to-green-400' 
+                        : 'bg-gradient-to-r from-blue-500 to-blue-400'
+                    }`}
+                    style={{ width: `${timeInfo.progress}%` }}
+                  />
+                </div>
+                
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>Início: {new Date(auction.start_date).toLocaleDateString('pt-BR', { 
+                    day: '2-digit', 
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</span>
+                  <span>{Math.round(timeInfo.progress)}%</span>
                 </div>
               </div>
             )}
