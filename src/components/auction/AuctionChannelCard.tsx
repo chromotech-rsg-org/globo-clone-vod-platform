@@ -178,9 +178,6 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                   <span className="text-white font-semibold text-sm truncate flex-1">{currentLot.name}</span>
                 </div>
                 
-                {currentLot.description && (
-                  <div className="text-xs text-gray-300 mb-2 line-clamp-1">{currentLot.description}</div>
-                )}
                 
                 <div className="flex justify-between items-center text-xs">
                   <div className="text-center">
