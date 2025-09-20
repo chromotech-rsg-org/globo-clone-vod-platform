@@ -170,16 +170,6 @@ const CurrentLotDisplay = ({
             </Alert>
           )}
           
-          {stateInfo.action && (
-            <Button 
-              onClick={stateInfo.onClick}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
-              disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick || auction.status === 'inactive' || !auction.is_live}
-            >
-              {submittingBid ? 'Enviando lance...' : stateInfo.action}
-            </Button>
-          )}
 
           {/* Status do lance do usuário */}
           {userPendingBid && (
@@ -231,17 +221,24 @@ const CurrentLotDisplay = ({
           })()}
         </div>
 
-        {/* Botão de Lance Principal (apenas se pode fazer lance) */}
-        {canBid && (
-          <Button
-            onClick={onBidClick}
-            disabled={!canBid}
-            className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50"
-          >
-            <Gavel className="h-5 w-5 mr-2" />
-            {canBid ? `Fazer Lance - ${formatCurrency(nextBidValue)}` : 'Lance Indisponível'}
-          </Button>
-        )}
+        {/* Botão Principal - Lance ou Habilitação */}
+        <Button
+          onClick={canBid ? onBidClick : (stateInfo.onClick || onRequestRegistration)}
+          disabled={stateInfo.disabled || submittingBid || auction.status === 'inactive' || !auction.is_live}
+          className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50"
+          variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
+        >
+          {submittingBid ? (
+            'Enviando lance...'
+          ) : canBid ? (
+            <>
+              <Gavel className="h-5 w-5 mr-2" />
+              {`Fazer Lance - ${formatCurrency(nextBidValue)}`}
+            </>
+          ) : (
+            stateInfo.action || 'Indisponível'
+          )}
+        </Button>
       </CardContent>
     </Card>
   );
