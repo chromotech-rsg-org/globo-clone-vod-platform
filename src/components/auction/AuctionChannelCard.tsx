@@ -206,17 +206,26 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
             )}
 
             {/* Finished Lots */}
-            {(() => {
-              const finishedLots = lots?.filter(lot => lot.status === 'finished') || [];
-              if (finishedLots.length === 0) return null;
+            <div className="bg-gray-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-600/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy size={16} className="text-yellow-400" />
+                <span className="text-yellow-400 font-semibold">Lotes Finalizados</span>
+              </div>
               
-              return (
-                <div className="bg-gray-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-600/30">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Trophy size={16} className="text-yellow-400" />
-                    <span className="text-yellow-400 font-semibold">Lotes Finalizados</span>
-                  </div>
-                  
+              {(() => {
+                const finishedLots = lots?.filter(lot => lot.status === 'finished') || [];
+                
+                if (finishedLots.length === 0) {
+                  return (
+                    <div className="text-center py-2">
+                      <div className="text-gray-400 text-sm">
+                        Nenhum lote finalizado ainda
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
                   <div className="space-y-2 max-h-24 overflow-y-auto">
                     {finishedLots.map((lot) => (
                       <div key={lot.id} className="flex justify-between items-center text-sm">
@@ -229,9 +238,9 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                       </div>
                     ))}
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
+            </div>
 
             {/* Timeline with Progress Bar */}
             {auction.start_date && (
