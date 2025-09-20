@@ -245,6 +245,125 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                 </p>
               </div>
             </div>
+
+            {/* Timeline with Progress Bar */}
+            {auction.start_date && (
+              <div className="bg-black/60 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-blue-400" />
+                    <span className="text-white font-semibold">Programação</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${timeInfo.isFinished ? 'bg-green-400' : 'bg-blue-400 animate-pulse'}`}></div>
+                    <span className={`font-semibold text-xs ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
+                      {timeInfo.isFinished ? 'Finalizado' : 'Em Andamento'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                {(() => {
+                  const startDate = new Date(auction.start_date);
+                  const endDate = auction.end_date ? new Date(auction.end_date) : null;
+                  const now = new Date();
+                  
+                  let progress = 0;
+                  let timeDisplay = '';
+                  
+                  if (timeInfo.isFinished) {
+                    // Show complete bar with execution time
+                    progress = 100;
+                    if (endDate) {
+                      const executionMs = endDate.getTime() - startDate.getTime();
+                      const executionHours = Math.floor(executionMs / (1000 * 60 * 60));
+                      const executionMinutes = Math.floor((executionMs % (1000 * 60 * 60)) / (1000 * 60));
+                      timeDisplay = executionHours > 0 ? `${executionHours}h ${executionMinutes}min` : `${executionMinutes}min`;
+                    } else {
+                      const executionMs = now.getTime() - startDate.getTime();
+                      const executionHours = Math.floor(executionMs / (1000 * 60 * 60));
+                      const executionMinutes = Math.floor((executionMs % (1000 * 60 * 60)) / (1000 * 60));
+                      timeDisplay = executionHours > 0 ? `${executionHours}h ${executionMinutes}min` : `${executionMinutes}min`;
+                    }
+                  } else {
+                    // Show current progress with time running
+                    const elapsedMs = now.getTime() - startDate.getTime();
+                    const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
+                    const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
+                    timeDisplay = elapsedHours > 0 ? `${elapsedHours}h ${elapsedMinutes}min` : `${elapsedMinutes}min`;
+                    
+                    if (endDate) {
+                      const totalDurationMs = endDate.getTime() - startDate.getTime();
+                      progress = totalDurationMs > 0 ? Math.min((elapsedMs / totalDurationMs) * 100, 100) : 0;
+                    } else {
+                      // Assume 2-hour duration for display purposes
+                      const assumedDuration = 2 * 60 * 60 * 1000; // 2 hours in ms
+                      progress = Math.min((elapsedMs / assumedDuration) * 100, 90);
+                    }
+                  }
+                  
+                  return (
+                    <>
+                      <div className="w-full bg-gray-700 rounded-full h-3 mb-3 overflow-hidden">
+                        <div 
+                          className={`h-full transition-all duration-500 ${
+                            timeInfo.isFinished 
+                              ? 'bg-gradient-to-r from-green-500 to-green-400' 
+                              : 'bg-gradient-to-r from-blue-500 to-blue-400'
+                          }`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      
+                      <div className="text-center mb-3">
+                        <div className="text-gray-300 text-xs mb-1">
+                          {timeInfo.isFinished ? 'Tempo total de execução:' : 'Tempo decorrido:'}
+                        </div>
+                        <div className={`font-bold text-lg ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
+                          {timeDisplay}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+                
+                {/* Programming dates and times */}
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Início:</span>
+                    <span className="text-white font-medium">
+                      {new Date(auction.start_date).toLocaleDateString('pt-BR', { 
+                        weekday: 'short',
+                        day: '2-digit', 
+                        month: '2-digit',
+                        year: 'numeric'
+                      })} às {new Date(auction.start_date).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                  {auction.end_date && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-300">
+                        {timeInfo.isFinished ? 'Finalizou:' : 'Previsão fim:'}
+                      </span>
+                      <span className={`font-medium ${timeInfo.isFinished ? 'text-green-400' : 'text-white'}`}>
+                        {new Date(auction.end_date).toLocaleDateString('pt-BR', { 
+                          weekday: 'short',
+                          day: '2-digit', 
+                          month: '2-digit',
+                          year: 'numeric'
+                        })} às {new Date(auction.end_date).toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Date */}
