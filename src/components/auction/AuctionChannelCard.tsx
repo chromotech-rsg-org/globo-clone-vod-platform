@@ -231,9 +231,74 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
                     </span>
                   </div>
                 </div>
+
+                {/* Progress Bar */}
+                {(() => {
+                  const startDate = new Date(auction.start_date);
+                  const endDate = auction.end_date ? new Date(auction.end_date) : null;
+                  const now = new Date();
+                  
+                  let progress = 0;
+                  let timeDisplay = '';
+                  
+                  if (timeInfo.isFinished) {
+                    // Show complete bar with execution time
+                    progress = 100;
+                    if (endDate) {
+                      const executionMs = endDate.getTime() - startDate.getTime();
+                      const executionHours = Math.floor(executionMs / (1000 * 60 * 60));
+                      const executionMinutes = Math.floor((executionMs % (1000 * 60 * 60)) / (1000 * 60));
+                      timeDisplay = executionHours > 0 ? `${executionHours}h ${executionMinutes}min` : `${executionMinutes}min`;
+                    } else {
+                      const executionMs = now.getTime() - startDate.getTime();
+                      const executionHours = Math.floor(executionMs / (1000 * 60 * 60));
+                      const executionMinutes = Math.floor((executionMs % (1000 * 60 * 60)) / (1000 * 60));
+                      timeDisplay = executionHours > 0 ? `${executionHours}h ${executionMinutes}min` : `${executionMinutes}min`;
+                    }
+                  } else {
+                    // Show current progress with time running
+                    const elapsedMs = now.getTime() - startDate.getTime();
+                    const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
+                    const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
+                    timeDisplay = elapsedHours > 0 ? `${elapsedHours}h ${elapsedMinutes}min` : `${elapsedMinutes}min`;
+                    
+                    if (endDate) {
+                      const totalDurationMs = endDate.getTime() - startDate.getTime();
+                      progress = totalDurationMs > 0 ? Math.min((elapsedMs / totalDurationMs) * 100, 100) : 0;
+                    } else {
+                      // Assume 2-hour duration for display purposes
+                      const assumedDuration = 2 * 60 * 60 * 1000; // 2 hours in ms
+                      progress = Math.min((elapsedMs / assumedDuration) * 100, 90);
+                    }
+                  }
+                  
+                  return (
+                    <>
+                      <div className="w-full bg-gray-700 rounded-full h-2 mb-2 overflow-hidden">
+                        <div 
+                          className={`h-full transition-all duration-500 ${
+                            timeInfo.isFinished 
+                              ? 'bg-gradient-to-r from-green-500 to-green-400' 
+                              : 'bg-gradient-to-r from-blue-500 to-blue-400'
+                          }`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-400">
+                          {timeInfo.isFinished ? 'Tempo de execução:' : 'Tempo decorrido:'}
+                        </span>
+                        <span className={`font-semibold ${timeInfo.isFinished ? 'text-green-400' : 'text-blue-400'}`}>
+                          {timeDisplay}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
                 
                 {/* Programming times */}
-                <div className="flex flex-col gap-1 text-xs text-gray-300">
+                <div className="flex flex-col gap-1 text-xs text-gray-300 mt-2 pt-2 border-t border-white/10">
                   <div className="flex justify-between">
                     <span>Início:</span>
                     <span>{new Date(auction.start_date).toLocaleDateString('pt-BR', { 
