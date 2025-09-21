@@ -91,6 +91,42 @@ const AuctionRoom = () => {
     });
   }, [auction, currentLot, bids, customIncrement]);
 
+  // Função para recalcular valor do lance com dados atuais
+  const recalculateNextBidValue = () => {
+    if (!auction || !customIncrement) return 0;
+
+    // Valor base do lance
+    let base = Number(currentLot ? currentLot.current_value : auction.current_bid_value);
+
+    // Filtrar lances aprovados
+    const approvedBids = bids.filter(bid => 
+      bid.status === 'approved' && 
+      (!currentLot || bid.auction_item_id === currentLot.id)
+    );
+
+    // Se houver lances aprovados, usar o maior como base
+    if (approvedBids.length > 0) {
+      const highestBid = Math.max(...approvedBids.map(b => Number(b.bid_value)));
+      if (highestBid > base) {
+        base = highestBid;
+      }
+    }
+
+    const calculatedNextBid = base + customIncrement;
+    
+    console.log('🔄 Recalculando nextBidValue:', {
+      base,
+      customIncrement,
+      calculatedNextBid,
+      approvedBidsCount: approvedBids.length,
+      highestApprovedBid: approvedBids.length > 0 ? Math.max(...approvedBids.map(b => Number(b.bid_value))) : 'N/A',
+      currentLot: currentLot ? { id: currentLot.id, current_value: currentLot.current_value } : null,
+      auctionCurrentValue: auction.current_bid_value
+    });
+
+    return calculatedNextBid;
+  };
+
   // Função para abrir dialog de lance com dados atualizados
   const openBidDialogComAtualizacao = async () => {
     try {
@@ -103,11 +139,14 @@ const AuctionRoom = () => {
         refetchBids()
       ]);
       
-      // Pequeno delay para garantir que os effects sejam executados
+      // Aguardar que os states sejam atualizados e recalcular
       setTimeout(() => {
-        console.log('📊 Dados atualizados. Incremento atual:', customIncrement);
+        const freshNextBidValue = recalculateNextBidValue();
+        setNextBidValue(freshNextBidValue);
+        
+        console.log('📊 Dados atualizados. Próximo lance recalculado:', freshNextBidValue);
         setShowBidDialog(true);
-      }, 100);
+      }, 200);
       
     } catch (error) {
       console.error('❌ Erro ao atualizar dados:', error);
@@ -251,8 +290,8 @@ const AuctionRoom = () => {
         variant: "default"
       });
     } else {
-      // Se falhou, atualizar dados e recalcular
-      console.log('⚠️ Lance falhou, atualizando dados...');
+      // Se falhou, atualizar dados e recalcular valor correto
+      console.log('⚠️ Lance falhou, atualizando dados e recalculando...');
       try {
         await Promise.all([
           refetchAuction(),
@@ -260,13 +299,27 @@ const AuctionRoom = () => {
           refetchBids()
         ]);
         
-        toast({
-          title: "Erro no lance",
-          description: "Dados atualizados. Verifique o valor e tente novamente.",
-          variant: "destructive"
-        });
+        // Aguardar atualização dos states e recalcular
+        setTimeout(() => {
+          const newCorrectValue = recalculateNextBidValue();
+          setNextBidValue(newCorrectValue);
+          
+          console.log('🔄 Novo valor calculado após falha:', newCorrectValue);
+          
+          toast({
+            title: "Lance rejeitado",
+            description: `Valor atualizado para R$ ${(newCorrectValue / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Tente novamente.`,
+            variant: "destructive"
+          });
+        }, 200);
+        
       } catch (error) {
         console.error('❌ Erro ao atualizar dados após falha:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao atualizar dados. Recarregue a página.",
+          variant: "destructive"
+        });
       }
     }
   };
