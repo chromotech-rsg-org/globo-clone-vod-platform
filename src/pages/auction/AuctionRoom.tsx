@@ -91,6 +91,34 @@ const AuctionRoom = () => {
     });
   }, [auction, currentLot, bids, customIncrement]);
 
+  // Função para abrir dialog de lance com dados atualizados
+  const openBidDialogComAtualizacao = async () => {
+    try {
+      console.log('🔄 Atualizando dados antes de abrir dialog de lance...');
+      
+      // Refetch todos os dados em paralelo
+      await Promise.all([
+        refetchAuction(),
+        refetchLots(),
+        refetchBids()
+      ]);
+      
+      // Pequeno delay para garantir que os effects sejam executados
+      setTimeout(() => {
+        console.log('📊 Dados atualizados. Incremento atual:', customIncrement);
+        setShowBidDialog(true);
+      }, 100);
+      
+    } catch (error) {
+      console.error('❌ Erro ao atualizar dados:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar dados. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getUserStateInfo = () => {
     const hasWinner = bids.some(bid => bid.is_winner);
     const isAuctionFinished = hasWinner || auction?.status === 'inactive';
@@ -208,34 +236,6 @@ const AuctionRoom = () => {
   const stateInfo = getUserStateInfo();
 
   const canBid = userState === 'can_bid' && !submittingBid && !isAllFinished;
-
-  // Função para abrir dialog de lance com dados atualizados
-  const openBidDialogComAtualizacao = async () => {
-    try {
-      console.log('🔄 Atualizando dados antes de abrir dialog de lance...');
-      
-      // Refetch todos os dados em paralelo
-      await Promise.all([
-        refetchAuction(),
-        refetchLots(),
-        refetchBids()
-      ]);
-      
-      // Pequeno delay para garantir que os effects sejam executados
-      setTimeout(() => {
-        console.log('📊 Dados atualizados. Incremento atual:', customIncrement);
-        setShowBidDialog(true);
-      }, 100);
-      
-    } catch (error) {
-      console.error('❌ Erro ao atualizar dados:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar dados. Tente novamente.",
-        variant: "destructive"
-      });
-    }
-  };
 
   // Função melhorada para submission de lance
   const handleBidSubmission = async () => {
