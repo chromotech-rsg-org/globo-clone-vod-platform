@@ -9,6 +9,7 @@ interface BidConfirmationDialogProps {
   onOpenChange: (open: boolean) => void;
   auction: Auction;
   bidValue: number;
+  currentValue?: number;
   onConfirm: () => void;
 }
 const BidConfirmationDialog = ({
@@ -16,6 +17,7 @@ const BidConfirmationDialog = ({
   onOpenChange,
   auction,
   bidValue,
+  currentValue,
   onConfirm
 }: BidConfirmationDialogProps) => {
   return <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,9 +43,9 @@ const BidConfirmationDialog = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-400">Lance Atual</p>
-                  <p className="font-semibold text-gray-300">
-                    {formatCurrency(auction.current_bid_value)}
-                  </p>
+          <p className="font-semibold text-gray-300">
+            {formatCurrency(currentValue ?? auction.current_bid_value)}
+          </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400">Seu Lance</p>

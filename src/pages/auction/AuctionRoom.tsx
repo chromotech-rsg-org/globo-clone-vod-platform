@@ -21,6 +21,7 @@ import AuctionStatusSummary from '@/components/auction/AuctionStatusSummary';
 import LotsList from '@/components/auction/LotsList';
 import BidHistoryWithFilters from '@/components/auction/BidHistoryWithFilters';
 import { useToast } from '@/components/ui/use-toast';
+import { formatCurrency } from '@/utils/formatters';
 
 const AuctionRoom = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,10 +37,11 @@ const AuctionRoom = () => {
     isAllFinished 
   } = useLotStatistics(lots, bids);
   const { customIncrement, updateCustomIncrement } = useCustomIncrement(currentLot, auction);
-  const [userState, setUserState] = useState<BidUserState>('need_registration');
-  const [showBidDialog, setShowBidDialog] = useState(false);
-  const [nextBidValue, setNextBidValue] = useState(0);
-  const { toast } = useToast();
+const [userState, setUserState] = useState<BidUserState>('need_registration');
+const [showBidDialog, setShowBidDialog] = useState(false);
+const [nextBidValue, setNextBidValue] = useState(0);
+const [currentBaseValue, setCurrentBaseValue] = useState(0);
+const { toast } = useToast();
 
   useEffect(() => {
     if (!registration) {
@@ -63,69 +65,73 @@ const AuctionRoom = () => {
     }
   }, [registration, userPendingBid]);
 
-  useEffect(() => {
-    if (!auction || !customIncrement) return;
+useEffect(() => {
+  if (!auction || !customIncrement) return;
 
-    // Valor base do lance: valor atual do lote (ou do leilão se não houver lote),
-    // considerando o maior lance aprovado do lote atual
-    let base = Number(currentLot ? currentLot.current_value : auction.current_bid_value);
+  // Valor base do lance: valor atual do lote (ou do leilão se não houver lote),
+  // considerando o maior lance aprovado do lote atual
+  let base = Number(currentLot ? currentLot.current_value : auction.current_bid_value);
 
-    const approvedBids = bids.filter(bid => bid.status === 'approved' && (!currentLot || bid.auction_item_id === currentLot.id));
-    if (approvedBids.length > 0) {
-      const highestBid = Math.max(...approvedBids.map(b => Number(b.bid_value)));
-      if (highestBid > base) {
-        base = highestBid;
-      }
+  const approvedBids = bids.filter(bid => bid.status === 'approved' && (!currentLot || bid.auction_item_id === currentLot.id));
+  if (approvedBids.length > 0) {
+    const highestBid = Math.max(...approvedBids.map(b => Number(b.bid_value)));
+    if (highestBid > base) {
+      base = highestBid;
     }
+  }
 
-    const calculatedNextBid = base + customIncrement;
-    setNextBidValue(calculatedNextBid);
-    
-    // Debug logs para rastrear valores de incremento
-    console.log('🔍 Calculating nextBidValue:', {
-      base,
-      customIncrement,
-      calculatedNextBid,
-      currentLot: currentLot ? { id: currentLot.id, name: currentLot.name, increment: currentLot.increment } : null,
-      auctionIncrement: auction.bid_increment
-    });
-  }, [auction, currentLot, bids, customIncrement]);
+  const calculatedNextBid = base + customIncrement;
+  setCurrentBaseValue(base);
+  setNextBidValue(calculatedNextBid);
+  
+  // Debug logs para rastrear valores de incremento
+  console.log('🔍 Calculating nextBidValue:', {
+    base,
+    customIncrement,
+    calculatedNextBid,
+    currentLot: currentLot ? { id: currentLot.id, name: currentLot.name, increment: currentLot.increment } : null,
+    auctionIncrement: auction.bid_increment
+  });
+}, [auction, currentLot, bids, customIncrement]);
 
-  // Função para recalcular valor do lance com dados atuais
-  const recalculateNextBidValue = () => {
-    if (!auction || !customIncrement) return 0;
+// Função para recalcular valor do lance com dados atuais
+const recalculateNextBidValue = () => {
+  if (!auction || !customIncrement) return 0;
 
-    // Valor base do lance
-    let base = Number(currentLot ? currentLot.current_value : auction.current_bid_value);
+  // Valor base do lance
+  let base = Number(currentLot ? currentLot.current_value : auction.current_bid_value);
 
-    // Filtrar lances aprovados
-    const approvedBids = bids.filter(bid => 
-      bid.status === 'approved' && 
-      (!currentLot || bid.auction_item_id === currentLot.id)
-    );
+  // Filtrar lances aprovados
+  const approvedBids = bids.filter(bid => 
+    bid.status === 'approved' && 
+    (!currentLot || bid.auction_item_id === currentLot.id)
+  );
 
-    // Se houver lances aprovados, usar o maior como base
-    if (approvedBids.length > 0) {
-      const highestBid = Math.max(...approvedBids.map(b => Number(b.bid_value)));
-      if (highestBid > base) {
-        base = highestBid;
-      }
+  // Se houver lances aprovados, usar o maior como base
+  if (approvedBids.length > 0) {
+    const highestBid = Math.max(...approvedBids.map(b => Number(b.bid_value)));
+    if (highestBid > base) {
+      base = highestBid;
     }
+  }
 
-    const calculatedNextBid = base + customIncrement;
-    
-    console.log('🔄 Recalculando nextBidValue:', {
-      base,
-      customIncrement,
-      calculatedNextBid,
-      approvedBidsCount: approvedBids.length,
-      highestApprovedBid: approvedBids.length > 0 ? Math.max(...approvedBids.map(b => Number(b.bid_value))) : 'N/A',
-      currentLot: currentLot ? { id: currentLot.id, current_value: currentLot.current_value } : null,
-      auctionCurrentValue: auction.current_bid_value
-    });
+  const calculatedNextBid = base + customIncrement;
+  
+  // Atualiza valor base atual para exibição no diálogo
+  setCurrentBaseValue(base);
+  
+  console.log('🔄 Recalculando nextBidValue:', {
+    base,
+    customIncrement,
+    calculatedNextBid,
+    approvedBidsCount: approvedBids.length,
+    highestApprovedBid: approvedBids.length > 0 ? Math.max(...approvedBids.map(b => Number(b.bid_value))) : 'N/A',
+    currentLot: currentLot ? { id: currentLot.id, current_value: currentLot.current_value } : null,
+    auctionCurrentValue: auction.current_bid_value
+  });
 
-    return calculatedNextBid;
-  };
+  return calculatedNextBid;
+};
 
   // Função para abrir dialog de lance com dados atualizados
   const openBidDialogComAtualizacao = async () => {
@@ -306,11 +312,11 @@ const AuctionRoom = () => {
           
           console.log('🔄 Novo valor calculado após falha:', newCorrectValue);
           
-          toast({
-            title: "Lance rejeitado",
-            description: `Valor atualizado para R$ ${(newCorrectValue / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Tente novamente.`,
-            variant: "destructive"
-          });
+toast({
+  title: "Lance rejeitado",
+  description: `Valor atualizado para ${formatCurrency(newCorrectValue)}. Tente novamente.`,
+  variant: "destructive"
+});
         }, 200);
         
       } catch (error) {
@@ -415,14 +421,15 @@ const AuctionRoom = () => {
           </div>
         )}
 
-        {/* Bid Confirmation Dialog */}
-        <BidConfirmationDialog
-        open={showBidDialog}
-        onOpenChange={setShowBidDialog}
-        auction={auction}
-        bidValue={nextBidValue}
-        onConfirm={handleBidSubmission}
-      />
+{/* Bid Confirmation Dialog */}
+<BidConfirmationDialog
+  open={showBidDialog}
+  onOpenChange={setShowBidDialog}
+  auction={auction}
+  bidValue={nextBidValue}
+  currentValue={currentBaseValue}
+  onConfirm={handleBidSubmission}
+/>
 
       {/* Client Notifications - Fixed position */}
       <div className="fixed top-20 right-4 z-40">
