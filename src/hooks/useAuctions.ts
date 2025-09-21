@@ -82,6 +82,23 @@ export const useAuctionDetails = (auctionId: string) => {
   useEffect(() => {
     if (auctionId) {
       fetchAuction();
+      
+      // Set up real-time subscription for auction changes
+      const subscription = supabase
+        .channel(`auction-details-${auctionId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'auctions',
+          filter: `id=eq.${auctionId}`
+        }, () => {
+          fetchAuction();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     }
   }, [auctionId]);
 

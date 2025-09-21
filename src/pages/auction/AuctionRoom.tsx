@@ -25,10 +25,10 @@ import { useToast } from '@/components/ui/use-toast';
 const AuctionRoom = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { auction, loading: auctionLoading } = useAuctionDetails(id!);
+  const { auction, loading: auctionLoading, refetch: refetchAuction } = useAuctionDetails(id!);
   const { registration, loading: registrationLoading, requestRegistration } = useAuctionRegistration(id!);
-  const { bids, submitBid, submittingBid, pendingBidExists, userPendingBid, loading: bidsLoading } = useAuctionBids(id!);
-  const { items: lots, loading: lotsLoading } = useAuctionItems(id!);
+  const { bids, submitBid, submittingBid, pendingBidExists, userPendingBid, loading: bidsLoading, refetch: refetchBids } = useAuctionBids(id!);
+  const { items: lots, loading: lotsLoading, refetch: refetchLots } = useAuctionItems(id!);
   const { 
     currentLot, 
     currentLotId, 
@@ -78,7 +78,17 @@ const AuctionRoom = () => {
       }
     }
 
-    setNextBidValue(base + customIncrement);
+    const calculatedNextBid = base + customIncrement;
+    setNextBidValue(calculatedNextBid);
+    
+    // Debug logs para rastrear valores de incremento
+    console.log('🔍 Calculating nextBidValue:', {
+      base,
+      customIncrement,
+      calculatedNextBid,
+      currentLot: currentLot ? { id: currentLot.id, name: currentLot.name, increment: currentLot.increment } : null,
+      auctionIncrement: auction.bid_increment
+    });
   }, [auction, currentLot, bids, customIncrement]);
 
   const getUserStateInfo = () => {
@@ -155,7 +165,7 @@ const AuctionRoom = () => {
           action: anyPendingBid && !userPendingBid ? 'Aguarde lance em análise' : 'Fazer Lance',
           variant: 'default' as const,
           icon: CheckCircle,
-          onClick: anyPendingBid && !userPendingBid ? null : () => setShowBidDialog(true),
+          onClick: anyPendingBid && !userPendingBid ? null : openBidDialogComAtualizacao,
           disabled: anyPendingBid && !userPendingBid
         };
       case 'bid_pending':
@@ -199,6 +209,68 @@ const AuctionRoom = () => {
 
   const canBid = userState === 'can_bid' && !submittingBid && !isAllFinished;
 
+  // Função para abrir dialog de lance com dados atualizados
+  const openBidDialogComAtualizacao = async () => {
+    try {
+      console.log('🔄 Atualizando dados antes de abrir dialog de lance...');
+      
+      // Refetch todos os dados em paralelo
+      await Promise.all([
+        refetchAuction(),
+        refetchLots(),
+        refetchBids()
+      ]);
+      
+      // Pequeno delay para garantir que os effects sejam executados
+      setTimeout(() => {
+        console.log('📊 Dados atualizados. Incremento atual:', customIncrement);
+        setShowBidDialog(true);
+      }, 100);
+      
+    } catch (error) {
+      console.error('❌ Erro ao atualizar dados:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar dados. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Função melhorada para submission de lance
+  const handleBidSubmission = async () => {
+    console.log('💰 Tentando fazer lance com valor:', nextBidValue);
+    
+    const success = await submitBid(nextBidValue);
+    
+    if (success) {
+      setShowBidDialog(false);
+      toast({
+        title: "Lance enviado!",
+        description: "Seu lance foi enviado com sucesso.",
+        variant: "default"
+      });
+    } else {
+      // Se falhou, atualizar dados e recalcular
+      console.log('⚠️ Lance falhou, atualizando dados...');
+      try {
+        await Promise.all([
+          refetchAuction(),
+          refetchLots(),
+          refetchBids()
+        ]);
+        
+        toast({
+          title: "Erro no lance",
+          description: "Dados atualizados. Verifique o valor e tente novamente.",
+          variant: "destructive"
+        });
+      } catch (error) {
+        console.error('❌ Erro ao atualizar dados após falha:', error);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <AuctionRoomHeader />
@@ -239,7 +311,7 @@ const AuctionRoom = () => {
                 customIncrement={customIncrement}
                 onIncrementChange={updateCustomIncrement}
                 nextBidValue={nextBidValue}
-                onBidClick={() => setShowBidDialog(true)}
+                onBidClick={openBidDialogComAtualizacao}
                 canBid={canBid}
                 userState={userState}
                 stateInfo={stateInfo}
@@ -260,7 +332,7 @@ const AuctionRoom = () => {
                 submittingBid={submittingBid}
                 userPendingBid={userPendingBid}
                 userId={user?.id}
-                onBidClick={() => setShowBidDialog(true)}
+                onBidClick={openBidDialogComAtualizacao}
                 onRequestRegistration={requestRegistration}
               />
             )}
@@ -296,12 +368,7 @@ const AuctionRoom = () => {
         onOpenChange={setShowBidDialog}
         auction={auction}
         bidValue={nextBidValue}
-        onConfirm={async () => {
-          const success = await submitBid(nextBidValue);
-          if (success) {
-            setShowBidDialog(false);
-          }
-        }}
+        onConfirm={handleBidSubmission}
       />
 
       {/* Client Notifications - Fixed position */}
