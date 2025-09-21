@@ -1002,6 +1002,14 @@ export type Database = {
         Args: { p_bid_id: string }
         Returns: undefined
       }
+      set_bid_winner_and_finalize_lot: {
+        Args: { p_bid_id: string }
+        Returns: Json
+      }
+      start_next_lot: {
+        Args: { p_auction_id: string; p_lot_id: string }
+        Returns: boolean
+      }
       user_has_active_subscription: {
         Args: { user_uuid: string }
         Returns: boolean

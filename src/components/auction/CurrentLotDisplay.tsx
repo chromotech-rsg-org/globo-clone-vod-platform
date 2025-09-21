@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuctionItem, Auction, Bid, BidUserState } from '@/types/auction';
 import { formatCurrency } from '@/utils/formatters';
-import { Crown, Plus, Minus, Gavel, AlertCircle, Clock, Trophy } from 'lucide-react';
+import { Hash, Plus, Minus, X, AlertTriangle, Trophy, PlayCircle, AlertCircle, Clock, Gavel } from "lucide-react";
 
 interface CurrentLotDisplayProps {
   currentLot: AuctionItem;
@@ -63,12 +63,38 @@ const CurrentLotDisplay = ({
   return (
     <Card className="bg-black border-green-500/50 shadow-xl">
       <CardHeader className="text-center">
+        {/* Status do Lote */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Hash className="h-5 w-5 text-gray-400" />
+              <span className="text-lg font-semibold text-white">
+                Lote {((currentLot.order_index || 0) + 1).toString().padStart(3, '0')}
+              </span>
+            </div>
+            {currentLot.status === 'finished' && (
+              <Badge variant="destructive" className="bg-red-600/20 text-red-400 border-red-600/30">
+                <X className="h-3 w-3 mr-1" />
+                Finalizado
+              </Badge>
+            )}
+            {currentLot.status === 'in_progress' && (
+              <Badge className="bg-green-600/20 text-green-400 border-green-600/30">
+                <PlayCircle className="h-3 w-3 mr-1" />
+                Em Andamento
+              </Badge>
+            )}
+          </div>
+        </div>
+
         <CardTitle className="text-white flex items-center justify-center gap-2">
-          <Crown className="h-6 w-6 text-yellow-400" />
-          <span>Lote</span>
-          <Badge className="bg-green-600 text-white animate-pulse">
-            EM ANDAMENTO
-          </Badge>
+          <Trophy className="h-6 w-6 text-yellow-400" />
+          <span>{currentLot.name}</span>
+          {currentLot.status === 'in_progress' && (
+            <Badge className="bg-green-600 text-white animate-pulse">
+              EM ANDAMENTO
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -113,7 +139,7 @@ const CurrentLotDisplay = ({
               variant="outline"
               size="sm"
               onClick={handleIncrementDecrease}
-              disabled={customIncrement <= minIncrement || auction.status === 'inactive' || !auction.is_live}
+            disabled={customIncrement <= minIncrement || auction.status === 'inactive' || !auction.is_live || currentLot.status === 'finished'}
               className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30"
             >
               <Minus className="h-4 w-4" />
@@ -130,7 +156,7 @@ const CurrentLotDisplay = ({
               variant="outline"
               size="sm"
               onClick={handleIncrementIncrease}
-              disabled={customIncrement >= maxIncrement || auction.status === 'inactive' || !auction.is_live}
+            disabled={customIncrement >= maxIncrement || auction.status === 'inactive' || !auction.is_live || currentLot.status === 'finished'}
               className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30"
             >
               <Plus className="h-4 w-4" />
@@ -157,14 +183,21 @@ const CurrentLotDisplay = ({
             </AlertDescription>
           </Alert>
 
-          {/* Verificar se a transmissão está encerrada */}
-          {(auction.status === 'inactive' || !auction.is_live) && (
+          {/* Verificar se a transmissão está encerrada ou lote finalizado */}
+          {(auction.status === 'inactive' || !auction.is_live || currentLot.status === 'finished') && (
             <Alert className="bg-red-900/20 border-red-500/50">
               <AlertCircle className="h-4 w-4 text-red-400" />
               <AlertDescription className="text-red-300">
                 <div className="text-center">
-                  <p className="font-bold">Transmissão Encerrada</p>
-                  <p>Não é mais possível fazer lances ou solicitar habilitação.</p>
+                  <p className="font-bold">
+                    {currentLot.status === 'finished' ? 'Lote Finalizado' : 'Transmissão Encerrada'}
+                  </p>
+                  <p>
+                    {currentLot.status === 'finished' 
+                      ? 'Este lote já foi finalizado e não aceita mais lances.'
+                      : 'Não é mais possível fazer lances ou solicitar habilitação.'
+                    }
+                  </p>
                 </div>
               </AlertDescription>
             </Alert>
@@ -224,7 +257,7 @@ const CurrentLotDisplay = ({
         {/* Botão Principal - Lance ou Habilitação */}
         <Button
           onClick={canBid ? onBidClick : (stateInfo.onClick || onRequestRegistration)}
-          disabled={stateInfo.disabled || submittingBid || auction.status === 'inactive' || !auction.is_live}
+          disabled={stateInfo.disabled || submittingBid || auction.status === 'inactive' || !auction.is_live || currentLot.status === 'finished'}
           className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50"
           variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
         >

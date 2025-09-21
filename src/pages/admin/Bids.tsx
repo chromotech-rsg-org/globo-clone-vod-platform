@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
 import BidDetailsModal from '@/components/admin/BidDetailsModal';
+import { LotProgressionModal } from '@/components/admin/LotProgressionModal';
 
 interface Bid {
   id: string;
@@ -63,6 +64,16 @@ const AdminBids = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [progressionModal, setProgressionModal] = useState<{
+    open: boolean;
+    winningBid?: any;
+    currentLot?: any;
+    nextLot?: any;
+    hasNextLot: boolean;
+  }>({
+    open: false,
+    hasNextLot: false
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -220,73 +231,100 @@ const AdminBids = () => {
   };
 
   const handleSetWinner = async (bidId: string) => {
-    if (!confirm('Tem certeza que deseja marcar este lance como vencedor?')) return;
+    if (!confirm('Tem certeza que deseja marcar este lance como vencedor e finalizar o lote?')) return;
     
     try {
-      const { error } = await supabase.rpc('set_bid_winner', { 
-        p_bid_id: bidId 
+      // Call the edge function to set winner and finalize lot
+      const { data, error } = await supabase.functions.invoke('manage-lot-progression', {
+        body: {
+          action: 'set_winner_and_finalize',
+          bidId: bidId
+        }
       });
-      
+
       if (error) throw error;
+
+      const result = data;
+      
+      // Find the winning bid to get details
+      const winningBid = bids.find(b => b.id === bidId);
       
       toast({
         title: "Sucesso",
-        description: "Lance marcado como vencedor"
+        description: "Lance marcado como vencedor e lote finalizado!"
       });
-
-      // Ask if user wants to start next lot
-      const shouldStartNext = confirm('Deseja iniciar o próximo lote automaticamente?');
-      if (shouldStartNext) {
-        // Find current bid to get auction_item_id
-        const currentBid = bids.find(bid => bid.id === bidId);
-        if (currentBid) {
-          // Get auction items to find next lot
-          const { data: items } = await supabase
-            .from('auction_items')
-            .select('*')
-            .eq('auction_id', currentBid.auction_id)
-            .order('order_index');
-
-          if (items && items.length > 0) {
-            const currentItemIndex = items.findIndex(item => item.id === currentBid.auction_item_id);
-            const nextItem = items[currentItemIndex + 1];
-            
-            if (nextItem) {
-              // Update current item to finished
-              await supabase
-                .from('auction_items')
-                .update({ status: 'finished', is_current: false })
-                .eq('id', currentBid.auction_item_id);
-              
-              // Update next item to in_progress
-              await supabase
-                .from('auction_items')
-                .update({ status: 'in_progress', is_current: true })
-                .eq('id', nextItem.id);
-                
-              toast({
-                title: "Sucesso",
-                description: `Próximo lote "${nextItem.name}" foi iniciado`
-              });
-            } else {
-              toast({
-                title: "Informação",
-                description: "Não há mais lotes para iniciar"
-              });
-            }
-          }
-        }
+      
+      // Show progression modal if there's a next lot
+      if (result.next_lot_available) {
+        setProgressionModal({
+          open: true,
+          winningBid,
+          currentLot: { name: winningBid?.lot_name || 'Lote atual' },
+          nextLot: {
+            id: result.next_lot_id,
+            name: result.next_lot_name
+          },
+          hasNextLot: true
+        });
+      } else {
+        // All lots finished
+        setProgressionModal({
+          open: true,
+          winningBid,
+          currentLot: { name: winningBid?.lot_name || 'Lote atual' },
+          hasNextLot: false
+        });
       }
       
       fetchBids();
     } catch (error) {
-      console.error('Erro ao marcar como vencedor:', error);
+      console.error('Error setting winner:', error);
       toast({
         title: "Erro",
         description: "Não foi possível marcar o lance como vencedor",
         variant: "destructive"
       });
     }
+  };
+
+  const handleStartNextLot = async () => {
+    try {
+      const { nextLot } = progressionModal;
+      if (!nextLot?.id) return;
+
+      const { error } = await supabase.functions.invoke('manage-lot-progression', {
+        body: {
+          action: 'start_next_lot',
+          auctionId: bids[0]?.auction_id, // Get auction ID from current bids
+          lotId: nextLot.id
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Lote "${nextLot.name}" iniciado com sucesso!`
+      });
+      
+      setProgressionModal({ ...progressionModal, open: false });
+      fetchBids();
+    } catch (error) {
+      console.error('Error starting next lot:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao iniciar próximo lote.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSkipNextLot = () => {
+    setProgressionModal({ ...progressionModal, open: false });
+    toast({
+      title: "Informação",
+      description: "Próximo lote não foi iniciado."
+    });
   };
 
   const handlePageChange = (page: number) => {
@@ -515,6 +553,17 @@ const AdminBids = () => {
         bid={selectedBid}
         onApprove={handleApprove}
         onReject={handleReject}
+      />
+
+      <LotProgressionModal
+        open={progressionModal.open}
+        onOpenChange={(open) => setProgressionModal({ ...progressionModal, open })}
+        winningBid={progressionModal.winningBid}
+        currentLot={progressionModal.currentLot}
+        nextLot={progressionModal.nextLot}
+        hasNextLot={progressionModal.hasNextLot}
+        onStartNextLot={handleStartNextLot}
+        onSkipNextLot={handleSkipNextLot}
       />
     </>
   );
