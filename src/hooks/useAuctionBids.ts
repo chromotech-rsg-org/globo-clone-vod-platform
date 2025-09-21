@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -282,6 +281,15 @@ export const useAuctionBids = (auctionId: string) => {
 
     } catch (error: any) {
       console.error('Error submitting bid:', error);
+      
+      // Handle unique constraint violation (duplicate bid value)
+      if (error?.code === '23505' || error?.message?.includes('unique_auction_item_bid_value')) {
+        return { 
+          success: false, 
+          message: "Um lance com esse valor já foi recebido. Atualize seu lance e tente novamente." 
+        };
+      }
+      
       const requiredMin = parseRequiredMinFromError(error?.message);
       let description = "Não foi possível enviar o lance";
       if (error?.message?.includes('duplicate')) {
@@ -290,7 +298,8 @@ export const useAuctionBids = (auctionId: string) => {
         description = `Erro: ${error.message}`;
       }
 
-      if (!requiredMin) {
+      // Only show toast for non-duplicate bid value errors
+      if (!requiredMin && error?.code !== '23505') {
         toast({
           title: "Erro",
           description,

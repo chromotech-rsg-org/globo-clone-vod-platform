@@ -325,6 +325,18 @@ const recalculateNextBidValue = () => {
       }
 
       // Falha ao enviar o lance
+      const resultMessage = (result as any)?.message;
+      
+      // Handle duplicate bid value error specifically
+      if (resultMessage?.includes("Um lance com esse valor já foi recebido")) {
+        toast({
+          title: "Lance duplicado",
+          description: resultMessage,
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const requiredMin = (result as any)?.requiredMin as number | undefined;
       if (requiredMin && requiredMin > 0) {
         // Ajusta o valor e o incremento para refletir a regra do servidor
