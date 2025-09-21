@@ -212,8 +212,20 @@ export const useAuctionBids = (auctionId: string) => {
         .eq('id', auctionId)
         .single();
 
-      const incrementToUse = (auctionItem.increment ?? auctionRow?.bid_increment ?? 0);
-      const minAllowed = Number(auctionItem.current_value) + Number(incrementToUse);
+      // Obter o maior lance aprovado para este lote
+      const { data: highestBidData } = await supabase
+        .from('bids')
+        .select('bid_value')
+        .eq('auction_item_id', auctionItem.id)
+        .eq('status', 'approved')
+        .order('bid_value', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const highestApprovedBid = highestBidData?.bid_value || 0;
+      const currentValue = Math.max(Number(auctionItem.current_value), Number(highestApprovedBid));
+      const incrementToUse = Number(auctionItem.increment ?? auctionRow?.bid_increment ?? 100);
+      const minAllowed = currentValue + incrementToUse;
 
       if (bidValue < minAllowed) {
         toast({
