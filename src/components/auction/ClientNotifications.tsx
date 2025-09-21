@@ -31,6 +31,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
   const [notifications, setNotifications] = useState<ClientNotification[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [acknowledgedRegistrations, setAcknowledgedRegistrations] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const fetchNotifications = async () => {
@@ -218,6 +219,10 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
     }
   };
 
+  const acknowledgeRegistration = (notificationId: string) => {
+    setAcknowledgedRegistrations(prev => new Set([...prev, notificationId]));
+  };
+
   // Show modal when there are new notifications
   useEffect(() => {
     if (unreadCount > 0 && notifications.length > 0) {
@@ -344,7 +349,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
                       </div>
                     )}
                   </CardHeader>
-                  <CardContent className="pt-0">
+                   <CardContent className="pt-0">
                     <div className="space-y-2">
                       <div className={`text-sm font-medium ${notification.read ? 'text-gray-500' : 'text-green-400'}`}>
                         {notification.auction_name}
@@ -364,8 +369,21 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
                           </div>
                         </div>
                       )}
+                      {notification.type === 'registration' && 
+                       notification.status === 'approved' && 
+                       !notification.read && 
+                       !acknowledgedRegistrations.has(notification.id) && (
+                        <div className="flex justify-center pt-2">
+                          <Button
+                            onClick={() => acknowledgeRegistration(notification.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            OK - Entendi
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  </CardContent>
+                   </CardContent>
                 </Card>
               ))
             )}
@@ -373,7 +391,25 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
 
           <div className="flex justify-end pt-4 border-t border-green-600/30">
             <Button 
-              onClick={() => setShowModal(false)}
+              onClick={() => {
+                const hasUnacknowledgedRegistrations = notifications.some(n => 
+                  n.type === 'registration' && 
+                  n.status === 'approved' && 
+                  !n.read && 
+                  !acknowledgedRegistrations.has(n.id)
+                );
+                
+                if (hasUnacknowledgedRegistrations) {
+                  toast({
+                    title: "Confirmação necessária",
+                    description: "Por favor, confirme as mensagens de habilitação clicando em 'OK - Entendi'",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                
+                setShowModal(false);
+              }}
               className="bg-green-600 hover:bg-green-700 text-white border-green-600"
             >
               Fechar
