@@ -106,22 +106,22 @@ const CurrentLotDisplay = ({
         </div>
 
         {/* Controles de Incremento */}
-        <div className="bg-gray-800/30 rounded-lg p-4">
-          <p className="text-sm text-gray-400 mb-3 text-center">Incremento de Lance</p>
+        <div className={`rounded-lg p-4 ${auction.status === 'inactive' || !auction.is_live ? 'bg-gray-900/50' : 'bg-gray-800/30'}`}>
+          <p className={`text-sm mb-3 text-center ${auction.status === 'inactive' || !auction.is_live ? 'text-gray-500' : 'text-gray-400'}`}>Incremento de Lance</p>
           <div className="flex items-center justify-center gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={handleIncrementDecrease}
-              disabled={customIncrement <= minIncrement}
-              className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500"
+              disabled={customIncrement <= minIncrement || auction.status === 'inactive' || !auction.is_live}
+              className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30"
             >
               <Minus className="h-4 w-4" />
             </Button>
             
-            <div className="bg-gray-900 rounded-lg px-4 py-2 min-w-[120px] text-center">
-              <p className="text-sm text-gray-400">Incremento</p>
-              <p className="text-lg font-bold text-white">
+            <div className={`rounded-lg px-4 py-2 min-w-[120px] text-center ${auction.status === 'inactive' || !auction.is_live ? 'bg-gray-900/80' : 'bg-gray-900'}`}>
+              <p className={`text-sm ${auction.status === 'inactive' || !auction.is_live ? 'text-gray-500' : 'text-gray-400'}`}>Incremento</p>
+              <p className={`text-lg font-bold ${auction.status === 'inactive' || !auction.is_live ? 'text-gray-500' : 'text-white'}`}>
                 {formatCurrency(customIncrement)}
               </p>
             </div>
@@ -130,8 +130,8 @@ const CurrentLotDisplay = ({
               variant="outline"
               size="sm"
               onClick={handleIncrementIncrease}
-              disabled={customIncrement >= maxIncrement}
-              className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500"
+              disabled={customIncrement >= maxIncrement || auction.status === 'inactive' || !auction.is_live}
+              className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30"
             >
               <Plus className="h-4 w-4" />
             </Button>
