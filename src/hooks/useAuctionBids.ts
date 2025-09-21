@@ -111,26 +111,43 @@ export const useAuctionBids = (auctionId: string) => {
     }
   }, [auctionId, user, toast]);
 
-  const submitBid = async (bidValue: number) => {
+  const submitBid = async (bidValue: number): Promise<{ success: boolean; requiredMin?: number; message?: string }> => {
     if (!user || !auctionId) {
+      const message = "Usuário não autenticado";
       toast({
         title: "Erro", 
-        description: "Usuário não autenticado",
+        description: message,
         variant: "destructive"
       });
-      return false;
+      return { success: false, message };
     }
 
     if (pendingBidExists) {
+      const message = "Aguarde a análise do seu lance atual";
       toast({
         title: "Lance em análise",
-        description: "Aguarde a análise do seu lance atual",
+        description: message,
         variant: "destructive"
       });
-      return false;
+      return { success: false, message };
     }
 
     setSubmittingBid(true);
+
+    // Helper para extrair valor mínimo exigido vindo do erro do servidor
+    const parseRequiredMinFromError = (msg?: string): number | undefined => {
+      if (!msg) return undefined;
+      // Procura por um valor monetário após "pelo menos"
+      // Ex.: "O valor do lance deve ser pelo menos R$ 520,000.00 (valor atual + incremento)"
+      const match = msg.match(/pelo menos\s*R\$\s*([\d.,]+)/i) || msg.match(/at least\s*R\$\s*([\d.,]+)/i);
+      const raw = match?.[1];
+      if (!raw) return undefined;
+      // Remove tudo que não é dígito e assume 2 casas decimais
+      const digits = raw.replace(/[^\d]/g, "");
+      if (!digits) return undefined;
+      const value = Number(digits) / 100; // funciona tanto para 520,000.00 quanto 520.000,00
+      return isNaN(value) ? undefined : value;
+    };
 
     try {
       // Verificar se o usuário tem lance pendente antes de enviar
@@ -142,12 +159,13 @@ export const useAuctionBids = (auctionId: string) => {
         .eq('status', 'pending');
 
       if (existingBids && existingBids.length > 0) {
+        const message = "Você já possui um lance aguardando análise";
         toast({
           title: "Lance em análise",
-          description: "Você já possui um lance aguardando análise",
+          description: message,
           variant: "destructive"
         });
-        return false;
+        return { success: false, message };
       }
 
       // Buscar item atual do leilão (preferindo is_current ou status in_progress)
@@ -228,12 +246,13 @@ export const useAuctionBids = (auctionId: string) => {
       const minAllowed = currentValue + incrementToUse;
 
       if (bidValue < minAllowed) {
+        const message = `O lance mínimo atual é R$ ${minAllowed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`;
         toast({
           title: "Valor de lance insuficiente",
-          description: `O lance mínimo atual é R$ ${minAllowed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
+          description: message,
           variant: "destructive"
         });
-        return false;
+        return { success: false, message };
       }
 
       const { data, error } = await supabase
@@ -259,24 +278,27 @@ export const useAuctionBids = (auctionId: string) => {
       });
 
       await fetchBids();
-      return true;
+      return { success: true };
 
     } catch (error: any) {
       console.error('Error submitting bid:', error);
-      
-      let errorMessage = "Não foi possível enviar o lance";
+      const requiredMin = parseRequiredMinFromError(error?.message);
+      let description = "Não foi possível enviar o lance";
       if (error?.message?.includes('duplicate')) {
-        errorMessage = "Você já possui um lance para este leilão";
+        description = "Você já possui um lance para este leilão";
       } else if (error?.message) {
-        errorMessage = `Erro: ${error.message}`;
+        description = `Erro: ${error.message}`;
       }
-      
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      return false;
+
+      if (!requiredMin) {
+        toast({
+          title: "Erro",
+          description,
+          variant: "destructive"
+        });
+      }
+
+      return { success: false, requiredMin, message: description };
     } finally {
       setSubmittingBid(false);
     }

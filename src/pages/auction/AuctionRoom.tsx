@@ -285,48 +285,67 @@ const recalculateNextBidValue = () => {
   // Função melhorada para submission de lance
   const handleBidSubmission = async () => {
     console.log('💰 Tentando fazer lance com valor:', nextBidValue);
-    
-    const success = await submitBid(nextBidValue);
-    
-    if (success) {
+
+    const result = await submitBid(nextBidValue as any);
+
+    if (result && (result as any).success) {
       setShowBidDialog(false);
       toast({
         title: "Lance enviado!",
         description: "Seu lance foi enviado com sucesso.",
         variant: "default"
       });
-    } else {
-      // Se falhou, atualizar dados e recalcular valor correto
-      console.log('⚠️ Lance falhou, atualizando dados e recalculando...');
-      try {
-        await Promise.all([
-          refetchAuction(),
-          refetchLots(),
-          refetchBids()
-        ]);
-        
-        // Aguardar atualização dos states e recalcular
-        setTimeout(() => {
-          const newCorrectValue = recalculateNextBidValue();
-          setNextBidValue(newCorrectValue);
-          
-          console.log('🔄 Novo valor calculado após falha:', newCorrectValue);
-          
-toast({
-  title: "Lance rejeitado",
-  description: `Valor atualizado para ${formatCurrency(newCorrectValue)}. Tente novamente.`,
-  variant: "destructive"
-});
-        }, 200);
-        
-      } catch (error) {
-        console.error('❌ Erro ao atualizar dados após falha:', error);
+      return;
+    }
+
+    // Falha ao enviar o lance
+    const requiredMin = (result as any)?.requiredMin as number | undefined;
+    if (requiredMin && requiredMin > 0) {
+      // Ajusta o valor e o incremento para refletir a regra do servidor
+      setNextBidValue(requiredMin);
+      const newIncrement = Math.max(1, Math.round(requiredMin - currentBaseValue));
+      updateCustomIncrement(newIncrement);
+
+      console.log('⚠️ Servidor exige lance mínimo:', { requiredMin, currentBaseValue, newIncrement });
+
+      toast({
+        title: "Lance rejeitado",
+        description: `Valor ajustado para ${formatCurrency(requiredMin)} conforme regra do leilão. Confirme novamente.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Se não conseguimos extrair o mínimo exigido, faz o fallback de atualizar dados e recalcular
+    console.log('⚠️ Lance falhou, atualizando dados e recalculando...');
+    try {
+      await Promise.all([
+        refetchAuction(),
+        refetchLots(),
+        refetchBids()
+      ]);
+
+      // Aguardar atualização dos states e recalcular
+      setTimeout(() => {
+        const newCorrectValue = recalculateNextBidValue();
+        setNextBidValue(newCorrectValue);
+
+        console.log('🔄 Novo valor calculado após falha:', newCorrectValue);
+
         toast({
-          title: "Erro",
-          description: "Erro ao atualizar dados. Recarregue a página.",
+          title: "Lance rejeitado",
+          description: `Valor atualizado para ${formatCurrency(newCorrectValue)}. Tente novamente.`,
           variant: "destructive"
         });
-      }
+      }, 200);
+
+    } catch (error) {
+      console.error('❌ Erro ao atualizar dados após falha:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar dados. Recarregue a página.",
+        variant: "destructive"
+      });
     }
   };
 
