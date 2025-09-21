@@ -284,41 +284,68 @@ const recalculateNextBidValue = () => {
 
   // Função melhorada para submission de lance
   const handleBidSubmission = async () => {
-    console.log('💰 Tentando fazer lance com valor:', nextBidValue);
-
-    const result = await submitBid(nextBidValue as any);
-
-    if (result && (result as any).success) {
-      setShowBidDialog(false);
-      toast({
-        title: "Lance enviado!",
-        description: "Seu lance foi enviado com sucesso.",
-        variant: "default"
-      });
-      return;
-    }
-
-    // Falha ao enviar o lance
-    const requiredMin = (result as any)?.requiredMin as number | undefined;
-    if (requiredMin && requiredMin > 0) {
-      // Ajusta o valor e o incremento para refletir a regra do servidor
-      setNextBidValue(requiredMin);
-      const newIncrement = Math.max(1, Math.round(requiredMin - currentBaseValue));
-      updateCustomIncrement(newIncrement);
-
-      console.log('⚠️ Servidor exige lance mínimo:', { requiredMin, currentBaseValue, newIncrement });
-
-      toast({
-        title: "Lance rejeitado",
-        description: `Valor ajustado para ${formatCurrency(requiredMin)} conforme regra do leilão. Confirme novamente.`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Se não conseguimos extrair o mínimo exigido, faz o fallback de atualizar dados e recalcular
-    console.log('⚠️ Lance falhou, atualizando dados e recalculando...');
     try {
+      // Pré-checagem: atualizar dados e validar o mínimo exigido antes de enviar
+      await Promise.all([
+        refetchAuction(),
+        refetchLots(),
+        refetchBids()
+      ]);
+
+      const freshNextMin = recalculateNextBidValue();
+      if (!freshNextMin) return;
+
+      // Se o valor atual estiver abaixo do mínimo recalculado, ajusta e pede nova confirmação
+      if (nextBidValue < freshNextMin) {
+        setNextBidValue(freshNextMin);
+        const newInc = Math.max(1, Math.round(freshNextMin - currentBaseValue));
+        updateCustomIncrement(newInc);
+        // Garante que o diálogo exiba a base correta
+        setCurrentBaseValue(freshNextMin - newInc);
+
+        toast({
+          title: "Valor atualizado",
+          description: `Valor ajustado para ${formatCurrency(freshNextMin)} conforme regra do leilão. Confirme novamente.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('💰 Tentando fazer lance com valor:', nextBidValue);
+      const result = await submitBid(nextBidValue as any);
+
+      if (result && (result as any).success) {
+        setShowBidDialog(false);
+        toast({
+          title: "Lance enviado!",
+          description: "Seu lance foi enviado com sucesso.",
+          variant: "default"
+        });
+        return;
+      }
+
+      // Falha ao enviar o lance
+      const requiredMin = (result as any)?.requiredMin as number | undefined;
+      if (requiredMin && requiredMin > 0) {
+        // Ajusta o valor e o incremento para refletir a regra do servidor
+        setNextBidValue(requiredMin);
+        const newIncrement = Math.max(1, Math.round(requiredMin - currentBaseValue));
+        updateCustomIncrement(newIncrement);
+        // Mantém a base exibida coerente com o valor ajustado
+        setCurrentBaseValue(requiredMin - newIncrement);
+
+        console.log('⚠️ Servidor exige lance mínimo:', { requiredMin, currentBaseValue, newIncrement });
+
+        toast({
+          title: "Lance rejeitado",
+          description: `Valor ajustado para ${formatCurrency(requiredMin)} conforme regra do leilão. Confirme novamente.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Se não conseguimos extrair o mínimo exigido, faz o fallback de atualizar dados e recalcular
+      console.log('⚠️ Lance falhou, atualizando dados e recalculando...');
       await Promise.all([
         refetchAuction(),
         refetchLots(),
@@ -338,12 +365,11 @@ const recalculateNextBidValue = () => {
           variant: "destructive"
         });
       }, 200);
-
     } catch (error) {
-      console.error('❌ Erro ao atualizar dados após falha:', error);
+      console.error('❌ Erro ao enviar o lance:', error);
       toast({
         title: "Erro",
-        description: "Erro ao atualizar dados. Recarregue a página.",
+        description: "Erro ao enviar o lance. Recarregue a página.",
         variant: "destructive"
       });
     }
