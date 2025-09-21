@@ -331,7 +331,8 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
                         <div className="text-xs text-gray-400">
                           {formatDateTime(notification.updated_at)}
                         </div>
-                        {!notification.read && (
+                        {!notification.read && 
+                         !(notification.type === 'registration' && notification.status === 'approved') && (
                           <Button
                             size="sm"
                             onClick={() => markAsRead(notification.id, notification.type)}
