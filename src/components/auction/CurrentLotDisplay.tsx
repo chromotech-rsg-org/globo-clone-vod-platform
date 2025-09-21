@@ -61,11 +61,11 @@ const CurrentLotDisplay = ({
   };
 
   return (
-    <Card className="bg-gradient-to-br from-green-900/20 to-green-800/10 border-green-500/50 shadow-xl">
+    <Card className="bg-black border-green-500/50 shadow-xl">
       <CardHeader className="text-center">
         <CardTitle className="text-white flex items-center justify-center gap-2">
           <Crown className="h-6 w-6 text-yellow-400" />
-          <span>Lote em Destaque</span>
+          <span>Lote</span>
           <Badge className="bg-green-600 text-white animate-pulse">
             EM ANDAMENTO
           </Badge>
