@@ -130,7 +130,7 @@ const AuthRequiredModal = ({
       
       <div className="space-y-3">
         <Button 
-          onClick={() => setMode('login')}
+          onClick={() => window.location.href = '/login'}
           className="w-full bg-primary hover:bg-primary/90"
           size="lg"
         >
