@@ -24,15 +24,43 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header found');
+      return new Response(JSON.stringify({ error: 'Authorization required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     );
+
+    // Verify user role before proceeding
+    const { data: roleData, error: roleError } = await supabaseClient.rpc('get_current_user_role');
+    if (roleError) {
+      console.error('Error getting user role:', roleError);
+      return new Response(JSON.stringify({ error: 'Failed to verify user permissions' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('User role:', roleData);
+    if (!['admin', 'desenvolvedor'].includes(roleData)) {
+      console.error('User does not have admin privileges:', roleData);
+      return new Response(JSON.stringify({ error: 'Admin privileges required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const { action, ...payload } = await req.json();
 
