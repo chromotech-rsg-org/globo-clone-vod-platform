@@ -81,7 +81,7 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
           {/* Informações de Data e Estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Data de Início */}
-            <div className="flex items-center gap-3 p-3 bg-black rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
               <Calendar className="h-5 w-5 text-green-400" />
               <div>
                 <p className="text-sm text-gray-400">Início</p>
@@ -101,7 +101,7 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
             </div>
 
             {/* Data de Fim */}
-            <div className="flex items-center gap-3 p-3 bg-black rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
               <Clock className="h-5 w-5 text-red-400" />
               <div>
                 <p className="text-sm text-gray-400">Encerramento</p>
@@ -121,7 +121,7 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
             </div>
 
             {/* Estatísticas de Lotes */}
-            <div className="flex items-center gap-3 p-3 bg-black rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
               <Package className="h-5 w-5 text-blue-400" />
               <div>
                 <p className="text-sm text-gray-400">Lotes</p>
