@@ -301,7 +301,6 @@ const recalculateNextBidValue = () => {
       const freshNextMin = recalculateNextBidValue();
       if (!freshNextMin) return;
 
-      // Se o valor atual estiver abaixo do mínimo recalculado, ajusta e pede nova confirmação
       if (nextBidValue < freshNextMin) {
         setNextBidValue(freshNextMin);
         const newInc = Math.max(1, Math.round(freshNextMin - currentBaseValue));
@@ -309,11 +308,11 @@ const recalculateNextBidValue = () => {
         // Garante que o diálogo exiba a base correta
         setCurrentBaseValue(freshNextMin - newInc);
 
-        toast({
-          title: "Valor atualizado",
-          description: `Valor ajustado para ${formatCurrency(freshNextMin)} conforme regra do leilão. Confirme novamente.`,
-          variant: "destructive"
-        });
+        // Fechar modal atual e mostrar modal de superação
+        setShowBidDialog(false);
+        setOriginalBidValue(nextBidValue);
+        setNextBidValue(freshNextMin);
+        setShowOutbidModal(true);
         return;
       }
 
@@ -352,20 +351,19 @@ const recalculateNextBidValue = () => {
       
       const requiredMin = (result as any)?.requiredMin as number | undefined;
       if (requiredMin && requiredMin > 0) {
-        // Se o valor exigido é maior que o valor tentado, significa que foi superado
-        if (requiredMin > nextBidValue) {
-          // Fechar modal de confirmação atual
-          setShowBidDialog(false);
-          
-          // Salvar valores para o modal de lance superado
-          setOriginalBidValue(nextBidValue);
-          setNextBidValue(requiredMin);
-          
-          // Mostrar modal de lance superado
-          setShowOutbidModal(true);
-          return;
-        }
+      // Se o valor exigido é maior que o valor tentado, significa que foi superado
+      if (requiredMin > nextBidValue) {
+        // Fechar modal de confirmação atual
+        setShowBidDialog(false);
         
+        // Salvar valores para o modal de lance superado
+        setOriginalBidValue(nextBidValue);
+        setNextBidValue(requiredMin);
+        
+        // Mostrar modal de lance superado
+        setShowOutbidModal(true);
+        return;
+      }
         // Caso contrário, apenas ajusta o valor normalmente
         setNextBidValue(requiredMin);
         const newIncrement = Math.max(1, Math.round(requiredMin - currentBaseValue));
@@ -374,11 +372,11 @@ const recalculateNextBidValue = () => {
 
         console.log('⚠️ Servidor exige lance mínimo:', { requiredMin, currentBaseValue, newIncrement });
 
-        toast({
-          title: "Lance rejeitado",
-          description: `Valor ajustado para ${formatCurrency(requiredMin)} conforme regra do leilão. Confirme novamente.`,
-          variant: "destructive"
-        });
+        // Não mostrar toast, apenas fechar modal atual e mostrar modal de superação
+        setShowBidDialog(false);
+        setOriginalBidValue(nextBidValue);
+        setNextBidValue(requiredMin);
+        setShowOutbidModal(true);
         return;
       }
 
@@ -393,15 +391,14 @@ const recalculateNextBidValue = () => {
       // Aguardar atualização dos states e recalcular
       setTimeout(() => {
         const newCorrectValue = recalculateNextBidValue();
+        
+        // Fechar modal atual e mostrar modal de superação com novo valor
+        setShowBidDialog(false);
+        setOriginalBidValue(nextBidValue);
         setNextBidValue(newCorrectValue);
+        setShowOutbidModal(true);
 
         console.log('🔄 Novo valor calculado após falha:', newCorrectValue);
-
-        toast({
-          title: "Lance rejeitado",
-          description: `Valor atualizado para ${formatCurrency(newCorrectValue)}. Tente novamente.`,
-          variant: "destructive"
-        });
       }, 200);
     } catch (error) {
       console.error('❌ Erro ao enviar o lance:', error);
