@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { Clock, CheckCircle, XCircle, Trophy, Filter, Package } from 'lucide-react';
 import { Bid, AuctionItem } from '@/types/auction';
 
@@ -198,7 +198,7 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
                           }
                         </p>
                         <p className="text-xs text-gray-400">
-                          {formatDate(bid.created_at)}
+                          {formatDateTime(bid.created_at)}
                         </p>
                       </div>
                       <div className="text-right">
