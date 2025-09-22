@@ -66,8 +66,8 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
 
   if (lots.length === 0) {
     return (
-      <Card className="bg-gray-900 border-green-600/30">
-        <CardContent className="text-center py-8">
+      <Card className="bg-black border-green-600/30">
+        <CardContent className="text-center py-8 bg-black">
           <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-400">Nenhum lote cadastrado para este leilão.</p>
         </CardContent>
@@ -76,14 +76,14 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
   }
 
   return (
-    <Card className="bg-gray-900 border-green-600/30">
+    <Card className="bg-black border-green-600/30">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Package className="h-5 w-5 text-green-400" />
           Todos os Lotes ({lots.length})
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="bg-black">
         <div className="space-y-4">
           {sortedLots.map((lot, index) => {
             const statusInfo = getStatusInfo(lot);
@@ -100,7 +100,7 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
                     ? 'border-green-500/50 bg-green-900/20 shadow-green-500/20' 
                     : lot.status === 'finished' && isCurrentUserWinner
                     ? 'border-yellow-500/50 bg-yellow-900/20'
-                    : 'border-gray-600/30 bg-gray-800/50 hover:border-gray-500/50'
+                    : 'border-gray-600/30 bg-black hover:border-gray-500/50'
                   }
                 `}
               >
@@ -108,9 +108,9 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
                   {/* Header do Lote */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-sm font-medium">
-                        Lote {lotNumber}
-                      </span>
+                       <span className="bg-black text-gray-300 px-2 py-1 rounded text-sm font-medium">
+                         Lote {lotNumber}
+                       </span>
                       <Badge className={`${statusInfo.className} flex items-center gap-1`}>
                         {statusInfo.icon}
                         {statusInfo.label}
@@ -137,9 +137,9 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
                           <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/20 to-transparent" />
                         </div>
                       ) : (
-                        <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-700/50 rounded-lg border-2 border-gray-600/50 flex items-center justify-center">
-                          <Package className="h-12 w-12 text-gray-400" />
-                        </div>
+                         <div className="w-32 h-32 md:w-40 md:h-40 bg-black/50 rounded-lg border-2 border-gray-600/50 flex items-center justify-center">
+                           <Package className="h-12 w-12 text-gray-400" />
+                         </div>
                       )}
                     </div>
 
@@ -154,32 +154,32 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
 
                       {/* Valores */}
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        <div className="bg-gray-700/30 rounded p-2">
-                          <p className="text-xs text-gray-400 mb-1">Valor Inicial</p>
-                          <p className="text-sm font-bold text-white">
-                            {formatCurrency(lot.initial_value)}
-                          </p>
-                        </div>
-                        
-                        <div className="bg-gray-700/30 rounded p-2">
-                          <p className="text-xs text-gray-400 mb-1">
-                            {winner ? 'Valor Final' : 'Valor Atual'}
-                          </p>
-                          <p className={`text-sm font-bold ${
-                            winner ? 'text-yellow-400' : 'text-green-400'
-                          }`}>
-                            {formatCurrency(winner?.bid_value || lot.current_value)}
-                          </p>
-                        </div>
+                         <div className="bg-black rounded p-2">
+                           <p className="text-xs text-gray-400 mb-1">Valor Inicial</p>
+                           <p className="text-sm font-bold text-white">
+                             {formatCurrency(lot.initial_value)}
+                           </p>
+                         </div>
+                         
+                         <div className="bg-black rounded p-2">
+                           <p className="text-xs text-gray-400 mb-1">
+                             {winner ? 'Valor Final' : 'Valor Atual'}
+                           </p>
+                           <p className={`text-sm font-bold ${
+                             winner ? 'text-yellow-400' : 'text-green-400'
+                           }`}>
+                             {formatCurrency(winner?.bid_value || lot.current_value)}
+                           </p>
+                         </div>
 
-                        {lot.increment && (
-                          <div className="bg-gray-700/30 rounded p-2">
-                            <p className="text-xs text-gray-400 mb-1">Incremento</p>
-                            <p className="text-sm font-bold text-blue-400">
-                              {formatCurrency(lot.increment)}
-                            </p>
-                          </div>
-                        )}
+                         {lot.increment && (
+                           <div className="bg-black rounded p-2">
+                             <p className="text-xs text-gray-400 mb-1">Incremento</p>
+                             <p className="text-sm font-bold text-blue-400">
+                               {formatCurrency(lot.increment)}
+                             </p>
+                           </div>
+                         )}
                       </div>
 
                       {/* Informações do Vencedor */}
