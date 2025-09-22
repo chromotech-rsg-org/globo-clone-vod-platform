@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Play, Square } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Play, Square, ChevronDown, ChevronUp } from 'lucide-react';
 import { Auction } from '@/types/auction';
 
 interface AuctionVideoPlayerProps {
@@ -10,6 +11,8 @@ interface AuctionVideoPlayerProps {
 }
 
 const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  
   const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return '';
     
@@ -47,9 +50,38 @@ const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
                 {auction.name}
               </h1>
               {auction.description && (
-                <p className="text-gray-300">
-                  {auction.description}
-                </p>
+                <div className="space-y-2">
+                  <p 
+                    className={`text-gray-300 leading-relaxed cursor-pointer transition-all duration-200 ${
+                      !isDescriptionExpanded 
+                        ? 'line-clamp-1 hover:text-white' 
+                        : ''
+                    }`}
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  >
+                    {auction.description}
+                  </p>
+                  {auction.description.length > 80 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                      className="p-0 h-auto text-gray-400 hover:text-white text-sm"
+                    >
+                      {isDescriptionExpanded ? (
+                        <>
+                          <ChevronUp className="h-4 w-4 mr-1" />
+                          Mostrar menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4 mr-1" />
+                          Mostrar mais
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
             <div className="flex flex-col gap-2">
