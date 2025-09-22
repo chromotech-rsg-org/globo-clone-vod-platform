@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuctionItem, Auction, Bid, BidUserState } from '@/types/auction';
 import { formatCurrency } from '@/utils/formatters';
-import { Hash, Plus, Minus, X, AlertTriangle, Trophy, PlayCircle, AlertCircle, Clock, Gavel } from "lucide-react";
+import { Hash, Plus, Minus, X, AlertTriangle, Trophy, PlayCircle, AlertCircle, Clock, Gavel, ChevronDown, ChevronUp } from "lucide-react";
 
 interface CurrentLotDisplayProps {
   currentLot: AuctionItem;
@@ -40,6 +40,8 @@ const CurrentLotDisplay = ({
   userId,
   onRequestRegistration
 }: CurrentLotDisplayProps) => {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  
   const baseIncrement = Number(currentLot.increment ?? auction.bid_increment);
   const currentBidValue = Math.max(
     currentLot.current_value,
@@ -110,7 +112,38 @@ const CurrentLotDisplay = ({
           )}
           <h3 className="text-2xl font-bold text-white mb-2">{currentLot.name}</h3>
           {currentLot.description && (
-            <p className="text-gray-300 leading-relaxed">{currentLot.description}</p>
+            <div className="space-y-2">
+              <p 
+                className={`text-gray-300 leading-relaxed cursor-pointer transition-all duration-200 ${
+                  !isDescriptionExpanded 
+                    ? 'line-clamp-1 hover:text-white' 
+                    : ''
+                }`}
+                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+              >
+                {currentLot.description}
+              </p>
+              {currentLot.description.length > 80 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="p-0 h-auto text-gray-400 hover:text-white text-sm"
+                >
+                  {isDescriptionExpanded ? (
+                    <>
+                      <ChevronUp className="h-4 w-4 mr-1" />
+                      Mostrar menos
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4 mr-1" />
+                      Mostrar mais
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
