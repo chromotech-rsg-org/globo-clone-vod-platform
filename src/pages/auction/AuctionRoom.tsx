@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BidUserState } from '@/types/auction';
 import { User, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
+import { DuplicateBidModal } from '@/components/auction/DuplicateBidModal';
 import ClientNotifications from '@/components/auction/ClientNotifications';
 import AuctionRoomHeader from '@/components/auction/AuctionRoomHeader';
 import AuctionVideoPlayer from '@/components/auction/AuctionVideoPlayer';
@@ -39,6 +40,8 @@ const AuctionRoom = () => {
   const { customIncrement, updateCustomIncrement } = useCustomIncrement(currentLot, auction);
 const [userState, setUserState] = useState<BidUserState>('need_registration');
 const [showBidDialog, setShowBidDialog] = useState(false);
+const [showDuplicateBidModal, setShowDuplicateBidModal] = useState(false);
+const [duplicateBidValue, setDuplicateBidValue] = useState(0);
 const [nextBidValue, setNextBidValue] = useState(0);
 const [currentBaseValue, setCurrentBaseValue] = useState(0);
 const { toast } = useToast();
@@ -329,11 +332,18 @@ const recalculateNextBidValue = () => {
       
       // Handle duplicate bid value error specifically
       if (resultMessage?.includes("Um lance com esse valor já foi recebido")) {
-        toast({
-          title: "Lance duplicado",
-          description: resultMessage,
-          variant: "destructive"
-        });
+        // Fechar modal de confirmação atual
+        setShowBidDialog(false);
+        
+        // Calcular próximo valor disponível
+        const freshNextMin = recalculateNextBidValue();
+        
+        // Salvar valor duplicado e próximo valor
+        setDuplicateBidValue(nextBidValue);
+        setNextBidValue(freshNextMin);
+        
+        // Mostrar modal de lance duplicado
+        setShowDuplicateBidModal(true);
         return;
       }
       
@@ -385,6 +395,31 @@ const recalculateNextBidValue = () => {
         variant: "destructive"
       });
     }
+  };
+
+  // Função para confirmar novo lance após duplicata
+  const handleConfirmNewBid = async () => {
+    setShowDuplicateBidModal(false);
+    
+    // Atualizar dados antes de tentar novamente
+    await Promise.all([
+      refetchAuction(),
+      refetchLots(),
+      refetchBids()
+    ]);
+    
+    // Recalcular valor e tentar novo lance
+    const freshNextMin = recalculateNextBidValue();
+    setNextBidValue(freshNextMin);
+    
+    // Reabrir modal de confirmação com novo valor
+    setShowBidDialog(true);
+  };
+
+  // Função para cancelar após duplicata
+  const handleCancelDuplicateBid = () => {
+    setShowDuplicateBidModal(false);
+    // Reset para valores anteriores se necessário
   };
 
   return (
@@ -486,6 +521,16 @@ const recalculateNextBidValue = () => {
   bidValue={nextBidValue}
   currentValue={currentBaseValue}
   onConfirm={handleBidSubmission}
+/>
+
+{/* Duplicate Bid Modal */}
+<DuplicateBidModal
+  open={showDuplicateBidModal}
+  onOpenChange={setShowDuplicateBidModal}
+  currentBidValue={duplicateBidValue}
+  nextAvailableValue={nextBidValue}
+  onConfirmNewBid={handleConfirmNewBid}
+  onCancel={handleCancelDuplicateBid}
 />
 
       {/* Client Notifications - Fixed position */}
