@@ -169,66 +169,9 @@ const AdminBids = () => {
     setDetailsModalOpen(true);
   };
 
-  const handleApprove = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('bids')
-        .update({ 
-          status: 'approved',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Sucesso",
-        description: "Lance aprovado com sucesso"
-      });
-      
-      fetchBids();
-    } catch (error) {
-      console.error('Erro ao aprovar:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível aprovar o lance",
-        variant: "destructive"
-      });
-    }
-  };
+  // Função removida - lances são aprovados automaticamente
 
-  const handleReject = async (id: string) => {
-    const reason = prompt('Motivo da rejeição (opcional):');
-    
-    try {
-      const { error } = await supabase
-        .from('bids')
-        .update({ 
-          status: 'rejected',
-          client_notes: reason || 'Lance rejeitado',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Sucesso",
-        description: "Lance rejeitado"
-      });
-      
-      fetchBids();
-    } catch (error) {
-      console.error('Erro ao rejeitar:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível rejeitar o lance",
-        variant: "destructive"
-      });
-    }
-  };
+  // Função removida - lances são aprovados automaticamente
 
   const handleSetWinner = async (bidId: string) => {
     if (!confirm('Tem certeza que deseja marcar este lance como vencedor e finalizar o lote?')) return;
@@ -478,28 +421,7 @@ const AdminBids = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        {bid.status === 'pending' && (
-                          <>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => handleApprove(bid.id)}
-                              className="text-green-400 hover:text-green-300 hover:bg-gray-800"
-                              title="Aprovar"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => handleReject(bid.id)}
-                              className="text-red-400 hover:text-red-300 hover:bg-gray-800"
-                              title="Rejeitar"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
+                        {/* Ações de aprovação removidas - lances são aprovados automaticamente */}
                         {bid.status === 'approved' && !bid.is_winner && (
                           <Button 
                             size="sm" 
@@ -547,13 +469,11 @@ const AdminBids = () => {
         )}
       </div>
 
-      <BidDetailsModal
-        open={detailsModalOpen}
-        onOpenChange={setDetailsModalOpen}
-        bid={selectedBid}
-        onApprove={handleApprove}
-        onReject={handleReject}
-      />
+        <BidDetailsModal
+          open={detailsModalOpen}
+          onOpenChange={setDetailsModalOpen}
+          bid={selectedBid}
+        />
 
       <LotProgressionModal
         open={progressionModal.open}

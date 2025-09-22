@@ -335,59 +335,27 @@ const BidDetailsModal: React.FC<BidDetailsModalProps> = ({
             </div>
           </Card>
 
-          {/* Actions */}
-          <div className="flex justify-between pt-4 border-t border-gray-700">
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                className="border-gray-600 text-black bg-white hover:bg-gray-100"
-              >
-                Fechar
-              </Button>
-              
-              <Button
-                onClick={handleSaveNotes}
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Save className="h-4 w-4 mr-1" />
-                Salvar Observações
-              </Button>
-            </div>
-            
-            {bid.status === 'pending' && (
-              <div className="space-x-2">
-                {onReject && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      onReject(bid.id);
-                      onOpenChange(false);
-                    }}
-                    className="border-red-500 text-red-500 hover:bg-red-500/10"
-                    disabled={loading}
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Rejeitar
-                  </Button>
-                )}
-                {onApprove && (
-                  <Button 
-                    onClick={() => {
-                      onApprove(bid.id);
-                      onOpenChange(false);
-                    }}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                    disabled={loading}
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Aprovar
-                  </Button>
-                )}
+            {/* Actions - Como os lances são aprovados automaticamente, só mostramos as ações básicas */}
+            <div className="flex justify-between pt-4 border-t border-gray-700">
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => onOpenChange(false)}
+                  className="border-gray-600 text-black bg-white hover:bg-gray-100"
+                >
+                  Fechar
+                </Button>
+                
+                <Button
+                  onClick={handleSaveNotes}
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  Salvar Observações
+                </Button>
               </div>
-            )}
-          </div>
+            </div>
         </div>
       </DialogContent>
     </Dialog>

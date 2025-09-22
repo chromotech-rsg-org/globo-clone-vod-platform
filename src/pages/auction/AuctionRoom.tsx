@@ -317,8 +317,8 @@ const recalculateNextBidValue = () => {
       if (result && (result as any).success) {
         setShowBidDialog(false);
         toast({
-          title: "Lance enviado!",
-          description: "Seu lance foi enviado com sucesso.",
+          title: "Lance aprovado!",
+          description: "Seu lance foi aprovado automaticamente.",
           variant: "default"
         });
         return;

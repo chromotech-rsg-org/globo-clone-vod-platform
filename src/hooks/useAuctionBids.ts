@@ -83,14 +83,9 @@ export const useAuctionBids = (auctionId: string) => {
 
       setBids(formattedBids);
 
-      // Verificar lance pendente do usuário
-      if (user?.id) {
-        const userHasPendingBid = formattedBids.some((bid: Bid) => 
-          bid.user_id === user.id && bid.status === 'pending'
-        );
-        setPendingBidExists(userHasPendingBid);
-        console.log('🔍 useAuctionBids: Usuário tem lance pendente?', userHasPendingBid);
-      }
+      // Como os lances são aprovados automaticamente, não há mais lances pendentes
+      setPendingBidExists(false);
+      console.log('🔍 useAuctionBids: Sistema de aprovação automática ativo');
 
     } catch (error) {
       console.error('💥 useAuctionBids: Erro geral:', error);
@@ -121,24 +116,16 @@ export const useAuctionBids = (auctionId: string) => {
       return { success: false, message };
     }
 
-    if (pendingBidExists) {
-      const message = "Aguarde a análise do seu lance atual";
-      toast({
-        title: "Lance em análise",
-        description: message,
-        variant: "destructive"
-      });
-      return { success: false, message };
-    }
+    // Como os lances são aprovados automaticamente, removemos a verificação de pending
 
     setSubmittingBid(true);
 
-    // Helper para extrair valor mínimo exigido vindo do erro do servidor
-    const parseRequiredMinFromError = (msg?: string): number | undefined => {
+    // Helper para extrair valor sugerido do erro do servidor
+    const parseSuggestedValueFromError = (msg?: string): number | undefined => {
       if (!msg) return undefined;
-      // Procura por um valor monetário após "pelo menos"
-      // Ex.: "O valor do lance deve ser pelo menos R$ 520,000.00 (valor atual + incremento)"
-      const match = msg.match(/pelo menos\s*R\$\s*([\d.,]+)/i) || msg.match(/at least\s*R\$\s*([\d.,]+)/i);
+      // Procura por um valor sugerido após "Sugestão: R$"
+      // Ex.: "O valor do lance deve ser pelo menos R$ 520,000.00 (valor atual + incremento). Sugestão: R$ 520,000.00"
+      const match = msg.match(/Sugestão:\s*R\$\s*([\d.,]+)/i) || msg.match(/pelo menos\s*R\$\s*([\d.,]+)/i);
       const raw = match?.[1];
       if (!raw) return undefined;
       // Remove tudo que não é dígito e assume 2 casas decimais
@@ -149,23 +136,7 @@ export const useAuctionBids = (auctionId: string) => {
     };
 
     try {
-      // Verificar se o usuário tem lance pendente antes de enviar
-      const { data: existingBids } = await supabase
-        .from('bids')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('auction_id', auctionId)
-        .eq('status', 'pending');
-
-      if (existingBids && existingBids.length > 0) {
-        const message = "Você já possui um lance aguardando análise";
-        toast({
-          title: "Lance em análise",
-          description: message,
-          variant: "destructive"
-        });
-        return { success: false, message };
-      }
+      // Como os lances são aprovados automaticamente, não precisamos verificar pending
 
       // Buscar item atual do leilão (preferindo is_current ou status in_progress)
       type ExistingItem = { id: string; current_value: number; increment: number | null; status: string; is_current: boolean };
@@ -272,8 +243,8 @@ export const useAuctionBids = (auctionId: string) => {
       }
 
       toast({
-        title: "Lance enviado",
-        description: "Seu lance foi enviado para análise",
+        title: "Lance aprovado!",
+        description: "Seu lance foi aprovado automaticamente",
       });
 
       await fetchBids();
@@ -286,11 +257,11 @@ export const useAuctionBids = (auctionId: string) => {
       if (error?.code === '23505' || error?.message?.includes('unique_auction_item_bid_value')) {
         return { 
           success: false, 
-          message: "Um lance com esse valor já foi recebido. Atualize seu lance e tente novamente." 
+          message: "Um lance com esse valor já foi recebido. Tente um valor maior."
         };
       }
       
-      const requiredMin = parseRequiredMinFromError(error?.message);
+      const suggestedMin = parseSuggestedValueFromError(error?.message);
       let description = "Não foi possível enviar o lance";
       if (error?.message?.includes('duplicate')) {
         description = "Você já possui um lance para este leilão";
@@ -298,8 +269,8 @@ export const useAuctionBids = (auctionId: string) => {
         description = `Erro: ${error.message}`;
       }
 
-      // Only show toast for non-duplicate bid value errors
-      if (!requiredMin && error?.code !== '23505') {
+      // Only show toast for non-duplicate bid value errors and when there's no suggested value
+      if (!suggestedMin && error?.code !== '23505') {
         toast({
           title: "Erro",
           description,
@@ -307,7 +278,7 @@ export const useAuctionBids = (auctionId: string) => {
         });
       }
 
-      return { success: false, requiredMin, message: description };
+      return { success: false, requiredMin: suggestedMin, message: description };
     } finally {
       setSubmittingBid(false);
     }
@@ -322,14 +293,12 @@ export const useAuctionBids = (auctionId: string) => {
     // Real-time subscription for bid updates
     const handleBidsChange = (payload: any) => {
       if (mounted.current) {
-        // Show toast for user's bid status changes
+        // Show toast for user's winning bid status changes
         if (payload.new && payload.new.user_id === user?.id && payload.eventType === 'UPDATE') {
-          if (payload.new.status === 'approved') {
+          if (payload.new.is_winner && !payload.old?.is_winner) {
             toast({
-              title: "Lance Aprovado",
-              description: payload.new.is_winner ? 
-                "Parabéns! Seu lance foi aprovado e você é o vencedor!" :
-                "Seu lance foi aprovado!",
+              title: "🏆 Parabéns!",
+              description: "Você ganhou o lote com seu lance!",
             });
           } else if (payload.new.status === 'rejected') {
             toast({
@@ -366,7 +335,7 @@ export const useAuctionBids = (auctionId: string) => {
     };
   }, [auctionId, fetchBids, user?.id, toast]);
 
-  const userPendingBid = bids.find(bid => bid.user_id === user?.id && bid.status === 'pending');
+  const userPendingBid = null; // Como os lances são aprovados automaticamente, não há pending
 
   return {
     bids,
