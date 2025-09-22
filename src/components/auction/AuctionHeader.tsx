@@ -18,8 +18,8 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
   const notStartedLots = lots.filter(lot => lot.status === 'not_started');
 
   return (
-    <Card className="bg-gradient-to-r from-gray-900 to-black border-green-600/30">
-      <CardContent className="p-6">
+    <Card className="bg-black border-green-600/30">
+      <CardContent className="p-6 bg-black">
         <div className="space-y-4">
           {/* Nome e Status do Leilão */}
           <div className="flex items-start justify-between">
@@ -81,7 +81,7 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
           {/* Informações de Data e Estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Data de Início */}
-            <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-black rounded-lg">
               <Calendar className="h-5 w-5 text-green-400" />
               <div>
                 <p className="text-sm text-gray-400">Início</p>
@@ -101,7 +101,7 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
             </div>
 
             {/* Data de Fim */}
-            <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-black rounded-lg">
               <Clock className="h-5 w-5 text-red-400" />
               <div>
                 <p className="text-sm text-gray-400">Encerramento</p>
@@ -121,7 +121,7 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
             </div>
 
             {/* Estatísticas de Lotes */}
-            <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-black rounded-lg">
               <Package className="h-5 w-5 text-blue-400" />
               <div>
                 <p className="text-sm text-gray-400">Lotes</p>
