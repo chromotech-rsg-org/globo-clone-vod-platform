@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, x-requested-with, accept, origin, referer',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Max-Age': '86400',
 };
@@ -22,7 +22,12 @@ interface StartNextLotRequest {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const requestHeaders = req.headers.get('access-control-request-headers');
+    const headers = {
+      ...corsHeaders,
+      'Access-Control-Allow-Headers': requestHeaders || corsHeaders['Access-Control-Allow-Headers'],
+    } as Record<string, string>;
+    return new Response(null, { headers });
   }
 
   try {
