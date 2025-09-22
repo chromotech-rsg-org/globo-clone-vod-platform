@@ -351,8 +351,6 @@ const recalculateNextBidValue = () => {
       
       const requiredMin = (result as any)?.requiredMin as number | undefined;
       if (requiredMin && requiredMin > 0) {
-      // Se o valor exigido é maior que o valor tentado, significa que foi superado
-      if (requiredMin > nextBidValue) {
         // Fechar modal de confirmação atual
         setShowBidDialog(false);
         
@@ -361,32 +359,19 @@ const recalculateNextBidValue = () => {
         // Garantir que não seja menor que o mínimo exigido pelo servidor
         const finalBidValue = Math.max(newBidValue, requiredMin);
         
+        console.log('💰 Calculando valores para modal de superação:', {
+          originalBid: nextBidValue,
+          increment: customIncrement,
+          newCalculated: newBidValue,
+          requiredMin,
+          finalBidValue
+        });
+        
         // Salvar valores para o modal de lance superado
         setOriginalBidValue(nextBidValue);
         setNextBidValue(finalBidValue);
         
         // Mostrar modal de lance superado
-        setShowOutbidModal(true);
-        return;
-      }
-        // Caso contrário, apenas ajusta o valor normalmente
-        setNextBidValue(requiredMin);
-        const newIncrement = Math.max(1, Math.round(requiredMin - currentBaseValue));
-        updateCustomIncrement(newIncrement);
-        setCurrentBaseValue(requiredMin - newIncrement);
-
-        console.log('⚠️ Servidor exige lance mínimo:', { requiredMin, currentBaseValue, newIncrement });
-
-        // Não mostrar toast, apenas fechar modal atual e mostrar modal de superação
-        setShowBidDialog(false);
-        
-        // Calcular novo lance como: lance pretendido + incremento
-        const newBidValue = nextBidValue + customIncrement;
-        // Garantir que não seja menor que o mínimo exigido pelo servidor
-        const finalBidValue = Math.max(newBidValue, requiredMin);
-        
-        setOriginalBidValue(nextBidValue);
-        setNextBidValue(finalBidValue);
         setShowOutbidModal(true);
         return;
       }
