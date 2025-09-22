@@ -177,6 +177,8 @@ const AdminBids = () => {
     if (!confirm('Tem certeza que deseja marcar este lance como vencedor e finalizar o lote?')) return;
     
     try {
+      console.log('Setting winner for bid:', bidId);
+      
       // Call the edge function to set winner and finalize lot
       const { data, error } = await supabase.functions.invoke('manage-lot-progression', {
         body: {
@@ -185,12 +187,28 @@ const AdminBids = () => {
         }
       });
 
-      if (error) throw error;
+      console.log('Edge function response:', { data, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Erro na função de gerenciamento de lotes');
+      }
+
+      if (!data) {
+        throw new Error('Resposta vazia da função de gerenciamento');
+      }
 
       const result = data;
       
       // Find the winning bid to get details
       const winningBid = bids.find(b => b.id === bidId);
+      
+      if (!winningBid) {
+        console.error('Winning bid not found in current bids');
+        throw new Error('Lance vencedor não encontrado');
+      }
+
+      console.log('Winner set successfully:', result);
       
       toast({
         title: "Sucesso",
@@ -222,9 +240,10 @@ const AdminBids = () => {
       fetchBids();
     } catch (error) {
       console.error('Error setting winner:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Não foi possível marcar o lance como vencedor';
       toast({
         title: "Erro",
-        description: "Não foi possível marcar o lance como vencedor",
+        description: errorMessage,
         variant: "destructive"
       });
     }
