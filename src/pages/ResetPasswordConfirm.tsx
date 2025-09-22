@@ -219,7 +219,7 @@ export default function ResetPasswordConfirm() {
               {loading ? 'Atualizando...' : 'Redefinir Senha'}
             </Button>
 
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <Button
                 type="button"
                 variant="link"
@@ -228,6 +228,16 @@ export default function ResetPasswordConfirm() {
                 onClick={() => navigate('/login')}
               >
                 Voltar ao Login
+              </Button>
+              
+              <Button
+                type="button"
+                variant="link"
+                className="text-sm transition-colors hover:opacity-75"
+                style={{ color: textColor }}
+                onClick={() => navigate('/')}
+              >
+                Voltar à Home
               </Button>
             </div>
           </form>

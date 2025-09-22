@@ -285,6 +285,18 @@ const Login = () => {
               </a>
             </p>
             
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="link"
+                className="text-sm transition-colors hover:opacity-75"
+                style={{ color: textColor }}
+                onClick={() => navigate('/')}
+              >
+                Voltar à Home
+              </Button>
+            </div>
+            
             {/* Bottom Logo */}
             <div className="pt-8">
               <div className="text-center">

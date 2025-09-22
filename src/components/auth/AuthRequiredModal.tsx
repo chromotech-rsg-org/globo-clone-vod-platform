@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, Lock, User, Mail, Phone, CreditCard } from 'lucide-react';
 
 interface AuthRequiredModalProps {
@@ -139,7 +140,26 @@ const AuthRequiredModal = ({
         </Button>
         
         <Button 
-          onClick={() => window.location.href = '/checkout'}
+          onClick={async () => {
+            try {
+              const { data: firstPlan } = await supabase
+                .from('plans')
+                .select('*')
+                .eq('active', true)
+                .order('priority', { ascending: true })
+                .limit(1)
+                .single();
+              
+              if (firstPlan) {
+                window.location.href = `/checkout?planId=${firstPlan.id}`;
+              } else {
+                window.location.href = '/checkout';
+              }
+            } catch (error) {
+              console.error('Error fetching plan:', error);
+              window.location.href = '/checkout';
+            }
+          }}
           variant="outline"
           className="w-full"
           size="lg"
