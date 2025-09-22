@@ -48,7 +48,6 @@ const CurrentLotDisplay = ({
   );
   
   const minIncrement = baseIncrement;
-  const maxIncrement = baseIncrement * 10; // Limite máximo de 10x o incremento base
 
   const handleIncrementDecrease = () => {
     const newIncrement = Math.max(minIncrement, customIncrement - baseIncrement);
@@ -56,7 +55,7 @@ const CurrentLotDisplay = ({
   };
 
   const handleIncrementIncrease = () => {
-    const newIncrement = Math.min(maxIncrement, customIncrement + baseIncrement);
+    const newIncrement = customIncrement + baseIncrement;
     onIncrementChange(newIncrement);
   };
 
@@ -156,7 +155,7 @@ const CurrentLotDisplay = ({
               variant="outline"
               size="sm"
               onClick={handleIncrementIncrease}
-            disabled={customIncrement >= maxIncrement || auction.status === 'inactive' || !auction.is_live || currentLot.status === 'finished'}
+              disabled={auction.status === 'inactive' || !auction.is_live || currentLot.status === 'finished'}
               className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30"
             >
               <Plus className="h-4 w-4" />
