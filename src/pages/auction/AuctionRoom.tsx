@@ -515,28 +515,31 @@ const recalculateNextBidValue = () => {
           </div>
         </div>
 
-        {/* Histórico de Lances com Filtros - Largura Total */}
-        <div className="mt-6">
-          <BidHistoryWithFilters
-            bids={bids}
-            lots={lots}
-            loading={bidsLoading}
-            currentUserId={user?.id}
-          />
-        </div>
-      </div>
+        {/* Segunda linha: Lista de Lotes (2/3) e Histórico de Lances (1/3) */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+          {/* Lista de Todos os Lotes (2/3 da tela) */}
+          <div className="xl:col-span-2">
+            {!lotsLoading && (
+              <LotsList
+                lots={lots}
+                bids={bids}
+                currentUserId={user?.id}
+                currentLotId={currentLotId}
+              />
+            )}
+          </div>
 
-        {/* Lista de Todos os Lotes - Largura Total */}
-        {!lotsLoading && (
-          <div className="mt-8">
-            <LotsList
-              lots={lots}
+          {/* Histórico de Lances com Filtros (1/3 da tela) */}
+          <div>
+            <BidHistoryWithFilters
               bids={bids}
+              lots={lots}
+              loading={bidsLoading}
               currentUserId={user?.id}
-              currentLotId={currentLotId}
             />
           </div>
-        )}
+        </div>
+      </div>
 
 {/* Bid Confirmation Dialog */}
 <BidConfirmationDialog
