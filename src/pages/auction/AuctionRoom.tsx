@@ -11,6 +11,7 @@ import { BidUserState } from '@/types/auction';
 import { User, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
 import { DuplicateBidModal } from '@/components/auction/DuplicateBidModal';
+import { OutbidNotificationModal } from '@/components/auction/OutbidNotificationModal';
 import ClientNotifications from '@/components/auction/ClientNotifications';
 import AuctionRoomHeader from '@/components/auction/AuctionRoomHeader';
 import AuctionVideoPlayer from '@/components/auction/AuctionVideoPlayer';
@@ -41,7 +42,9 @@ const AuctionRoom = () => {
 const [userState, setUserState] = useState<BidUserState>('need_registration');
 const [showBidDialog, setShowBidDialog] = useState(false);
 const [showDuplicateBidModal, setShowDuplicateBidModal] = useState(false);
+const [showOutbidModal, setShowOutbidModal] = useState(false);
 const [duplicateBidValue, setDuplicateBidValue] = useState(0);
+const [originalBidValue, setOriginalBidValue] = useState(0);
 const [nextBidValue, setNextBidValue] = useState(0);
 const [currentBaseValue, setCurrentBaseValue] = useState(0);
 const { toast } = useToast();
@@ -349,11 +352,24 @@ const recalculateNextBidValue = () => {
       
       const requiredMin = (result as any)?.requiredMin as number | undefined;
       if (requiredMin && requiredMin > 0) {
-        // Ajusta o valor e o incremento para refletir a regra do servidor
+        // Se o valor exigido é maior que o valor tentado, significa que foi superado
+        if (requiredMin > nextBidValue) {
+          // Fechar modal de confirmação atual
+          setShowBidDialog(false);
+          
+          // Salvar valores para o modal de lance superado
+          setOriginalBidValue(nextBidValue);
+          setNextBidValue(requiredMin);
+          
+          // Mostrar modal de lance superado
+          setShowOutbidModal(true);
+          return;
+        }
+        
+        // Caso contrário, apenas ajusta o valor normalmente
         setNextBidValue(requiredMin);
         const newIncrement = Math.max(1, Math.round(requiredMin - currentBaseValue));
         updateCustomIncrement(newIncrement);
-        // Mantém a base exibida coerente com o valor ajustado
         setCurrentBaseValue(requiredMin - newIncrement);
 
         console.log('⚠️ Servidor exige lance mínimo:', { requiredMin, currentBaseValue, newIncrement });
@@ -419,6 +435,18 @@ const recalculateNextBidValue = () => {
   // Função para cancelar após duplicata
   const handleCancelDuplicateBid = () => {
     setShowDuplicateBidModal(false);
+    // Reset para valores anteriores se necessário
+  };
+
+  // Funções para o modal de lance superado
+  const handleProceedAfterOutbid = () => {
+    setShowOutbidModal(false);
+    // Reabrir modal de confirmação com o novo valor
+    setShowBidDialog(true);
+  };
+
+  const handleCancelAfterOutbid = () => {
+    setShowOutbidModal(false);
     // Reset para valores anteriores se necessário
   };
 
@@ -531,6 +559,16 @@ const recalculateNextBidValue = () => {
   nextAvailableValue={nextBidValue}
   onConfirmNewBid={handleConfirmNewBid}
   onCancel={handleCancelDuplicateBid}
+/>
+
+{/* Outbid Notification Modal */}
+<OutbidNotificationModal
+  open={showOutbidModal}
+  onOpenChange={setShowOutbidModal}
+  originalBidValue={originalBidValue}
+  newBidValue={nextBidValue}
+  onProceed={handleProceedAfterOutbid}
+  onCancel={handleCancelAfterOutbid}
 />
 
       {/* Client Notifications - Fixed position */}
