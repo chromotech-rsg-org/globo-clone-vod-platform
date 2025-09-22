@@ -455,7 +455,7 @@ const recalculateNextBidValue = () => {
       {/* Guest Mode Banner - show only if user is not logged in */}
       {!user && <GuestModeBanner className="container mx-auto px-4 mb-4" />}
       
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 bg-black">
         {/* Header do Leilão */}
         <AuctionHeader auction={auction} lots={lots} />
 
