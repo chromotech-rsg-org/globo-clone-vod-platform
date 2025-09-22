@@ -356,9 +356,14 @@ const recalculateNextBidValue = () => {
         // Fechar modal de confirmação atual
         setShowBidDialog(false);
         
+        // Calcular novo lance como: lance pretendido + incremento
+        const newBidValue = nextBidValue + customIncrement;
+        // Garantir que não seja menor que o mínimo exigido pelo servidor
+        const finalBidValue = Math.max(newBidValue, requiredMin);
+        
         // Salvar valores para o modal de lance superado
         setOriginalBidValue(nextBidValue);
-        setNextBidValue(requiredMin);
+        setNextBidValue(finalBidValue);
         
         // Mostrar modal de lance superado
         setShowOutbidModal(true);
@@ -374,8 +379,14 @@ const recalculateNextBidValue = () => {
 
         // Não mostrar toast, apenas fechar modal atual e mostrar modal de superação
         setShowBidDialog(false);
+        
+        // Calcular novo lance como: lance pretendido + incremento
+        const newBidValue = nextBidValue + customIncrement;
+        // Garantir que não seja menor que o mínimo exigido pelo servidor
+        const finalBidValue = Math.max(newBidValue, requiredMin);
+        
         setOriginalBidValue(nextBidValue);
-        setNextBidValue(requiredMin);
+        setNextBidValue(finalBidValue);
         setShowOutbidModal(true);
         return;
       }
@@ -392,13 +403,18 @@ const recalculateNextBidValue = () => {
       setTimeout(() => {
         const newCorrectValue = recalculateNextBidValue();
         
+        // Calcular novo lance como: lance pretendido + incremento
+        const newBidValue = nextBidValue + customIncrement;
+        // Usar o maior entre o lance calculado e o valor recalculado
+        const finalBidValue = Math.max(newBidValue, newCorrectValue);
+        
         // Fechar modal atual e mostrar modal de superação com novo valor
         setShowBidDialog(false);
         setOriginalBidValue(nextBidValue);
-        setNextBidValue(newCorrectValue);
+        setNextBidValue(finalBidValue);
         setShowOutbidModal(true);
 
-        console.log('🔄 Novo valor calculado após falha:', newCorrectValue);
+        console.log('🔄 Novo valor calculado após falha:', finalBidValue);
       }, 200);
     } catch (error) {
       console.error('❌ Erro ao enviar o lance:', error);
