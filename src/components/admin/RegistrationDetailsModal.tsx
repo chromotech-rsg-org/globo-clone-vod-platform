@@ -177,8 +177,8 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
 
       // Update the registration object with new notes
       Object.assign(registration, { internal_notes: internalNotes, client_notes: clientNotes });
-      
-    } catch (error) {
+
+    } catch (error: any) {
       console.error('Erro ao salvar observações:', error);
       toast({
         title: "Erro",
@@ -188,6 +188,26 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveNotesAndApprove = async () => {
+    if (!registration || !onApprove) return;
+
+    // First save notes
+    await handleSaveNotes();
+    // Then approve
+    onApprove(registration.id);
+    onOpenChange(false);
+  };
+
+  const handleSaveNotesAndReject = async () => {
+    if (!registration || !onReject) return;
+
+    // First save notes
+    await handleSaveNotes();
+    // Then reject
+    onReject(registration.id);
+    onOpenChange(false);
   };
 
   if (!registration) return null;
@@ -374,15 +394,6 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
                   rows={3}
                 />
               </div>
-              
-              <Button
-                onClick={handleSaveNotes}
-                disabled={saving}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Salvando...' : 'Salvar Observações'}
-              </Button>
             </div>
           </div>
 
@@ -404,8 +415,7 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
                     <Button 
                       variant="outline" 
                       onClick={() => {
-                        onReject(registration.id);
-                        onOpenChange(false);
+                        handleSaveNotesAndReject();
                       }}
                       className="border-red-500 text-red-500 hover:bg-red-500/10"
                     >
@@ -416,8 +426,7 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
                   {onApprove && (
                     <Button 
                       onClick={() => {
-                        onApprove(registration.id);
-                        onOpenChange(false);
+                        handleSaveNotesAndApprove();
                       }}
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
@@ -426,6 +435,18 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
                     </Button>
                   )}
                 </>
+              )}
+
+              {/* For non-pending statuses, show save button */}
+              {registration.status !== 'pending' && (
+                <Button
+                  onClick={handleSaveNotes}
+                  disabled={saving}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  {saving ? 'Salvando...' : 'Salvar'}
+                </Button>
               )}
 
               {/* Approved status actions */}
