@@ -6,6 +6,7 @@ import { useAuctions } from '@/hooks/useAuctions';
 import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
 import { useAuth } from '@/contexts/AuthContext';
 import AuctionChannelCard from '@/components/auction/AuctionChannelCard';
+import PreBiddingLotSelector from '@/components/auction/PreBiddingLotSelector';
 import SubscriptionRequired from '@/components/SubscriptionRequired';
 import AuctionPromoBanner from '@/components/auction/AuctionPromoBanner';
 import GuestModeBanner from '@/components/auction/GuestModeBanner';
@@ -154,20 +155,9 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
+              <div className="space-y-8">
                 {preBiddingAuctions.map((auction) => (
-                  <div 
-                    key={auction.id} 
-                    className="flex-shrink-0" 
-                    style={{ 
-                      width: 'calc((100% - 2.4cm) / 3)', 
-                      minWidth: '280px',
-                      maxWidth: '420px',
-                      marginBottom: '1cm'
-                    }}
-                  >
-                    <AuctionChannelCard auction={auction} />
-                  </div>
+                  <PreBiddingLotSelector key={auction.id} auction={auction} />
                 ))}
               </div>
             )}
