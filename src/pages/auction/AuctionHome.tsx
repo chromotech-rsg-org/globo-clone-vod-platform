@@ -155,9 +155,20 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-8">
+              <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
                 {preBiddingAuctions.map((auction) => (
-                  <PreBiddingLotSelector key={auction.id} auction={auction} />
+                  <div 
+                    key={auction.id} 
+                    className="flex-shrink-0" 
+                    style={{ 
+                      width: 'calc((100% - 2.4cm) / 3)', 
+                      minWidth: '280px',
+                      maxWidth: '420px',
+                      marginBottom: '1cm'
+                    }}
+                  >
+                    <AuctionChannelCard auction={auction} />
+                  </div>
                 ))}
               </div>
             )}
