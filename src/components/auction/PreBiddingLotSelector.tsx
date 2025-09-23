@@ -31,16 +31,43 @@ const PreBiddingLotSelector = ({ auction }: PreBiddingLotSelectorProps) => {
 
   if (!lots || lots.length === 0) {
     return (
-      <Card className="text-center py-16 bg-gradient-to-br from-gray-900/80 to-black/60 border-green-600/30">
-        <CardContent>
-          <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Target size={32} className="text-gray-500" />
+      <Card className="bg-gradient-to-br from-gray-900/80 to-black/60 border-green-600/30">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white text-2xl mb-2 flex items-center gap-3">
+                <Target size={24} className="text-green-400" />
+                {auction.name}
+              </CardTitle>
+              {auction.description && (
+                <p className="text-gray-300 mb-4">{auction.description}</p>
+              )}
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="border-green-600/50 text-green-400">
+                  Pré Lance Disponível
+                </Badge>
+                <Badge variant="secondary">
+                  {auction.auction_type === 'rural' ? 'Rural' : 'Judicial'}
+                </Badge>
+              </div>
+            </div>
+            {auction.image_url && (
+              <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
+                <img 
+                  src={auction.image_url} 
+                  alt={auction.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
           </div>
-          <h3 className="text-2xl font-semibold text-white mb-4">
-            Nenhum lote disponível
-          </h3>
-          <p className="text-gray-400 text-lg">
-            Este leilão ainda não possui lotes cadastrados.
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock size={24} className="text-gray-500" />
+          </div>
+          <p className="text-gray-400">
+            Os lotes deste leilão ainda estão sendo preparados para pré lance.
           </p>
         </CardContent>
       </Card>
