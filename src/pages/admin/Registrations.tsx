@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Check, X, Search, Eye } from 'lucide-react';
+import { Check, X, Search, Eye, Power } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
@@ -30,7 +30,8 @@ const getStatusDisplay = (status: string) => {
     'approved': 'Aprovado',
     'rejected': 'Rejeitado',
     'canceled': 'Cancelado',
-    'reopened': 'Reaberto'
+    'reopened': 'Reaberto',
+    'disabled': 'Desabilitado'
   };
   return statusMap[status] || status;
 };
@@ -41,6 +42,7 @@ const getStatusVariant = (status: string) => {
       return 'admin-success';
     case 'rejected':
     case 'canceled':
+    case 'disabled':
       return 'admin-danger';
     case 'pending':
     case 'reopened':
@@ -173,6 +175,38 @@ const AdminRegistrations = () => {
     }
   };
 
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'approved' ? 'disabled' : 'approved';
+    const action = newStatus === 'approved' ? 'ativada' : 'desabilitada';
+    
+    try {
+      const { error } = await supabase
+        .from('auction_registrations')
+        .update({ 
+          status: newStatus,
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: `Habilitação ${action} com sucesso`
+      });
+      
+      fetchRegistrations();
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível alterar o status da habilitação",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleViewDetails = (registration: Registration) => {
     setSelectedRegistration(registration);
     setDetailsModalOpen(true);
@@ -237,6 +271,7 @@ const AdminRegistrations = () => {
             <option value="rejected">Rejeitado</option>
             <option value="canceled">Cancelado</option>
             <option value="reopened">Reaberto</option>
+            <option value="disabled">Desabilitado</option>
           </select>
         </div>
 
@@ -300,6 +335,19 @@ const AdminRegistrations = () => {
                               <X className="h-4 w-4" />
                             </Button>
                           </>
+                        )}
+                        {(registration.status === 'approved' || registration.status === 'disabled') && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleToggleStatus(registration.id, registration.status)}
+                            className={registration.status === 'approved' 
+                              ? "text-orange-400 hover:text-orange-300 hover:bg-gray-800" 
+                              : "text-green-400 hover:text-green-300 hover:bg-gray-800"}
+                            title={registration.status === 'approved' ? 'Desabilitar' : 'Ativar'}
+                          >
+                            <Power className="h-4 w-4" />
+                          </Button>
                         )}
                       </div>
                     </TableCell>
