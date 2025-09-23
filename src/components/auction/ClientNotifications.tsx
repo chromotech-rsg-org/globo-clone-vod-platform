@@ -34,6 +34,17 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
   const [acknowledgedRegistrations, setAcknowledgedRegistrations] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
+  // Initialize modal state on component mount
+  useEffect(() => {
+    if (!user) return;
+    
+    // Check if we should show modal on page load
+    const shouldShowOnLoad = unreadCount > 0;
+    if (shouldShowOnLoad) {
+      setShowModal(true);
+    }
+  }, [user, unreadCount]);
+
   const fetchNotifications = async () => {
     if (!user) return;
 
@@ -225,24 +236,47 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
     await markAsRead(notificationId, notificationType);
   };
 
-  // Show modal when there are new notifications
+  // Auto-show modal when there are unread notifications and persist across reloads
   useEffect(() => {
-    if (unreadCount > 0 && notifications.length > 0) {
-      // Show toast for new notifications
-      const lastNotification = notifications[0];
-      if (lastNotification && !lastNotification.read) {
+    const shouldShowModal = unreadCount > 0 && notifications.length > 0;
+    
+    if (shouldShowModal) {
+      // Always show modal if there are unread notifications
+      setShowModal(true);
+      // Prevent body scroll when modal is shown
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Allow body scroll when modal is closed
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup function to restore scroll
+    return () => {
+      if (unreadCount === 0) {
+        document.body.style.overflow = 'unset';
+      }
+    };
+  }, [unreadCount, notifications, user?.id]);
+
+  // Prevent ESC key from closing modal when there are unread notifications
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && unreadCount > 0 && showModal) {
+        event.preventDefault();
+        event.stopPropagation();
         toast({
-          title: "Nova notificação",
-          description: `Você tem uma atualização sobre ${lastNotification.type === 'bid' ? 'seu lance' : 'sua habilitação'} no ${lastNotification.auction_name}`,
-          action: (
-            <Button size="sm" onClick={() => setShowModal(true)}>
-              Ver
-            </Button>
-          ),
+          title: "Ação necessária",
+          description: "Por favor, confirme todas as mensagens clicando em 'OK - Entendi' antes de fechar.",
+          variant: "destructive",
         });
       }
+    };
+
+    if (showModal && unreadCount > 0) {
+      document.addEventListener('keydown', handleKeyDown, true);
+      return () => document.removeEventListener('keydown', handleKeyDown, true);
     }
-  }, [unreadCount, notifications, toast]);
+  }, [showModal, unreadCount, toast]);
 
   const getStatusIcon = (status: string, type: string) => {
     switch (status) {
@@ -275,6 +309,21 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
 
   return (
     <>
+      {showModal && unreadCount > 0 && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[100] pointer-events-auto cursor-not-allowed" 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toast({
+              title: "Ação necessária",
+              description: "Por favor, confirme todas as mensagens clicando em 'OK - Entendi' antes de continuar.",
+              variant: "destructive",
+            });
+          }}
+        />
+      )}
+      
       <div className="fixed top-4 right-4 z-50">
         <NotificationBadge 
           count={unreadCount} 
@@ -282,8 +331,29 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         />
       </div>
 
-      <Dialog open={showModal} onOpenChange={unreadCount === 0 ? setShowModal : undefined}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-black border-green-600/30 text-white [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-green-500">
+      <Dialog 
+        open={showModal} 
+        onOpenChange={unreadCount === 0 ? setShowModal : undefined}
+        modal={true}
+      >
+        <DialogContent 
+          className="max-w-2xl max-h-[80vh] overflow-y-auto bg-black border-green-600/30 text-white [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-green-500 z-[101]"
+          onPointerDownOutside={(e) => {
+            if (unreadCount > 0) {
+              e.preventDefault();
+              toast({
+                title: "Ação necessária",
+                description: "Por favor, confirme todas as mensagens clicando em 'OK - Entendi' antes de fechar.",
+                variant: "destructive",
+              });
+            }
+          }}
+          onInteractOutside={(e) => {
+            if (unreadCount > 0) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2 text-green-400">
