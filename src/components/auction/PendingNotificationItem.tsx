@@ -12,6 +12,7 @@ interface PendingItem {
   user_name: string;
   value?: number;
   created_at: string;
+  isReactivationAfterManualDisable?: boolean;
 }
 
 interface PendingNotificationItemProps {
@@ -44,10 +45,24 @@ const PendingNotificationItem: React.FC<PendingNotificationItemProps> = ({
                 {formatCurrency(item.value || 0)}
               </p>
             ) : (
-              <Badge variant="outline" className="border-admin-border text-admin-muted-foreground">
-                <Clock className="h-3 w-3 mr-1" />
-                Pendente
-              </Badge>
+              <div className="flex flex-col items-end">
+                <Badge 
+                  variant="outline" 
+                  className={`border-admin-border text-admin-muted-foreground ${
+                    item.isReactivationAfterManualDisable 
+                      ? 'border-orange-500/50 text-orange-400 bg-orange-500/10' 
+                      : ''
+                  }`}
+                >
+                  <Clock className="h-3 w-3 mr-1" />
+                  {item.isReactivationAfterManualDisable ? 'Reativação' : 'Pendente'}
+                </Badge>
+                {item.isReactivationAfterManualDisable && (
+                  <p className="text-xs text-orange-400 mt-1">
+                    Após desativação manual
+                  </p>
+                )}
+              </div>
             )}
             <p className="text-xs text-admin-muted-foreground">
               {formatDate(item.created_at)}

@@ -39,11 +39,13 @@ export interface AuctionRegistration {
   id: string;
   user_id: string;
   auction_id: string;
-  status: 'approved' | 'pending' | 'rejected' | 'canceled';
+  status: 'approved' | 'pending' | 'rejected' | 'canceled' | 'disabled';
   internal_notes?: string;
   client_notes?: string;
   approved_by?: string;
   next_registration_allowed_at?: string;
+  manually_disabled_by?: string;
+  manually_disabled_at?: string;
   created_at: string;
   updated_at: string;
 }

@@ -180,13 +180,27 @@ const AdminRegistrations = () => {
     const action = newStatus === 'approved' ? 'ativada' : 'desabilitada';
     
     try {
+      const currentUser = (await supabase.auth.getUser()).data.user?.id;
+      
+      const updateData: any = { 
+        status: newStatus,
+        approved_by: currentUser,
+        updated_at: new Date().toISOString()
+      };
+      
+      // If disabling, mark it as manual deactivation
+      if (newStatus === 'disabled') {
+        updateData.manually_disabled_by = currentUser;
+        updateData.manually_disabled_at = new Date().toISOString();
+      } else if (newStatus === 'approved') {
+        // Clear manual deactivation fields when re-approving
+        updateData.manually_disabled_by = null;
+        updateData.manually_disabled_at = null;
+      }
+
       const { error } = await supabase
         .from('auction_registrations')
-        .update({ 
-          status: newStatus,
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', id);
       
       if (error) throw error;

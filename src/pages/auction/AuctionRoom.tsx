@@ -60,6 +60,9 @@ const { toast } = useToast();
         case 'rejected':
           setUserState('registration_rejected');
           break;
+        case 'disabled':
+          setUserState('need_registration'); // Treat disabled as need_registration
+          break;
         case 'approved':
           if (userPendingBid) {
             setUserState('bid_pending');
@@ -190,12 +193,17 @@ const recalculateNextBidValue = () => {
           };
         }
         
+        // Check if user was manually disabled
+        const wasManuallyDisabled = registration?.status === 'disabled';
+        
         return {
-          title: 'Habilitação Necessária',
-          description: 'Você precisa se habilitar para participar deste leilão.',
-          action: 'Solicitar Habilitação',
-          variant: 'default' as const,
-          icon: User,
+          title: wasManuallyDisabled ? 'Habilitação Desabilitada' : 'Habilitação Necessária',
+          description: wasManuallyDisabled 
+            ? 'Sua habilitação foi desabilitada. Você pode solicitar uma nova habilitação.' 
+            : 'Você precisa se habilitar para participar deste leilão.',
+          action: wasManuallyDisabled ? 'Solicitar Nova Habilitação' : 'Solicitar Habilitação',
+          variant: wasManuallyDisabled ? 'destructive' as const : 'default' as const,
+          icon: wasManuallyDisabled ? AlertCircle : User,
           onClick: requestRegistration,
           disabled: false
         };

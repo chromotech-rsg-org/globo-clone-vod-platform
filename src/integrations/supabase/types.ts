@@ -78,6 +78,8 @@ export type Database = {
           created_at: string
           id: string
           internal_notes: string | null
+          manually_disabled_at: string | null
+          manually_disabled_by: string | null
           next_registration_allowed_at: string | null
           status: string
           updated_at: string
@@ -90,6 +92,8 @@ export type Database = {
           created_at?: string
           id?: string
           internal_notes?: string | null
+          manually_disabled_at?: string | null
+          manually_disabled_by?: string | null
           next_registration_allowed_at?: string | null
           status?: string
           updated_at?: string
@@ -102,6 +106,8 @@ export type Database = {
           created_at?: string
           id?: string
           internal_notes?: string | null
+          manually_disabled_at?: string | null
+          manually_disabled_by?: string | null
           next_registration_allowed_at?: string | null
           status?: string
           updated_at?: string

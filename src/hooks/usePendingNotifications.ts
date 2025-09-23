@@ -14,6 +14,7 @@ interface PendingItem {
   value?: number;
   created_at: string;
   isNew?: boolean;
+  isReactivationAfterManualDisable?: boolean;
 }
 
 export const usePendingNotifications = () => {
@@ -67,7 +68,7 @@ export const usePendingNotifications = () => {
       // Buscar registros pendentes
       const { data: registrationsData, error: registrationsError } = await supabase
         .from('auction_registrations')
-        .select('id, created_at, auction_id, user_id')
+        .select('id, created_at, auction_id, user_id, manually_disabled_by, manually_disabled_at, client_notes')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -143,7 +144,8 @@ export const usePendingNotifications = () => {
             auction_name: auctionsMap.get(registration.auction_id) || `Leilão ${registration.auction_id.slice(-4)}`,
             user_name: profilesMap.get(registration.user_id) || `Usuário ${registration.user_id.slice(-4)}`,
             created_at: registration.created_at,
-            isNew: false // Will be set by real-time updates
+            isNew: false, // Will be set by real-time updates
+            isReactivationAfterManualDisable: Boolean(registration.manually_disabled_by && registration.client_notes?.includes('reativação após desativação manual'))
           }));
         } catch (error) {
           console.error('⚠️ usePendingNotifications: Erro ao processar registros:', error);

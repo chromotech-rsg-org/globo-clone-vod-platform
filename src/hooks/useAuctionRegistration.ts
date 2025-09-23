@@ -130,6 +130,18 @@ export const useAuctionRegistration = (auctionId: string) => {
             .eq('id', registration.id);
 
           if (error) throw error;
+        } else if (registration.status === 'disabled') {
+          // Reativar habilitação desabilitada manualmente
+          const { error } = await supabase
+            .from('auction_registrations')
+            .update({
+              status: 'pending',
+              updated_at: new Date().toISOString(),
+              client_notes: 'Solicitação de reativação após desativação manual'
+            })
+            .eq('id', registration.id);
+
+          if (error) throw error;
         }
       } else {
         const { error } = await supabase
@@ -255,6 +267,12 @@ export const useAuctionRegistration = (auctionId: string) => {
             toast({
               title: "Habilitação Cancelada",
               description: "Sua habilitação foi cancelada.",
+              variant: "destructive"
+            });
+          } else if (newStatus === 'disabled') {
+            toast({
+              title: "Habilitação Desabilitada ⛔",
+              description: "Sua habilitação foi desabilitada pelo administrador. Você pode solicitar uma nova habilitação.",
               variant: "destructive"
             });
           }
