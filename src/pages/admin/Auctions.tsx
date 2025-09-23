@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Edit, Trash2, Plus, Search, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ const AdminAuctions = () => {
   const [inputValue, setInputValue] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [liveFilter, setLiveFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
@@ -51,7 +53,7 @@ const AdminAuctions = () => {
 
   useEffect(() => {
     fetchAuctions();
-  }, [statusFilter, liveFilter, currentPage, pageSize, searchTerm]);
+  }, [statusFilter, liveFilter, currentPage, pageSize, searchTerm, activeTab]);
 
   const fetchAuctions = async () => {
     try {
@@ -68,6 +70,11 @@ const AdminAuctions = () => {
 
       if (liveFilter !== 'all') {
         query = query.eq('is_live', liveFilter === 'live');
+      }
+
+      // Filter by tab
+      if (activeTab === 'pre-bidding') {
+        query = query.eq('allow_pre_bidding', true);
       }
 
       if (searchTerm) {
@@ -251,6 +258,17 @@ const AdminAuctions = () => {
           </Button>
         </div>
 
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList className="bg-admin-muted border-admin-border">
+            <TabsTrigger value="all" className="text-admin-muted-foreground data-[state=active]:text-admin-primary-foreground">
+              Todos os Leilões
+            </TabsTrigger>
+            <TabsTrigger value="pre-bidding" className="text-admin-muted-foreground data-[state=active]:text-admin-primary-foreground">
+              Pré Lance
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex flex-col">
             <label className="text-sm text-admin-muted-foreground mb-1">Status</label>
@@ -304,14 +322,21 @@ const AdminAuctions = () => {
                 {auctions.map(auction => (
                   <TableRow key={auction.id} className="border-gray-700">
                     <TableCell className="text-white">{auction.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        auction.status === 'active' ? 'admin-success' :
-                          'admin-muted'
-                      }>
-                        {auction.status === 'active' ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
+                     <TableCell>
+                       <div className="flex flex-col gap-1">
+                         <Badge variant={
+                           auction.status === 'active' ? 'admin-success' :
+                             'admin-muted'
+                         }>
+                           {auction.status === 'active' ? 'Visível' : 'Oculto'}
+                         </Badge>
+                         {auction.allow_pre_bidding && (
+                           <Badge variant="outline" className="bg-yellow-900/30 text-yellow-400 border-yellow-600">
+                             Pré Lance
+                           </Badge>
+                         )}
+                       </div>
+                     </TableCell>
                     <TableCell>
                       <Badge variant={
                         auction.is_live ? 'admin-success' : 'admin-muted'

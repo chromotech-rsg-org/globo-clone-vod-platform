@@ -15,6 +15,7 @@ export interface Auction {
   status: 'active' | 'inactive';
   auction_type: 'rural' | 'judicial';
   is_live: boolean;
+  allow_pre_bidding: boolean;
   created_at: string;
   updated_at: string;
 }

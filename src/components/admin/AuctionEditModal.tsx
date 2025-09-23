@@ -30,7 +30,8 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
     end_date: '',
     status: 'inactive',
     auction_type: 'rural',
-    is_live: false
+    is_live: false,
+    allow_pre_bidding: false
   });
 
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
@@ -98,7 +99,8 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
         end_date: formData.end_date ? convertToUTC(formData.end_date) : null,
         status: formData.status,
         auction_type: formData.auction_type,
-        is_live: formData.is_live
+        is_live: formData.is_live,
+        allow_pre_bidding: formData.allow_pre_bidding
       };
 
       const { error } = await supabase
@@ -195,14 +197,28 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                   checked={formData.status === 'active'}
                   onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? 'active' : 'inactive' })}
                 />
-                <Label htmlFor="status" className="text-white">Ativo</Label>
+                <Label htmlFor="status" className="text-white">Visível</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="allow_pre_bidding"
+                  checked={formData.allow_pre_bidding}
+                  onCheckedChange={(checked) => setFormData({ ...formData, allow_pre_bidding: checked })}
+                />
+                <Label htmlFor="allow_pre_bidding" className="text-white">Pré Lance</Label>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is_live"
                   checked={formData.is_live}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_live: checked })}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    is_live: checked,
+                    // Quando ativar ao vivo, desativar pré lance
+                    allow_pre_bidding: checked ? false : formData.allow_pre_bidding
+                  })}
                 />
                 <Label htmlFor="is_live" className="text-white">Ao vivo</Label>
               </div>

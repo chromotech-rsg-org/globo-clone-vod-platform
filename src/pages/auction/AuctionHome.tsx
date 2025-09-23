@@ -19,6 +19,7 @@ const AuctionHome = () => {
 
   const liveAuctions = auctions.filter(auction => auction.is_live);
   const recordedAuctions = auctions.filter(auction => !auction.is_live);
+  const preBiddingAuctions = auctions.filter(auction => auction.allow_pre_bidding && !auction.is_live);
 
   console.log('🏠 AuctionHome: Current state:', {
     user: user ? { email: user.email, role: user.role } : null,
@@ -63,7 +64,7 @@ const AuctionHome = () => {
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="live" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-900 border border-green-600/30">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-gray-900 border border-green-600/30">
             <TabsTrigger 
               value="live" 
               className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
@@ -73,6 +74,18 @@ const AuctionHome = () => {
               {liveAuctions.length > 0 && (
                 <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2">
                   {liveAuctions.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pre-bidding" 
+              className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+            >
+              <Target size={16} />
+              Pré Lance
+              {preBiddingAuctions.length > 0 && (
+                <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full ml-2">
+                  {preBiddingAuctions.length}
                 </span>
               )}
             </TabsTrigger>
@@ -108,6 +121,41 @@ const AuctionHome = () => {
             ) : (
               <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
                 {liveAuctions.map((auction) => (
+                  <div 
+                    key={auction.id} 
+                    className="flex-shrink-0" 
+                    style={{ 
+                      width: 'calc((100% - 2.4cm) / 3)', 
+                      minWidth: '280px',
+                      maxWidth: '420px',
+                      marginBottom: '1cm'
+                    }}
+                  >
+                    <AuctionChannelCard auction={auction} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="pre-bidding" className="space-y-6">
+            {preBiddingAuctions.length === 0 ? (
+              <Card className="text-center py-16 bg-gradient-to-br from-gray-900/80 to-black/60 border-green-600/30">
+                <CardContent>
+                  <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Target size={32} className="text-gray-500" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-white mb-4">
+                    Nenhum leilão com pré lance
+                  </h3>
+                  <p className="text-gray-400 text-lg">
+                    No momento não há leilões disponíveis para pré lance.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
+                {preBiddingAuctions.map((auction) => (
                   <div 
                     key={auction.id} 
                     className="flex-shrink-0" 

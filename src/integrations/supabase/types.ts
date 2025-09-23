@@ -139,6 +139,7 @@ export type Database = {
       }
       auctions: {
         Row: {
+          allow_pre_bidding: boolean | null
           auction_type: string
           bid_increment: number
           created_at: string
@@ -161,6 +162,7 @@ export type Database = {
           youtube_url: string | null
         }
         Insert: {
+          allow_pre_bidding?: boolean | null
           auction_type?: string
           bid_increment?: number
           created_at?: string
@@ -183,6 +185,7 @@ export type Database = {
           youtube_url?: string | null
         }
         Update: {
+          allow_pre_bidding?: boolean | null
           auction_type?: string
           bid_increment?: number
           created_at?: string
