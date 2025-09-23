@@ -120,6 +120,7 @@ const AdminRegistrations = () => {
         .from('auction_registrations')
         .update({ 
           status: 'approved',
+          client_notes: 'Aprovado',
           approved_by: (await supabase.auth.getUser()).data.user?.id,
           updated_at: new Date().toISOString()
         })

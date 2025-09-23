@@ -152,24 +152,6 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
 
       if (error) throw error;
 
-      // Send email notification if client notes were added/changed
-      if (clientNotes && clientNotes !== registration.client_notes && userProfile) {
-        try {
-          await supabase.functions.invoke('send-registration-notification', {
-            body: {
-              userEmail: userProfile.email,
-              userName: userProfile.name,
-              auctionName: auctionData?.name || 'Leilão',
-              status: registration.status,
-              clientNotes: clientNotes
-            }
-          });
-        } catch (emailError) {
-          console.error('Erro ao enviar email:', emailError);
-          // Don't fail the save operation if email fails
-        }
-      }
-
       toast({
         title: "Sucesso",
         description: "Observações salvas com sucesso",
@@ -193,8 +175,39 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
   const handleSaveNotesAndApprove = async () => {
     if (!registration || !onApprove) return;
 
-    // First save notes
-    await handleSaveNotes();
+    // Ensure client notes has default message if empty
+    const finalClientNotes = clientNotes.trim() || 'Aprovado';
+    setClientNotes(finalClientNotes);
+    
+    // Save notes with default message
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('auction_registrations')
+        .update({
+          internal_notes: internalNotes,
+          client_notes: finalClientNotes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', registration.id);
+
+      if (error) throw error;
+      
+      // Update the registration object with new notes
+      Object.assign(registration, { internal_notes: internalNotes, client_notes: finalClientNotes });
+    } catch (error) {
+      console.error('Erro ao salvar observações:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as observações",
+        variant: "destructive",
+      });
+      setSaving(false);
+      return;
+    } finally {
+      setSaving(false);
+    }
+
     // Then approve
     onApprove(registration.id);
     onOpenChange(false);
@@ -203,8 +216,39 @@ const RegistrationDetailsModal: React.FC<RegistrationDetailsModalProps> = ({
   const handleSaveNotesAndReject = async () => {
     if (!registration || !onReject) return;
 
-    // First save notes
-    await handleSaveNotes();
+    // Ensure client notes has default message if empty
+    const finalClientNotes = clientNotes.trim() || 'Reprovado';
+    setClientNotes(finalClientNotes);
+    
+    // Save notes with default message
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('auction_registrations')
+        .update({
+          internal_notes: internalNotes,
+          client_notes: finalClientNotes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', registration.id);
+
+      if (error) throw error;
+      
+      // Update the registration object with new notes
+      Object.assign(registration, { internal_notes: internalNotes, client_notes: finalClientNotes });
+    } catch (error) {
+      console.error('Erro ao salvar observações:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as observações",
+        variant: "destructive",
+      });
+      setSaving(false);
+      return;
+    } finally {
+      setSaving(false);
+    }
+
     // Then reject
     onReject(registration.id);
     onOpenChange(false);
