@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2, Plus, Search, Eye } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -127,6 +127,39 @@ const AdminAuctions = () => {
   const handleEdit = (item: Auction) => {
     setEditingAuction(item);
     setIsEditModalOpen(true);
+  };
+
+  const handleDuplicate = async (auction: Auction) => {
+    try {
+      const { id, created_at, updated_at, ...auctionData } = auction;
+      
+      // Create duplicate with modified name
+      const duplicateData = {
+        ...auctionData,
+        name: `${auction.name} - Cópia`,
+        status: 'inactive'
+      };
+
+      const { error } = await supabase
+        .from('auctions')
+        .insert([duplicateData]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Leilão duplicado com sucesso"
+      });
+
+      fetchAuctions();
+    } catch (error: any) {
+      console.error('Erro ao duplicar leilão:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível duplicar o leilão",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleModalClose = () => {
@@ -322,11 +355,11 @@ const AdminAuctions = () => {
                         <Button 
                           size="sm" 
                           variant="ghost" 
-                          onClick={() => handleView(auction)}
+                          onClick={() => handleDuplicate(auction)}
                           className="text-green-400 hover:text-green-300 hover:bg-gray-800"
-                          title="Visualizar/Editar"
+                          title="Duplicar Leilão"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Copy className="h-4 w-4" />
                         </Button>
                         <Button 
                           size="sm" 
