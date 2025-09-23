@@ -342,8 +342,8 @@ const AdminRegistrations = () => {
                             variant="ghost" 
                             onClick={() => handleToggleStatus(registration.id, registration.status)}
                             className={registration.status === 'approved' 
-                              ? "text-orange-400 hover:text-orange-300 hover:bg-gray-800" 
-                              : "text-green-400 hover:text-green-300 hover:bg-gray-800"}
+                              ? "text-green-400 hover:text-green-300 hover:bg-gray-800" 
+                              : "text-red-400 hover:text-red-300 hover:bg-gray-800"}
                             title={registration.status === 'approved' ? 'Desabilitar' : 'Ativar'}
                           >
                             <Power className="h-4 w-4" />
