@@ -219,8 +219,10 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
     }
   };
 
-  const acknowledgeRegistration = (notificationId: string) => {
+  const acknowledgeRegistration = async (notificationId: string, notificationType: 'bid' | 'registration') => {
     setAcknowledgedRegistrations(prev => new Set([...prev, notificationId]));
+    // Mark as read when acknowledged
+    await markAsRead(notificationId, notificationType);
   };
 
   // Show modal when there are new notifications
@@ -280,7 +282,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         />
       </div>
 
-      <Dialog open={showModal} onOpenChange={setShowModal}>
+      <Dialog open={showModal} onOpenChange={unreadCount === 0 ? setShowModal : undefined}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-black border-green-600/30 text-white [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-green-500">
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -293,16 +295,6 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
                   </Badge>
                 )}
               </DialogTitle>
-              {unreadCount > 0 && (
-                <Button
-                  size="sm"
-                  onClick={markAllAsRead}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <MailCheck className="h-4 w-4 mr-1" />
-                  Marcar todas como lidas
-                </Button>
-              )}
             </div>
           </DialogHeader>
 
@@ -331,17 +323,6 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
                         <div className="text-xs text-gray-400">
                           {formatDateTime(notification.updated_at)}
                         </div>
-                        {!notification.read && 
-                         !(notification.type === 'registration' && notification.status === 'approved') && (
-                          <Button
-                            size="sm"
-                            onClick={() => markAsRead(notification.id, notification.type)}
-                            className="h-6 px-2 bg-green-600 hover:bg-green-700 text-white text-xs"
-                          >
-                            <Check className="h-3 w-3 mr-1" />
-                            Marcar como lida
-                          </Button>
-                        )}
                       </div>
                     </div>
                     {notification.read && notification.read_at && (
@@ -370,13 +351,10 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
                           </div>
                         </div>
                       )}
-                      {notification.type === 'registration' && 
-                       notification.status === 'approved' && 
-                       !notification.read && 
-                       !acknowledgedRegistrations.has(notification.id) && (
+                      {!notification.read && (
                         <div className="flex justify-center pt-2">
                           <Button
-                            onClick={() => acknowledgeRegistration(notification.id)}
+                            onClick={() => acknowledgeRegistration(notification.id, notification.type)}
                             className="bg-green-600 hover:bg-green-700 text-white"
                           >
                             OK - Entendi
@@ -393,17 +371,10 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
           <div className="flex justify-end pt-4 border-t border-green-600/30">
             <Button 
               onClick={() => {
-                const hasUnacknowledgedRegistrations = notifications.some(n => 
-                  n.type === 'registration' && 
-                  n.status === 'approved' && 
-                  !n.read && 
-                  !acknowledgedRegistrations.has(n.id)
-                );
-                
-                if (hasUnacknowledgedRegistrations) {
+                if (unreadCount > 0) {
                   toast({
                     title: "Confirmação necessária",
-                    description: "Por favor, confirme as mensagens de habilitação clicando em 'OK - Entendi'",
+                    description: "Por favor, confirme todas as mensagens clicando em 'OK - Entendi'",
                     variant: "destructive",
                   });
                   return;
@@ -411,7 +382,12 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
                 
                 setShowModal(false);
               }}
-              className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+              disabled={unreadCount > 0}
+              className={`border-green-600 ${
+                unreadCount > 0 
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
             >
               Fechar
             </Button>
