@@ -65,14 +65,8 @@ const CurrentLotDisplay = ({
     <Card className="bg-black border-green-500/50 shadow-xl">
       <CardHeader className="text-center">
         {/* Status do Lote */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-center mb-6">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Hash className="h-5 w-5 text-gray-400" />
-              <span className="text-lg font-semibold text-white">
-                Lote {((currentLot.order_index || 0) + 1).toString().padStart(3, '0')}
-              </span>
-            </div>
             {currentLot.status === 'finished' && (
               <Badge variant="destructive" className="bg-red-600/20 text-red-400 border-red-600/30">
                 <X className="h-3 w-3 mr-1" />
