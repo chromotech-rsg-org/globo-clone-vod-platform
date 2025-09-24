@@ -50,56 +50,16 @@ const CurrentLotDisplay = ({
     const newIncrement = customIncrement + baseIncrement;
     onIncrementChange(newIncrement);
   };
-  return <Card className="bg-black border-green-500/50 shadow-xl">
-      <CardHeader className="text-center">
-        {/* Status do Lote */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Hash className="h-5 w-5 text-gray-400" />
-              <span className="text-lg font-semibold text-white">
-                Lote {((currentLot.order_index || 0) + 1).toString().padStart(3, '0')}
-              </span>
-            </div>
-            {currentLot.status === 'finished'}
-            {currentLot.status === 'in_progress' && <Badge className="bg-green-600/20 text-green-400 border-green-600/30">
-                <PlayCircle className="h-3 w-3 mr-1" />
-                Em Andamento
-              </Badge>}
-          </div>
-        </div>
-
+  return <Card className="bg-black border-green-500/50 shadow-xl h-full flex flex-col">
+      <CardHeader className="text-center py-4">
         <CardTitle className="text-white flex items-center justify-center gap-2">
-          <Trophy className="h-6 w-6 text-yellow-400" />
           <span>{currentLot.name}</span>
           {currentLot.status === 'in_progress' && <Badge className="bg-green-600 text-white animate-pulse">
               EM ANDAMENTO
             </Badge>}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Imagem e Nome do Lote */}
-        <div className="text-center">
-          {currentLot.image_url && <div className="mx-auto w-48 h-48 mb-4 overflow-hidden rounded-lg border-2 border-green-500/30">
-              <img src={currentLot.image_url} alt={currentLot.name} className="w-full h-full object-cover" />
-            </div>}
-          <h3 className="text-2xl font-bold text-white mb-2">{currentLot.name}</h3>
-          {currentLot.description && <div className="space-y-2">
-              <p className={`text-gray-300 leading-relaxed cursor-pointer transition-all duration-200 ${!isDescriptionExpanded ? 'line-clamp-1 hover:text-white' : ''}`} onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}>
-                {currentLot.description}
-              </p>
-              {currentLot.description.length > 80 && <Button variant="ghost" size="sm" onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)} className="p-0 h-auto text-gray-400 hover:text-white text-sm">
-                  {isDescriptionExpanded ? <>
-                      <ChevronUp className="h-4 w-4 mr-1" />
-                      Mostrar menos
-                    </> : <>
-                      <ChevronDown className="h-4 w-4 mr-1" />
-                      Mostrar mais
-                    </>}
-                </Button>}
-            </div>}
-        </div>
-
+      <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
         {/* Valores do Lote */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-gray-800/50 rounded-lg p-4 text-center">
