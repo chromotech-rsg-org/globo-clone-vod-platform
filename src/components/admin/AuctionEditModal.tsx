@@ -5,10 +5,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Auction } from '@/types/auction';
 import { AuctionLotsManager } from './AuctionLotsManager';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 
 interface AuctionEditModalProps {
@@ -169,25 +175,107 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
             </div>
 
             <div>
-              <Label htmlFor="start_date" className="text-white">Data de Início (Horário de Brasília)</Label>
-              <Input
-                id="start_date"
-                type="datetime-local"
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="bg-black border-green-600/30 text-white"
-              />
+              <Label className="text-white">Data de Início (Horário de Brasília)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal bg-black border-green-600/30 text-white hover:bg-gray-800",
+                      !formData.start_date && "text-gray-400"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.start_date ? (
+                      format(new Date(formData.start_date), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                    ) : (
+                      <span>Selecione a data de início</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-gray-900 border-green-600/30" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.start_date ? new Date(formData.start_date) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const dateStr = format(date, "yyyy-MM-dd'T'HH:mm");
+                        setFormData({ ...formData, start_date: dateStr });
+                      }
+                    }}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                  <div className="p-3 border-t border-green-600/30">
+                    <Input
+                      type="time"
+                      value={formData.start_date ? format(new Date(formData.start_date), "HH:mm") : ""}
+                      onChange={(e) => {
+                        if (formData.start_date) {
+                          const date = new Date(formData.start_date);
+                          const [hours, minutes] = e.target.value.split(':');
+                          date.setHours(parseInt(hours), parseInt(minutes));
+                          const dateStr = format(date, "yyyy-MM-dd'T'HH:mm");
+                          setFormData({ ...formData, start_date: dateStr });
+                        }
+                      }}
+                      className="bg-black border-green-600/30 text-white"
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>
-              <Label htmlFor="end_date" className="text-white">Data de Fim (Horário de Brasília)</Label>
-              <Input
-                id="end_date"
-                type="datetime-local"
-                value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="bg-black border-green-600/30 text-white"
-              />
+              <Label className="text-white">Data de Fim (Horário de Brasília)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal bg-black border-green-600/30 text-white hover:bg-gray-800",
+                      !formData.end_date && "text-gray-400"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.end_date ? (
+                      format(new Date(formData.end_date), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                    ) : (
+                      <span>Selecione a data de fim</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-gray-900 border-green-600/30" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.end_date ? new Date(formData.end_date) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const dateStr = format(date, "yyyy-MM-dd'T'HH:mm");
+                        setFormData({ ...formData, end_date: dateStr });
+                      }
+                    }}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                  <div className="p-3 border-t border-green-600/30">
+                    <Input
+                      type="time"
+                      value={formData.end_date ? format(new Date(formData.end_date), "HH:mm") : ""}
+                      onChange={(e) => {
+                        if (formData.end_date) {
+                          const date = new Date(formData.end_date);
+                          const [hours, minutes] = e.target.value.split(':');
+                          date.setHours(parseInt(hours), parseInt(minutes));
+                          const dateStr = format(date, "yyyy-MM-dd'T'HH:mm");
+                          setFormData({ ...formData, end_date: dateStr });
+                        }
+                      }}
+                      className="bg-black border-green-600/30 text-white"
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="flex items-center space-x-4">
