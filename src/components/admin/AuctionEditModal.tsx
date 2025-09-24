@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Auction } from '@/types/auction';
-import { AuctionLotsManager } from './AuctionLotsManager';
+import { AuctionLotsManager, AuctionLotsManagerRef } from './AuctionLotsManager';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
@@ -27,6 +27,7 @@ interface AuctionEditModalProps {
 const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModalProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const lotsManagerRef = React.useRef<AuctionLotsManagerRef>(null);
   const [formData, setFormData] = useState<Partial<Auction>>({
     name: '',
     description: '',
@@ -73,6 +74,10 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
     setSaving(true);
 
     try {
+      // Save any pending lot changes first
+      if (lotsManagerRef.current) {
+        await lotsManagerRef.current.savePendingChanges();
+      }
       // If a new image was selected, upload it now (deferred upload)
       let imageUrl = formData.image_url || '';
       if (pendingImageFile) {
@@ -369,7 +374,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
           {auction?.id && (
             <div className="border-t border-green-600/30 pt-6 bg-gray-900/50 rounded-lg p-4 -mx-2">
               <h3 className="text-lg font-semibold text-white mb-4">Gerenciar Lotes</h3>
-              <AuctionLotsManager auctionId={auction.id} />
+              <AuctionLotsManager ref={lotsManagerRef} auctionId={auction.id} />
             </div>
           )}
 

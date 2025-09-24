@@ -32,6 +32,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+export interface AuctionLotsManagerRef {
+  savePendingChanges: () => Promise<void>;
+}
+
 interface AuctionLotsManagerProps {
   auctionId: string;
 }
@@ -245,7 +249,7 @@ const SortableItem = ({
   );
 };
 
-export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
+export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, AuctionLotsManagerProps>(({ auctionId }, ref) => {
   const { items, loading, refetch } = useAuctionItems(auctionId);
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
@@ -475,6 +479,17 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
 
       if (error) throw error;
 
+      setEditingId(null);
+      setEditData({
+        name: '',
+        description: '',
+        initial_value: 0,
+        increment: 100,
+        status: 'not_started',
+        image_url: '',
+        order_index: 0
+      });
+
       toast({
         title: "Lote atualizado",
         description: "O lote foi atualizado com sucesso.",
@@ -515,6 +530,15 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
       });
     }
   };
+
+  // Expose methods to parent through ref
+  React.useImperativeHandle(ref, () => ({
+    savePendingChanges: async () => {
+      if (editingId) {
+        await handleSave();
+      }
+    }
+  }));
 
   if (loading) {
     return <div className="text-center py-4 text-gray-400">Carregando lotes...</div>;
@@ -688,6 +712,8 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
       </div>
     </div>
   );
-};
+});
+
+AuctionLotsManager.displayName = 'AuctionLotsManager';
 
 export default AuctionLotsManager;
