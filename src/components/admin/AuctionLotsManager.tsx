@@ -163,11 +163,13 @@ const SortableItem = ({
               <div>
                 <Label className="text-white">Imagem do Lote</Label>
                 <ImageUpload 
-                  onImageUploaded={(url) => onEditDataChange({ image_url: url })}
+                  onImageUploaded={(url, path) => onEditDataChange({ image_url: url })}
                   folder="auction-items"
                   existingImages={editData.image_url ? [{ 
                     url: editData.image_url, 
-                    path: editData.image_url.split('/').pop() || '', 
+                    path: editData.image_url.includes('auction-items/') 
+                      ? editData.image_url.split('auction-items/')[1] 
+                      : editData.image_url.split('/').pop() || '', 
                     name: 'Imagem do Lote' 
                   }] : []}
                 />
@@ -608,11 +610,13 @@ export const AuctionLotsManager = ({ auctionId }: AuctionLotsManagerProps) => {
               <div>
                 <Label className="text-white">Imagem do Lote</Label>
                 <ImageUpload 
-                  onImageUploaded={(url) => setFormData({ ...formData, image_url: url })}
+                  onImageUploaded={(url, path) => setFormData({ ...formData, image_url: url })}
                   folder="auction-items"
                   existingImages={formData.image_url ? [{ 
                     url: formData.image_url, 
-                    path: formData.image_url.split('/').pop() || '', 
+                    path: formData.image_url.includes('auction-items/') 
+                      ? formData.image_url.split('auction-items/')[1] 
+                      : formData.image_url.split('/').pop() || '', 
                     name: 'Imagem do Lote' 
                   }] : []}
                 />
