@@ -121,6 +121,20 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
 
       if (error) throw error;
 
+      // Update lot statuses automatically after saving auction
+      if (auction?.id) {
+        try {
+          const { error: statusError } = await supabase.rpc('update_auction_lot_statuses', {
+            auction_uuid: auction.id
+          });
+          if (statusError) {
+            console.error('Error updating lot statuses:', statusError);
+          }
+        } catch (statusError) {
+          console.error('Error calling update_auction_lot_statuses:', statusError);
+        }
+      }
+
       toast({
         title: "Sucesso",
         description: "Leilão atualizado com sucesso"

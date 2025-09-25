@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, GripVertical, Edit2, Trash2, Save, X, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { Plus, GripVertical, Edit2, Trash2, Save, X, ArrowUpDown } from 'lucide-react';
 import ImageUpload from '@/components/ui/image-upload';
 import { useAuctionItems } from '@/hooks/useAuctionItems';
-import { useLotStatusUpdater } from '@/hooks/useLotStatusUpdater';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AuctionItem } from '@/types/auction';
@@ -254,7 +254,7 @@ const SortableItem = ({
 
 export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, AuctionLotsManagerProps>(({ auctionId }, ref) => {
   const { items, loading, refetch } = useAuctionItems(auctionId);
-  const { updateLotStatuses } = useLotStatusUpdater();
+  
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -284,13 +284,6 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     })
   );
 
-  // Handle lot status update
-  const handleUpdateLotStatuses = async () => {
-    const success = await updateLotStatuses(auctionId);
-    if (success) {
-      refetch();
-    }
-  };
 
   // Auto-order function
   const handleAutoOrder = async () => {
@@ -562,14 +555,6 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Gerenciar Lotes</h3>
           <div className="flex gap-2">
-            <Button 
-              onClick={handleUpdateLotStatuses} 
-              variant="outline"
-              className="border-blue-600/50 text-blue-400 hover:bg-blue-900/30"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Atualizar Status
-            </Button>
             <Button 
               onClick={handleAutoOrder} 
               variant="outline"
