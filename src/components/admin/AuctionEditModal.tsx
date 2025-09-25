@@ -38,7 +38,8 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
     status: 'inactive',
     auction_type: 'rural',
     is_live: false,
-    allow_pre_bidding: false
+    allow_pre_bidding: false,
+    broadcast_enabled: true
   });
 
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
@@ -111,7 +112,8 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
         status: formData.status,
         auction_type: formData.auction_type,
         is_live: formData.is_live,
-        allow_pre_bidding: formData.allow_pre_bidding
+        allow_pre_bidding: formData.allow_pre_bidding,
+        broadcast_enabled: formData.broadcast_enabled
       };
 
       const { error } = await supabase
@@ -344,13 +346,42 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
           </div>
 
           <div>
-            <Label htmlFor="youtube_url" className="text-white">Link da Transmissão</Label>
+            <div className="flex items-center justify-between mb-3">
+              <Label htmlFor="youtube_url" className="text-white">Link da Transmissão</Label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="broadcast_enabled"
+                  checked={formData.broadcast_enabled}
+                  onCheckedChange={(checked) => setFormData({ ...formData, broadcast_enabled: checked })}
+                />
+                <Label htmlFor="broadcast_enabled" className="text-sm text-gray-300">
+                  {formData.broadcast_enabled ? 'Ativada' : 'Desativada'}
+                </Label>
+              </div>
+            </div>
+            {!formData.broadcast_enabled && (
+              <div className="mb-4 p-4 bg-amber-900/20 border border-amber-600/30 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-amber-200 text-sm font-medium mb-1">
+                      Transmissão Desativada
+                    </p>
+                    <p className="text-amber-300/80 text-xs leading-relaxed">
+                      Os usuários verão uma mensagem informando que a transmissão não está disponível, 
+                      mas poderão continuar acompanhando todas as informações do leilão e lotes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <Input
               id="youtube_url"
               value={formData.youtube_url}
               onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
               className="bg-black border-green-600/30 text-white"
               placeholder="https://www.youtube.com/watch?v=..."
+              disabled={!formData.broadcast_enabled}
             />
           </div>
 

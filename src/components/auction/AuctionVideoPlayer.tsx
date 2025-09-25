@@ -27,7 +27,7 @@ const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
     <Card className="bg-black border-green-600/30">
       <CardContent className="p-0">
         <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
-          {auction.youtube_url ? (
+          {auction.broadcast_enabled && auction.youtube_url ? (
             <iframe
               src={getYouTubeEmbedUrl(auction.youtube_url)}
               className="w-full h-full"
@@ -35,10 +35,22 @@ const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
               allowFullScreen
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-white">
-              <div className="text-center">
-                <Play size={64} className="mx-auto mb-4 opacity-50" />
-                <p>Transmissão não disponível</p>
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+              <div className="text-center px-8 py-12 max-w-md">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-800/50 flex items-center justify-center">
+                  <Play size={32} className="text-gray-400 ml-1" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">
+                  Transmissão não disponível
+                </h3>
+                <p className="text-gray-300 text-sm leading-relaxed mb-6">
+                  A transmissão ao vivo não está ativa no momento, mas você pode continuar 
+                  acompanhando todas as informações do leilão, lotes e participar dos lances.
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-green-400">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-sm font-medium">Leilão ativo</span>
+                </div>
               </div>
             </div>
           )}
