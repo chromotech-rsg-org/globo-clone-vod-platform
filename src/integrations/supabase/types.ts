@@ -142,6 +142,7 @@ export type Database = {
           allow_pre_bidding: boolean | null
           auction_type: string
           bid_increment: number
+          broadcast_enabled: boolean
           created_at: string
           current_bid_value: number
           description: string | null
@@ -165,6 +166,7 @@ export type Database = {
           allow_pre_bidding?: boolean | null
           auction_type?: string
           bid_increment?: number
+          broadcast_enabled?: boolean
           created_at?: string
           current_bid_value?: number
           description?: string | null
@@ -188,6 +190,7 @@ export type Database = {
           allow_pre_bidding?: boolean | null
           auction_type?: string
           bid_increment?: number
+          broadcast_enabled?: boolean
           created_at?: string
           current_bid_value?: number
           description?: string | null

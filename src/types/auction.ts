@@ -16,7 +16,7 @@ export interface Auction {
   auction_type: 'rural' | 'judicial';
   is_live: boolean;
   allow_pre_bidding: boolean;
-  broadcast_enabled?: boolean;
+  broadcast_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
