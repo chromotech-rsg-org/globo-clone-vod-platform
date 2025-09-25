@@ -469,9 +469,19 @@ const recalculateNextBidValue = () => {
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Coluna Principal - Transmissão (2/3 da tela) */}
-          <div className="xl:col-span-2">
+          <div className="xl:col-span-2 space-y-0">
             {/* Video Player */}
             <AuctionVideoPlayer auction={auction} />
+            
+            {/* Lista de Lotes diretamente abaixo do vídeo */}
+            {!lotsLoading && (
+              <LotsList
+                lots={lots}
+                bids={bids}
+                currentUserId={user?.id}
+                currentLotId={currentLotId}
+              />
+            )}
           </div>
 
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
@@ -517,27 +527,8 @@ const recalculateNextBidValue = () => {
               bids={bids}
               currentUserId={user?.id}
             />
-          </div>
-        </div>
 
-        {/* Segunda linha: Lista de Lotes (2/3) e Histórico de Lances (1/3) */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Lista de Todos os Lotes (2/3 da tela) - exatamente abaixo do vídeo */}
-          <div className="xl:col-span-2">
-            {!lotsLoading && (
-              <div style={{ minHeight: 'calc(56.25vw * 2/3)' }}>
-                <LotsList
-                  lots={lots}
-                  bids={bids}
-                  currentUserId={user?.id}
-                  currentLotId={currentLotId}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Histórico de Lances com Filtros (1/3 da tela) */}
-          <div>
+            {/* Histórico de Lances */}
             <BidHistoryWithFilters
               bids={bids}
               lots={lots}
