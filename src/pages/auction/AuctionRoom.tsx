@@ -521,7 +521,7 @@ const recalculateNextBidValue = () => {
         </div>
 
         {/* Segunda linha: Lista de Lotes (2/3) e Histórico de Lances (1/3) */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Lista de Todos os Lotes (2/3 da tela) - exatamente abaixo do vídeo */}
           <div className="xl:col-span-2">
             {!lotsLoading && (
