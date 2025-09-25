@@ -27,7 +27,7 @@ const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
     <Card className="bg-black border-green-600/30">
       <CardContent className="p-0">
         <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
-          {auction.broadcast_enabled && auction.youtube_url ? (
+          {auction.broadcast_enabled !== false && auction.youtube_url ? (
             <iframe
               src={getYouTubeEmbedUrl(auction.youtube_url)}
               className="w-full h-full"
@@ -45,7 +45,7 @@ const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
                 </h3>
                 <p className="text-gray-300 text-sm leading-relaxed mb-6">
                   A transmissão ao vivo não está ativa no momento, mas você pode continuar 
-                  acompanhando todas as informações do leilão, lotes e participar dos lances.
+                  acompanhando todas as informações do leilão e lotes.
                 </p>
                 <div className="flex items-center justify-center space-x-2 text-green-400">
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>

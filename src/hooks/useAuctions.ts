@@ -10,10 +10,10 @@ export const useAuctions = () => {
 
   const fetchAuctions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('auctions')
-        .select('*')
-        .order('created_at', { ascending: false });
+        const { data, error } = await supabase
+          .from('auctions')
+          .select('*')
+          .order('created_at', { ascending: false });
 
       if (error) throw error;
       setAuctions(data as Auction[] || []);
@@ -59,11 +59,11 @@ export const useAuctionDetails = (auctionId: string) => {
 
   const fetchAuction = async () => {
     try {
-      const { data, error } = await supabase
-        .from('auctions')
-        .select('*')
-        .eq('id', auctionId)
-        .single();
+        const { data, error } = await supabase
+          .from('auctions')
+          .select('*')
+          .eq('id', auctionId)
+          .single();
 
       if (error) throw error;
       setAuction(data as Auction);
