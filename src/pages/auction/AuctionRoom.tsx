@@ -475,12 +475,14 @@ const recalculateNextBidValue = () => {
             
             {/* Lista de Lotes diretamente abaixo do vídeo */}
             {!lotsLoading && (
-              <LotsList
-                lots={lots}
-                bids={bids}
-                currentUserId={user?.id}
-                currentLotId={currentLotId}
-              />
+              <div className="mt-4">
+                <LotsList
+                  lots={lots}
+                  bids={bids}
+                  currentUserId={user?.id}
+                  currentLotId={currentLotId}
+                />
+              </div>
             )}
           </div>
 
