@@ -30,7 +30,7 @@ export interface AuctionItem {
   initial_value: number;
   current_value: number;
   increment?: number;
-  status: 'not_started' | 'in_progress' | 'finished' | 'indisponivel';
+  status: 'not_started' | 'in_progress' | 'finished' | 'indisponivel' | 'pre_bidding';
   is_current: boolean;
   order_index: number;
   created_at: string;

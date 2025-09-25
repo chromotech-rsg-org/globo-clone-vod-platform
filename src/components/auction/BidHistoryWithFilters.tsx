@@ -175,7 +175,7 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-green-500">
             {filteredBids.map((bid) => {
-              const statusInfo = getStatusInfo(bid.status, bid.is_winner);
+              const statusInfo = getStatusInfo(bid, lots);
               const isCurrentUser = bid.user_id === currentUserId;
 
               return (

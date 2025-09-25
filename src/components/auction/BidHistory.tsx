@@ -9,10 +9,13 @@ interface Bid {
   id: string;
   user_id: string;
   bid_value: number;
-  status: 'approved' | 'pending' | 'rejected' | 'superseded';
+  status: 'approved' | 'pending' | 'rejected' | 'superseded' | 'pre_bidding';
   is_winner: boolean;
   created_at: string;
   user_name?: string;
+  auction_item?: {
+    status?: string;
+  };
 }
 
 interface BidHistoryProps {
@@ -22,8 +25,13 @@ interface BidHistoryProps {
 }
 
 const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId }) => {
-  const getStatusIcon = (status: string, isWinner: boolean) => {
+  const getStatusIcon = (status: string, isWinner: boolean, lotStatus?: string) => {
     if (isWinner) return <Trophy className="h-3 w-3 text-green-400" />;
+    
+    // Se é um lance de pré leilão (lote com status pre_bidding)
+    if (lotStatus === 'pre_bidding' || status === 'pre_bidding') {
+      return <Clock className="h-3 w-3 text-yellow-500" />;
+    }
     
     switch (status) {
       case 'approved':
@@ -39,8 +47,13 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
     }
   };
 
-  const getStatusVariant = (status: string, isWinner: boolean) => {
+  const getStatusVariant = (status: string, isWinner: boolean, lotStatus?: string) => {
     if (isWinner) return 'default';
+    
+    // Se é um lance de pré leilão
+    if (lotStatus === 'pre_bidding' || status === 'pre_bidding') {
+      return 'secondary' as const;
+    }
     
     switch (status) {
       case 'approved':
@@ -56,8 +69,13 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
     }
   };
 
-  const getStatusText = (status: string, isWinner: boolean) => {
+  const getStatusText = (status: string, isWinner: boolean, lotStatus?: string) => {
     if (isWinner) return 'Vencedor';
+    
+    // Se é um lance de pré leilão
+    if (lotStatus === 'pre_bidding' || status === 'pre_bidding') {
+      return 'Pré Lance';
+    }
     
     switch (status) {
       case 'approved':
@@ -128,10 +146,12 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                       {formatCurrency(bid.bid_value)}
                     </p>
                     <Badge 
-                      variant={getStatusVariant(bid.status, bid.is_winner)}
+                      variant={getStatusVariant(bid.status, bid.is_winner, bid.auction_item?.status)}
                       className={`flex items-center gap-1 text-xs h-5 px-1.5 ${
                         bid.is_winner 
                           ? 'bg-green-500 text-white hover:bg-green-600 border-green-400' 
+                          : (bid.auction_item?.status === 'pre_bidding' || bid.status === 'pre_bidding')
+                          ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30 hover:bg-yellow-500/30'
                           : bid.status === 'approved'
                           ? 'bg-green-600/20 text-green-400 border-green-600/30 hover:bg-green-600/30'
                           : bid.status === 'pending'
@@ -141,9 +161,9 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                           : 'bg-gray-600/20 text-gray-400 border-gray-600/30'
                       }`}
                     >
-                      {getStatusIcon(bid.status, bid.is_winner)}
+                      {getStatusIcon(bid.status, bid.is_winner, bid.auction_item?.status)}
                       <span className="truncate max-w-16">
-                        {getStatusText(bid.status, bid.is_winner)}
+                        {getStatusText(bid.status, bid.is_winner, bid.auction_item?.status)}
                       </span>
                     </Badge>
                   </div>

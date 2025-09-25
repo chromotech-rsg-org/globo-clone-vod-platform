@@ -46,7 +46,7 @@ interface LotFormData {
   description: string;
   initial_value: number;
   increment: number;
-  status: 'not_started' | 'in_progress' | 'finished' | 'indisponivel';
+  status: 'not_started' | 'in_progress' | 'finished' | 'indisponivel' | 'pre_bidding';
   image_url: string;
   order_index: number;
 }
@@ -161,6 +161,7 @@ const SortableItem = ({
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-green-600/30">
                     <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
+                    <SelectItem value="pre_bidding" className="text-yellow-400 hover:bg-gray-800">Pré Lance</SelectItem>
                     <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
                     <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
                     <SelectItem value="indisponivel" className="text-white hover:bg-gray-800">Indisponível</SelectItem>
