@@ -40,12 +40,21 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
     return lot ? `Lote ${lotIndex} - ${lot.name}` : `Lote ${lotId.slice(-4)}`;
   };
 
-  const getStatusInfo = (status: string, isWinner: boolean) => {
+  const getStatusInfo = (status: string, isWinner: boolean, lotStatus?: string) => {
     if (isWinner) {
       return {
         icon: <Trophy className="h-3 w-3" />,
         label: 'Vencedor',
         className: 'bg-green-500 text-white hover:bg-green-600 border-green-400'
+      };
+    }
+
+    // Se é um lance de pré leilão
+    if (lotStatus === 'pre_bidding' || status === 'pre_bidding') {
+      return {
+        icon: <Clock className="h-3 w-3" />,
+        label: 'Pré Lance',
+        className: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
       };
     }
     
@@ -175,7 +184,8 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-green-500">
             {filteredBids.map((bid) => {
-              const statusInfo = getStatusInfo(bid, lots);
+              const lot = lots.find(l => l.id === bid.auction_item_id);
+              const statusInfo = getStatusInfo(bid.status, bid.is_winner, lot?.status);
               const isCurrentUser = bid.user_id === currentUserId;
 
               return (
