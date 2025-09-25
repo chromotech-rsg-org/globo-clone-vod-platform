@@ -90,14 +90,14 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
   }
 
   return (
-    <Card className="bg-black border-green-600/30">
+    <Card className="bg-black border-green-600/30 h-full flex flex-col">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Package className="h-5 w-5 text-green-400" />
           Todos os Lotes ({lots.length})
         </CardTitle>
       </CardHeader>
-      <CardContent className="bg-black">
+      <CardContent className="bg-black flex-1 overflow-y-auto">
         <div className="space-y-4">
           {sortedLots.map((lot, index) => {
             const statusInfo = getStatusInfo(lot);
