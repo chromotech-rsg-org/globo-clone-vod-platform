@@ -214,7 +214,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-gray-900 border-green-600/30" align="start">
+                <PopoverContent className="w-auto p-0 bg-white border-gray-300 text-black" align="start">
                   <Calendar
                     mode="single"
                     selected={formData.start_date ? new Date(formData.start_date) : undefined}
@@ -225,9 +225,9 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                       }
                     }}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+                    className={cn("p-3 pointer-events-auto text-black [&_.rdp-day]:text-black [&_.rdp-day_button]:text-black [&_.rdp-nav_button]:text-black [&_.rdp-caption]:text-black")}
                   />
-                  <div className="p-3 border-t border-green-600/30">
+                  <div className="p-3 border-t border-gray-300">
                     <Input
                       type="time"
                       value={formData.start_date ? format(new Date(formData.start_date), "HH:mm") : ""}
@@ -240,7 +240,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                           setFormData({ ...formData, start_date: dateStr });
                         }
                       }}
-                      className="bg-black border-green-600/30 text-white"
+                      className="bg-white border-gray-300 text-black"
                     />
                   </div>
                 </PopoverContent>
@@ -266,7 +266,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-gray-900 border-green-600/30" align="start">
+                <PopoverContent className="w-auto p-0 bg-white border-gray-300 text-black" align="start">
                   <Calendar
                     mode="single"
                     selected={formData.end_date ? new Date(formData.end_date) : undefined}
@@ -277,9 +277,9 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                       }
                     }}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+                    className={cn("p-3 pointer-events-auto text-black [&_.rdp-day]:text-black [&_.rdp-day_button]:text-black [&_.rdp-nav_button]:text-black [&_.rdp-caption]:text-black")}
                   />
-                  <div className="p-3 border-t border-green-600/30">
+                  <div className="p-3 border-t border-gray-300">
                     <Input
                       type="time"
                       value={formData.end_date ? format(new Date(formData.end_date), "HH:mm") : ""}
@@ -292,7 +292,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                           setFormData({ ...formData, end_date: dateStr });
                         }
                       }}
-                      className="bg-black border-green-600/30 text-white"
+                      className="bg-white border-gray-300 text-black"
                     />
                   </div>
                 </PopoverContent>
