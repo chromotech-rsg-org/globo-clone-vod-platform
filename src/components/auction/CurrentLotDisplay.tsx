@@ -179,7 +179,7 @@ const CurrentLotDisplay = ({
           {submittingBid ? 'Enviando lance...' : canBid ? <>
               <Gavel className="h-5 w-5 mr-2" />
               {`Fazer Lance - ${formatCurrency(nextBidValue)}`}
-            </> : stateInfo.action || 'Indisponível'}
+            </> : stateInfo.action || (userState === 'registration_pending' ? 'Habilitação em análise' : 'Indisponível')}
         </Button>
       </CardContent>
     </Card>;
