@@ -54,9 +54,30 @@ const CurrentLotDisplay = ({
       <CardHeader className="text-center py-4">
         <CardTitle className="text-white flex items-center justify-center gap-2">
           <span>{currentLot.name}</span>
-          {currentLot.status === 'in_progress' && <Badge className="bg-green-600 text-white animate-pulse">
-              EM ANDAMENTO
-            </Badge>}
+          {(() => {
+            // Se o leilão não está ao vivo, determinar status baseado no lance vencedor
+            if (!auction.is_live) {
+              const hasWinningBid = bids.some(bid => bid.auction_item_id === currentLot.id && bid.is_winner);
+              if (hasWinningBid) {
+                return <Badge className="bg-blue-600 text-white">
+                  FINALIZADO
+                </Badge>;
+              } else {
+                return <Badge className="bg-gray-600 text-white">
+                  INDISPONÍVEL
+                </Badge>;
+              }
+            }
+            
+            // Lógica original para leilão ao vivo
+            if (currentLot.status === 'in_progress') {
+              return <Badge className="bg-green-600 text-white animate-pulse">
+                EM ANDAMENTO
+              </Badge>;
+            }
+            
+            return null;
+          })()}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
