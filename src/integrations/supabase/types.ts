@@ -1019,6 +1019,10 @@ export type Database = {
         Args: { p_auction_id: string; p_lot_id: string }
         Returns: boolean
       }
+      update_auction_lot_statuses: {
+        Args: { auction_uuid: string }
+        Returns: undefined
+      }
       user_has_active_subscription: {
         Args: { user_uuid: string }
         Returns: boolean
