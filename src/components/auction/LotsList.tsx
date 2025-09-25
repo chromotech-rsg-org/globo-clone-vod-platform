@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { AuctionItem, Bid } from '@/types/auction';
 import { formatCurrency } from '@/utils/formatters';
-import { Package, Trophy, Clock, CheckCircle } from 'lucide-react';
+import { Package, Trophy, Clock, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface LotsListProps {
   lots: AuctionItem[];
@@ -13,6 +14,19 @@ interface LotsListProps {
 }
 
 const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) => {
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
+  
+  const toggleDescription = (lotId: string) => {
+    setExpandedDescriptions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(lotId)) {
+        newSet.delete(lotId);
+      } else {
+        newSet.add(lotId);
+      }
+      return newSet;
+    });
+  };
   // Organizar lotes: em andamento → não iniciados → finalizados
   const sortedLots = [...lots].sort((a, b) => {
     // Lote atual primeiro
@@ -148,7 +162,38 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
                       <div>
                         <h4 className="text-lg font-bold text-white mb-1">{lot.name}</h4>
                         {lot.description && (
-                          <p className="text-sm text-gray-300 leading-relaxed">{lot.description}</p>
+                          <div className="space-y-2">
+                            <p 
+                              className={`text-sm text-gray-300 leading-relaxed cursor-pointer transition-all duration-200 ${
+                                !expandedDescriptions.has(lot.id) 
+                                  ? 'line-clamp-3 hover:text-white' 
+                                  : ''
+                              }`}
+                              onClick={() => toggleDescription(lot.id)}
+                            >
+                              {lot.description}
+                            </p>
+                            {lot.description.length > 120 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleDescription(lot.id)}
+                                className="p-0 h-auto text-gray-400 hover:text-white text-sm"
+                              >
+                                {expandedDescriptions.has(lot.id) ? (
+                                  <>
+                                    <ChevronUp className="h-4 w-4 mr-1" />
+                                    Mostrar menos
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="h-4 w-4 mr-1" />
+                                    Mostrar mais
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
                         )}
                         </div>
 
