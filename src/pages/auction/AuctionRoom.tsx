@@ -473,16 +473,14 @@ const recalculateNextBidValue = () => {
             {/* Video Player */}
             <AuctionVideoPlayer auction={auction} />
             
-            {/* Status Summary quando não há lote ativo */}
-            {!hasActiveLot || !currentLot ? (
-              <div className="mt-6">
-                <AuctionStatusSummary
-                  lots={lots}
-                  bids={bids}
-                  currentUserId={user?.id}
-                />
-              </div>
-            ) : null}
+            {/* Status Summary */}
+            <div className="mt-6">
+              <AuctionStatusSummary
+                lots={lots}
+                bids={bids}
+                currentUserId={user?.id}
+              />
+            </div>
           </div>
 
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
