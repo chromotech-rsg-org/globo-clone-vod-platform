@@ -475,7 +475,7 @@ const recalculateNextBidValue = () => {
           </div>
 
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
-          <div className="space-y-6">
+          <div className="flex flex-col space-y-4" style={{ minHeight: 'calc(56.25vw * 2/3 + 200px)' }}>
             {/* Card do Lote Atual com Informações de Habilitação */}
             {hasActiveLot && currentLot && stateInfo && (
               <CurrentLotDisplay

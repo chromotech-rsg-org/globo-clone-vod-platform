@@ -28,14 +28,14 @@ const AuctionStatusSummary = ({ lots, bids, currentUserId }: AuctionStatusSummar
   });
 
   return (
-    <Card className="bg-gray-900/50 border-gray-600/30">
+    <Card className="bg-black border-green-600/30 h-full flex flex-col">
       <CardHeader className="text-center">
         <CardTitle className="text-white flex items-center justify-center gap-2">
           <Package className="h-6 w-6 text-gray-400" />
           Status do Leilão
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 flex-1 overflow-y-auto">
         {/* Status Geral */}
         <div className="text-center">
           <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
