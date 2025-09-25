@@ -20,6 +20,7 @@ interface AuctionFormData {
   end_date?: string;
   status: 'active' | 'inactive';
   auction_type: 'rural' | 'judicial';
+  broadcast_enabled: boolean;
 }
 
 const AuctionCreate = () => {
@@ -36,6 +37,7 @@ const AuctionCreate = () => {
     end_date: '',
     status: 'inactive',
     auction_type: 'rural',
+    broadcast_enabled: true
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

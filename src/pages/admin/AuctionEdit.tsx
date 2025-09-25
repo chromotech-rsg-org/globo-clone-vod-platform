@@ -29,7 +29,8 @@ const AuctionEdit = () => {
     registration_wait_unit: 'minutes',
     status: 'inactive',
     auction_type: 'rural',
-    is_live: false
+    is_live: false,
+    broadcast_enabled: true
   });
 
   useEffect(() => {

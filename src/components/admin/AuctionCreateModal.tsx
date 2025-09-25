@@ -33,7 +33,8 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
     end_date: '',
     status: false, // mudou para boolean (true = ativo, false = inativo)
     auction_type: 'rural' as 'rural' | 'judicial',
-    is_live: false
+    is_live: false,
+    broadcast_enabled: true
   });
 
   // Helper function to convert Brazil timezone to UTC for database
@@ -104,7 +105,8 @@ const AuctionCreateModal = ({ isOpen, onClose, onSave }: AuctionCreateModalProps
       end_date: '',
       status: false,
       auction_type: 'rural',
-      is_live: false
+      is_live: false,
+      broadcast_enabled: true
     });
     if (onSave) onSave();
     onClose();
