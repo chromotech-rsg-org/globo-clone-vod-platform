@@ -225,7 +225,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                       }
                     }}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto text-black [&_.rdp-day]:text-black [&_.rdp-day_button]:text-black [&_.rdp-nav_button]:text-black [&_.rdp-nav_button_previous]:text-black [&_.rdp-nav_button_next]:text-black [&_.rdp-caption]:text-black")}
+                    className={cn("p-3 pointer-events-auto text-black [&_.rdp-day]:text-black [&_.rdp-day_button]:text-black [&_.rdp-nav_button]:!text-black [&_.rdp-nav_button>svg]:!fill-black [&_.rdp-nav_button>svg]:!stroke-black [&_.rdp-caption]:text-black")}
                   />
                   <div className="p-3 border-t border-gray-300">
                     <Input
@@ -277,7 +277,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                       }
                     }}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto text-black [&_.rdp-day]:text-black [&_.rdp-day_button]:text-black [&_.rdp-nav_button]:text-black [&_.rdp-nav_button_previous]:text-black [&_.rdp-nav_button_next]:text-black [&_.rdp-caption]:text-black")}
+                    className={cn("p-3 pointer-events-auto text-black [&_.rdp-day]:text-black [&_.rdp-day_button]:text-black [&_.rdp-nav_button]:!text-black [&_.rdp-nav_button>svg]:!fill-black [&_.rdp-nav_button>svg]:!stroke-black [&_.rdp-caption]:text-black")}
                   />
                   <div className="p-3 border-t border-gray-300">
                     <Input
