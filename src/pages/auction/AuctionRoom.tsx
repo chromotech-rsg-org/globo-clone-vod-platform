@@ -470,16 +470,20 @@ const recalculateNextBidValue = () => {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Coluna Principal - Transmissão (2/3 da tela) */}
           <div className="xl:col-span-2">
-            {/* Video Player */}
-            <AuctionVideoPlayer auction={auction} />
-            
-            {/* Status Summary */}
-            <div className="mt-6">
-              <AuctionStatusSummary
-                lots={lots}
-                bids={bids}
-                currentUserId={user?.id}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Video Player */}
+              <div className="lg:col-span-1">
+                <AuctionVideoPlayer auction={auction} />
+              </div>
+              
+              {/* Status Summary */}
+              <div className="lg:col-span-1">
+                <AuctionStatusSummary
+                  lots={lots}
+                  bids={bids}
+                  currentUserId={user?.id}
+                />
+              </div>
             </div>
           </div>
 
