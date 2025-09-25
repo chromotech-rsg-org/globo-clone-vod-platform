@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, GripVertical, Edit2, Trash2, Save, X, ArrowUpDown } from 'lucide-react';
+import { Plus, GripVertical, Edit2, Trash2, Save, X, ArrowUpDown, RefreshCw } from 'lucide-react';
 import ImageUpload from '@/components/ui/image-upload';
 import { useAuctionItems } from '@/hooks/useAuctionItems';
+import { useLotStatusUpdater } from '@/hooks/useLotStatusUpdater';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AuctionItem } from '@/types/auction';
@@ -45,7 +46,7 @@ interface LotFormData {
   description: string;
   initial_value: number;
   increment: number;
-  status: 'not_started' | 'in_progress' | 'finished';
+  status: 'not_started' | 'in_progress' | 'finished' | 'indisponivel';
   image_url: string;
   order_index: number;
 }
@@ -55,6 +56,7 @@ const StatusBadge = ({ status }: { status: AuctionItem['status'] }) => {
     not_started: { label: 'Não Iniciado', variant: 'secondary' as const, className: 'bg-gray-800 text-gray-300 border-gray-600' },
     in_progress: { label: 'Em Andamento', variant: 'default' as const, className: 'bg-green-900/40 text-green-400 border-green-600' },
     finished: { label: 'Finalizado', variant: 'outline' as const, className: 'bg-gray-900 text-white border-gray-500' },
+    indisponivel: { label: 'Indisponível', variant: 'destructive' as const, className: 'bg-red-900/40 text-red-400 border-red-600' },
   };
 
   const config = statusConfig[status];
@@ -161,6 +163,7 @@ const SortableItem = ({
                     <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
                     <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
                     <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
+                    <SelectItem value="indisponivel" className="text-white hover:bg-gray-800">Indisponível</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -251,6 +254,7 @@ const SortableItem = ({
 
 export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, AuctionLotsManagerProps>(({ auctionId }, ref) => {
   const { items, loading, refetch } = useAuctionItems(auctionId);
+  const { updateLotStatuses } = useLotStatusUpdater();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -279,6 +283,14 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Handle lot status update
+  const handleUpdateLotStatuses = async () => {
+    const success = await updateLotStatuses(auctionId);
+    if (success) {
+      refetch();
+    }
+  };
 
   // Auto-order function
   const handleAutoOrder = async () => {
@@ -551,6 +563,14 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
           <h3 className="text-lg font-semibold text-white">Gerenciar Lotes</h3>
           <div className="flex gap-2">
             <Button 
+              onClick={handleUpdateLotStatuses} 
+              variant="outline"
+              className="border-blue-600/50 text-blue-400 hover:bg-blue-900/30"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Atualizar Status
+            </Button>
+            <Button 
               onClick={handleAutoOrder} 
               variant="outline"
               className="border-green-600/50 text-green-400 hover:bg-green-900/30"
@@ -628,6 +648,7 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
                     <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
                     <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
                     <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
+                    <SelectItem value="indisponivel" className="text-white hover:bg-gray-800">Indisponível</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

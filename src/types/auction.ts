@@ -29,7 +29,7 @@ export interface AuctionItem {
   initial_value: number;
   current_value: number;
   increment?: number;
-  status: 'not_started' | 'in_progress' | 'finished';
+  status: 'not_started' | 'in_progress' | 'finished' | 'indisponivel';
   is_current: boolean;
   order_index: number;
   created_at: string;

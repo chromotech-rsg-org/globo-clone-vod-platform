@@ -63,7 +63,7 @@ const CurrentLotDisplay = ({
                   FINALIZADO
                 </Badge>;
               } else {
-                return <Badge className="bg-gray-600 text-white">
+                return <Badge className="bg-red-600 text-white">
                   INDISPONÍVEL
                 </Badge>;
               }
