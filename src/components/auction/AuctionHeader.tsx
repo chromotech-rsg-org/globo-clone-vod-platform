@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Auction, AuctionItem } from '@/types/auction';
-import { Calendar, Clock, Package, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, Package, ChevronDown, ChevronUp, Target } from 'lucide-react';
 
 interface AuctionHeaderProps {
   auction: Auction;
@@ -75,6 +75,12 @@ const AuctionHeader = ({ auction, lots }: AuctionHeaderProps) => {
               <Badge variant="outline" className="bg-blue-900/30 text-blue-400 border-blue-600">
                 {auction.auction_type === 'rural' ? 'Rural' : 'Judicial'}
               </Badge>
+              {auction.allow_pre_bidding && (
+                <Badge variant="outline" className="bg-yellow-900/30 text-yellow-400 border-yellow-600 flex items-center gap-1">
+                  <Target size={12} />
+                  Pré Lance
+                </Badge>
+              )}
             </div>
           </div>
 

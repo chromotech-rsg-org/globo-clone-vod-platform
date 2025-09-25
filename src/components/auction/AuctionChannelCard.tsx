@@ -130,6 +130,16 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
               </Badge>
             </div>
           )}
+
+          {/* Pre-bidding Badge */}
+          {auction.allow_pre_bidding && !hasWinner && (
+            <div className="absolute top-4 right-4 z-30">
+              <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white flex items-center gap-2 text-sm px-3 py-1.5 shadow-lg">
+                <Target size={16} />
+                PRÉ LANCE
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Hover Content - Full info */}

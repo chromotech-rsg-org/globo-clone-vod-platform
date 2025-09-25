@@ -65,6 +65,16 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
                 )}
               </Badge>
               
+              {auction.allow_pre_bidding && (
+                <Badge 
+                  variant="outline" 
+                  className="whitespace-nowrap border-yellow-600/50 text-yellow-400 bg-yellow-500/10 text-xs px-2 py-1 flex items-center gap-1"
+                >
+                  <Target size={10} />
+                  Pré Lance
+                </Badge>
+              )}
+              
               {hasWinner && (
                 <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white flex items-center gap-1 whitespace-nowrap animate-pulse text-xs px-2 py-1">
                   <Trophy size={10} />
