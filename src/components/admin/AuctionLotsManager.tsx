@@ -71,7 +71,8 @@ const SortableItem = ({
   onCancel, 
   onDelete, 
   editData, 
-  onEditDataChange 
+  onEditDataChange,
+  onQuickStatusUpdate
 }: {
   item: AuctionItem;
   isEditing: boolean;
@@ -81,6 +82,7 @@ const SortableItem = ({
   onDelete: () => void;
   editData: LotFormData;
   onEditDataChange: (data: Partial<LotFormData>) => void;
+  onQuickStatusUpdate: (itemId: string, status: string) => void;
 }) => {
   const {
     attributes,
@@ -191,7 +193,67 @@ const SortableItem = ({
                   <Badge variant="secondary" className="bg-blue-900/40 text-blue-400 border-blue-600 text-xs">
                     #{item.order_index}
                   </Badge>
-                  <StatusBadge status={item.status} />
+                  {!isEditing && (
+                    <div className="flex items-center gap-1">
+                      {/* Botões de status rápido */}
+                      <div className="flex items-center gap-1 mr-2">
+                        <Button
+                          size="sm"
+                          variant={item.status === 'not_started' ? 'default' : 'outline'}
+                          onClick={() => onQuickStatusUpdate(item.id, 'not_started')}
+                          className={`h-6 px-2 text-xs ${
+                            item.status === 'not_started' 
+                              ? 'bg-gray-600 hover:bg-gray-700 text-white' 
+                              : 'border-gray-600 text-gray-400 hover:bg-gray-800'
+                            }`}
+                          title="Não Iniciado"
+                        >
+                          ⏸
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={item.status === 'pre_bidding' ? 'default' : 'outline'}
+                          onClick={() => onQuickStatusUpdate(item.id, 'pre_bidding')}
+                          className={`h-6 px-2 text-xs ${
+                            item.status === 'pre_bidding' 
+                              ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
+                              : 'border-yellow-600 text-yellow-400 hover:bg-yellow-900/30'
+                            }`}
+                          title="Pré Lance"
+                        >
+                          ⏰
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={item.status === 'in_progress' ? 'default' : 'outline'}
+                          onClick={() => onQuickStatusUpdate(item.id, 'in_progress')}
+                          className={`h-6 px-2 text-xs ${
+                            item.status === 'in_progress' 
+                              ? 'bg-green-600 hover:bg-green-700 text-white' 
+                              : 'border-green-600 text-green-400 hover:bg-green-900/30'
+                            }`}
+                          title="Em Andamento"
+                        >
+                          ▶
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={item.status === 'finished' ? 'default' : 'outline'}
+                          onClick={() => onQuickStatusUpdate(item.id, 'finished')}
+                          className={`h-6 px-2 text-xs ${
+                            item.status === 'finished' 
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                              : 'border-blue-600 text-blue-400 hover:bg-blue-900/30'
+                            }`}
+                          title="Finalizado"
+                        >
+                          ✓
+                        </Button>
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </div>
+                  )}
+                  {isEditing && <StatusBadge status={item.status} />}
                 </div>
               </div>
               {item.description && (
@@ -440,6 +502,31 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     });
   };
 
+  const handleQuickStatusUpdate = async (itemId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('auction_items')
+        .update({ status: newStatus })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Status atualizado",
+        description: "O status do lote foi atualizado com sucesso.",
+      });
+
+      refetch();
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     if (!editingId) return;
 
@@ -679,38 +766,39 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
             <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-3">
                 {items.map((item) => (
-                <SortableItem
-                  key={item.id}
-                  item={item}
-                  isEditing={editingId === item.id}
-                  onEdit={() => {
-                    console.log('Edit button clicked for:', item.id);
-                    handleEdit(item);
-                  }}
-                  onSave={() => {
-                    console.log('Save button clicked');
-                    handleSave();
-                  }}
-                   onCancel={() => {
-                     console.log('Cancel button clicked');
-                     setEditingId(null);
-                     setEditData({
-                       name: '',
-                       description: '',
-                       initial_value: 0,
-                       increment: 100,
-                       status: 'not_started',
-                       image_url: '',
-                       order_index: 0
-                     });
+                 <SortableItem
+                   key={item.id}
+                   item={item}
+                   isEditing={editingId === item.id}
+                   onEdit={() => {
+                     console.log('Edit button clicked for:', item.id);
+                     handleEdit(item);
                    }}
-                  onDelete={() => handleDelete(item.id)}
-                  editData={editData}
-                  onEditDataChange={(data) => {
-                    console.log('Edit data changing:', data);
-                    setEditData({ ...editData, ...data });
-                  }}
-                />
+                   onSave={() => {
+                     console.log('Save button clicked');
+                     handleSave();
+                   }}
+                    onCancel={() => {
+                      console.log('Cancel button clicked');
+                      setEditingId(null);
+                      setEditData({
+                        name: '',
+                        description: '',
+                        initial_value: 0,
+                        increment: 100,
+                        status: 'not_started',
+                        image_url: '',
+                        order_index: 0
+                      });
+                    }}
+                   onDelete={() => handleDelete(item.id)}
+                   editData={editData}
+                   onEditDataChange={(data) => {
+                     console.log('Edit data changing:', data);
+                     setEditData({ ...editData, ...data });
+                   }}
+                   onQuickStatusUpdate={handleQuickStatusUpdate}
+                 />
                 ))}
               </div>
             </SortableContext>
