@@ -472,15 +472,6 @@ const recalculateNextBidValue = () => {
           <div className="xl:col-span-2">
             {/* Video Player */}
             <AuctionVideoPlayer auction={auction} />
-            
-            {/* Status Summary */}
-            <div className="mt-6">
-              <AuctionStatusSummary
-                lots={lots}
-                bids={bids}
-                currentUserId={user?.id}
-              />
-            </div>
           </div>
 
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
@@ -519,6 +510,13 @@ const recalculateNextBidValue = () => {
                 onRequestRegistration={requestRegistration}
               />
             )}
+
+            {/* Status Summary */}
+            <AuctionStatusSummary
+              lots={lots}
+              bids={bids}
+              currentUserId={user?.id}
+            />
           </div>
         </div>
 
