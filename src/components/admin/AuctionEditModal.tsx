@@ -313,7 +313,12 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSave }: AuctionEditModal
                 <Switch
                   id="allow_pre_bidding"
                   checked={formData.allow_pre_bidding}
-                  onCheckedChange={(checked) => setFormData({ ...formData, allow_pre_bidding: checked })}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    allow_pre_bidding: checked,
+                    // Quando ativar pré lance, desativar ao vivo
+                    is_live: checked ? false : formData.is_live
+                  })}
                 />
                 <Label htmlFor="allow_pre_bidding" className="text-white">Pré Lance</Label>
               </div>
