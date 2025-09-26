@@ -300,17 +300,23 @@ function AppContent() {
       } />
       <Route path="/admin/auditoria" element={
         <ProtectedRoute requiredRole="admin">
-          <Auditoria />
+          <AdminLayout>
+            <Auditoria />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/documentos" element={
         <ProtectedRoute requiredRole="admin">
-          <Documentos />
+          <AdminLayout>
+            <Documentos />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/limites-clientes" element={
         <ProtectedRoute requiredRole="admin">
-          <LimitesClientes />
+          <AdminLayout>
+            <LimitesClientes />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       

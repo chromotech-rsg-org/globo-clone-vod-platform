@@ -34,6 +34,13 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       '/admin/lances',
       '/admin/personalizacao',
       '/admin/asaas-api-tester',
+      '/admin/imagens',
+      '/admin/conteudo',
+      '/admin/hero-slider',
+      '/admin/dashboard-financeiro',
+      '/admin/documentos',
+      '/admin/limites-clientes',
+      '/admin/auditoria',
       '/profile',
       '/subscription'
     ];
