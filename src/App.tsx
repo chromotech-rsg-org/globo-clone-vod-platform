@@ -293,7 +293,9 @@ function AppContent() {
       } />
       <Route path="/admin/dashboard-financeiro" element={
         <ProtectedRoute requiredRole="admin">
-          <DashboardFinanceiro />
+          <AdminLayout>
+            <DashboardFinanceiro />
+          </AdminLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/auditoria" element={
