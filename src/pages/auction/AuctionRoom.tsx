@@ -19,6 +19,7 @@ import AuctionUserActions from '@/components/auction/AuctionUserActions';
 import GuestModeBanner from '@/components/auction/GuestModeBanner';
 import AuctionHeader from '@/components/auction/AuctionHeader';
 import CurrentLotDisplay from '@/components/auction/CurrentLotDisplay';
+import PreBiddingLotDisplay from '@/components/auction/PreBiddingLotDisplay';
 import AuctionStatusSummary from '@/components/auction/AuctionStatusSummary';
 import LotsList from '@/components/auction/LotsList';
 import BidHistoryWithFilters from '@/components/auction/BidHistoryWithFilters';
@@ -42,6 +43,13 @@ const AuctionRoom = () => {
     isAllFinished 
   } = useLotStatistics(lots, bids);
 const [selectedPreBiddingLotId, setSelectedPreBiddingLotId] = useState<string | undefined>();
+
+  // Selecionar automaticamente o primeiro lote de pré-lance se não houver seleção
+  useEffect(() => {
+    if (hasPreBiddingLots && preBiddingLots.length > 0 && !selectedPreBiddingLotId) {
+      setSelectedPreBiddingLotId(preBiddingLots[0].id);
+    }
+  }, [hasPreBiddingLots, preBiddingLots, selectedPreBiddingLotId]);
   const { customIncrement, updateCustomIncrement } = useCustomIncrement(
     currentLot, 
     auction, 
@@ -519,8 +527,8 @@ const recalculateNextBidValue = () => {
 
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
           <div className="flex flex-col space-y-4" style={{ minHeight: 'calc(56.25vw * 2/3 + 200px)' }}>
-            {/* Card do Lote Atual com Informações de Habilitação */}
-            {hasActiveLot && currentLot && stateInfo && (
+            {/* Display do Lote - Atual ou Pré-Lance */}
+            {hasActiveLot && currentLot && stateInfo ? (
               <CurrentLotDisplay
                 currentLot={currentLot}
                 auction={auction}
@@ -537,10 +545,25 @@ const recalculateNextBidValue = () => {
                 userId={user?.id}
                 onRequestRegistration={requestRegistration}
               />
-            )}
+            ) : hasPreBiddingLots && selectedPreBiddingLotId && preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) && stateInfo && userState === 'can_bid' ? (
+              <PreBiddingLotDisplay
+                selectedLot={preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId)!}
+                preBiddingLots={preBiddingLots}
+                auction={auction}
+                bids={bids}
+                customIncrement={customIncrement}
+                onIncrementChange={updateCustomIncrement}
+                nextBidValue={nextBidValue}
+                onBidClick={() => openBidDialogComAtualizacao(selectedPreBiddingLotId)}
+                onLotSelect={setSelectedPreBiddingLotId}
+                submittingBid={submittingBid}
+                userPendingBid={userPendingBid}
+                userId={user?.id}
+              />
+            ) : null}
 
-            {/* Ações do Usuário - apenas quando não há lote ativo OU há lotes em pré-lance */}
-            {((!hasActiveLot || !currentLot) || hasPreBiddingLots) && stateInfo && (
+            {/* Ações do Usuário - apenas quando não há lote ativo E não está em modo pré-lance com lote selecionado */}
+            {!hasActiveLot && (!hasPreBiddingLots || !selectedPreBiddingLotId || userState !== 'can_bid') && stateInfo && (
               <AuctionUserActions
                 auction={auction}
                 bids={bids}
@@ -565,6 +588,7 @@ const recalculateNextBidValue = () => {
               lots={lots}
               bids={bids}
               currentUserId={user?.id}
+              preBiddingLots={preBiddingLots}
             />
 
             {/* Histórico de Lances */}

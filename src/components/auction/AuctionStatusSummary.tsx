@@ -9,9 +9,10 @@ interface AuctionStatusSummaryProps {
   lots: AuctionItem[];
   bids: Bid[];
   currentUserId?: string;
+  preBiddingLots?: AuctionItem[];
 }
 
-const AuctionStatusSummary = ({ lots, bids, currentUserId }: AuctionStatusSummaryProps) => {
+const AuctionStatusSummary = ({ lots, bids, currentUserId, preBiddingLots = [] }: AuctionStatusSummaryProps) => {
   const notStartedLots = lots.filter(lot => lot.status === 'not_started');
   const finishedLots = lots.filter(lot => lot.status === 'finished');
   const nextLot = notStartedLots.sort((a, b) => a.order_index - b.order_index)[0];
@@ -39,29 +40,40 @@ const AuctionStatusSummary = ({ lots, bids, currentUserId }: AuctionStatusSummar
         {/* Status Geral */}
         <div className="text-center">
           <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
-            <h3 className="text-xl font-bold text-white mb-2">Nenhum Lote em Andamento</h3>
+            <h3 className="text-xl font-bold text-white mb-2">
+              {preBiddingLots.length > 0 ? 'Pré-Lance Ativo' : 'Nenhum Lote em Andamento'}
+            </h3>
             <p className="text-gray-300">
               {finishedLots.length} de {lots.length} lotes finalizados
+              {preBiddingLots.length > 0 && (
+                <span> • {preBiddingLots.length} em pré-lance</span>
+              )}
             </p>
           </div>
 
           {/* Estatísticas */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-4 gap-2 mb-6">
             <div className="bg-gray-800/30 rounded-lg p-3 text-center">
-              <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">Finalizados</p>
+              <CheckCircle className="h-5 w-5 text-green-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-400">Finalizados</p>
               <p className="text-lg font-bold text-white">{finishedLots.length}</p>
             </div>
             
             <div className="bg-gray-800/30 rounded-lg p-3 text-center">
-              <Clock className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">Aguardando</p>
+              <Clock className="h-5 w-5 text-yellow-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-400">Aguardando</p>
               <p className="text-lg font-bold text-white">{notStartedLots.length}</p>
             </div>
             
             <div className="bg-gray-800/30 rounded-lg p-3 text-center">
-              <Package className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">Total</p>
+              <Package className="h-5 w-5 text-blue-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-400">Pré-Lance</p>
+              <p className="text-lg font-bold text-white">{preBiddingLots.length}</p>
+            </div>
+            
+            <div className="bg-gray-800/30 rounded-lg p-3 text-center">
+              <Package className="h-5 w-5 text-gray-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-400">Total</p>
               <p className="text-lg font-bold text-white">{lots.length}</p>
             </div>
           </div>
