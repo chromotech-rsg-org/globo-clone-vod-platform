@@ -55,6 +55,9 @@ const AuctionUserActions = ({
   const isPreBiddingMode = preBiddingLots.length > 0;
   const hasMultiplePreBiddingLots = preBiddingLots.length > 1;
   
+  // Se está em modo pré-lance, permitir lances mesmo se transmissão estiver "encerrada"
+  const shouldAllowBidding = isPreBiddingMode || !isTransmissionEnded;
+  
   const handleLotChange = (lotId: string) => {
     setLocalSelectedLotId(lotId);
     if (onLotSelect) {
@@ -127,8 +130,8 @@ const AuctionUserActions = ({
           </Alert>
         )}
 
-        {/* Mostrar alerta se a transmissão estiver encerrada */}
-        {isTransmissionEnded && (
+        {/* Mostrar alerta de status da transmissão */}
+        {isTransmissionEnded && !isPreBiddingMode && (
           <Alert className="bg-red-900/20 border-red-500/50">
             <AlertCircle className="h-4 w-4 text-red-400" />
             <AlertDescription className="text-red-300">
@@ -139,13 +142,26 @@ const AuctionUserActions = ({
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Mostrar alerta de pré-lance ativo quando transmissão está encerrada mas há pré-lances */}
+        {isTransmissionEnded && isPreBiddingMode && (
+          <Alert className="bg-blue-900/20 border-blue-500/50">
+            <Package className="h-4 w-4 text-blue-400" />
+            <AlertDescription className="text-blue-300">
+              <div className="text-center">
+                <p className="font-bold">Pré-Lance Ativo</p>
+                <p>Você pode fazer lances nos lotes disponíveis para pré-lance.</p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
          
         {stateInfo.action && (
           <Button 
             onClick={isPreBiddingMode ? handleBidClick : stateInfo.onClick}
             className="w-full bg-green-600 hover:bg-green-700 text-white"
             variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
-            disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick || isTransmissionEnded || (isPreBiddingMode && hasMultiplePreBiddingLots && !localSelectedLotId)}
+            disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick || !shouldAllowBidding || (isPreBiddingMode && hasMultiplePreBiddingLots && !localSelectedLotId)}
           >
             {submittingBid ? 'Enviando lance...' : 
              isPreBiddingMode ? 'Fazer Pré-Lance' : stateInfo.action}
