@@ -214,7 +214,12 @@ const SortableItem = ({
             <Button
               size="sm"
               variant={item.status === 'not_started' ? 'default' : 'outline'}
-              onClick={() => onQuickStatusUpdate(item.id, 'not_started')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickStatusUpdate(item.id, 'not_started');
+              }}
               className={`h-6 px-2 text-xs ${
                 item.status === 'not_started' 
                   ? 'bg-gray-600 hover:bg-gray-700 text-white' 
@@ -227,7 +232,12 @@ const SortableItem = ({
             <Button
               size="sm"
               variant={item.status === 'pre_bidding' ? 'default' : 'outline'}
-              onClick={() => onQuickStatusUpdate(item.id, 'pre_bidding')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickStatusUpdate(item.id, 'pre_bidding');
+              }}
               className={`h-6 px-2 text-xs ${
                 item.status === 'pre_bidding' 
                   ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
@@ -240,7 +250,12 @@ const SortableItem = ({
             <Button
               size="sm"
               variant={item.status === 'in_progress' ? 'default' : 'outline'}
-              onClick={() => onQuickStatusUpdate(item.id, 'in_progress')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickStatusUpdate(item.id, 'in_progress');
+              }}
               className={`h-6 px-2 text-xs ${
                 item.status === 'in_progress' 
                   ? 'bg-green-600 hover:bg-green-700 text-white' 
@@ -253,7 +268,12 @@ const SortableItem = ({
             <Button
               size="sm"
               variant={item.status === 'finished' ? 'default' : 'outline'}
-              onClick={() => onQuickStatusUpdate(item.id, 'finished')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickStatusUpdate(item.id, 'finished');
+              }}
               className={`h-6 px-2 text-xs ${
                 item.status === 'finished' 
                   ? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -461,7 +481,8 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     }
   };
 
-  const handleQuickStatusUpdate = async (itemId: string, newStatus: string) => {
+  const handleQuickStatusUpdate = (itemId: string, newStatus: string) => {
+    // Only update local state, don't save immediately
     handleLotChange(itemId, { status: newStatus as LotFormData['status'] });
   };
 
