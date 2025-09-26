@@ -8,7 +8,7 @@ import { useCustomIncrement } from '@/hooks/useCustomIncrement';
 import { useLotStatistics } from '@/hooks/useLotStatistics';
 import { useAuth } from '@/contexts/AuthContext';
 import { BidUserState } from '@/types/auction';
-import { User, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { User, AlertCircle, CheckCircle, Clock, Target } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
 import { DuplicateBidModal } from '@/components/auction/DuplicateBidModal';
 import { OutbidNotificationModal } from '@/components/auction/OutbidNotificationModal';
@@ -23,6 +23,7 @@ import AuctionStatusSummary from '@/components/auction/AuctionStatusSummary';
 import LotsList from '@/components/auction/LotsList';
 import BidHistoryWithFilters from '@/components/auction/BidHistoryWithFilters';
 import { useToast } from '@/components/ui/use-toast';
+import PreBiddingLotSelector from '@/components/auction/PreBiddingLotSelector';
 import { formatCurrency } from '@/utils/formatters';
 
 const AuctionRoom = () => {
@@ -294,7 +295,12 @@ const recalculateNextBidValue = () => {
 
   const stateInfo = getUserStateInfo();
 
-  const canBid = userState === 'can_bid' && !submittingBid && !isAllFinished;
+  // Verificar se existem lotes disponíveis para pré-lance
+  const preBiddingLots = lots.filter(lot => lot.status === 'pre_bidding');
+  const canPreBid = auction?.allow_pre_bidding && preBiddingLots.length > 0;
+  
+  const canBid = (userState === 'can_bid' && !submittingBid && !isAllFinished) || 
+                 (userState === 'can_bid' && !submittingBid && canPreBid);
 
   // Função melhorada para submission de lance
   const handleBidSubmission = async () => {
@@ -489,9 +495,9 @@ const recalculateNextBidValue = () => {
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
           <div className="flex flex-col space-y-4" style={{ minHeight: 'calc(56.25vw * 2/3 + 200px)' }}>
             {/* Card do Lote Atual com Informações de Habilitação */}
-            {hasActiveLot && currentLot && stateInfo && (
+            {(hasActiveLot && currentLot && stateInfo) || (canPreBid && preBiddingLots.length === 1 && preBiddingLots[0] && stateInfo) ? (
               <CurrentLotDisplay
-                currentLot={currentLot}
+                currentLot={currentLot || preBiddingLots[0]}
                 auction={auction}
                 bids={bids}
                 customIncrement={customIncrement}
@@ -506,10 +512,21 @@ const recalculateNextBidValue = () => {
                 userId={user?.id}
                 onRequestRegistration={requestRegistration}
               />
+            ) : null}
+
+            {/* Seletor de Pré-lances - quando há múltiplos lotes em pré-lance */}
+            {canPreBid && preBiddingLots.length > 1 && user && (
+              <div className="bg-gray-900 border border-green-600/30 rounded-lg p-4">
+                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                  <Target className="h-4 w-4 text-green-400" />
+                  Lotes Disponíveis para Pré-Lance
+                </h3>
+                <PreBiddingLotSelector auction={auction} />
+              </div>
             )}
 
-            {/* Ações do Usuário - apenas quando não há lote ativo */}
-            {(!hasActiveLot || !currentLot) && stateInfo && (
+            {/* Ações do Usuário - quando não há lote ativo ou apenas um lote em pré-lance */}
+            {((!hasActiveLot || !currentLot) || (canPreBid && preBiddingLots.length === 1)) && stateInfo && (
               <AuctionUserActions
                 auction={auction}
                 bids={bids}
@@ -518,7 +535,7 @@ const recalculateNextBidValue = () => {
                 submittingBid={submittingBid}
                 userPendingBid={userPendingBid}
                 userId={user?.id}
-                onBidClick={openBidDialogComAtualizacao}
+                onBidClick={canPreBid && preBiddingLots.length === 1 ? openBidDialogComAtualizacao : stateInfo.onClick || openBidDialogComAtualizacao}
                 onRequestRegistration={requestRegistration}
               />
             )}

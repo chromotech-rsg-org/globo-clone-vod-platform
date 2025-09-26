@@ -196,7 +196,7 @@ const CurrentLotDisplay = ({
         </div>
 
         {/* Botão Principal - Lance ou Habilitação */}
-        {!((auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) || currentLot.status === 'finished') && (
+        {!((auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) || (currentLot.status === 'finished' || currentLot.status === 'indisponivel')) && (
           <Button onClick={canBid ? onBidClick : stateInfo.onClick || onRequestRegistration} disabled={stateInfo.disabled || submittingBid || userState === 'registration_pending'} className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50" variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}>
             {submittingBid ? 'Enviando lance...' : canBid ? <>
                 <Gavel className="h-5 w-5 mr-2" />
