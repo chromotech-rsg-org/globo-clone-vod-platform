@@ -83,8 +83,9 @@ export const useClientDocuments = (userId?: string) => {
 
   const uploadDocument = async (
     file: File,
-    targetUserId: string,
-    category: string = 'general'
+    targetUserId: string | null,
+    category: string = 'general',
+    customName?: string
   ) => {
     try {
       setUploading(true);
@@ -96,7 +97,8 @@ export const useClientDocuments = (userId?: string) => {
 
       // Criar nome único para o arquivo
       const fileExt = file.name.split('.').pop();
-      const fileName = `${targetUserId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const folderPath = targetUserId ? `${targetUserId}` : 'general';
+      const fileName = `${folderPath}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       // Upload para o Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -114,7 +116,7 @@ export const useClientDocuments = (userId?: string) => {
         .insert({
           user_id: targetUserId,
           file_path: fileName,
-          file_name: file.name,
+          file_name: customName || file.name,
           file_type: file.type,
           file_size: file.size,
           category: category,

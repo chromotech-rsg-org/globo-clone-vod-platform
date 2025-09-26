@@ -23,7 +23,8 @@ const Documentos: React.FC = () => {
   const [uploadData, setUploadData] = useState({
     userId: '',
     category: 'general',
-    file: null as File | null
+    file: null as File | null,
+    documentName: ''
   });
 
   const { documents, loading, uploading, categories, uploadDocument, deleteDocument, downloadDocument } = useClientDocuments();
@@ -37,19 +38,24 @@ const Documentos: React.FC = () => {
   });
 
   const handleUpload = async () => {
-    if (!uploadData.file || !uploadData.userId) {
+    if (!uploadData.file) {
       toast({
         title: "Dados incompletos",
-        description: "Selecione um arquivo e um usuário",
+        description: "Selecione um arquivo",
         variant: "destructive"
       });
       return;
     }
 
-    const success = await uploadDocument(uploadData.file, uploadData.userId, uploadData.category);
+    const success = await uploadDocument(
+      uploadData.file, 
+      uploadData.userId || null, 
+      uploadData.category,
+      uploadData.documentName || uploadData.file.name
+    );
     if (success) {
       setUploadDialogOpen(false);
-      setUploadData({ userId: '', category: 'general', file: null });
+      setUploadData({ userId: '', category: 'general', file: null, documentName: '' });
     }
   };
 
@@ -100,11 +106,21 @@ const Documentos: React.FC = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label className="text-admin-table-text">ID do Usuário</Label>
+                  <Label className="text-admin-table-text">Nome do Documento</Label>
+                  <Input
+                    value={uploadData.documentName}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, documentName: e.target.value }))}
+                    placeholder="Nome personalizado (opcional)"
+                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-admin-table-text">ID do Cliente (opcional)</Label>
                   <Input
                     value={uploadData.userId}
                     onChange={(e) => setUploadData(prev => ({ ...prev, userId: e.target.value }))}
-                    placeholder="Informe o ID do usuário"
+                    placeholder="Deixe vazio para documento geral"
                     className="bg-admin-content-bg border-admin-border text-admin-table-text"
                   />
                 </div>

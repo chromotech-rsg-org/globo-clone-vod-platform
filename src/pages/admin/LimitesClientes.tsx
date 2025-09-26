@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { useBidLimits } from '@/hooks/useBidLimits';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, UserCheck, UserX, DollarSign, AlertTriangle, Check, X } from 'lucide-react';
+import { Search, UserCheck, UserX, DollarSign, AlertTriangle, Check, X, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -14,13 +14,27 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/utils/formatters';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
+
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+  cpf?: string;
+  phone?: string;
+}
 
 const LimitesClientes: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
   const [limitData, setLimitData] = useState({
     userId: '',
     maxLimit: 10000,
@@ -37,6 +51,37 @@ const LimitesClientes: React.FC = () => {
     refetch 
   } = useBidLimits();
 
+  const fetchClients = async () => {
+    if (!clientSearchTerm || clientSearchTerm.length < 2) {
+      setClients([]);
+      return;
+    }
+
+    try {
+      setLoadingClients(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, email, cpf, phone')
+        .or(`name.ilike.%${clientSearchTerm}%,email.ilike.%${clientSearchTerm}%,cpf.ilike.%${clientSearchTerm}%`)
+        .limit(10);
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    } finally {
+      setLoadingClients(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchClients();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [clientSearchTerm]);
+
   const filteredLimits = limits.filter(limit => 
     searchTerm === '' || 
     limit.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,12 +90,20 @@ const LimitesClientes: React.FC = () => {
 
   const pendingRequests = requests.filter(req => req.status === 'pending');
 
+  const handleClientSelect = (client: Client) => {
+    setSelectedClient(client);
+    setLimitData(prev => ({ ...prev, userId: client.id }));
+    setClients([]);
+    setClientSearchTerm('');
+  };
+
   const handleCreateLimit = async () => {
     if (!limitData.userId) return;
     
     await createOrUpdateLimit(limitData.userId, limitData.maxLimit, limitData.isUnlimited);
     setLimitDialogOpen(false);
     setLimitData({ userId: '', maxLimit: 10000, isUnlimited: false });
+    setSelectedClient(null);
     await refetch();
   };
 
@@ -98,19 +151,55 @@ const LimitesClientes: React.FC = () => {
                 Definir Limite
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-admin-content-bg border-admin-border">
+            <DialogContent className="bg-admin-content-bg border-admin-border max-w-md">
               <DialogHeader>
                 <DialogTitle className="text-admin-table-text">Definir Limite do Cliente</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label className="text-admin-table-text">ID do Usuário</Label>
-                  <Input
-                    value={limitData.userId}
-                    onChange={(e) => setLimitData(prev => ({ ...prev, userId: e.target.value }))}
-                    placeholder="Informe o ID do usuário"
-                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                  />
+                  <Label className="text-admin-table-text">Buscar Cliente</Label>
+                  <div className="relative">
+                    <Input
+                      value={clientSearchTerm}
+                      onChange={(e) => setClientSearchTerm(e.target.value)}
+                      placeholder="Digite nome, e-mail ou CPF..."
+                      className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                    />
+                    {loadingClients && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin h-4 w-4 border-2 border-green-600 border-t-transparent rounded-full" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {clients.length > 0 && (
+                    <div className="mt-2 max-h-40 overflow-y-auto border border-admin-border rounded-md bg-admin-content-bg">
+                      {clients.map((client) => (
+                        <button
+                          key={client.id}
+                          onClick={() => handleClientSelect(client)}
+                          className="w-full text-left p-3 hover:bg-gray-800/50 border-b border-admin-border last:border-b-0"
+                        >
+                          <div className="text-admin-table-text font-medium">{client.name}</div>
+                          <div className="text-admin-muted-foreground text-sm">
+                            {client.email} {client.cpf && `• ${client.cpf}`}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedClient && (
+                    <div className="mt-2 p-3 bg-green-600/10 border border-green-600/30 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-green-400" />
+                        <div>
+                          <div className="text-admin-table-text font-medium">{selectedClient.name}</div>
+                          <div className="text-admin-muted-foreground text-sm">{selectedClient.email}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -140,13 +229,19 @@ const LimitesClientes: React.FC = () => {
                 <div className="flex justify-end gap-2">
                   <Button 
                     variant="outline" 
-                    onClick={() => setLimitDialogOpen(false)}
+                    onClick={() => {
+                      setLimitDialogOpen(false);
+                      setSelectedClient(null);
+                      setClientSearchTerm('');
+                      setClients([]);
+                    }}
                     className="text-admin-table-text border-admin-border"
                   >
                     Cancelar
                   </Button>
                   <Button 
                     onClick={handleCreateLimit}
+                    disabled={!selectedClient}
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     Salvar
@@ -393,33 +488,33 @@ const LimitesClientes: React.FC = () => {
         <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
           <DialogContent className="bg-admin-content-bg border-admin-border">
             <DialogHeader>
-              <DialogTitle className="text-admin-table-text">Revisar Solicitação</DialogTitle>
+              <DialogTitle className="text-admin-table-text">Revisar Solicitação de Limite</DialogTitle>
             </DialogHeader>
             {selectedRequest && (
               <div className="space-y-4">
-                <div className="bg-gray-900 p-4 rounded">
-                  <h4 className="font-medium text-admin-table-text mb-2">Detalhes da Solicitação</h4>
-                  <div className="space-y-2 text-sm">
-                    <div><strong>Cliente:</strong> {selectedRequest.user?.name}</div>
-                    <div><strong>Limite atual:</strong> {formatCurrency(selectedRequest.current_limit)}</div>
-                    <div><strong>Limite solicitado:</strong> {formatCurrency(selectedRequest.requested_limit)}</div>
-                    <div><strong>Diferença:</strong> +{formatCurrency(selectedRequest.requested_limit - selectedRequest.current_limit)}</div>
-                    {selectedRequest.reason && (
-                      <div><strong>Motivo:</strong> {selectedRequest.reason}</div>
-                    )}
+                <div className="space-y-2">
+                  <div className="text-admin-table-text">
+                    <strong>Cliente:</strong> {selectedRequest.user?.name}
                   </div>
+                  <div className="text-admin-table-text">
+                    <strong>Limite atual:</strong> {formatCurrency(selectedRequest.current_limit)}
+                  </div>
+                  <div className="text-admin-table-text">
+                    <strong>Limite solicitado:</strong> {formatCurrency(selectedRequest.requested_limit)}
+                  </div>
+                  {selectedRequest.reason && (
+                    <div>
+                      <strong className="text-admin-table-text">Motivo:</strong>
+                      <div className="bg-gray-900 p-2 rounded mt-1 text-admin-muted-foreground">
+                        {selectedRequest.reason}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end gap-2">
                   <Button 
                     variant="outline" 
-                    onClick={() => setReviewDialogOpen(false)}
-                    className="text-admin-table-text border-admin-border"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    variant="outline"
                     onClick={() => handleReviewRequest(false)}
                     className="text-red-400 border-red-400 hover:bg-red-400/10"
                   >
@@ -427,7 +522,7 @@ const LimitesClientes: React.FC = () => {
                     Rejeitar
                   </Button>
                   <Button 
-                    onClick={() => handleReviewRequest(true)}
+                    onClick={() => handleReviewRequest(true, selectedRequest.requested_limit)}
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     <Check className="h-4 w-4 mr-2" />

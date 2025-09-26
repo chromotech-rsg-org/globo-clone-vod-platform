@@ -35,9 +35,44 @@ export const useDashboardStats = () => {
 
   const fetchGeneralStats = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_dashboard_stats');
-      if (error) throw error;
-      setGeneralStats(data[0] || null);
+      // Fetch stats manually since get_dashboard_stats function might not exist
+      const [
+        { count: totalUsers },
+        { count: totalAuctions },
+        { count: totalBids },
+        { count: activeAuctions },
+        { count: pendingRegistrations },
+        { count: documentsCount },
+        { count: limitRequestsPending }
+      ] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('auctions').select('*', { count: 'exact', head: true }),
+        supabase.from('bids').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('auctions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('auction_registrations').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('client_documents').select('*', { count: 'exact', head: true }),
+        supabase.from('limit_increase_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+      ]);
+
+      // Calculate total revenue
+      const { data: winnerBids } = await supabase
+        .from('bids')
+        .select('bid_value')
+        .eq('is_winner', true)
+        .eq('status', 'approved');
+
+      const totalRevenue = winnerBids?.reduce((sum, bid) => sum + Number(bid.bid_value), 0) || 0;
+
+      setGeneralStats({
+        total_users: totalUsers || 0,
+        total_auctions: totalAuctions || 0,
+        total_bids: totalBids || 0,
+        total_revenue: totalRevenue,
+        active_auctions: activeAuctions || 0,
+        pending_registrations: pendingRegistrations || 0,
+        documents_count: documentsCount || 0,
+        limit_requests_pending: limitRequestsPending || 0
+      });
     } catch (err) {
       console.error('Error fetching general stats:', err);
       throw err;

@@ -73,7 +73,7 @@ const Auditoria: React.FC = () => {
   };
 
   const filteredLogs = logs.filter(log => {
-    if (filters.action && log.action !== filters.action) return false;
+    if (filters.action && filters.action !== 'all' && log.action !== filters.action) return false;
     return true;
   });
 
@@ -115,9 +115,13 @@ const Auditoria: React.FC = () => {
                   <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
                     <SelectValue placeholder="Selecionar tabela" />
                   </SelectTrigger>
-                  <SelectContent className="bg-admin-content-bg border-admin-border">
+                    <SelectContent className="bg-admin-content-bg border-admin-border">
                     {AUDIT_TABLES.map(table => (
-                      <SelectItem key={table.value} value={table.value} className="text-admin-table-text">
+                      <SelectItem 
+                        key={table.value || 'all'} 
+                        value={table.value || 'all'} 
+                        className="text-admin-table-text"
+                      >
                         {table.label}
                       </SelectItem>
                     ))}
@@ -133,9 +137,13 @@ const Auditoria: React.FC = () => {
                   <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
                     <SelectValue placeholder="Selecionar ação" />
                   </SelectTrigger>
-                  <SelectContent className="bg-admin-content-bg border-admin-border">
+                    <SelectContent className="bg-admin-content-bg border-admin-border">
                     {AUDIT_ACTIONS.map(action => (
-                      <SelectItem key={action.value} value={action.value} className="text-admin-table-text">
+                      <SelectItem 
+                        key={action.value || 'all'} 
+                        value={action.value || 'all'} 
+                        className="text-admin-table-text"
+                      >
                         {action.label}
                       </SelectItem>
                     ))}
