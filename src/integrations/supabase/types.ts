@@ -212,6 +212,39 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bids: {
         Row: {
           approved_by: string | null
@@ -285,6 +318,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      client_bid_limits: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_unlimited: boolean
+          max_limit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_unlimited?: boolean
+          max_limit?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_unlimited?: boolean
+          max_limit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      client_documents: {
+        Row: {
+          category: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          updated_at: string
+          uploaded_by: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type: string
+          id?: string
+          updated_at?: string
+          uploaded_by: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          updated_at?: string
+          uploaded_by?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       content_items: {
         Row: {
@@ -602,6 +704,45 @@ export type Database = {
         }
         Relationships: []
       }
+      limit_increase_requests: {
+        Row: {
+          created_at: string
+          current_limit: number
+          id: string
+          reason: string | null
+          requested_limit: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_limit: number
+          id?: string
+          reason?: string | null
+          requested_limit: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_limit?: number
+          id?: string
+          reason?: string | null
+          requested_limit?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       motv_api_configs: {
         Row: {
           api_base_url: string
@@ -885,6 +1026,33 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       terms_acceptances: {
         Row: {
           accepted_at: string
@@ -991,6 +1159,19 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_dashboard_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          active_auctions: number
+          documents_count: number
+          limit_requests_pending: number
+          pending_registrations: number
+          total_auctions: number
+          total_bids: number
+          total_revenue: number
+          total_users: number
+        }[]
       }
       get_user_active_subscription: {
         Args: { user_uuid: string }
