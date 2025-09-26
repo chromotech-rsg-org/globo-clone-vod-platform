@@ -58,12 +58,13 @@ interface LotChanges {
 const StatusBadge = ({ status }: { status: AuctionItem['status'] }) => {
   const statusConfig = {
     not_started: { label: 'Não Iniciado', variant: 'secondary' as const, className: 'bg-gray-800 text-gray-300 border-gray-600' },
+    pre_bidding: { label: 'Pré Lance', variant: 'secondary' as const, className: 'bg-yellow-900/40 text-yellow-400 border-yellow-600' },
     in_progress: { label: 'Em Andamento', variant: 'default' as const, className: 'bg-green-900/40 text-green-400 border-green-600' },
     finished: { label: 'Finalizado', variant: 'outline' as const, className: 'bg-gray-900 text-white border-gray-500' },
     indisponivel: { label: 'Indisponível', variant: 'destructive' as const, className: 'bg-red-900/40 text-red-400 border-red-600' },
   };
 
-  const config = statusConfig[status];
+  const config = statusConfig[status] || statusConfig.not_started;
   return <Badge variant={config.variant} className={config.className}>{config.label}</Badge>;
 };
 
@@ -71,12 +72,14 @@ const SortableItem = ({
   item, 
   onDelete, 
   onQuickStatusUpdate,
-  onChange
+  onChange,
+  isExpanded = false
 }: {
   item: AuctionItem;
   onDelete: () => void;
   onQuickStatusUpdate: (itemId: string, status: string) => void;
   onChange: (itemId: string, changes: Partial<LotFormData>) => void;
+  isExpanded?: boolean;
 }) => {
   const {
     attributes,
@@ -99,82 +102,91 @@ const SortableItem = ({
             <GripVertical className="h-5 w-5 text-green-400" />
           </div>
           
-          <div className="flex-1 space-y-3">
-            <div>
-              <Label htmlFor={`name-${item.id}`} className="text-white">Nome</Label>
-              <Input
-                id={`name-${item.id}`}
-                value={item.name}
-                onChange={(e) => onChange(item.id, { name: e.target.value })}
-                className="bg-black border-green-600/30 text-white focus:border-green-500"
-              />
+          <div className={`flex-1 ${isExpanded ? 'space-y-3' : ''}`}>
+            <div className="mb-2">
+              <div className="font-medium text-white text-sm mb-1">{item.name}</div>
+              <div className="text-gray-400 text-xs">#{item.order_index}</div>
             </div>
-            <div>
-              <Label htmlFor={`description-${item.id}`} className="text-white">Descrição</Label>
-              <Textarea
-                id={`description-${item.id}`}
-                value={item.description || ''}
-                onChange={(e) => onChange(item.id, { description: e.target.value })}
-                rows={2}
-                className="bg-black border-green-600/30 text-white focus:border-green-500"
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label htmlFor={`initial-value-${item.id}`} className="text-white">Valor Inicial</Label>
-                <CurrencyInput
-                  value={item.initial_value}
-                  onChange={(value) => onChange(item.id, { initial_value: value })}
-                />
+            
+            {isExpanded && (
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor={`name-${item.id}`} className="text-white">Nome</Label>
+                  <Input
+                    id={`name-${item.id}`}
+                    value={item.name}
+                    onChange={(e) => onChange(item.id, { name: e.target.value })}
+                    className="bg-black border-green-600/30 text-white focus:border-green-500"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`description-${item.id}`} className="text-white">Descrição</Label>
+                  <Textarea
+                    id={`description-${item.id}`}
+                    value={item.description || ''}
+                    onChange={(e) => onChange(item.id, { description: e.target.value })}
+                    rows={2}
+                    className="bg-black border-green-600/30 text-white focus:border-green-500"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label htmlFor={`initial-value-${item.id}`} className="text-white">Valor Inicial</Label>
+                    <CurrencyInput
+                      value={item.initial_value}
+                      onChange={(value) => onChange(item.id, { initial_value: value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`increment-${item.id}`} className="text-white">Incremento</Label>
+                    <CurrencyInput
+                      value={item.increment || 0}
+                      onChange={(value) => onChange(item.id, { increment: value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`order-${item.id}`} className="text-white">Ordem</Label>
+                    <Input
+                      id={`order-${item.id}`}
+                      type="number"
+                      value={item.order_index}
+                      onChange={(e) => onChange(item.id, { order_index: parseInt(e.target.value) || 0 })}
+                      className="bg-black border-green-600/30 text-white focus:border-green-500"
+                      min="1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor={`status-${item.id}`} className="text-white">Status</Label>
+                  <Select value={item.status} onValueChange={(value) => onChange(item.id, { status: value as LotFormData['status'] })}>
+                    <SelectTrigger className="bg-black border-green-600/30 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-green-600/30">
+                      <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
+                      <SelectItem value="pre_bidding" className="text-yellow-400 hover:bg-gray-800">Pré Lance</SelectItem>
+                      <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
+                      <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
+                      <SelectItem value="indisponivel" className="text-white hover:bg-gray-800">Indisponível</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-white">Imagem do Lote</Label>
+                  <ImageUpload 
+                    onImageUploaded={(url, path) => onChange(item.id, { image_url: url })}
+                    folder="auction-items"
+                    existingImages={item.image_url ? [{ 
+                      url: item.image_url, 
+                      path: item.image_url.includes('auction-items/') 
+                        ? item.image_url.split('auction-items/')[1] 
+                        : item.image_url.split('/').pop() || '', 
+                      name: 'Imagem do Lote' 
+                    }] : []}
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor={`increment-${item.id}`} className="text-white">Incremento</Label>
-                <CurrencyInput
-                  value={item.increment || 0}
-                  onChange={(value) => onChange(item.id, { increment: value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor={`order-${item.id}`} className="text-white">Ordem</Label>
-                <Input
-                  id={`order-${item.id}`}
-                  type="number"
-                  value={item.order_index}
-                  onChange={(e) => onChange(item.id, { order_index: parseInt(e.target.value) || 0 })}
-                  className="bg-black border-green-600/30 text-white focus:border-green-500"
-                  min="1"
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor={`status-${item.id}`} className="text-white">Status</Label>
-              <Select value={item.status} onValueChange={(value) => onChange(item.id, { status: value as LotFormData['status'] })}>
-                <SelectTrigger className="bg-black border-green-600/30 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-green-600/30">
-                  <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
-                  <SelectItem value="pre_bidding" className="text-yellow-400 hover:bg-gray-800">Pré Lance</SelectItem>
-                  <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
-                  <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
-                  <SelectItem value="indisponivel" className="text-white hover:bg-gray-800">Indisponível</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-white">Imagem do Lote</Label>
-              <ImageUpload 
-                onImageUploaded={(url, path) => onChange(item.id, { image_url: url })}
-                folder="auction-items"
-                existingImages={item.image_url ? [{ 
-                  url: item.image_url, 
-                  path: item.image_url.includes('auction-items/') 
-                    ? item.image_url.split('auction-items/')[1] 
-                    : item.image_url.split('/').pop() || '', 
-                  name: 'Imagem do Lote' 
-                }] : []}
-              />
-            </div>
+            )}
           </div>
         </div>
         
@@ -249,6 +261,7 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [lotChanges, setLotChanges] = useState<LotChanges>({});
+  const [allLotsExpanded, setAllLotsExpanded] = useState(false);
   const [formData, setFormData] = useState<LotFormData>({
     name: '',
     description: '',
@@ -544,6 +557,13 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
           <h3 className="text-lg font-semibold text-white">Gerenciar Lotes</h3>
           <div className="flex gap-2">
             <Button 
+              onClick={() => setAllLotsExpanded(!allLotsExpanded)} 
+              variant="outline"
+              className="border-green-600/50 text-green-400 hover:bg-green-900/30"
+            >
+              {allLotsExpanded ? 'Recolher Todos' : 'Expandir Todos'}
+            </Button>
+            <Button 
               onClick={handleAutoOrder} 
               variant="outline"
               className="border-green-600/50 text-green-400 hover:bg-green-900/30"
@@ -665,13 +685,14 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
           >
             <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-3">
-                {items.map((item) => (
+                 {items.map((item) => (
                  <SortableItem
                    key={item.id}
                    item={getUpdatedItem(item)}
                    onDelete={() => handleDelete(item.id)}
                    onQuickStatusUpdate={handleQuickStatusUpdate}
                    onChange={handleLotChange}
+                   isExpanded={allLotsExpanded}
                  />
                 ))}
               </div>
