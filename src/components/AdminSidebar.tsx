@@ -19,7 +19,11 @@ import {
   Plug,
   Settings,
   ChevronDown,
-  ExternalLink
+  ExternalLink,
+  BarChart3,
+  Shield,
+  FolderOpen,
+  DollarSign
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
@@ -121,6 +125,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
   const adminMenuItems: MenuItem[] = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
+    { path: '/admin/dashboard-financeiro', icon: BarChart3, label: 'Dashboard Financeiro' },
     { path: '/admin/usuarios', icon: Users, label: 'Usuários' },
     { path: '/admin/planos', icon: CreditCard, label: 'Planos' },
     { path: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
@@ -138,6 +143,9 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
       label: 'Lances',
       pendingCount: pendingBids.length
     },
+    { path: '/admin/documentos', icon: FolderOpen, label: 'Documentos' },
+    { path: '/admin/limites-clientes', icon: DollarSign, label: 'Limites Clientes' },
+    { path: '/admin/auditoria', icon: Shield, label: 'Auditoria' },
   ];
 
   const developerConfigItems: MenuItem[] = [

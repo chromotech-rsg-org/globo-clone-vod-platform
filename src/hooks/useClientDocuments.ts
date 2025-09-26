@@ -16,11 +16,11 @@ interface ClientDocument {
   user?: {
     name: string;
     email: string;
-  };
+  } | null;
   uploader?: {
     name: string;
     email: string;
-  };
+  } | null;
 }
 
 const DOCUMENT_CATEGORIES = [
@@ -43,11 +43,7 @@ export const useClientDocuments = (userId?: string) => {
       setLoading(true);
       let query = supabase
         .from('client_documents')
-        .select(`
-          *,
-          user:profiles!client_documents_user_id_fkey(name, email),
-          uploader:profiles!client_documents_uploaded_by_fkey(name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (userId) {
@@ -57,7 +53,22 @@ export const useClientDocuments = (userId?: string) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setDocuments(data || []);
+
+      // Fetch user and uploader names separately
+      const documentsWithUsers = await Promise.all((data || []).map(async (document) => {
+        const [userProfile, uploaderProfile] = await Promise.all([
+          supabase.from('profiles').select('name, email').eq('id', document.user_id).single(),
+          supabase.from('profiles').select('name, email').eq('id', document.uploaded_by).single()
+        ]);
+        
+        return { 
+          ...document, 
+          user: userProfile.data,
+          uploader: uploaderProfile.data 
+        };
+      }));
+
+      setDocuments(documentsWithUsers);
     } catch (error) {
       console.error('Error fetching documents:', error);
       toast({
@@ -95,6 +106,9 @@ export const useClientDocuments = (userId?: string) => {
       if (uploadError) throw uploadError;
 
       // Salvar metadados no banco
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user) throw new Error('User not authenticated');
+
       const { error: dbError } = await supabase
         .from('client_documents')
         .insert({
@@ -103,7 +117,8 @@ export const useClientDocuments = (userId?: string) => {
           file_name: file.name,
           file_type: file.type,
           file_size: file.size,
-          category: category
+          category: category,
+          uploaded_by: currentUser.user.id
         });
 
       if (dbError) throw dbError;

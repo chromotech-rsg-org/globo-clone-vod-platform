@@ -31,6 +31,10 @@ import AdminRegistrations from "./pages/admin/Registrations";
 import AdminBids from "./pages/admin/Bids";
 import AdminIntegration from "./pages/admin/Integration";
 import AsaasApiTester from "./pages/admin/AsaasApiTester";
+import DashboardFinanceiro from "./pages/admin/DashboardFinanceiro";
+import Auditoria from "./pages/admin/Auditoria";
+import Documentos from "./pages/admin/Documentos";
+import LimitesClientes from "./pages/admin/LimitesClientes";
 import AuctionCreate from "./pages/admin/AuctionCreate";
 import AuctionEdit from "./pages/admin/AuctionEdit";
 import AuctionDetails from "./pages/admin/AuctionDetails";
@@ -285,6 +289,26 @@ function AppContent() {
           <AdminLayout>
             <AsaasApiTester />
           </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/dashboard-financeiro" element={
+        <ProtectedRoute requiredRole="admin">
+          <DashboardFinanceiro />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/auditoria" element={
+        <ProtectedRoute requiredRole="admin">
+          <Auditoria />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/documentos" element={
+        <ProtectedRoute requiredRole="admin">
+          <Documentos />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/limites-clientes" element={
+        <ProtectedRoute requiredRole="admin">
+          <LimitesClientes />
         </ProtectedRoute>
       } />
       

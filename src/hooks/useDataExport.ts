@@ -15,7 +15,7 @@ export const useDataExport = () => {
   const exportToCSV = async (options: ExportOptions) => {
     setIsExporting(true);
     try {
-      let query = supabase.from(options.table).select(options.columns?.join(',') || '*');
+      let query = (supabase as any).from(options.table).select(options.columns?.join(',') || '*');
       
       if (options.filters) {
         Object.entries(options.filters).forEach(([key, value]) => {
@@ -92,7 +92,7 @@ export const useDataExport = () => {
 
     setIsExporting(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from(options.table)
         .select(options.columns?.join(',') || '*')
         .in('id', options.selectedIds);

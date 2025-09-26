@@ -64,15 +64,24 @@ export const useDashboardStats = () => {
         .from('bids')
         .select(`
           user_id, 
-          bid_value, 
-          profiles(name)
+          bid_value
         `)
         .eq('is_winner', true)
         .eq('status', 'approved');
 
       if (biddersError) throw biddersError;
 
-      const topBidders = processTopBidders(topBiddersData || []);
+      // Fetch user names separately for top bidders
+      const biddersWithNames = await Promise.all((topBiddersData || []).map(async (bid) => {
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', bid.user_id)
+          .single();
+        return { ...bid, profiles: userProfile };
+      }));
+
+      const topBidders = processTopBidders(biddersWithNames || []);
 
       // Performance dos leilões
       const { data: auctionData, error: auctionError } = await supabase
@@ -94,9 +103,9 @@ export const useDashboardStats = () => {
         .select(`
           bid_value,
           created_at,
-          profiles(name),
-          auctions(name),
-          auction_items(name)
+          user_id,
+          auction_id,
+          auction_item_id
         `)
         .eq('is_winner', true)
         .eq('status', 'approved')
@@ -105,12 +114,21 @@ export const useDashboardStats = () => {
 
       if (winnersError) throw winnersError;
 
-      const recentWinnersProcessed = (recentWinners || []).map(winner => ({
-        user_name: winner.profiles?.name || 'Usuário Desconhecido',
-        auction_name: winner.auctions?.name || 'Leilão Desconhecido',
-        lot_name: winner.auction_items?.name || 'Lote Desconhecido',
-        winning_bid: winner.bid_value,
-        date: winner.created_at
+      // Fetch related data separately
+      const recentWinnersProcessed = await Promise.all((recentWinners || []).map(async (winner) => {
+        const [userProfile, auction, auctionItem] = await Promise.all([
+          supabase.from('profiles').select('name').eq('id', winner.user_id).single(),
+          supabase.from('auctions').select('name').eq('id', winner.auction_id).single(),
+          supabase.from('auction_items').select('name').eq('id', winner.auction_item_id).single()
+        ]);
+        
+        return {
+          user_name: userProfile.data?.name || 'Usuário Desconhecido',
+          auction_name: auction.data?.name || 'Leilão Desconhecido',
+          lot_name: auctionItem.data?.name || 'Lote Desconhecido',
+          winning_bid: winner.bid_value,
+          date: winner.created_at
+        };
       }));
 
       setFinancialStats({
@@ -230,7 +248,7 @@ export const useDashboardStats = () => {
       }
       const bidder = bidderMap.get(bid.user_id);
       bidder.total_bids += 1;
-      bidder.total_value += bid.bid_value;
+      bidder.total_value += Number(bid.bid_value);
     });
 
     return Array.from(bidderMap.values())

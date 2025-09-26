@@ -4,11 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2, Plus, Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Edit, Trash2, Plus, Search, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import DataTablePagination from '@/components/admin/DataTablePagination';
+import BulkActionsToolbar from '@/components/admin/BulkActionsToolbar';
 import UserFormDialog from '@/components/admin/UserFormDialog';
 import { useCustomizations } from '@/hooks/useCustomizations';
 
@@ -34,6 +36,7 @@ const AdminUsers = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { customizations } = useCustomizations('home');
@@ -166,6 +169,60 @@ const AdminUsers = () => {
     fetchUsers();
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(users.map(user => user.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, userId]);
+    } else {
+      setSelectedIds(prev => prev.filter(id => id !== userId));
+    }
+  };
+
+  const handleBulkDelete = async (userIds: string[]) => {
+    if (!confirm(`Tem certeza que deseja excluir ${userIds.length} usuários?`)) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .in('id', userIds);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: `${userIds.length} usuários excluídos com sucesso`
+      });
+      
+      setSelectedIds([]);
+      fetchUsers();
+    } catch (error) {
+      console.error('Erro ao excluir usuários:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir os usuários",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const bulkActions = [
+    {
+      key: 'delete',
+      label: 'Excluir Selecionados',
+      icon: Trash2,
+      variant: 'destructive' as const,
+      action: handleBulkDelete
+    }
+  ];
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -231,16 +288,33 @@ const AdminUsers = () => {
         </div>
 
         {/* Users Table */}
+        <BulkActionsToolbar
+          selectedIds={selectedIds}
+          totalSelected={selectedIds.length}
+          onClearSelection={() => setSelectedIds([])}
+          table="profiles"
+          customActions={bulkActions}
+          exportColumns={['name', 'email', 'role', 'cpf', 'phone', 'motv_user_id', 'created_at']}
+          exportFileName={`usuarios_${new Date().toISOString().split('T')[0]}.csv`}
+        />
+        
         <Card className="bg-black border-green-600/30">
           <CardContent className="p-0">
             <Table>
                <TableHeader>
                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-300">Nome</TableHead>
-                    <TableHead className="text-gray-300">Email</TableHead>
-                    <TableHead className="text-gray-300">Função</TableHead>
-                    <TableHead className="text-gray-300">ID {projectName}</TableHead>
-                    <TableHead className="text-gray-300">Ações</TableHead>
+                   <TableHead className="text-gray-300 w-12">
+                     <Checkbox
+                       checked={selectedIds.length === users.length && users.length > 0}
+                       onCheckedChange={handleSelectAll}
+                       className="border-gray-600"
+                     />
+                   </TableHead>
+                   <TableHead className="text-gray-300">Nome</TableHead>
+                   <TableHead className="text-gray-300">Email</TableHead>
+                   <TableHead className="text-gray-300">Função</TableHead>
+                   <TableHead className="text-gray-300">ID {projectName}</TableHead>
+                   <TableHead className="text-gray-300">Ações</TableHead>
                  </TableRow>
                </TableHeader>
               <TableBody>
@@ -254,6 +328,13 @@ const AdminUsers = () => {
                   })
                   .map(user => (
                   <TableRow key={user.id} className="border-gray-700">
+                    <TableCell className="w-12">
+                      <Checkbox
+                        checked={selectedIds.includes(user.id)}
+                        onCheckedChange={(checked) => handleSelectOne(user.id, checked as boolean)}
+                        className="border-gray-600"
+                      />
+                    </TableCell>
                      <TableCell className="text-white">{user.name}</TableCell>
                      <TableCell className="text-white">{user.email}</TableCell>
                      <TableCell>
@@ -309,6 +390,9 @@ const AdminUsers = () => {
               totalItems={totalItems}
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
+              table="profiles"
+              exportColumns={['name', 'email', 'role', 'cpf', 'phone', 'motv_user_id', 'created_at']}
+              exportFileName={`usuarios_completo_${new Date().toISOString().split('T')[0]}.csv`}
             />
           </CardContent>
         </Card>

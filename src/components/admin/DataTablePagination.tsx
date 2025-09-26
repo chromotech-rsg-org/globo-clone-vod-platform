@@ -3,6 +3,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { useDataExport } from '@/hooks/useDataExport';
+import { Download } from 'lucide-react';
 
 interface DataTablePaginationProps {
   currentPage: number;
@@ -11,6 +13,9 @@ interface DataTablePaginationProps {
   totalItems: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  table?: string;
+  exportColumns?: string[];
+  exportFileName?: string;
 }
 
 const DataTablePagination: React.FC<DataTablePaginationProps> = ({
@@ -20,7 +25,11 @@ const DataTablePagination: React.FC<DataTablePaginationProps> = ({
   totalItems,
   onPageChange,
   onPageSizeChange,
+  table,
+  exportColumns,
+  exportFileName,
 }) => {
+  const { exportToCSV, isExporting } = useDataExport();
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
@@ -63,6 +72,19 @@ const DataTablePagination: React.FC<DataTablePaginationProps> = ({
           </SelectContent>
         </Select>
         <p className="text-sm text-admin-muted-foreground">por página</p>
+        
+        {table && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportToCSV({ table, columns: exportColumns, fileName: exportFileName })}
+            disabled={isExporting}
+            className="text-admin-table-text border-admin-border ml-4"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {isExporting ? 'Exportando...' : 'Exportar Tudo'}
+          </Button>
+        )}
       </div>
 
       <Pagination>

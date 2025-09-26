@@ -8,12 +8,12 @@ interface AuditLog {
   action: string;
   old_values: any;
   new_values: any;
-  user_id: string;
+  user_id: string | null;
   created_at: string;
   user?: {
     name: string;
     email: string;
-  };
+  } | null;
 }
 
 interface UseAuditLogsProps {
@@ -36,10 +36,7 @@ export const useAuditLogs = (filters: UseAuditLogsProps = {}) => {
 
       let query = supabase
         .from('audit_logs')
-        .select(`
-          *,
-          user:profiles(name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (filters.table) {
@@ -62,7 +59,20 @@ export const useAuditLogs = (filters: UseAuditLogsProps = {}) => {
 
       if (fetchError) throw fetchError;
 
-      setLogs(data || []);
+      // Fetch user names separately for efficiency
+      const logsWithUsers = await Promise.all((data || []).map(async (log) => {
+        if (log.user_id) {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('name, email')
+            .eq('id', log.user_id)
+            .single();
+          return { ...log, user: userProfile };
+        }
+        return { ...log, user: null };
+      }));
+
+      setLogs(logsWithUsers);
     } catch (err) {
       console.error('Error fetching audit logs:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar logs de auditoria');

@@ -13,7 +13,7 @@ interface BidLimit {
   user?: {
     name: string;
     email: string;
-  };
+  } | null;
 }
 
 interface LimitRequest {
@@ -21,20 +21,20 @@ interface LimitRequest {
   user_id: string;
   current_limit: number;
   requested_limit: number;
-  reason: string;
+  reason: string | null;
   status: string;
-  reviewed_by?: string;
-  reviewed_at?: string;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
   created_at: string;
   updated_at: string;
   user?: {
     name: string;
     email: string;
-  };
+  } | null;
   reviewer?: {
     name: string;
     email: string;
-  };
+  } | null;
 }
 
 export const useBidLimits = () => {
@@ -50,14 +50,22 @@ export const useBidLimits = () => {
     try {
       const { data, error } = await supabase
         .from('client_bid_limits')
-        .select(`
-          *,
-          user:profiles(name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setLimits(data || []);
+
+      // Fetch user names separately
+      const limitsWithUsers = await Promise.all((data || []).map(async (limit) => {
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('name, email')
+          .eq('id', limit.user_id)
+          .single();
+        return { ...limit, user: userProfile };
+      }));
+
+      setLimits(limitsWithUsers);
     } catch (error) {
       console.error('Error fetching bid limits:', error);
       toast({
@@ -72,15 +80,28 @@ export const useBidLimits = () => {
     try {
       const { data, error } = await supabase
         .from('limit_increase_requests')
-        .select(`
-          *,
-          user:profiles!limit_increase_requests_user_id_fkey(name, email),
-          reviewer:profiles!limit_increase_requests_reviewed_by_fkey(name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRequests(data || []);
+
+      // Fetch user and reviewer names separately
+      const requestsWithUsers = await Promise.all((data || []).map(async (request) => {
+        const [userProfile, reviewerProfile] = await Promise.all([
+          supabase.from('profiles').select('name, email').eq('id', request.user_id).single(),
+          request.reviewed_by 
+            ? supabase.from('profiles').select('name, email').eq('id', request.reviewed_by).single()
+            : Promise.resolve({ data: null })
+        ]);
+        
+        return { 
+          ...request, 
+          user: userProfile.data,
+          reviewer: reviewerProfile.data 
+        };
+      }));
+
+      setRequests(requestsWithUsers);
     } catch (error) {
       console.error('Error fetching limit requests:', error);
       toast({
@@ -114,12 +135,16 @@ export const useBidLimits = () => {
 
   const createOrUpdateLimit = async (userId: string, maxLimit: number, isUnlimited: boolean = false) => {
     try {
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user) throw new Error('User not authenticated');
+
       const { error } = await supabase
         .from('client_bid_limits')
         .upsert({
           user_id: userId,
           max_limit: maxLimit,
-          is_unlimited: isUnlimited
+          is_unlimited: isUnlimited,
+          created_by: currentUser.user.id
         }, {
           onConflict: 'user_id'
         });
