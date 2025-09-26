@@ -51,6 +51,10 @@ interface LotFormData {
   order_index: number;
 }
 
+interface LotChanges {
+  [itemId: string]: Partial<LotFormData>;
+}
+
 const StatusBadge = ({ status }: { status: AuctionItem['status'] }) => {
   const statusConfig = {
     not_started: { label: 'Não Iniciado', variant: 'secondary' as const, className: 'bg-gray-800 text-gray-300 border-gray-600' },
@@ -65,24 +69,14 @@ const StatusBadge = ({ status }: { status: AuctionItem['status'] }) => {
 
 const SortableItem = ({ 
   item, 
-  isEditing, 
-  onEdit, 
-  onSave, 
-  onCancel, 
   onDelete, 
-  editData, 
-  onEditDataChange,
-  onQuickStatusUpdate
+  onQuickStatusUpdate,
+  onChange
 }: {
   item: AuctionItem;
-  isEditing: boolean;
-  onEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
   onDelete: () => void;
-  editData: LotFormData;
-  onEditDataChange: (data: Partial<LotFormData>) => void;
   onQuickStatusUpdate: (itemId: string, status: string) => void;
+  onChange: (itemId: string, changes: Partial<LotFormData>) => void;
 }) => {
   const {
     attributes,
@@ -99,216 +93,150 @@ const SortableItem = ({
 
   return (
     <div ref={setNodeRef} style={style} className="bg-gray-900 border border-green-600/30 rounded-lg p-4 hover:border-green-600/50 transition-colors">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            {!isEditing && (
-              <div {...attributes} {...listeners} className="cursor-grab hover:cursor-grabbing">
-                <GripVertical className="h-5 w-5 text-green-400" />
-              </div>
-            )}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3 flex-1">
+          <div {...attributes} {...listeners} className="cursor-grab hover:cursor-grabbing">
+            <GripVertical className="h-5 w-5 text-green-400" />
+          </div>
           
-          {isEditing ? (
-            <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-3">
+            <div>
+              <Label htmlFor={`name-${item.id}`} className="text-white">Nome</Label>
+              <Input
+                id={`name-${item.id}`}
+                value={item.name}
+                onChange={(e) => onChange(item.id, { name: e.target.value })}
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`description-${item.id}`} className="text-white">Descrição</Label>
+              <Textarea
+                id={`description-${item.id}`}
+                value={item.description || ''}
+                onChange={(e) => onChange(item.id, { description: e.target.value })}
+                rows={2}
+                className="bg-black border-green-600/30 text-white focus:border-green-500"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label htmlFor={`name-${item.id}`} className="text-white">Nome</Label>
+                <Label htmlFor={`initial-value-${item.id}`} className="text-white">Valor Inicial</Label>
+                <CurrencyInput
+                  value={item.initial_value}
+                  onChange={(value) => onChange(item.id, { initial_value: value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor={`increment-${item.id}`} className="text-white">Incremento</Label>
+                <CurrencyInput
+                  value={item.increment || 0}
+                  onChange={(value) => onChange(item.id, { increment: value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor={`order-${item.id}`} className="text-white">Ordem</Label>
                 <Input
-                  id={`name-${item.id}`}
-                  value={editData.name}
-                  onChange={(e) => onEditDataChange({ name: e.target.value })}
+                  id={`order-${item.id}`}
+                  type="number"
+                  value={item.order_index}
+                  onChange={(e) => onChange(item.id, { order_index: parseInt(e.target.value) || 0 })}
                   className="bg-black border-green-600/30 text-white focus:border-green-500"
-                />
-              </div>
-              <div>
-                <Label htmlFor={`description-${item.id}`} className="text-white">Descrição</Label>
-                <Textarea
-                  id={`description-${item.id}`}
-                  value={editData.description}
-                  onChange={(e) => onEditDataChange({ description: e.target.value })}
-                  rows={2}
-                  className="bg-black border-green-600/30 text-white focus:border-green-500"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label htmlFor={`initial-value-${item.id}`} className="text-white">Valor Inicial</Label>
-                  <CurrencyInput
-                    value={editData.initial_value}
-                    onChange={(value) => onEditDataChange({ initial_value: value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor={`increment-${item.id}`} className="text-white">Incremento</Label>
-                  <CurrencyInput
-                    value={editData.increment}
-                    onChange={(value) => onEditDataChange({ increment: value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor={`order-${item.id}`} className="text-white">Ordem</Label>
-                  <Input
-                    id={`order-${item.id}`}
-                    type="number"
-                    value={editData.order_index}
-                    onChange={(e) => onEditDataChange({ order_index: parseInt(e.target.value) || 0 })}
-                    className="bg-black border-green-600/30 text-white focus:border-green-500"
-                    min="1"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor={`status-${item.id}`} className="text-white">Status</Label>
-                <Select value={editData.status} onValueChange={(value) => onEditDataChange({ status: value as LotFormData['status'] })}>
-                  <SelectTrigger className="bg-black border-green-600/30 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-green-600/30">
-                    <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
-                    <SelectItem value="pre_bidding" className="text-yellow-400 hover:bg-gray-800">Pré Lance</SelectItem>
-                    <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
-                    <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
-                    <SelectItem value="indisponivel" className="text-white hover:bg-gray-800">Indisponível</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-white">Imagem do Lote</Label>
-                <ImageUpload 
-                  onImageUploaded={(url, path) => onEditDataChange({ image_url: url })}
-                  folder="auction-items"
-                  existingImages={editData.image_url ? [{ 
-                    url: editData.image_url, 
-                    path: editData.image_url.includes('auction-items/') 
-                      ? editData.image_url.split('auction-items/')[1] 
-                      : editData.image_url.split('/').pop() || '', 
-                    name: 'Imagem do Lote' 
-                  }] : []}
+                  min="1"
                 />
               </div>
             </div>
-          ) : (
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-white">{item.name}</h4>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-blue-900/40 text-blue-400 border-blue-600 text-xs">
-                    #{item.order_index}
-                  </Badge>
-                  {!isEditing && (
-                    <div className="flex items-center gap-1">
-                      {/* Botões de status rápido */}
-                      <div className="flex items-center gap-1 mr-2">
-                        <Button
-                          size="sm"
-                          variant={item.status === 'not_started' ? 'default' : 'outline'}
-                          onClick={() => onQuickStatusUpdate(item.id, 'not_started')}
-                          className={`h-6 px-2 text-xs ${
-                            item.status === 'not_started' 
-                              ? 'bg-gray-600 hover:bg-gray-700 text-white' 
-                              : 'border-gray-600 text-gray-400 hover:bg-gray-800'
-                            }`}
-                          title="Não Iniciado"
-                        >
-                          ⏸
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={item.status === 'pre_bidding' ? 'default' : 'outline'}
-                          onClick={() => onQuickStatusUpdate(item.id, 'pre_bidding')}
-                          className={`h-6 px-2 text-xs ${
-                            item.status === 'pre_bidding' 
-                              ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
-                              : 'border-yellow-600 text-yellow-400 hover:bg-yellow-900/30'
-                            }`}
-                          title="Pré Lance"
-                        >
-                          ⏰
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={item.status === 'in_progress' ? 'default' : 'outline'}
-                          onClick={() => onQuickStatusUpdate(item.id, 'in_progress')}
-                          className={`h-6 px-2 text-xs ${
-                            item.status === 'in_progress' 
-                              ? 'bg-green-600 hover:bg-green-700 text-white' 
-                              : 'border-green-600 text-green-400 hover:bg-green-900/30'
-                            }`}
-                          title="Em Andamento"
-                        >
-                          ▶
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={item.status === 'finished' ? 'default' : 'outline'}
-                          onClick={() => onQuickStatusUpdate(item.id, 'finished')}
-                          className={`h-6 px-2 text-xs ${
-                            item.status === 'finished' 
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                              : 'border-blue-600 text-blue-400 hover:bg-blue-900/30'
-                            }`}
-                          title="Finalizado"
-                        >
-                          ✓
-                        </Button>
-                      </div>
-                      <StatusBadge status={item.status} />
-                    </div>
-                  )}
-                  {isEditing && <StatusBadge status={item.status} />}
-                </div>
-              </div>
-              {item.description && (
-                <p className="text-sm text-gray-300 mb-2">{item.description}</p>
-              )}
-              <div className="flex items-center gap-4 mb-2">
-                {item.image_url && (
-                  <div className="w-16 h-16 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
-                    <img 
-                      src={item.image_url} 
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="text-sm space-y-1 text-gray-300">
-                  <p>Valor inicial: <span className="text-green-400 font-medium">R$ {item.initial_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
-                  {item.increment && (
-                    <p>Incremento: <span className="text-green-400 font-medium">R$ {item.increment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
-                  )}
-                </div>
-              </div>
+            <div>
+              <Label htmlFor={`status-${item.id}`} className="text-white">Status</Label>
+              <Select value={item.status} onValueChange={(value) => onChange(item.id, { status: value as LotFormData['status'] })}>
+                <SelectTrigger className="bg-black border-green-600/30 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-green-600/30">
+                  <SelectItem value="not_started" className="text-white hover:bg-gray-800">Não Iniciado</SelectItem>
+                  <SelectItem value="pre_bidding" className="text-yellow-400 hover:bg-gray-800">Pré Lance</SelectItem>
+                  <SelectItem value="in_progress" className="text-white hover:bg-gray-800">Em Andamento</SelectItem>
+                  <SelectItem value="finished" className="text-white hover:bg-gray-800">Finalizado</SelectItem>
+                  <SelectItem value="indisponivel" className="text-white hover:bg-gray-800">Indisponível</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+            <div>
+              <Label className="text-white">Imagem do Lote</Label>
+              <ImageUpload 
+                onImageUploaded={(url, path) => onChange(item.id, { image_url: url })}
+                folder="auction-items"
+                existingImages={item.image_url ? [{ 
+                  url: item.image_url, 
+                  path: item.image_url.includes('auction-items/') 
+                    ? item.image_url.split('auction-items/')[1] 
+                    : item.image_url.split('/').pop() || '', 
+                  name: 'Imagem do Lote' 
+                }] : []}
+              />
+            </div>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 ml-3">
-          {isEditing ? (
-            <>
-              <Button size="sm" onClick={onSave} className="bg-green-600 hover:bg-green-700 text-white">
-                <Save className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="outline" onClick={onCancel} className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                <X className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onEdit();
-                }} 
-                className="border-green-600/50 text-green-400 hover:bg-green-900/30"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="destructive" onClick={onDelete} className="bg-red-900 hover:bg-red-800 text-white">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </>
-          )}
+          <div className="flex items-center gap-1 mr-2">
+            <Button
+              size="sm"
+              variant={item.status === 'not_started' ? 'default' : 'outline'}
+              onClick={() => onQuickStatusUpdate(item.id, 'not_started')}
+              className={`h-6 px-2 text-xs ${
+                item.status === 'not_started' 
+                  ? 'bg-gray-600 hover:bg-gray-700 text-white' 
+                  : 'border-gray-600 text-gray-400 hover:bg-gray-800'
+                }`}
+              title="Não Iniciado"
+            >
+              ⏸
+            </Button>
+            <Button
+              size="sm"
+              variant={item.status === 'pre_bidding' ? 'default' : 'outline'}
+              onClick={() => onQuickStatusUpdate(item.id, 'pre_bidding')}
+              className={`h-6 px-2 text-xs ${
+                item.status === 'pre_bidding' 
+                  ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
+                  : 'border-yellow-600 text-yellow-400 hover:bg-yellow-900/30'
+                }`}
+              title="Pré Lance"
+            >
+              ⏰
+            </Button>
+            <Button
+              size="sm"
+              variant={item.status === 'in_progress' ? 'default' : 'outline'}
+              onClick={() => onQuickStatusUpdate(item.id, 'in_progress')}
+              className={`h-6 px-2 text-xs ${
+                item.status === 'in_progress' 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : 'border-green-600 text-green-400 hover:bg-green-900/30'
+                }`}
+              title="Em Andamento"
+            >
+              ▶
+            </Button>
+            <Button
+              size="sm"
+              variant={item.status === 'finished' ? 'default' : 'outline'}
+              onClick={() => onQuickStatusUpdate(item.id, 'finished')}
+              className={`h-6 px-2 text-xs ${
+                item.status === 'finished' 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                  : 'border-blue-600 text-blue-400 hover:bg-blue-900/30'
+                }`}
+              title="Finalizado"
+            >
+              ✓
+            </Button>
+          </div>
+          <StatusBadge status={item.status} />
+          <Button size="sm" variant="destructive" onClick={onDelete} className="bg-red-900 hover:bg-red-800 text-white">
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
@@ -320,16 +248,7 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
   
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<LotFormData>({
-    name: '',
-    description: '',
-    initial_value: 0,
-    increment: 100,
-    status: 'not_started',
-    image_url: '',
-    order_index: 0
-  });
+  const [lotChanges, setLotChanges] = useState<LotChanges>({});
   const [formData, setFormData] = useState<LotFormData>({
     name: '',
     description: '',
@@ -346,6 +265,26 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const handleLotChange = (itemId: string, changes: Partial<LotFormData>) => {
+    setLotChanges(prev => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        ...changes
+      }
+    }));
+  };
+
+  const getUpdatedItem = (item: AuctionItem): AuctionItem => {
+    const changes = lotChanges[item.id];
+    if (!changes) return item;
+    
+    return {
+      ...item,
+      ...changes
+    };
+  };
 
 
   // Auto-order function
@@ -489,115 +428,47 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     }
   };
 
-  const handleEdit = (item: AuctionItem) => {
-    setEditingId(item.id);
-    setEditData({
-      name: item.name,
-      description: item.description || '',
-      initial_value: item.initial_value,
-      increment: item.increment || 100,
-      status: item.status,
-      image_url: item.image_url || '',
-      order_index: item.order_index
-    });
-  };
-
   const handleQuickStatusUpdate = async (itemId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('auction_items')
-        .update({ status: newStatus })
-        .eq('id', itemId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Status atualizado",
-        description: "O status do lote foi atualizado com sucesso.",
-      });
-
-      refetch();
-    } catch (error: any) {
-      console.error('Error updating status:', error);
-      toast({
-        title: "Erro ao atualizar status",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    handleLotChange(itemId, { status: newStatus as LotFormData['status'] });
   };
 
-  const handleSave = async () => {
-    if (!editingId) return;
-
-    try {
-      const currentItem = items.find(item => item.id === editingId);
-      if (!currentItem) return;
-
-      // Check if the new order_index is different and already exists
-      if (editData.order_index !== currentItem.order_index) {
-        const existingItem = items.find(item => 
-          item.id !== editingId && item.order_index === editData.order_index
-        );
-
-        if (existingItem) {
-          // Reorder all items that have order_index >= the new order_index
-          const itemsToReorder = items.filter(item => 
-            item.id !== editingId && item.order_index >= editData.order_index
-          );
-
-          // Update all conflicting items first
-          for (const item of itemsToReorder) {
-            await supabase
+  // Expose methods to parent through ref
+  React.useImperativeHandle(ref, () => ({
+    savePendingChanges: async () => {
+      try {
+        const updates = Object.entries(lotChanges);
+        
+        for (const [itemId, changes] of updates) {
+          if (Object.keys(changes).length > 0) {
+            const { error } = await supabase
               .from('auction_items')
-              .update({ order_index: item.order_index + 1 })
-              .eq('id', item.id);
+              .update(changes)
+              .eq('id', itemId);
+
+            if (error) throw error;
           }
         }
+
+        if (updates.length > 0) {
+          toast({
+            title: "Lotes salvos",
+            description: `${updates.length} lote(s) foram atualizados com sucesso.`,
+          });
+          
+          setLotChanges({});
+          refetch();
+        }
+      } catch (error: any) {
+        console.error('Error saving lot changes:', error);
+        toast({
+          title: "Erro ao salvar lotes",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
       }
-
-      // Now update the current item
-      const { error } = await supabase
-        .from('auction_items')
-        .update({
-          name: editData.name,
-          description: editData.description,
-          initial_value: editData.initial_value,
-          increment: editData.increment,
-          status: editData.status,
-          image_url: editData.image_url,
-          order_index: editData.order_index
-        })
-        .eq('id', editingId);
-
-      if (error) throw error;
-
-      setEditingId(null);
-      setEditData({
-        name: '',
-        description: '',
-        initial_value: 0,
-        increment: 100,
-        status: 'not_started',
-        image_url: '',
-        order_index: 0
-      });
-
-      toast({
-        title: "Lote atualizado",
-        description: "O lote foi atualizado com sucesso.",
-      });
-
-      refetch();
-    } catch (error: any) {
-      console.error('Error updating lot:', error);
-      toast({
-        title: "Erro ao atualizar lote",
-        description: error.message,
-        variant: "destructive",
-      });
     }
-  };
+  }));
 
   const handleDelete = async (itemId: string) => {
     try {
@@ -627,8 +498,37 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
   // Expose methods to parent through ref
   React.useImperativeHandle(ref, () => ({
     savePendingChanges: async () => {
-      if (editingId) {
-        await handleSave();
+      try {
+        const updates = Object.entries(lotChanges);
+        
+        for (const [itemId, changes] of updates) {
+          if (Object.keys(changes).length > 0) {
+            const { error } = await supabase
+              .from('auction_items')
+              .update(changes)
+              .eq('id', itemId);
+
+            if (error) throw error;
+          }
+        }
+
+        if (updates.length > 0) {
+          toast({
+            title: "Lotes salvos",
+            description: `${updates.length} lote(s) foram atualizados com sucesso.`,
+          });
+          
+          setLotChanges({});
+          refetch();
+        }
+      } catch (error: any) {
+        console.error('Error saving lot changes:', error);
+        toast({
+          title: "Erro ao salvar lotes",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
       }
     }
   }));
@@ -768,36 +668,10 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
                 {items.map((item) => (
                  <SortableItem
                    key={item.id}
-                   item={item}
-                   isEditing={editingId === item.id}
-                   onEdit={() => {
-                     console.log('Edit button clicked for:', item.id);
-                     handleEdit(item);
-                   }}
-                   onSave={() => {
-                     console.log('Save button clicked');
-                     handleSave();
-                   }}
-                    onCancel={() => {
-                      console.log('Cancel button clicked');
-                      setEditingId(null);
-                      setEditData({
-                        name: '',
-                        description: '',
-                        initial_value: 0,
-                        increment: 100,
-                        status: 'not_started',
-                        image_url: '',
-                        order_index: 0
-                      });
-                    }}
+                   item={getUpdatedItem(item)}
                    onDelete={() => handleDelete(item.id)}
-                   editData={editData}
-                   onEditDataChange={(data) => {
-                     console.log('Edit data changing:', data);
-                     setEditData({ ...editData, ...data });
-                   }}
                    onQuickStatusUpdate={handleQuickStatusUpdate}
+                   onChange={handleLotChange}
                  />
                 ))}
               </div>
