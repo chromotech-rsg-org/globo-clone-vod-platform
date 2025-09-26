@@ -114,7 +114,12 @@ const SortableItem = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => onToggleExpand(item.id)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onToggleExpand(item.id);
+                  }}
                   className="text-green-400 hover:bg-green-900/30 h-6 w-6 p-0"
                 >
                   {isExpanded ? '−' : '+'}
@@ -594,21 +599,35 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
           <h3 className="text-lg font-semibold text-white">Gerenciar Lotes</h3>
           <div className="flex gap-2">
             <Button 
-              onClick={handleAllLotsToggle} 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAllLotsToggle();
+              }} 
+              type="button"
               variant="outline"
               className="border-green-600/50 text-green-400 hover:bg-green-900/30"
             >
               {allLotsExpanded ? 'Recolher Todos' : 'Expandir Todos'}
             </Button>
             <Button 
-              onClick={handleAutoOrder} 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAutoOrder();
+              }}
+              type="button" 
               variant="outline"
               className="border-green-600/50 text-green-400 hover:bg-green-900/30"
             >
               <ArrowUpDown className="h-4 w-4 mr-2" />
               Auto-Ordenar
             </Button>
-            <Button onClick={() => setShowForm(true)} disabled={showForm} className="bg-green-600 hover:bg-green-700 text-white">
+            <Button onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowForm(true);
+            }} disabled={showForm} type="button" className="bg-green-600 hover:bg-green-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Lote
             </Button>
