@@ -34,8 +34,10 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
     if (b.id === currentLotId) return 1;
     
     // Depois por status
-    const statusOrder = { 'in_progress': 0, 'not_started': 1, 'finished': 2 };
-    const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+    const statusOrder = { 'in_progress': 0, 'pre_bidding': 1, 'not_started': 2, 'finished': 3 } as const;
+    const rankA = (statusOrder as any)[a.status] ?? 99;
+    const rankB = (statusOrder as any)[b.status] ?? 99;
+    const statusDiff = rankA - rankB;
     if (statusDiff !== 0) return statusDiff;
     
     // Por fim, por ordem
@@ -57,6 +59,12 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
           label: 'FINALIZADO',
           className: 'bg-gray-700 text-gray-300',
           icon: <Trophy className="h-3 w-3" />
+        };
+      case 'pre_bidding':
+        return {
+          label: 'PRÉ-LANCE',
+          className: 'bg-blue-600/80 text-white',
+          icon: <Clock className="h-3 w-3" />
         };
       case 'in_progress':
         return {
