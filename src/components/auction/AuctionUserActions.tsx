@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/utils/formatters';
 import { Auction, Bid, BidUserState, AuctionItem } from '@/types/auction';
-import { Play, Square, User, AlertCircle, CheckCircle, Clock, Trophy, Package } from 'lucide-react';
+import { Play, Square, User, AlertCircle, CheckCircle, Clock, Trophy, Package, Plus, Minus, Gavel } from 'lucide-react';
 
 interface AuctionUserActionsProps {
   auction: Auction;
@@ -19,9 +19,12 @@ interface AuctionUserActionsProps {
   userId?: string;
   preBiddingLots?: AuctionItem[];
   selectedLotId?: string;
+  customIncrement?: number;
+  nextBidValue?: number;
   onBidClick: (lotId?: string) => void;
   onRequestRegistration: () => void;
   onLotSelect?: (lotId: string) => void;
+  onIncrementChange?: (newIncrement: number) => void;
 }
 
 const AuctionUserActions = ({ 
@@ -34,9 +37,12 @@ const AuctionUserActions = ({
   userId,
   preBiddingLots = [],
   selectedLotId,
+  customIncrement = 0,
+  nextBidValue = 0,
   onBidClick,
   onRequestRegistration,
-  onLotSelect
+  onLotSelect,
+  onIncrementChange
 }: AuctionUserActionsProps) => {
   const [localSelectedLotId, setLocalSelectedLotId] = useState(selectedLotId || preBiddingLots[0]?.id);
 
@@ -57,6 +63,25 @@ const AuctionUserActions = ({
   
   // Se está em modo pré-lance, permitir lances mesmo se transmissão estiver "encerrada"
   const shouldAllowBidding = isPreBiddingMode || !isTransmissionEnded;
+  
+  // Lote selecionado
+  const selectedLot = preBiddingLots.find(lot => lot.id === localSelectedLotId);
+  const baseIncrement = Number(selectedLot?.increment ?? auction.bid_increment);
+  const minIncrement = baseIncrement;
+  
+  const handleIncrementDecrease = () => {
+    if (onIncrementChange && customIncrement > minIncrement) {
+      const newIncrement = Math.max(minIncrement, customIncrement - baseIncrement);
+      onIncrementChange(newIncrement);
+    }
+  };
+  
+  const handleIncrementIncrease = () => {
+    if (onIncrementChange) {
+      const newIncrement = customIncrement + baseIncrement;
+      onIncrementChange(newIncrement);
+    }
+  };
   
   const handleLotChange = (lotId: string) => {
     setLocalSelectedLotId(lotId);
@@ -130,6 +155,46 @@ const AuctionUserActions = ({
           </Alert>
         )}
 
+        {/* Controles de Incremento para Pré-Lance */}
+        {isPreBiddingMode && userState === 'can_bid' && onIncrementChange && (
+          <div className="bg-gray-800/30 rounded-lg p-4">
+            <p className="text-sm mb-3 text-center text-gray-400">Incremento de Lance</p>
+            <div className="flex items-center justify-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleIncrementDecrease} 
+                disabled={customIncrement <= minIncrement} 
+                className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              
+              <div className="rounded-lg px-4 py-2 min-w-[120px] text-center bg-gray-900">
+                <p className="text-sm text-gray-400">Incremento</p>
+                <p className="text-lg font-bold text-white">
+                  {formatCurrency(customIncrement)}
+                </p>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleIncrementIncrease} 
+                className="h-8 w-8 p-0 border-gray-600 hover:border-gray-500"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="text-center mt-3">
+              <p className="text-sm text-gray-400">
+                Próximo lance: <span className="text-white font-medium">{formatCurrency(nextBidValue)}</span>
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Mostrar alerta de status da transmissão */}
         {isTransmissionEnded && !isPreBiddingMode && (
           <Alert className="bg-red-900/20 border-red-500/50">
@@ -159,12 +224,17 @@ const AuctionUserActions = ({
         {stateInfo.action && (
           <Button 
             onClick={isPreBiddingMode ? handleBidClick : stateInfo.onClick}
-            className="w-full bg-green-600 hover:bg-green-700 text-white"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg h-12"
             variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
             disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick || !shouldAllowBidding || (isPreBiddingMode && hasMultiplePreBiddingLots && !localSelectedLotId)}
           >
             {submittingBid ? 'Enviando lance...' : 
-             isPreBiddingMode ? 'Fazer Pré-Lance' : stateInfo.action}
+             isPreBiddingMode ? (
+               <>
+                 <Gavel className="h-5 w-5 mr-2" />
+                 {`Fazer Pré-Lance - ${formatCurrency(nextBidValue)}`}
+               </>
+             ) : stateInfo.action}
           </Button>
         )}
 

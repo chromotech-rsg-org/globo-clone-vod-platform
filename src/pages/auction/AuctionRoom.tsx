@@ -41,7 +41,12 @@ const AuctionRoom = () => {
     multiplePreBiddingLots,
     isAllFinished 
   } = useLotStatistics(lots, bids);
-  const { customIncrement, updateCustomIncrement } = useCustomIncrement(currentLot, auction);
+const [selectedPreBiddingLotId, setSelectedPreBiddingLotId] = useState<string | undefined>();
+  const { customIncrement, updateCustomIncrement } = useCustomIncrement(
+    currentLot, 
+    auction, 
+    selectedPreBiddingLotId ? preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) : null
+  );
 const [userState, setUserState] = useState<BidUserState>('need_registration');
 const [showBidDialog, setShowBidDialog] = useState(false);
 const [showDuplicateBidModal, setShowDuplicateBidModal] = useState(false);
@@ -50,7 +55,6 @@ const [duplicateBidValue, setDuplicateBidValue] = useState(0);
 const [originalBidValue, setOriginalBidValue] = useState(0);
 const [nextBidValue, setNextBidValue] = useState(0);
 const [currentBaseValue, setCurrentBaseValue] = useState(0);
-const [selectedPreBiddingLotId, setSelectedPreBiddingLotId] = useState<string | undefined>();
 const { toast } = useToast();
 
   useEffect(() => {
@@ -547,9 +551,12 @@ const recalculateNextBidValue = () => {
                 userId={user?.id}
                 preBiddingLots={preBiddingLots}
                 selectedLotId={selectedPreBiddingLotId}
+                customIncrement={customIncrement}
+                nextBidValue={nextBidValue}
                 onBidClick={openBidDialogComAtualizacao}
                 onRequestRegistration={requestRegistration}
                 onLotSelect={setSelectedPreBiddingLotId}
+                onIncrementChange={updateCustomIncrement}
               />
             )}
 
