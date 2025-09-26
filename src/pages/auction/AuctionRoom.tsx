@@ -35,7 +35,10 @@ const AuctionRoom = () => {
   const { 
     currentLot, 
     currentLotId, 
-    hasActiveLot, 
+    hasActiveLot,
+    preBiddingLots,
+    hasPreBiddingLots,
+    multiplePreBiddingLots,
     isAllFinished 
   } = useLotStatistics(lots, bids);
   const { customIncrement, updateCustomIncrement } = useCustomIncrement(currentLot, auction);
@@ -47,6 +50,7 @@ const [duplicateBidValue, setDuplicateBidValue] = useState(0);
 const [originalBidValue, setOriginalBidValue] = useState(0);
 const [nextBidValue, setNextBidValue] = useState(0);
 const [currentBaseValue, setCurrentBaseValue] = useState(0);
+const [selectedPreBiddingLotId, setSelectedPreBiddingLotId] = useState<string | undefined>();
 const { toast } = useToast();
 
   useEffect(() => {
@@ -77,11 +81,16 @@ const { toast } = useToast();
 useEffect(() => {
   if (!auction || !customIncrement) return;
 
-  // Valor base do lance: valor atual do lote (ou do leilão se não houver lote),
-  // considerando o maior lance aprovado do lote atual
-  let base = Number(currentLot ? currentLot.current_value : auction.current_bid_value);
+  // Determinar qual lote usar para cálculos
+  const targetLot = (hasPreBiddingLots && selectedPreBiddingLotId) 
+    ? preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) || currentLot
+    : currentLot;
 
-  const approvedBids = bids.filter(bid => bid.status === 'approved' && (!currentLot || bid.auction_item_id === currentLot.id));
+  // Valor base do lance: valor atual do lote (ou do leilão se não houver lote),
+  // considerando o maior lance aprovado do lote alvo
+  let base = Number(targetLot ? targetLot.current_value : auction.current_bid_value);
+
+  const approvedBids = bids.filter(bid => bid.status === 'approved' && (!targetLot || bid.auction_item_id === targetLot.id));
   if (approvedBids.length > 0) {
     const highestBid = Math.max(...approvedBids.map(b => Number(b.bid_value)));
     if (highestBid > base) {
@@ -98,22 +107,30 @@ useEffect(() => {
     base,
     customIncrement,
     calculatedNextBid,
+    targetLot: targetLot ? { id: targetLot.id, name: targetLot.name, increment: targetLot.increment } : null,
     currentLot: currentLot ? { id: currentLot.id, name: currentLot.name, increment: currentLot.increment } : null,
-    auctionIncrement: auction.bid_increment
+    auctionIncrement: auction.bid_increment,
+    isPreBiddingMode: hasPreBiddingLots,
+    selectedPreBiddingLotId
   });
-}, [auction, currentLot, bids, customIncrement]);
+}, [auction, currentLot, bids, customIncrement, hasPreBiddingLots, selectedPreBiddingLotId, preBiddingLots]);
 
 // Função para recalcular valor do lance com dados atuais
 const recalculateNextBidValue = () => {
   if (!auction || !customIncrement) return 0;
 
+  // Determinar qual lote usar para cálculos
+  const targetLot = (hasPreBiddingLots && selectedPreBiddingLotId) 
+    ? preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) || currentLot
+    : currentLot;
+
   // Valor base do lance
-  let base = Number(currentLot ? currentLot.current_value : auction.current_bid_value);
+  let base = Number(targetLot ? targetLot.current_value : auction.current_bid_value);
 
   // Filtrar lances aprovados
   const approvedBids = bids.filter(bid => 
     bid.status === 'approved' && 
-    (!currentLot || bid.auction_item_id === currentLot.id)
+    (!targetLot || bid.auction_item_id === targetLot.id)
   );
 
   // Se houver lances aprovados, usar o maior como base
@@ -135,15 +152,22 @@ const recalculateNextBidValue = () => {
     calculatedNextBid,
     approvedBidsCount: approvedBids.length,
     highestApprovedBid: approvedBids.length > 0 ? Math.max(...approvedBids.map(b => Number(b.bid_value))) : 'N/A',
+    targetLot: targetLot ? { id: targetLot.id, current_value: targetLot.current_value } : null,
     currentLot: currentLot ? { id: currentLot.id, current_value: currentLot.current_value } : null,
-    auctionCurrentValue: auction.current_bid_value
+    auctionCurrentValue: auction.current_bid_value,
+    isPreBiddingMode: hasPreBiddingLots,
+    selectedPreBiddingLotId
   });
 
   return calculatedNextBid;
 };
 
   // Função para abrir dialog de lance com dados atualizados
-  const openBidDialogComAtualizacao = async () => {
+  const openBidDialogComAtualizacao = async (lotId?: string) => {
+    // Se for pré-lance e há um lotId específico, usar esse lote
+    if (lotId && hasPreBiddingLots) {
+      setSelectedPreBiddingLotId(lotId);
+    }
     try {
       console.log('🔄 Atualizando dados antes de abrir dialog de lance...');
       
@@ -295,6 +319,7 @@ const recalculateNextBidValue = () => {
   const stateInfo = getUserStateInfo();
 
   const canBid = userState === 'can_bid' && !submittingBid && !isAllFinished;
+  const canPreBid = hasPreBiddingLots && userState === 'can_bid' && !submittingBid;
 
   // Função melhorada para submission de lance
   const handleBidSubmission = async () => {
@@ -325,7 +350,9 @@ const recalculateNextBidValue = () => {
       }
 
       console.log('💰 Tentando fazer lance com valor:', nextBidValue);
-      const result = await submitBid(nextBidValue as any);
+      // Passar lotId para pré-lances
+      const targetLotId = hasPreBiddingLots && selectedPreBiddingLotId ? selectedPreBiddingLotId : undefined;
+      const result = await submitBid(nextBidValue as any, targetLotId);
 
       if (result && (result as any).success) {
         setShowBidDialog(false);
@@ -508,8 +535,8 @@ const recalculateNextBidValue = () => {
               />
             )}
 
-            {/* Ações do Usuário - apenas quando não há lote ativo */}
-            {(!hasActiveLot || !currentLot) && stateInfo && (
+            {/* Ações do Usuário - apenas quando não há lote ativo OU há lotes em pré-lance */}
+            {((!hasActiveLot || !currentLot) || hasPreBiddingLots) && stateInfo && (
               <AuctionUserActions
                 auction={auction}
                 bids={bids}
@@ -518,8 +545,11 @@ const recalculateNextBidValue = () => {
                 submittingBid={submittingBid}
                 userPendingBid={userPendingBid}
                 userId={user?.id}
+                preBiddingLots={preBiddingLots}
+                selectedLotId={selectedPreBiddingLotId}
                 onBidClick={openBidDialogComAtualizacao}
                 onRequestRegistration={requestRegistration}
+                onLotSelect={setSelectedPreBiddingLotId}
               />
             )}
 

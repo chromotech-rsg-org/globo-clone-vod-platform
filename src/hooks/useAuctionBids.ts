@@ -105,7 +105,7 @@ export const useAuctionBids = (auctionId: string) => {
     }
   }, [auctionId, user, toast]);
 
-  const submitBid = async (bidValue: number): Promise<{ success: boolean; requiredMin?: number; message?: string }> => {
+  const submitBid = async (bidValue: number, lotId?: string): Promise<{ success: boolean; requiredMin?: number; message?: string }> => {
     if (!user || !auctionId) {
       const message = "Usuário não autenticado";
       toast({
@@ -139,58 +139,77 @@ export const useAuctionBids = (auctionId: string) => {
       // Como os lances são aprovados automaticamente, não precisamos verificar pending
 
       // Buscar item atual do leilão (preferindo is_current ou status in_progress)
+      // Se lotId específico foi fornecido (pré-lance), usar esse lote
       type ExistingItem = { id: string; current_value: number; increment: number | null; status: string; is_current: boolean };
       let auctionItem: ExistingItem;
 
-      const { data: existingItem, error: itemError } = await supabase
-        .from('auction_items')
-        .select('id, current_value, increment, status, is_current')
-        .eq('auction_id', auctionId)
-        .or('is_current.eq.true,status.eq.in_progress')
-        .order('is_current', { ascending: false })
-        .order('order_index', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (itemError) {
-        console.error('Error fetching auction item:', itemError);
-        throw new Error('Não foi possível encontrar o item do leilão');
-      }
-
-      if (!existingItem) {
-        // Criar um item padrão se não existir
-        const { data: auctionData } = await supabase
-          .from('auctions')
-          .select('name, description, initial_bid_value, current_bid_value, bid_increment')
-          .eq('id', auctionId)
+      if (lotId) {
+        // Buscar lote específico para pré-lance
+        const { data: specificItem, error: specificItemError } = await supabase
+          .from('auction_items')
+          .select('id, current_value, increment, status, is_current')
+          .eq('id', lotId)
+          .eq('auction_id', auctionId)
           .single();
 
-        if (auctionData) {
-          const { data: newItem, error: createError } = await supabase
-            .from('auction_items')
-            .insert({
-              auction_id: auctionId,
-              name: auctionData.name,
-              description: auctionData.description || 'Item principal do leilão',
-              initial_value: auctionData.initial_bid_value,
-              current_value: auctionData.current_bid_value,
-              increment: null, // usa incremento do leilão por padrão
-              is_current: true,
-              order_index: 0
-            })
-            .select('id, current_value, increment, status, is_current')
+        if (specificItemError || !specificItem) {
+          console.error('Error fetching specific auction item:', specificItemError);
+          throw new Error('Não foi possível encontrar o lote especificado');
+        }
+
+        auctionItem = specificItem as ExistingItem;
+      } else {
+        // Lógica original para lotes ativos
+        const { data: existingItem, error: itemError } = await supabase
+          .from('auction_items')
+          .select('id, current_value, increment, status, is_current')
+          .eq('auction_id', auctionId)
+          .or('is_current.eq.true,status.eq.in_progress')
+          .order('is_current', { ascending: false })
+          .order('order_index', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (itemError) {
+          console.error('Error fetching auction item:', itemError);
+          throw new Error('Não foi possível encontrar o item do leilão');
+        }
+
+        if (!existingItem) {
+          // Criar um item padrão se não existir
+          const { data: auctionData } = await supabase
+            .from('auctions')
+            .select('name, description, initial_bid_value, current_bid_value, bid_increment')
+            .eq('id', auctionId)
             .single();
 
-          if (createError) {
-            console.error('Error creating auction item:', createError);
-            throw new Error('Não foi possível criar o item do leilão');
+          if (auctionData) {
+            const { data: newItem, error: createError } = await supabase
+              .from('auction_items')
+              .insert({
+                auction_id: auctionId,
+                name: auctionData.name,
+                description: auctionData.description || 'Item principal do leilão',
+                initial_value: auctionData.initial_bid_value,
+                current_value: auctionData.current_bid_value,
+                increment: null, // usa incremento do leilão por padrão
+                is_current: true,
+                order_index: 0
+              })
+              .select('id, current_value, increment, status, is_current')
+              .single();
+
+            if (createError) {
+              console.error('Error creating auction item:', createError);
+              throw new Error('Não foi possível criar o item do leilão');
+            }
+            auctionItem = newItem as ExistingItem;
+          } else {
+            throw new Error('Leilão não encontrado');
           }
-          auctionItem = newItem as ExistingItem;
         } else {
-          throw new Error('Leilão não encontrado');
+          auctionItem = existingItem as ExistingItem;
         }
-      } else {
-        auctionItem = existingItem as ExistingItem;
       }
 
       // Validar valor mínimo do lance com dados atualizados do servidor

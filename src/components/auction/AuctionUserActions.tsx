@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/utils/formatters';
-import { Auction, Bid, BidUserState } from '@/types/auction';
-import { Play, Square, User, AlertCircle, CheckCircle, Clock, Trophy } from 'lucide-react';
+import { Auction, Bid, BidUserState, AuctionItem } from '@/types/auction';
+import { Play, Square, User, AlertCircle, CheckCircle, Clock, Trophy, Package } from 'lucide-react';
 
 interface AuctionUserActionsProps {
   auction: Auction;
@@ -16,8 +17,11 @@ interface AuctionUserActionsProps {
   submittingBid: boolean;
   userPendingBid: Bid | null;
   userId?: string;
-  onBidClick: () => void;
+  preBiddingLots?: AuctionItem[];
+  selectedLotId?: string;
+  onBidClick: (lotId?: string) => void;
   onRequestRegistration: () => void;
+  onLotSelect?: (lotId: string) => void;
 }
 
 const AuctionUserActions = ({ 
@@ -28,11 +32,43 @@ const AuctionUserActions = ({
   submittingBid, 
   userPendingBid, 
   userId,
+  preBiddingLots = [],
+  selectedLotId,
   onBidClick,
-  onRequestRegistration
+  onRequestRegistration,
+  onLotSelect
 }: AuctionUserActionsProps) => {
+  const [localSelectedLotId, setLocalSelectedLotId] = useState(selectedLotId || preBiddingLots[0]?.id);
+
+  // Sincronizar estado local com props quando muda
+  useEffect(() => {
+    if (selectedLotId) {
+      setLocalSelectedLotId(selectedLotId);
+    } else if (preBiddingLots.length > 0 && !localSelectedLotId) {
+      setLocalSelectedLotId(preBiddingLots[0].id);
+    }
+  }, [selectedLotId, preBiddingLots, localSelectedLotId]);
   // Verificar se a transmissão está encerrada
   const isTransmissionEnded = auction.status === 'inactive' || !auction.is_live;
+  
+  // Verificar se está em modo pré-lance
+  const isPreBiddingMode = preBiddingLots.length > 0;
+  const hasMultiplePreBiddingLots = preBiddingLots.length > 1;
+  
+  const handleLotChange = (lotId: string) => {
+    setLocalSelectedLotId(lotId);
+    if (onLotSelect) {
+      onLotSelect(lotId);
+    }
+  };
+  
+  const handleBidClick = () => {
+    if (isPreBiddingMode && localSelectedLotId) {
+      onBidClick(localSelectedLotId);
+    } else {
+      onBidClick();
+    }
+  };
 
   return (
     <Card className="bg-black border-green-600/30">
@@ -49,6 +85,48 @@ const AuctionUserActions = ({
           </AlertDescription>
         </Alert>
 
+        {/* Seletor de lotes em pré-lance */}
+        {isPreBiddingMode && hasMultiplePreBiddingLots && userState === 'can_bid' && (
+          <div className="space-y-2">
+            <Alert className="bg-blue-900/20 border-blue-500/50">
+              <Package className="h-4 w-4 text-blue-400" />
+              <AlertDescription className="text-blue-300">
+                <p className="font-bold mb-2">Modo Pré-Lance Ativo</p>
+                <p className="mb-3">Selecione o lote para fazer seu lance:</p>
+                <Select value={localSelectedLotId} onValueChange={handleLotChange}>
+                  <SelectTrigger className="w-full bg-gray-800 border-gray-600 text-white">
+                    <SelectValue placeholder="Selecione um lote" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-600">
+                    {preBiddingLots.map((lot) => (
+                      <SelectItem key={lot.id} value={lot.id} className="text-white hover:bg-gray-700">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{lot.name}</span>
+                          <span className="text-sm text-gray-400">
+                            Valor atual: {formatCurrency(lot.current_value)}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {/* Alerta de lote único em pré-lance */}
+        {isPreBiddingMode && !hasMultiplePreBiddingLots && userState === 'can_bid' && (
+          <Alert className="bg-blue-900/20 border-blue-500/50">
+            <Package className="h-4 w-4 text-blue-400" />
+            <AlertDescription className="text-blue-300">
+              <p className="font-bold">Modo Pré-Lance Ativo</p>
+              <p>Lote disponível: <span className="font-medium">{preBiddingLots[0]?.name}</span></p>
+              <p>Valor atual: {formatCurrency(preBiddingLots[0]?.current_value || 0)}</p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Mostrar alerta se a transmissão estiver encerrada */}
         {isTransmissionEnded && (
           <Alert className="bg-red-900/20 border-red-500/50">
@@ -64,12 +142,13 @@ const AuctionUserActions = ({
          
         {stateInfo.action && (
           <Button 
-            onClick={stateInfo.onClick}
+            onClick={isPreBiddingMode ? handleBidClick : stateInfo.onClick}
             className="w-full bg-green-600 hover:bg-green-700 text-white"
             variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
-            disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick || isTransmissionEnded}
+            disabled={stateInfo.disabled || submittingBid || !stateInfo.onClick || isTransmissionEnded || (isPreBiddingMode && hasMultiplePreBiddingLots && !localSelectedLotId)}
           >
-            {submittingBid ? 'Enviando lance...' : stateInfo.action}
+            {submittingBid ? 'Enviando lance...' : 
+             isPreBiddingMode ? 'Fazer Pré-Lance' : stateInfo.action}
           </Button>
         )}
 
