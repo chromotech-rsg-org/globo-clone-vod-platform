@@ -73,13 +73,15 @@ const SortableItem = ({
   onDelete, 
   onQuickStatusUpdate,
   onChange,
-  isExpanded = false
+  isExpanded = false,
+  onToggleExpand
 }: {
   item: AuctionItem;
   onDelete: () => void;
   onQuickStatusUpdate: (itemId: string, status: string) => void;
   onChange: (itemId: string, changes: Partial<LotFormData>) => void;
   isExpanded?: boolean;
+  onToggleExpand: (itemId: string) => void;
 }) => {
   const {
     attributes,
@@ -104,8 +106,20 @@ const SortableItem = ({
           
           <div className={`flex-1 ${isExpanded ? 'space-y-3' : ''}`}>
             <div className="mb-2">
-              <div className="font-medium text-white text-sm mb-1">{item.name}</div>
-              <div className="text-gray-400 text-xs">#{item.order_index}</div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-white text-sm mb-1">{item.name}</div>
+                  <div className="text-gray-400 text-xs">#{item.order_index}</div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onToggleExpand(item.id)}
+                  className="text-green-400 hover:bg-green-900/30 h-6 w-6 p-0"
+                >
+                  {isExpanded ? '−' : '+'}
+                </Button>
+              </div>
             </div>
             
             {isExpanded && (
@@ -262,6 +276,7 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
   const [showForm, setShowForm] = useState(false);
   const [lotChanges, setLotChanges] = useState<LotChanges>({});
   const [allLotsExpanded, setAllLotsExpanded] = useState(false);
+  const [expandedLots, setExpandedLots] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState<LotFormData>({
     name: '',
     description: '',
@@ -445,6 +460,28 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     handleLotChange(itemId, { status: newStatus as LotFormData['status'] });
   };
 
+  const toggleLotExpansion = (lotId: string) => {
+    setExpandedLots(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(lotId)) {
+        newSet.delete(lotId);
+      } else {
+        newSet.add(lotId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAllLotsToggle = () => {
+    if (allLotsExpanded) {
+      setExpandedLots(new Set());
+      setAllLotsExpanded(false);
+    } else {
+      setExpandedLots(new Set(items.map(item => item.id)));
+      setAllLotsExpanded(true);
+    }
+  };
+
   // Expose methods to parent through ref
   React.useImperativeHandle(ref, () => ({
     savePendingChanges: async () => {
@@ -557,7 +594,7 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
           <h3 className="text-lg font-semibold text-white">Gerenciar Lotes</h3>
           <div className="flex gap-2">
             <Button 
-              onClick={() => setAllLotsExpanded(!allLotsExpanded)} 
+              onClick={handleAllLotsToggle} 
               variant="outline"
               className="border-green-600/50 text-green-400 hover:bg-green-900/30"
             >
@@ -692,7 +729,8 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
                    onDelete={() => handleDelete(item.id)}
                    onQuickStatusUpdate={handleQuickStatusUpdate}
                    onChange={handleLotChange}
-                   isExpanded={allLotsExpanded}
+                   isExpanded={expandedLots.has(item.id)}
+                   onToggleExpand={toggleLotExpansion}
                  />
                 ))}
               </div>
