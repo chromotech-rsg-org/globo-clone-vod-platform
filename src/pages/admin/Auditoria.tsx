@@ -14,13 +14,20 @@ import { useDataExport } from '@/hooks/useDataExport';
 import AdminLayout from '@/components/AdminLayout';
 
 const AUDIT_TABLES = [
-  { value: '', label: 'Todas as tabelas' },
+  { value: 'all', label: 'Todas as tabelas' },
   { value: 'auctions', label: 'Leilões' },
   { value: 'auction_items', label: 'Itens do Leilão' },
   { value: 'bids', label: 'Lances' },
   { value: 'profiles', label: 'Perfis' },
   { value: 'subscriptions', label: 'Assinaturas' },
-  { value: 'auction_registrations', label: 'Registros' }
+  { value: 'auction_registrations', label: 'Registros' },
+  { value: 'client_bid_limits', label: 'Limites de Lance' },
+  { value: 'client_documents', label: 'Documentos' },
+  { value: 'plans', label: 'Planos' },
+  { value: 'packages', label: 'Pacotes' },
+  { value: 'coupons', label: 'Cupons' },
+  { value: 'customizations', label: 'Customizações' },
+  { value: 'integration_settings', label: 'Integrações' }
 ];
 
 const AUDIT_ACTIONS = [
@@ -32,7 +39,7 @@ const AUDIT_ACTIONS = [
 
 const Auditoria: React.FC = () => {
   const [filters, setFilters] = useState({
-    table: '',
+    table: 'all',
     action: '',
     userId: '',
     dateFrom: '',
@@ -40,7 +47,8 @@ const Auditoria: React.FC = () => {
   });
 
   const { logs, loading, error, getChangesSummary, getActionColor, getActionLabel } = useAuditLogs({
-    table: filters.table || undefined,
+    table: filters.table && filters.table !== 'all' ? filters.table : undefined,
+    action: filters.action || undefined,
     userId: filters.userId || undefined,
     dateFrom: filters.dateFrom || undefined,
     dateTo: filters.dateTo || undefined
@@ -54,7 +62,7 @@ const Auditoria: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({
-      table: '',
+      table: 'all',
       action: '',
       userId: '',
       dateFrom: '',
@@ -113,13 +121,13 @@ const Auditoria: React.FC = () => {
                 </label>
                 <Select value={filters.table} onValueChange={(value) => handleFilterChange('table', value)}>
                   <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
-                    <SelectValue placeholder="Selecionar tabela" />
+                    <SelectValue placeholder="Todas as tabelas" />
                   </SelectTrigger>
                     <SelectContent className="bg-admin-content-bg border-admin-border">
                     {AUDIT_TABLES.map(table => (
                       <SelectItem 
-                        key={table.value || 'all'} 
-                        value={table.value || 'all'} 
+                        key={table.value} 
+                        value={table.value} 
                         className="text-admin-table-text"
                       >
                         {table.label}
@@ -135,13 +143,13 @@ const Auditoria: React.FC = () => {
                 </label>
                 <Select value={filters.action} onValueChange={(value) => handleFilterChange('action', value)}>
                   <SelectTrigger className="bg-admin-content-bg border-admin-border text-admin-table-text">
-                    <SelectValue placeholder="Selecionar ação" />
+                    <SelectValue placeholder="Todas as ações" />
                   </SelectTrigger>
                     <SelectContent className="bg-admin-content-bg border-admin-border">
                     {AUDIT_ACTIONS.map(action => (
                       <SelectItem 
                         key={action.value || 'all'} 
-                        value={action.value || 'all'} 
+                        value={action.value} 
                         className="text-admin-table-text"
                       >
                         {action.label}

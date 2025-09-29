@@ -22,6 +22,7 @@ interface UseAuditLogsProps {
   userId?: string;
   dateFrom?: string;
   dateTo?: string;
+  action?: string;
 }
 
 export const useAuditLogs = (filters: UseAuditLogsProps = {}) => {
@@ -48,6 +49,9 @@ export const useAuditLogs = (filters: UseAuditLogsProps = {}) => {
       if (filters.userId) {
         query = query.eq('user_id', filters.userId);
       }
+      if (filters.action) {
+        query = query.eq('action', filters.action);
+      }
       if (filters.dateFrom) {
         query = query.gte('created_at', filters.dateFrom);
       }
@@ -66,7 +70,7 @@ export const useAuditLogs = (filters: UseAuditLogsProps = {}) => {
             .from('profiles')
             .select('name, email')
             .eq('id', log.user_id)
-            .single();
+            .maybeSingle();
           return { ...log, user: userProfile };
         }
         return { ...log, user: null };
@@ -83,7 +87,7 @@ export const useAuditLogs = (filters: UseAuditLogsProps = {}) => {
 
   useEffect(() => {
     fetchLogs();
-  }, [filters.table, filters.recordId, filters.userId, filters.dateFrom, filters.dateTo]);
+  }, [filters.table, filters.recordId, filters.userId, filters.action, filters.dateFrom, filters.dateTo]);
 
   const getChangesSummary = (log: AuditLog) => {
     if (log.action === 'INSERT') {
