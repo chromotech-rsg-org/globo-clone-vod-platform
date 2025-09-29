@@ -202,7 +202,7 @@ export const useDashboardStats = () => {
         .select(`
           user_id,
           auction_id,
-          profiles(name),
+          profiles!auction_registrations_user_id_fkey(name),
           bids(is_winner, status)
         `)
         .eq('status', 'approved');
