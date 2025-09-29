@@ -17,7 +17,7 @@ import AdminLayout from '@/components/AdminLayout';
 
 const Documentos: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadData, setUploadData] = useState({
@@ -32,7 +32,7 @@ const Documentos: React.FC = () => {
 
   const filteredDocuments = documents.filter(doc => {
     if (selectedUserId && doc.user_id !== selectedUserId) return false;
-    if (selectedCategory && doc.category !== selectedCategory) return false;
+    if (selectedCategory && selectedCategory !== 'all' && doc.category !== selectedCategory) return false;
     if (searchTerm && !doc.file_name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     return true;
   });
@@ -208,7 +208,7 @@ const Documentos: React.FC = () => {
                     <SelectValue placeholder="Todas as categorias" />
                   </SelectTrigger>
                   <SelectContent className="bg-admin-content-bg border-admin-border">
-                    <SelectItem value="" className="text-admin-table-text">Todas as categorias</SelectItem>
+                    <SelectItem value="all" className="text-admin-table-text">Todas as categorias</SelectItem>
                     {categories.map(category => (
                       <SelectItem key={category.value} value={category.value} className="text-admin-table-text">
                         {category.label}
