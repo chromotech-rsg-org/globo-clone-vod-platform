@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,19 +7,32 @@ import { useClientDocuments } from '@/hooks/useClientDocuments';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Upload, Download, Eye, Trash2, Search, Filter, FileText, Image, FileIcon } from 'lucide-react';
+import { Upload, Download, Eye, Trash2, Search, Filter, FileText, Image, FileIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
+import { supabase } from '@/integrations/supabase/client';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+}
 
 const Documentos: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [uploadData, setUploadData] = useState({
     userId: '',
     category: 'general',
@@ -29,6 +42,35 @@ const Documentos: React.FC = () => {
 
   const { documents, loading, uploading, categories, uploadDocument, deleteDocument, downloadDocument } = useClientDocuments();
   const { toast } = useToast();
+
+  // Buscar clientes ao abrir o dialog
+  useEffect(() => {
+    if (uploadDialogOpen && clients.length === 0) {
+      fetchClients();
+    }
+  }, [uploadDialogOpen]);
+
+  const fetchClients = async () => {
+    try {
+      setLoadingClients(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .order('name');
+      
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: "Erro ao carregar clientes",
+        description: "Não foi possível carregar a lista de clientes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingClients(false);
+    }
+  };
 
   const filteredDocuments = documents.filter(doc => {
     if (selectedUserId && doc.user_id !== selectedUserId) return false;
@@ -116,13 +158,72 @@ const Documentos: React.FC = () => {
                 </div>
                 
                 <div>
-                  <Label className="text-admin-table-text">ID do Cliente (opcional)</Label>
-                  <Input
-                    value={uploadData.userId}
-                    onChange={(e) => setUploadData(prev => ({ ...prev, userId: e.target.value }))}
-                    placeholder="Deixe vazio para documento geral"
-                    className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                  />
+                  <Label className="text-admin-table-text">Cliente (opcional)</Label>
+                  <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={clientSearchOpen}
+                        className="w-full justify-between bg-admin-content-bg border-admin-border text-admin-table-text"
+                      >
+                        {uploadData.userId
+                          ? clients.find((client) => client.id === uploadData.userId)?.name
+                          : "Selecione um cliente..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0 bg-admin-content-bg border-admin-border">
+                      <Command className="bg-admin-content-bg">
+                        <CommandInput placeholder="Buscar cliente..." className="text-admin-table-text" />
+                        <CommandList>
+                          <CommandEmpty className="text-admin-muted-foreground py-6 text-center text-sm">
+                            Nenhum cliente encontrado.
+                          </CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value=""
+                              onSelect={() => {
+                                setUploadData(prev => ({ ...prev, userId: '' }));
+                                setClientSearchOpen(false);
+                              }}
+                              className="text-admin-table-text"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  uploadData.userId === '' ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              Nenhum (documento geral)
+                            </CommandItem>
+                            {clients.map((client) => (
+                              <CommandItem
+                                key={client.id}
+                                value={client.name}
+                                onSelect={() => {
+                                  setUploadData(prev => ({ ...prev, userId: client.id }));
+                                  setClientSearchOpen(false);
+                                }}
+                                className="text-admin-table-text"
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    uploadData.userId === client.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span>{client.name}</span>
+                                  <span className="text-xs text-admin-muted-foreground">{client.email}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 
                 <div>

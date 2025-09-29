@@ -111,10 +111,13 @@ export const useClientDocuments = (userId?: string) => {
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) throw new Error('User not authenticated');
 
+      // Validar se targetUserId é um UUID válido ou null
+      const validUserId = targetUserId && targetUserId.trim() !== '' ? targetUserId : null;
+
       const { error: dbError } = await supabase
         .from('client_documents')
         .insert({
-          user_id: targetUserId,
+          user_id: validUserId,
           file_path: fileName,
           file_name: customName || file.name,
           file_type: file.type,
