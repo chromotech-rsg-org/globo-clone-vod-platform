@@ -540,6 +540,36 @@ export type Database = {
         }
         Relationships: []
       }
+      export_history: {
+        Row: {
+          created_at: string
+          file_name: string
+          filters: Json | null
+          id: string
+          record_count: number | null
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          filters?: Json | null
+          id?: string
+          record_count?: number | null
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          filters?: Json | null
+          id?: string
+          record_count?: number | null
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       integration_jobs: {
         Row: {
           attempts: number

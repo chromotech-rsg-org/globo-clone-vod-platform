@@ -33,6 +33,7 @@ import AdminIntegration from "./pages/admin/Integration";
 import AsaasApiTester from "./pages/admin/AsaasApiTester";
 import DashboardFinanceiro from "./pages/admin/DashboardFinanceiro";
 import Auditoria from "./pages/admin/Auditoria";
+import Relatorios from "./pages/admin/Relatorios";
 import Documentos from "./pages/admin/Documentos";
 import LimitesClientes from "./pages/admin/LimitesClientes";
 import AuctionCreate from "./pages/admin/AuctionCreate";
@@ -302,6 +303,13 @@ function AppContent() {
         <ProtectedRoute requiredRole="admin">
           <AdminLayout>
             <Auditoria />
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/relatorios" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <Relatorios />
           </AdminLayout>
         </ProtectedRoute>
       } />

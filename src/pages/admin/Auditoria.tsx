@@ -7,10 +7,9 @@ import { useAuditLogs } from '@/hooks/useAuditLogs';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, Filter, Download, Eye } from 'lucide-react';
+import { Search, Filter, Eye } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useDataExport } from '@/hooks/useDataExport';
 import AdminLayout from '@/components/AdminLayout';
 
 const AUDIT_TABLES = [
@@ -54,7 +53,6 @@ const Auditoria: React.FC = () => {
     dateTo: filters.dateTo || undefined
   });
 
-  const { exportToCSV, isExporting } = useDataExport();
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -70,18 +68,9 @@ const Auditoria: React.FC = () => {
     });
   };
 
-  const handleExport = () => {
-    exportToCSV({
-      table: 'audit_logs',
-      fileName: `auditoria_${new Date().toISOString().split('T')[0]}.csv`,
-      filters: Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== '')
-      )
-    });
-  };
-
   const filteredLogs = logs.filter(log => {
-    if (filters.action && filters.action !== 'all' && log.action !== filters.action) return false;
+    if (filters.action && log.action !== filters.action) return false;
+    if (filters.table && filters.table !== 'all' && log.table_name !== filters.table) return false;
     return true;
   });
 
@@ -95,14 +84,6 @@ const Auditoria: React.FC = () => {
               Acompanhe todas as alterações realizadas no sistema
             </p>
           </div>
-          <Button 
-            onClick={handleExport} 
-            disabled={isExporting}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            {isExporting ? 'Exportando...' : 'Exportar'}
-          </Button>
         </div>
 
         {/* Filtros */}

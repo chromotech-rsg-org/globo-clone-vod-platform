@@ -23,7 +23,8 @@ import {
   BarChart3,
   Shield,
   FolderOpen,
-  DollarSign
+  DollarSign,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCustomizations } from '@/hooks/useAdminCustomizations';
@@ -145,6 +146,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     },
     { path: '/admin/documentos', icon: FolderOpen, label: 'Documentos' },
     { path: '/admin/limites-clientes', icon: DollarSign, label: 'Limites Clientes' },
+    { path: '/admin/relatorios', icon: FileSpreadsheet, label: 'Relatórios' },
     { path: '/admin/auditoria', icon: Shield, label: 'Auditoria' },
   ];
 

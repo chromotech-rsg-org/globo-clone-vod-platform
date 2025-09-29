@@ -7,6 +7,7 @@ interface ExportOptions {
   fileName?: string;
   columns?: string[];
   filters?: Record<string, any>;
+  tableName?: string; // Human-readable table name for history
 }
 
 export const useDataExport = () => {
@@ -63,6 +64,23 @@ export const useDataExport = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Register in export history
+      const fileName = options.fileName || `${options.table}_export_${new Date().toISOString().split('T')[0]}.csv`;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('export_history').insert({
+            user_id: user.id,
+            table_name: options.table,
+            file_name: fileName,
+            record_count: data.length,
+            filters: options.filters || null,
+          });
+        }
+      } catch (historyError) {
+        console.error('Error saving export history:', historyError);
+      }
       
       toast({
         title: "Exportação concluída",
