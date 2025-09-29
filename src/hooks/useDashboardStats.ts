@@ -196,20 +196,27 @@ export const useDashboardStats = () => {
 
       const potentialClients = processPotentialClients(potentialData || []);
 
-      // Clientes fidelizados
+      // Clientes fidelizados - buscar registros
       const { data: loyalData, error: loyalError } = await supabase
         .from('auction_registrations')
         .select(`
           user_id,
           auction_id,
-          profiles!auction_registrations_user_id_fkey(name),
-          bids(is_winner, status)
+          profiles!auction_registrations_user_id_fkey(name)
         `)
         .eq('status', 'approved');
 
       if (loyalError) throw loyalError;
 
-      const loyalClients = processLoyalClients(loyalData || []);
+      // Buscar bids separadamente
+      const { data: loyalBidsData, error: loyalBidsError } = await supabase
+        .from('bids')
+        .select('user_id, auction_id, is_winner, status')
+        .eq('status', 'approved');
+
+      if (loyalBidsError) throw loyalBidsError;
+
+      const loyalClients = processLoyalClients(loyalData || [], loyalBidsData || []);
 
       // Oportunidades perdidas (penúltimo lance)
       const { data: missedData, error: missedError } = await supabase
@@ -334,9 +341,10 @@ export const useDashboardStats = () => {
       .slice(0, 20);
   };
 
-  const processLoyalClients = (data: any[]) => {
+  const processLoyalClients = (registrations: any[], bids: any[]) => {
     const clientMap = new Map();
-    data.forEach(registration => {
+    
+    registrations.forEach(registration => {
       const userName = registration.profiles?.name || 'Usuário Desconhecido';
       if (!clientMap.has(registration.user_id)) {
         clientMap.set(registration.user_id, {
@@ -348,10 +356,14 @@ export const useDashboardStats = () => {
       }
       const client = clientMap.get(registration.user_id);
       client.auctions_participated += 1;
-      if (registration.bids) {
-        client.total_bids += registration.bids.length;
-        client.wins += registration.bids.filter((bid: any) => bid.is_winner && bid.status === 'approved').length;
-      }
+      
+      // Buscar bids relacionados a este registro (mesmo user_id e auction_id)
+      const relatedBids = bids.filter(
+        bid => bid.user_id === registration.user_id && bid.auction_id === registration.auction_id
+      );
+      
+      client.total_bids += relatedBids.length;
+      client.wins += relatedBids.filter(bid => bid.is_winner && bid.status === 'approved').length;
     });
 
     return Array.from(clientMap.values())
