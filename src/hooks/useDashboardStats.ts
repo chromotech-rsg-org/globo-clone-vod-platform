@@ -188,7 +188,7 @@ export const useDashboardStats = () => {
           bid_value,
           created_at,
           is_winner,
-          profiles(name)
+          profiles!bids_user_id_fkey(name)
         `)
         .eq('status', 'approved');
 
@@ -219,7 +219,7 @@ export const useDashboardStats = () => {
           auction_item_id,
           bid_value,
           is_winner,
-          profiles(name),
+          profiles!bids_user_id_fkey(name),
           auctions(name),
           auction_items(name)
         `)
