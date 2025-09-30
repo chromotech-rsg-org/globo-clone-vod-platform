@@ -32,6 +32,7 @@ const Documentos: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loadingClients, setLoadingClients] = useState(false);
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
+  const [filterClientSearchOpen, setFilterClientSearchOpen] = useState(false);
   const [uploadData, setUploadData] = useState({
     userId: '',
     category: 'general',
@@ -42,12 +43,10 @@ const Documentos: React.FC = () => {
   const { documents, loading, uploading, categories, uploadDocument, deleteDocument, downloadDocument } = useClientDocuments();
   const { toast } = useToast();
 
-  // Buscar clientes ao abrir o dialog
+  // Buscar clientes ao carregar o componente
   useEffect(() => {
-    if (uploadDialogOpen && clients.length === 0) {
-      fetchClients();
-    }
-  }, [uploadDialogOpen]);
+    fetchClients();
+  }, []);
 
   const fetchClients = async () => {
     try {
@@ -318,13 +317,72 @@ const Documentos: React.FC = () => {
               </div>
 
               <div>
-                <Label className="text-admin-table-text">ID do Usuário</Label>
-                <Input
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  placeholder="Filtrar por usuário..."
-                  className="bg-admin-content-bg border-admin-border text-admin-table-text"
-                />
+                <Label className="text-admin-table-text">Cliente</Label>
+                <Popover open={filterClientSearchOpen} onOpenChange={setFilterClientSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={filterClientSearchOpen}
+                      className="w-full justify-between bg-admin-content-bg border-admin-border text-admin-table-text"
+                    >
+                      {selectedUserId
+                        ? clients.find((client) => client.id === selectedUserId)?.name
+                        : "Todos os clientes"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 bg-admin-content-bg border-admin-border">
+                    <Command className="bg-admin-content-bg">
+                      <CommandInput placeholder="Buscar cliente..." className="text-admin-table-text" />
+                      <CommandList>
+                        <CommandEmpty className="text-admin-muted-foreground py-6 text-center text-sm">
+                          {loadingClients ? 'Carregando...' : 'Nenhum cliente encontrado.'}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="all"
+                            onSelect={() => {
+                              setSelectedUserId('');
+                              setFilterClientSearchOpen(false);
+                            }}
+                            className="text-admin-table-text"
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedUserId === '' ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            Todos os clientes
+                          </CommandItem>
+                          {clients.map((client) => (
+                            <CommandItem
+                              key={client.id}
+                              value={client.name}
+                              onSelect={() => {
+                                setSelectedUserId(client.id);
+                                setFilterClientSearchOpen(false);
+                              }}
+                              className="text-admin-table-text"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedUserId === client.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span>{client.name}</span>
+                                <span className="text-xs text-admin-muted-foreground">{client.email}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </CardContent>
