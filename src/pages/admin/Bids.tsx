@@ -94,13 +94,9 @@ const AdminBids = () => {
         `, { count: 'exact' })
         .order('created_at', { ascending: false });
 
-      // Apply search filter - search across multiple fields
+      // Apply search filter - search by bid ID
       if (searchTerm) {
-        query = query.or(`
-          id.ilike.%${searchTerm}%,
-          auctions.name.ilike.%${searchTerm}%,
-          profiles.name.ilike.%${searchTerm}%
-        `);
+        query = query.ilike('id', `%${searchTerm}%`);
       }
 
       // Apply status filter
