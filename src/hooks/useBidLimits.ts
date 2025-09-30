@@ -37,9 +37,28 @@ interface LimitRequest {
   } | null;
 }
 
+interface FailedBidAttempt {
+  id: string;
+  user_id: string;
+  auction_id: string;
+  auction_item_id: string;
+  attempted_bid_value: number;
+  current_limit: number;
+  total_bids_at_attempt: number;
+  reason: string;
+  created_at: string;
+  auction?: {
+    name: string;
+  } | null;
+  auction_item?: {
+    name: string;
+  } | null;
+}
+
 export const useBidLimits = () => {
   const [limits, setLimits] = useState<BidLimit[]>([]);
   const [requests, setRequests] = useState<LimitRequest[]>([]);
+  const [failedAttempts, setFailedAttempts] = useState<FailedBidAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [systemSettings, setSystemSettings] = useState({
     minLimit: 1000,
@@ -109,6 +128,35 @@ export const useBidLimits = () => {
         description: "Não foi possível carregar as solicitações de aumento",
         variant: "destructive"
       });
+    }
+  };
+
+  const fetchFailedAttempts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('failed_bid_attempts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch auction and item names separately
+      const attemptsWithDetails = await Promise.all((data || []).map(async (attempt) => {
+        const [auctionData, itemData] = await Promise.all([
+          supabase.from('auctions').select('name').eq('id', attempt.auction_id).single(),
+          supabase.from('auction_items').select('name').eq('id', attempt.auction_item_id).single()
+        ]);
+        
+        return {
+          ...attempt,
+          auction: auctionData.data,
+          auction_item: itemData.data
+        };
+      }));
+
+      setFailedAttempts(attemptsWithDetails);
+    } catch (error) {
+      console.error('Error fetching failed attempts:', error);
     }
   };
 
@@ -259,6 +307,7 @@ export const useBidLimits = () => {
       await Promise.all([
         fetchLimits(),
         fetchRequests(),
+        fetchFailedAttempts(),
         fetchSystemSettings()
       ]);
       setLoading(false);
@@ -270,12 +319,13 @@ export const useBidLimits = () => {
   return {
     limits,
     requests,
+    failedAttempts,
     loading,
     systemSettings,
     createOrUpdateLimit,
     requestLimitIncrease,
     reviewLimitRequest,
     getUserLimit,
-    refetch: () => Promise.all([fetchLimits(), fetchRequests()])
+    refetch: () => Promise.all([fetchLimits(), fetchRequests(), fetchFailedAttempts()])
   };
 };

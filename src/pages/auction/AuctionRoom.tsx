@@ -12,6 +12,7 @@ import { User, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
 import { DuplicateBidModal } from '@/components/auction/DuplicateBidModal';
 import { OutbidNotificationModal } from '@/components/auction/OutbidNotificationModal';
+import { BidLimitReachedDialog } from '@/components/auction/BidLimitReachedDialog';
 import ClientNotifications from '@/components/auction/ClientNotifications';
 import AuctionRoomHeader from '@/components/auction/AuctionRoomHeader';
 import AuctionVideoPlayer from '@/components/auction/AuctionVideoPlayer';
@@ -25,6 +26,7 @@ import LotsList from '@/components/auction/LotsList';
 import BidHistoryWithFilters from '@/components/auction/BidHistoryWithFilters';
 import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency } from '@/utils/formatters';
+import { useBidLimitValidation } from '@/hooks/useBidLimitValidation';
 
 const AuctionRoom = () => {
   const { id } = useParams<{ id: string }>();
@@ -59,11 +61,19 @@ const [userState, setUserState] = useState<BidUserState>('need_registration');
 const [showBidDialog, setShowBidDialog] = useState(false);
 const [showDuplicateBidModal, setShowDuplicateBidModal] = useState(false);
 const [showOutbidModal, setShowOutbidModal] = useState(false);
+const [showLimitReachedDialog, setShowLimitReachedDialog] = useState(false);
+const [limitReachedData, setLimitReachedData] = useState<{
+  currentLimit: number;
+  totalBidsUsed: number;
+  attemptedBidValue: number;
+  auctionItemId: string;
+} | null>(null);
 const [duplicateBidValue, setDuplicateBidValue] = useState(0);
 const [originalBidValue, setOriginalBidValue] = useState(0);
 const [nextBidValue, setNextBidValue] = useState(0);
 const [currentBaseValue, setCurrentBaseValue] = useState(0);
 const { toast } = useToast();
+const { validateBidLimit, logFailedBidAttempt } = useBidLimitValidation();
 
   useEffect(() => {
     if (!registration) {
@@ -191,9 +201,46 @@ const recalculateNextBidValue = () => {
       ]);
       
       // Aguardar que os states sejam atualizados e recalcular
-      setTimeout(() => {
+      setTimeout(async () => {
         const freshNextBidValue = recalculateNextBidValue();
         setNextBidValue(freshNextBidValue);
+        
+        // Validar limite antes de abrir o modal de lance
+        if (user?.id && auction?.id) {
+          console.log('🔍 Validando limite de lance...');
+          const validation = await validateBidLimit(user.id, auction.id, freshNextBidValue);
+          
+          if (!validation.canBid && !validation.isUnlimited) {
+            console.log('⚠️ Limite de lance atingido!', validation);
+            
+            // Determinar qual lote será usado
+            const targetLot = (hasPreBiddingLots && selectedPreBiddingLotId) 
+              ? preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) || currentLot
+              : currentLot;
+            
+            const targetLotId = targetLot?.id || '';
+            
+            // Registrar tentativa falhada
+            await logFailedBidAttempt(
+              user.id,
+              auction.id,
+              targetLotId,
+              freshNextBidValue,
+              validation.currentLimit,
+              validation.totalBidsUsed
+            );
+            
+            // Mostrar modal de limite atingido
+            setLimitReachedData({
+              currentLimit: validation.currentLimit,
+              totalBidsUsed: validation.totalBidsUsed,
+              attemptedBidValue: freshNextBidValue,
+              auctionItemId: targetLotId
+            });
+            setShowLimitReachedDialog(true);
+            return;
+          }
+        }
         
         console.log('📊 Dados atualizados. Próximo lance recalculado:', freshNextBidValue);
         setShowBidDialog(true);
@@ -631,6 +678,26 @@ const recalculateNextBidValue = () => {
   onProceed={handleProceedAfterOutbid}
   onCancel={handleCancelAfterOutbid}
 />
+
+{/* Bid Limit Reached Dialog */}
+{limitReachedData && user?.id && auction?.id && (
+  <BidLimitReachedDialog
+    open={showLimitReachedDialog}
+    onOpenChange={setShowLimitReachedDialog}
+    currentLimit={limitReachedData.currentLimit}
+    totalBidsUsed={limitReachedData.totalBidsUsed}
+    attemptedBidValue={limitReachedData.attemptedBidValue}
+    userId={user.id}
+    auctionId={auction.id}
+    auctionItemId={limitReachedData.auctionItemId}
+    onRequestSent={() => {
+      toast({
+        title: "Solicitação enviada",
+        description: "Sua solicitação de aumento de limite foi enviada para análise"
+      });
+    }}
+  />
+)}
 
       {/* Client Notifications - Fixed position */}
       <div className="fixed top-20 right-4 z-40">

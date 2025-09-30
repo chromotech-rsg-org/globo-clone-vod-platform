@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useBidLimits } from '@/hooks/useBidLimits';
+import { ClientLimitCard } from '@/components/admin/ClientLimitCard';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, UserCheck, UserX, DollarSign, AlertTriangle, Check, X, Users } from 'lucide-react';
+import { Search, UserCheck, UserX, DollarSign, AlertTriangle, Check, X, Users, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -43,6 +44,7 @@ const LimitesClientes: React.FC = () => {
   const { 
     limits, 
     requests, 
+    failedAttempts,
     loading, 
     systemSettings, 
     createOrUpdateLimit, 
@@ -274,6 +276,16 @@ const LimitesClientes: React.FC = () => {
 
           <Card className="bg-admin-content-bg border-admin-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-admin-table-text">Tentativas Bloqueadas</CardTitle>
+              <AlertCircle className="h-4 w-4 text-admin-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-400">{failedAttempts.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-admin-content-bg border-admin-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-admin-table-text">Limite Padrão</CardTitle>
               <DollarSign className="h-4 w-4 text-admin-muted-foreground" />
             </CardHeader>
@@ -292,6 +304,9 @@ const LimitesClientes: React.FC = () => {
             </TabsTrigger>
             <TabsTrigger value="solicitacoes" className="text-admin-table-text">
               Solicitações ({pendingRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="tentativas" className="text-admin-table-text">
+              Tentativas Bloqueadas ({failedAttempts.length})
             </TabsTrigger>
           </TabsList>
 
@@ -312,80 +327,73 @@ const LimitesClientes: React.FC = () => {
             </Card>
 
             {/* Lista de Limites */}
-            <Card className="bg-admin-content-bg border-admin-border">
-              <CardHeader>
-                <CardTitle className="text-admin-table-text">
-                  Limites Configurados ({filteredLimits.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="space-y-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex items-center space-x-4">
-                        <Skeleton className="h-12 w-12 rounded-full bg-gray-800" />
-                        <Skeleton className="h-4 w-1/3 bg-gray-800" />
-                        <Skeleton className="h-4 w-1/4 bg-gray-800" />
-                        <Skeleton className="h-4 w-1/5 bg-gray-800" />
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredLimits.length === 0 ? (
-                  <div className="text-center text-admin-muted-foreground py-8">
-                    Nenhum limite configurado
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredLimits.map((limit) => (
-                      <div key={limit.id} className="border border-admin-border rounded-lg p-4 hover:bg-gray-800/50 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h4 className="font-medium text-admin-table-text">
-                                {limit.user?.name || 'Usuário Desconhecido'}
-                              </h4>
-                              {limit.is_unlimited ? (
-                                <Badge className="bg-blue-600/20 text-blue-400 border-blue-400">
-                                  Ilimitado
-                                </Badge>
-                              ) : (
-                                <Badge className="bg-green-600/20 text-green-400 border-green-400">
-                                  {formatCurrency(limit.max_limit)}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            <div className="text-admin-muted-foreground text-sm">
-                              {limit.user?.email || 'E-mail não disponível'}
-                            </div>
-                            
-                            <div className="text-admin-muted-foreground text-sm">
-                              Configurado em: {format(new Date(limit.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                            </div>
-                          </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <Card key={i} className="bg-admin-content-bg border-admin-border">
+                    <CardHeader>
+                      <Skeleton className="h-6 w-2/3 bg-gray-800" />
+                      <Skeleton className="h-4 w-1/2 bg-gray-800 mt-2" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-20 w-full bg-gray-800" />
+                    </CardContent>
+                  </Card>
+                ))
+              ) : filteredLimits.length === 0 ? (
+                <div className="col-span-full">
+                  <Card className="bg-admin-content-bg border-admin-border">
+                    <CardContent className="text-center text-admin-muted-foreground py-12">
+                      Nenhum limite configurado
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                filteredLimits.map((limit) => {
+                  const userRequests = requests.filter(req => req.user_id === limit.user_id && req.status === 'pending');
+                  const userFailedAttempts = failedAttempts
+                    .filter(attempt => attempt.user_id === limit.user_id)
+                    .slice(0, 5)
+                    .map(attempt => ({
+                      id: attempt.id,
+                      attempted_bid_value: attempt.attempted_bid_value,
+                      auction_name: attempt.auction?.name || 'Leilão desconhecido',
+                      lot_name: attempt.auction_item?.name || 'Lote desconhecido',
+                      created_at: attempt.created_at
+                    }));
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setLimitData({
-                                userId: limit.user_id,
-                                maxLimit: limit.max_limit,
-                                isUnlimited: limit.is_unlimited
-                              });
-                              setLimitDialogOpen(true);
-                            }}
-                            className="text-admin-table-text border-admin-border"
-                          >
-                            Editar
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  return (
+                    <ClientLimitCard
+                      key={limit.id}
+                      userName={limit.user?.name || 'Usuário Desconhecido'}
+                      userEmail={limit.user?.email || 'Email não disponível'}
+                      currentLimit={limit.max_limit}
+                      isUnlimited={limit.is_unlimited}
+                      pendingRequests={userRequests}
+                      failedAttempts={userFailedAttempts}
+                      onReviewRequest={(requestId) => {
+                        const request = requests.find(r => r.id === requestId);
+                        setSelectedRequest(request);
+                        setReviewDialogOpen(true);
+                      }}
+                      onEditLimit={() => {
+                         setLimitData({
+                          userId: limit.user_id,
+                          maxLimit: limit.max_limit,
+                          isUnlimited: limit.is_unlimited
+                        });
+                        setSelectedClient({ 
+                          id: limit.user_id, 
+                          name: limit.user?.name || '', 
+                          email: limit.user?.email || '' 
+                        });
+                        setLimitDialogOpen(true);
+                      }}
+                    />
+                  );
+                })
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="solicitacoes" className="space-y-4">

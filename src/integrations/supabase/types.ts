@@ -570,6 +570,42 @@ export type Database = {
         }
         Relationships: []
       }
+      failed_bid_attempts: {
+        Row: {
+          attempted_bid_value: number
+          auction_id: string
+          auction_item_id: string
+          created_at: string
+          current_limit: number
+          id: string
+          reason: string
+          total_bids_at_attempt: number
+          user_id: string
+        }
+        Insert: {
+          attempted_bid_value: number
+          auction_id: string
+          auction_item_id: string
+          created_at?: string
+          current_limit: number
+          id?: string
+          reason?: string
+          total_bids_at_attempt: number
+          user_id: string
+        }
+        Update: {
+          attempted_bid_value?: number
+          auction_id?: string
+          auction_item_id?: string
+          created_at?: string
+          current_limit?: number
+          id?: string
+          reason?: string
+          total_bids_at_attempt?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       integration_jobs: {
         Row: {
           attempts: number
