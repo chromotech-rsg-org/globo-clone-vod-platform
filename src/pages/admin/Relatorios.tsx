@@ -7,7 +7,6 @@ import { Download, FileText, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import AdminLayout from '@/components/AdminLayout';
 import { useDataExport } from '@/hooks/useDataExport';
 import { useExportHistory } from '@/hooks/useExportHistory';
 import { toast } from 'sonner';
@@ -63,8 +62,7 @@ const Relatorios: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-admin-table-text">Relatórios e Exportações</h1>
@@ -197,7 +195,6 @@ const Relatorios: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
   );
 };
 
