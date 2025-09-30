@@ -10,7 +10,6 @@ import { ptBR } from 'date-fns/locale';
 import { Search, Filter, Eye } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import AdminLayout from '@/components/AdminLayout';
 
 const AUDIT_TABLES = [
   { value: 'all', label: 'Todas as tabelas' },
@@ -30,7 +29,7 @@ const AUDIT_TABLES = [
 ];
 
 const AUDIT_ACTIONS = [
-  { value: '', label: 'Todas as ações' },
+  { value: 'all', label: 'Todas as ações' },
   { value: 'INSERT', label: 'Criação' },
   { value: 'UPDATE', label: 'Atualização' },
   { value: 'DELETE', label: 'Exclusão' }
@@ -39,7 +38,7 @@ const AUDIT_ACTIONS = [
 const Auditoria: React.FC = () => {
   const [filters, setFilters] = useState({
     table: 'all',
-    action: '',
+    action: 'all',
     userId: '',
     dateFrom: '',
     dateTo: ''
@@ -47,7 +46,7 @@ const Auditoria: React.FC = () => {
 
   const { logs, loading, error, getChangesSummary, getActionColor, getActionLabel } = useAuditLogs({
     table: filters.table && filters.table !== 'all' ? filters.table : undefined,
-    action: filters.action || undefined,
+    action: filters.action && filters.action !== 'all' ? filters.action : undefined,
     userId: filters.userId || undefined,
     dateFrom: filters.dateFrom || undefined,
     dateTo: filters.dateTo || undefined
@@ -61,7 +60,7 @@ const Auditoria: React.FC = () => {
   const clearFilters = () => {
     setFilters({
       table: 'all',
-      action: '',
+      action: 'all',
       userId: '',
       dateFrom: '',
       dateTo: ''
@@ -69,14 +68,13 @@ const Auditoria: React.FC = () => {
   };
 
   const filteredLogs = logs.filter(log => {
-    if (filters.action && log.action !== filters.action) return false;
+    if (filters.action && filters.action !== 'all' && log.action !== filters.action) return false;
     if (filters.table && filters.table !== 'all' && log.table_name !== filters.table) return false;
     return true;
   });
 
   return (
-    <AdminLayout>
-      <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-admin-table-text">Auditoria do Sistema</h1>
@@ -296,7 +294,6 @@ const Auditoria: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
   );
 };
 

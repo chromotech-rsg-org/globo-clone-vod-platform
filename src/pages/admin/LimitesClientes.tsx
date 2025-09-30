@@ -16,7 +16,6 @@ import { formatCurrency } from '@/utils/formatters';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import AdminLayout from '@/components/AdminLayout';
 
 interface Client {
   id: string;
@@ -135,8 +134,7 @@ const LimitesClientes: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-admin-table-text">Limites por Cliente</h1>
@@ -534,7 +532,6 @@ const LimitesClientes: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
   );
 };
 

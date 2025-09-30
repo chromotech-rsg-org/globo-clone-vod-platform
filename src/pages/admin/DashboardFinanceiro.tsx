@@ -5,36 +5,30 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatCurrency } from '@/utils/formatters';
 import { Loader2, TrendingUp, Users, FileText, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import AdminLayout from '@/components/AdminLayout';
 
 const DashboardFinanceiro: React.FC = () => {
   const { generalStats, financialStats, insightStats, loading, error } = useDashboardStats();
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-          <span className="ml-2 text-admin-table-text">Carregando estatísticas...</span>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+        <span className="ml-2 text-admin-table-text">Carregando estatísticas...</span>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64 text-red-400">
-          <AlertCircle className="h-8 w-8 mr-2" />
-          <span>Erro ao carregar dados: {error}</span>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-64 text-red-400">
+        <AlertCircle className="h-8 w-8 mr-2" />
+        <span>Erro ao carregar dados: {error}</span>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-admin-table-text">Dashboard Financeiro</h1>
@@ -333,7 +327,6 @@ const DashboardFinanceiro: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>
   );
 };
 

@@ -14,32 +14,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   // Ensure we're in an admin route, if not redirect to dashboard
   useEffect(() => {
-    const adminPaths = [
-      '/dashboard',
-      '/admin/usuarios',
-      '/admin/pacotes',
-      '/admin/planos',
-      '/admin/assinaturas',
-      '/admin/cupons',
-      '/admin/leiloes',
-      '/admin/integracao',
-      '/admin/habilitacoes',
-      '/admin/lances',
-      '/admin/personalizacao',
-      '/admin/asaas-api-tester',
-      '/admin/imagens',
-      '/admin/conteudo',
-      '/admin/hero-slider',
-      '/admin/dashboard-financeiro',
-      '/admin/documentos',
-      '/admin/limites-clientes',
-      '/admin/auditoria',
-      '/profile',
-      '/subscription'
-    ];
+    const allowedPaths = ['/dashboard', '/profile', '/subscription'];
     
-    // Consider path prefixes (e.g., query params or nested routes)
-    const isValidPath = adminPaths.some(path => location.pathname.startsWith(path));
+    // Allow any path starting with /admin or in the allowed list
+    const isValidPath = location.pathname.startsWith('/admin') || 
+                        allowedPaths.some(path => location.pathname.startsWith(path));
     
     if (!isValidPath) {
       console.log('⚠️ Invalid admin route detected:', location.pathname);
