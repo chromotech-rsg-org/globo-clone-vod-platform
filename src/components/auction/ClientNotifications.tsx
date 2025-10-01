@@ -215,15 +215,20 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
     if (!user) return;
 
     try {
+      // Primeiro tenta inserir
       const { error } = await supabase
         .from('user_notification_reads')
-        .insert({
+        .upsert({
           user_id: user.id,
           notification_type: notificationType,
-          notification_id: notificationId
+          notification_id: notificationId,
+          read_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,notification_type,notification_id'
         });
 
-      if (error && error.code !== '23505') { // Ignore unique constraint violations
+      if (error) {
+        console.error('Error marking notification as read:', error);
         throw error;
       }
 
@@ -238,17 +243,9 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
       
       setUnreadCount(prev => Math.max(0, prev - 1));
 
-      toast({
-        title: "Mensagem marcada como lida",
-        description: "A notificação foi marcada como lida com sucesso.",
-      });
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao marcar mensagem como lida",
-        variant: "destructive",
-      });
+      // Não mostrar toast de erro, apenas logar
     }
   };
 

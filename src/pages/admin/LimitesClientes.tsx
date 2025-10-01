@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useBidLimits } from '@/hooks/useBidLimits';
 import { ClientLimitCard } from '@/components/admin/ClientLimitCard';
+import { ReviewRequestModal } from '@/components/admin/ReviewRequestModal';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -492,51 +493,11 @@ const LimitesClientes: React.FC = () => {
 
         {/* Dialog de Revisão */}
         <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
-          <DialogContent className="bg-admin-content-bg border-admin-border">
+          <DialogContent className="bg-admin-content-bg border-admin-border max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-admin-table-text">Revisar Solicitação de Limite</DialogTitle>
             </DialogHeader>
-            {selectedRequest && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="text-admin-table-text">
-                    <strong>Cliente:</strong> {selectedRequest.user?.name}
-                  </div>
-                  <div className="text-admin-table-text">
-                    <strong>Limite atual:</strong> {formatCurrency(selectedRequest.current_limit)}
-                  </div>
-                  <div className="text-admin-table-text">
-                    <strong>Limite solicitado:</strong> {formatCurrency(selectedRequest.requested_limit)}
-                  </div>
-                  {selectedRequest.reason && (
-                    <div>
-                      <strong className="text-admin-table-text">Motivo:</strong>
-                      <div className="bg-gray-900 p-2 rounded mt-1 text-admin-muted-foreground">
-                        {selectedRequest.reason}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleReviewRequest(false)}
-                    className="text-red-400 border-red-400 hover:bg-red-400/10"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Rejeitar
-                  </Button>
-                  <Button 
-                    onClick={() => handleReviewRequest(true, selectedRequest.requested_limit)}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Aprovar
-                  </Button>
-                </div>
-              </div>
-            )}
+            {selectedRequest && <ReviewRequestModal request={selectedRequest} onApprove={() => handleReviewRequest(true, selectedRequest.requested_limit)} onReject={() => handleReviewRequest(false)} />}
           </DialogContent>
         </Dialog>
       </div>
