@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { formatCurrency } from '@/utils/formatters';
 import { useBidLimits } from '@/hooks/useBidLimits';
 import { TrendingUp } from 'lucide-react';
+import CurrencyInput from '@/components/ui/currency-input';
 
 interface RequestLimitIncreaseDialogProps {
   open: boolean;
@@ -86,15 +87,12 @@ export function RequestLimitIncreaseDialog({
 
           <div className="space-y-2">
             <Label className="text-gray-300">Novo Limite Solicitado *</Label>
-            <Input
-              type="number"
+            <CurrencyInput
               value={requestedLimit}
-              onChange={(e) => setRequestedLimit(Number(e.target.value))}
-              min={currentLimit + 1}
-              step={1000}
-              required
+              onChange={(value) => setRequestedLimit(value)}
+              placeholder="R$ 0,00"
+              disabled={submitting}
               className="bg-gray-800 border-gray-700 text-white"
-              placeholder="Ex: 50000"
             />
             <p className="text-xs text-gray-500">
               Mínimo: {formatCurrency(currentLimit + 1000)}

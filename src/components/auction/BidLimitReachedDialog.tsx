@@ -62,27 +62,19 @@ export function BidLimitReachedDialog({
                   <span className="text-white font-bold">{formatCurrency(currentLimit)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Total usado:</span>
-                  <span className="text-yellow-400 font-medium">{formatCurrency(totalBidsUsed)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Disponível:</span>
-                  <span className="text-green-400 font-medium">{formatCurrency(remainingLimit)}</span>
+                  <span className="text-gray-400">Lance tentado:</span>
+                  <span className="text-red-400 font-bold">{formatCurrency(attemptedBidValue)}</span>
                 </div>
                 <div className="border-t border-gray-700 pt-2 mt-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Lance tentado:</span>
-                    <span className="text-red-400 font-bold">{formatCurrency(attemptedBidValue)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm mt-1">
+                  <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Excede em:</span>
-                    <span className="text-red-300">{formatCurrency(exceedsBy)}</span>
+                    <span className="text-red-300 font-semibold">{formatCurrency(exceedsBy)}</span>
                   </div>
                 </div>
               </div>
               
               <p className="text-center text-gray-400">
-                Você não possui saldo suficiente para fazer este lance.
+                Seu limite excede este lance.
                 Solicite um aumento de limite ao administrador.
               </p>
             </AlertDialogDescription>

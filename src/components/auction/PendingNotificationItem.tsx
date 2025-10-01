@@ -1,18 +1,19 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/utils/formatters';
-import { Clock } from 'lucide-react';
+import { Clock, Gavel, Users, TrendingUp } from 'lucide-react';
 
 interface PendingItem {
   id: string;
-  type: 'bid' | 'registration';
-  auction_name: string;
+  type: 'bid' | 'registration' | 'limit_request';
+  auction_name?: string;
   user_name: string;
   value?: number;
   created_at: string;
   isReactivationAfterManualDisable?: boolean;
+  requested_limit?: number;
+  current_limit?: number;
 }
 
 interface PendingNotificationItemProps {
@@ -24,47 +25,49 @@ const PendingNotificationItem: React.FC<PendingNotificationItemProps> = ({
   item,
   onClick
 }) => {
+  const getIcon = () => {
+    if (item.type === 'bid') return <Gavel className="h-4 w-4 text-yellow-400" />;
+    if (item.type === 'registration') return <Users className="h-4 w-4 text-blue-400" />;
+    return <TrendingUp className="h-4 w-4 text-green-400" />;
+  };
+
+  const getTitle = () => {
+    if (item.type === 'bid') return 'Lance';
+    if (item.type === 'registration') return 'Habilitação';
+    return 'Solicitação de Limite';
+  };
+
   return (
     <Card 
       className="p-3 cursor-pointer transition-all duration-200 hover:bg-admin-primary/10 hover:border-admin-primary/50 border-admin-border" 
       onClick={() => onClick(item)}
     >
       <CardContent className="p-0">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start gap-3">
+          <div className="mt-1">{getIcon()}</div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-admin-modal-text truncate">
-              {item.auction_name}
-            </p>
-            <p className="text-sm text-admin-muted-foreground truncate">
-              por {item.user_name}
-            </p>
-          </div>
-          <div className="text-right flex-shrink-0 ml-4">
-            {item.type === 'bid' ? (
-              <p className="font-semibold text-admin-modal-text">
-                {formatCurrency(item.value || 0)}
-              </p>
-            ) : (
-              <div className="flex flex-col items-end">
-                <Badge 
-                  variant="outline" 
-                  className={`border-admin-border text-admin-muted-foreground ${
-                    item.isReactivationAfterManualDisable 
-                      ? 'border-orange-500/50 text-orange-400 bg-orange-500/10' 
-                      : ''
-                  }`}
-                >
-                  <Clock className="h-3 w-3 mr-1" />
-                  {item.isReactivationAfterManualDisable ? 'Reativação' : 'Pendente'}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm font-medium text-admin-modal-text">{getTitle()}</span>
+              {item.auction_name && (
+                <Badge variant="outline" className="text-xs border-admin-border text-admin-muted-foreground">
+                  {item.auction_name}
                 </Badge>
-                {item.isReactivationAfterManualDisable && (
-                  <p className="text-xs text-orange-400 mt-1">
-                    Após desativação manual
-                  </p>
-                )}
-              </div>
+              )}
+            </div>
+            <p className="text-sm text-admin-muted-foreground truncate">{item.user_name}</p>
+            {item.value && (
+              <p className="text-sm font-semibold text-yellow-400 mt-1">
+                {formatCurrency(item.value)}
+              </p>
             )}
-            <p className="text-xs text-admin-muted-foreground">
+            {item.type === 'limit_request' && item.requested_limit && (
+              <p className="text-sm font-semibold text-green-400 mt-1">
+                {formatCurrency(item.current_limit || 0)} → {formatCurrency(item.requested_limit)}
+              </p>
+            )}
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-xs text-admin-muted-foreground whitespace-nowrap">
               {formatDate(item.created_at)}
             </p>
           </div>

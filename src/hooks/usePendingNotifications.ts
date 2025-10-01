@@ -8,18 +8,21 @@ import { clearVercelCache } from '@/utils/vercelOptimizations';
 
 interface PendingItem {
   id: string;
-  type: 'bid' | 'registration';
-  auction_name: string;
+  type: 'bid' | 'registration' | 'limit_request';
+  auction_name?: string;
   user_name: string;
   value?: number;
   created_at: string;
   isNew?: boolean;
   isReactivationAfterManualDisable?: boolean;
+  requested_limit?: number;
+  current_limit?: number;
 }
 
 export const usePendingNotifications = () => {
   const [pendingBids, setPendingBids] = useState<PendingItem[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingItem[]>([]);
+  const [pendingLimitRequests, setPendingLimitRequests] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [lastTotalCount, setLastTotalCount] = useState(0);
@@ -85,6 +88,20 @@ export const usePendingNotifications = () => {
         setPendingRegistrations([]);
       } else {
         console.log('✅ usePendingNotifications: Registros pendentes encontrados:', registrationsData?.length || 0);
+      }
+
+      // Buscar solicitações de aumento de limite pendentes
+      const { data: limitRequestsData, error: limitRequestsError } = await supabase
+        .from('limit_increase_requests')
+        .select('id, user_id, current_limit, requested_limit, created_at')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (limitRequestsError) {
+        console.error('❌ usePendingNotifications: Erro ao buscar solicitações de limite:', limitRequestsError);
+        setPendingLimitRequests([]);
+      } else {
+        console.log('✅ usePendingNotifications: Solicitações de limite encontradas:', limitRequestsData?.length || 0);
       }
 
       if (!mounted.current) return;
@@ -153,8 +170,38 @@ export const usePendingNotifications = () => {
         }
       }
 
+      // Processar solicitações de limite se existirem
+      let formattedLimitRequests: PendingItem[] = [];
+      if (limitRequestsData && limitRequestsData.length > 0) {
+        try {
+          const userIds = [...new Set(limitRequestsData.map(req => req.user_id))];
+
+          console.log('🔍 usePendingNotifications: Buscando dados relacionados para solicitações de limite');
+
+          const profilesResponse = await supabase
+            .from('profiles')
+            .select('id, name')
+            .in('id', userIds);
+
+          const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p.name]) || []);
+
+          formattedLimitRequests = limitRequestsData.map((request: any) => ({
+            id: request.id,
+            type: 'limit_request' as const,
+            user_name: profilesMap.get(request.user_id) || `Usuário ${request.user_id.slice(-4)}`,
+            created_at: request.created_at,
+            requested_limit: request.requested_limit,
+            current_limit: request.current_limit,
+            isNew: false
+          }));
+        } catch (error) {
+          console.error('⚠️ usePendingNotifications: Erro ao processar solicitações de limite:', error);
+          formattedLimitRequests = [];
+        }
+      }
+
       // Check for new notifications
-      const currentTotal = formattedBids.length + formattedRegistrations.length;
+      const currentTotal = formattedBids.length + formattedRegistrations.length + formattedLimitRequests.length;
       if (lastTotalCount > 0 && currentTotal > lastTotalCount) {
         setHasNewNotifications(true);
         // Reset after 5 seconds
@@ -164,11 +211,13 @@ export const usePendingNotifications = () => {
 
       setPendingBids(formattedBids);
       setPendingRegistrations(formattedRegistrations);
+      setPendingLimitRequests(formattedLimitRequests);
       
       console.log('✅ usePendingNotifications: Processamento concluído:', {
         lances: formattedBids.length,
         registros: formattedRegistrations.length,
-        total: formattedBids.length + formattedRegistrations.length
+        limitRequests: formattedLimitRequests.length,
+        total: formattedBids.length + formattedRegistrations.length + formattedLimitRequests.length
       });
 
     } catch (error) {
@@ -244,6 +293,11 @@ export const usePendingNotifications = () => {
           schema: 'public',
           table: 'auction_registrations'
         }, handlePendingChange)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'limit_increase_requests'
+        }, handlePendingChange)
         .subscribe((status) => {
           console.log('📡 usePendingNotifications: Realtime subscription status:', status);
         });
@@ -273,11 +327,12 @@ export const usePendingNotifications = () => {
     };
   }, [user?.id, fetchPendingItems]);
 
-  const totalPending = pendingBids.length + pendingRegistrations.length;
+  const totalPending = pendingBids.length + pendingRegistrations.length + pendingLimitRequests.length;
 
   return {
     pendingBids,
     pendingRegistrations,
+    pendingLimitRequests,
     totalPending,
     loading,
     hasNewNotifications,

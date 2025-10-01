@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Gavel, Users, ArrowRight, Bell } from 'lucide-react';
+import { Gavel, Users, ArrowRight, Bell, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,23 +11,27 @@ import BidDetailsModal from '@/components/admin/BidDetailsModal';
 import RegistrationDetailsModal from '@/components/admin/RegistrationDetailsModal';
 interface PendingItem {
   id: string;
-  type: 'bid' | 'registration';
-  auction_name: string;
+  type: 'bid' | 'registration' | 'limit_request';
+  auction_name?: string;
   user_name: string;
   value?: number;
   created_at: string;
+  requested_limit?: number;
+  current_limit?: number;
 }
 interface PendingNotificationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pendingBids: PendingItem[];
   pendingRegistrations: PendingItem[];
+  pendingLimitRequests: PendingItem[];
 }
 const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   open,
   onOpenChange,
   pendingBids,
-  pendingRegistrations
+  pendingRegistrations,
+  pendingLimitRequests
 }) => {
   const navigate = useNavigate();
   const {
@@ -43,6 +47,11 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   };
   const handleGoToRegistrations = () => {
     navigate('/admin/habilitacoes');
+    onOpenChange(false);
+  };
+
+  const handleGoToLimitRequests = () => {
+    navigate('/admin/limites-clientes');
     onOpenChange(false);
   };
   const handleItemClick = async (item: PendingItem) => {
@@ -176,7 +185,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       });
     }
   };
-  const totalPending = pendingBids.length + pendingRegistrations.length;
+  const totalPending = pendingBids.length + pendingRegistrations.length + pendingLimitRequests.length;
   return <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[80vh] bg-black/95 text-admin-modal-text border-admin-border backdrop-blur-sm">
@@ -188,6 +197,28 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
           </DialogHeader>
 
           <div className="space-y-6 pr-2">
+            {/* Solicitações de Aumento de Limite */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-admin-modal-text">
+                  <TrendingUp className="h-5 w-5" />
+                  Aumento de Limite Pendentes ({pendingLimitRequests.length})
+                </h3>
+                {pendingLimitRequests.length > 0 && <Button onClick={handleGoToLimitRequests} variant="outline" size="sm" className="border-admin-border text-slate-950">
+                    Ver Todos <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>}
+              </div>
+
+              {pendingLimitRequests.length === 0 ? <div className="text-center text-admin-muted-foreground py-8">
+                  Nenhuma solicitação pendente
+                </div> : <div className="space-y-2 max-h-48">
+                  {pendingLimitRequests.slice(0, 5).map(request => <PendingNotificationItem key={request.id} item={request} onClick={handleItemClick} />)}
+                  {pendingLimitRequests.length > 5 && <p className="text-center text-sm text-admin-muted-foreground pt-2">
+                      +{pendingLimitRequests.length - 5} solicitações adicionais
+                    </p>}
+                </div>}
+            </div>
+
             {/* Lances Pendentes */}
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -238,6 +269,9 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                 Fechar
               </Button>
               <div className="space-x-2">
+                {pendingLimitRequests.length > 0 && <Button onClick={handleGoToLimitRequests} className="bg-admin-primary hover:bg-admin-primary/90">
+                    Gerenciar Limites
+                  </Button>}
                 {pendingBids.length > 0 && <Button onClick={handleGoToBids} className="bg-admin-primary hover:bg-admin-primary/90">
                     Gerenciar Lances
                   </Button>}

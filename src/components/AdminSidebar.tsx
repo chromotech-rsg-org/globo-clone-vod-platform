@@ -52,7 +52,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { getCustomization } = useAdminCustomizations();
-  const { pendingBids, pendingRegistrations, totalPending, loading, hasNewNotifications } = usePendingNotifications();
+  const { pendingBids, pendingRegistrations, pendingLimitRequests, totalPending, loading, hasNewNotifications } = usePendingNotifications();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const { toast } = useToast();
@@ -432,6 +432,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           onOpenChange={setShowNotificationModal}
           pendingBids={pendingBids}
           pendingRegistrations={pendingRegistrations}
+          pendingLimitRequests={pendingLimitRequests}
         />
       )}
     </div>
