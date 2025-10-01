@@ -102,9 +102,9 @@ export function ClientLimitCard({
               <div className="space-y-2">
                 {pendingRequests.map((request) => (
                   <div key={request.id} className="bg-gray-900/50 rounded p-2 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-400">Novo limite solicitado:</span>
-                      <span className="text-sm font-bold text-white">{formatCurrency(request.requested_limit)}</span>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs text-gray-400 flex-shrink-0">Novo limite:</span>
+                      <span className="text-sm font-bold text-white text-right break-all">{formatCurrency(request.requested_limit)}</span>
                     </div>
                     {request.reason && (
                       <p className="text-xs text-gray-400 break-words">"{request.reason}"</p>
@@ -141,9 +141,9 @@ export function ClientLimitCard({
               <div className="space-y-2">
                 {failedAttempts.map((attempt) => (
                   <div key={attempt.id} className="bg-gray-900/50 rounded p-2 text-xs space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Lance:</span>
-                      <span className="text-red-400 font-bold">{formatCurrency(attempt.attempted_bid_value)}</span>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-gray-400 flex-shrink-0">Lance:</span>
+                      <span className="text-red-400 font-bold text-right break-all">{formatCurrency(attempt.attempted_bid_value)}</span>
                     </div>
                     <div className="text-gray-500 break-words">
                       <div>{attempt.auction_name}</div>

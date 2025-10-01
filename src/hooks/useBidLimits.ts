@@ -247,11 +247,38 @@ export const useBidLimits = () => {
 
   const reviewLimitRequest = async (requestId: string, approved: boolean, newLimit?: number) => {
     try {
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user) throw new Error('User not authenticated');
+
+      // Buscar a solicitação completa para obter user_id e auction_id
+      const { data: fullRequest, error: fetchError } = await supabase
+        .from('limit_increase_requests')
+        .select('user_id, requested_limit, current_limit')
+        .eq('id', requestId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Tentar buscar auction_id de registrations relacionadas ao usuário (mais recente)
+      let auctionId: string | null = null;
+      const { data: userRegistrations } = await supabase
+        .from('auction_registrations')
+        .select('auction_id')
+        .eq('user_id', fullRequest.user_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (userRegistrations) {
+        auctionId = userRegistrations.auction_id;
+      }
+
       // Atualizar o status da solicitação
       const { data: request, error: requestError } = await supabase
         .from('limit_increase_requests')
         .update({
           status: approved ? 'approved' : 'rejected',
+          reviewed_by: currentUser.user.id,
           reviewed_at: new Date().toISOString()
         })
         .eq('id', requestId)
@@ -261,16 +288,37 @@ export const useBidLimits = () => {
       if (requestError) throw requestError;
 
       // Se aprovado, atualizar o limite do usuário
+      const limitToSet = approved && request ? (newLimit || request.requested_limit) : fullRequest.current_limit;
       if (approved && request) {
-        const limitToSet = newLimit || request.requested_limit;
         await createOrUpdateLimit(request.user_id, limitToSet);
+      }
+
+      // Criar notificação para o usuário
+      const notificationMessage = approved 
+        ? `Sua solicitação de aumento de limite foi aprovada! Novo limite: R$ ${limitToSet.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+        : `Sua solicitação de aumento de limite foi rejeitada. Seu limite atual permanece em R$ ${fullRequest.current_limit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+      const { error: notificationError } = await supabase
+        .from('limit_request_responses')
+        .insert({
+          request_id: requestId,
+          user_id: fullRequest.user_id,
+          auction_id: auctionId,
+          status: approved ? 'approved' : 'rejected',
+          new_limit: limitToSet,
+          reviewed_by: currentUser.user.id,
+          client_notes: notificationMessage
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
       }
       
       toast({
         title: approved ? "Solicitação aprovada" : "Solicitação rejeitada",
         description: approved 
-          ? "O limite do usuário foi atualizado com sucesso"
-          : "A solicitação foi rejeitada"
+          ? "O limite do usuário foi atualizado e ele foi notificado"
+          : "A solicitação foi rejeitada e o usuário foi notificado"
       });
       
       await fetchRequests();

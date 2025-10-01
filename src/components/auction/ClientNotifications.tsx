@@ -12,7 +12,7 @@ import NotificationBadge from './NotificationBadge';
 
 interface ClientNotification {
   id: string;
-  type: 'bid' | 'registration';
+  type: 'bid' | 'registration' | 'limit_request';
   auction_name: string;
   status: string;
   client_notes?: string;
@@ -20,6 +20,7 @@ interface ClientNotification {
   updated_at: string;
   read: boolean;
   read_at?: string;
+  new_limit?: number;
 }
 
 interface ClientNotificationsProps {
@@ -75,6 +76,14 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         .eq(auctionId ? 'auction_id' : 'user_id', auctionId || user.id)
         .order('updated_at', { ascending: false });
 
+      // Buscar respostas de limite do usuário
+      const { data: limitResponsesData, error: limitResponsesError } = await supabase
+        .from('limit_request_responses')
+        .select('id, status, client_notes, created_at, reviewed_at, new_limit, auction_id')
+        .eq('user_id', user.id)
+        .eq(auctionId ? 'auction_id' : 'user_id', auctionId || user.id)
+        .order('reviewed_at', { ascending: false });
+
       // Buscar notificações lidas
       const { data: readNotifications, error: readError } = await supabase
         .from('user_notification_reads')
@@ -83,6 +92,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
 
       if (bidsError) throw bidsError;
       if (registrationsError) throw registrationsError;
+      if (limitResponsesError) throw limitResponsesError;
       if (readError) throw readError;
 
       const readMap = new Map();
@@ -114,7 +124,32 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         read_at: readMap.get(`registration-${reg.id}`)
       }));
 
-      const allNotifications = [...formattedBids, ...formattedRegistrations]
+      const formattedLimitResponses = await Promise.all((limitResponsesData || []).map(async (resp) => {
+        let auctionName = 'Seus Leilões';
+        if (resp.auction_id) {
+          const { data: auctionData } = await supabase
+            .from('auctions')
+            .select('name')
+            .eq('id', resp.auction_id)
+            .single();
+          if (auctionData) auctionName = auctionData.name;
+        }
+
+        return {
+          id: resp.id,
+          type: 'limit_request' as const,
+          auction_name: auctionName,
+          status: resp.status,
+          client_notes: resp.client_notes,
+          created_at: resp.created_at,
+          updated_at: resp.reviewed_at,
+          read: readMap.has(`limit_request-${resp.id}`),
+          read_at: readMap.get(`limit_request-${resp.id}`),
+          new_limit: resp.new_limit
+        };
+      }));
+
+      const allNotifications = [...formattedBids, ...formattedRegistrations, ...formattedLimitResponses]
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
       setNotifications(allNotifications);
@@ -145,6 +180,12 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         table: 'auction_registrations',
         filter: `user_id=eq.${user.id}`
       }, fetchNotifications)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'limit_request_responses',
+        filter: `user_id=eq.${user.id}`
+      }, fetchNotifications)
       .subscribe();
 
     return () => {
@@ -152,7 +193,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
     };
   }, [user, auctionId]);
 
-  const markAsRead = async (notificationId: string, notificationType: 'bid' | 'registration') => {
+  const markAsRead = async (notificationId: string, notificationType: 'bid' | 'registration' | 'limit_request') => {
     if (!user) return;
 
     try {
@@ -230,7 +271,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
     }
   };
 
-  const acknowledgeRegistration = async (notificationId: string, notificationType: 'bid' | 'registration') => {
+  const acknowledgeRegistration = async (notificationId: string, notificationType: 'bid' | 'registration' | 'limit_request') => {
     setAcknowledgedRegistrations(prev => new Set([...prev, notificationId]));
     // Mark as read when acknowledged
     await markAsRead(notificationId, notificationType);
@@ -292,6 +333,9 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
   };
 
   const getStatusText = (status: string, type: string) => {
+    if (type === 'limit_request') {
+      return status === 'approved' ? 'Limite Aprovado' : 'Limite Rejeitado';
+    }
     const prefix = type === 'bid' ? 'Lance' : 'Habilitação';
     switch (status) {
       case 'approved':

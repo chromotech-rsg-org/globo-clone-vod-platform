@@ -809,6 +809,53 @@ export type Database = {
         }
         Relationships: []
       }
+      limit_request_responses: {
+        Row: {
+          auction_id: string | null
+          client_notes: string | null
+          created_at: string
+          id: string
+          new_limit: number | null
+          request_id: string
+          reviewed_at: string
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          auction_id?: string | null
+          client_notes?: string | null
+          created_at?: string
+          id?: string
+          new_limit?: number | null
+          request_id: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          auction_id?: string | null
+          client_notes?: string | null
+          created_at?: string
+          id?: string
+          new_limit?: number | null
+          request_id?: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "limit_request_responses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "limit_increase_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       motv_api_configs: {
         Row: {
           api_base_url: string

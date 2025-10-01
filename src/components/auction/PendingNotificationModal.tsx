@@ -185,7 +185,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       });
     }
   };
-  const totalPending = pendingBids.length + pendingRegistrations.length + pendingLimitRequests.length;
+  const totalPending = pendingRegistrations.length + pendingLimitRequests.length;
   return <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[80vh] bg-black/95 text-admin-modal-text border-admin-border backdrop-blur-sm">
@@ -219,27 +219,6 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                 </div>}
             </div>
 
-            {/* Lances Pendentes */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2 text-admin-modal-text">
-                  <Gavel className="h-5 w-5" />
-                  Lances Pendentes ({pendingBids.length})
-                </h3>
-                {pendingBids.length > 0 && <Button onClick={handleGoToBids} variant="outline" size="sm" className="border-admin-border text-slate-950">
-                    Ver Todos <ArrowRight className="h-4 w-4 ml-1" />
-                  </Button>}
-              </div>
-
-              {pendingBids.length === 0 ? <div className="text-center text-admin-muted-foreground py-8">
-                  Nenhum lance pendente
-                </div> : <div className="space-y-2 max-h-48">
-                  {pendingBids.slice(0, 5).map(bid => <PendingNotificationItem key={bid.id} item={bid} onClick={handleItemClick} />)}
-                  {pendingBids.length > 5 && <p className="text-center text-sm text-admin-muted-foreground pt-2">
-                      +{pendingBids.length - 5} lances adicionais
-                    </p>}
-                </div>}
-            </div>
 
             {/* Habilitações Pendentes */}
             <div>
@@ -271,9 +250,6 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
               <div className="space-x-2">
                 {pendingLimitRequests.length > 0 && <Button onClick={handleGoToLimitRequests} className="bg-admin-primary hover:bg-admin-primary/90">
                     Gerenciar Limites
-                  </Button>}
-                {pendingBids.length > 0 && <Button onClick={handleGoToBids} className="bg-admin-primary hover:bg-admin-primary/90">
-                    Gerenciar Lances
                   </Button>}
                 {pendingRegistrations.length > 0 && <Button onClick={handleGoToRegistrations} className="bg-admin-primary hover:bg-admin-primary/90">
                     Gerenciar Habilitações
