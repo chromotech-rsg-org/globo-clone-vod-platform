@@ -13,6 +13,8 @@ interface LimitRequest {
   reason: string | null;
   status: string;
   created_at: string;
+  auction_name?: string | null;
+  lot_name?: string | null;
 }
 
 interface FailedAttempt {
@@ -79,9 +81,9 @@ export function ClientLimitCard({
                 Ilimitado
               </Badge>
             ) : (
-              <div>
+              <div className="max-w-[140px]">
                 <p className="text-xs text-gray-400">Limite</p>
-                <p className="text-lg font-bold text-white">{formatCurrency(currentLimit)}</p>
+                <p className="text-lg font-bold text-white break-words">{formatCurrency(currentLimit)}</p>
               </div>
             )}
           </div>
@@ -102,15 +104,21 @@ export function ClientLimitCard({
               <div className="space-y-2">
                 {pendingRequests.map((request) => (
                   <div key={request.id} className="bg-gray-900/50 rounded p-2 space-y-1">
-                    <div className="flex justify-between items-center gap-2">
+                    <div className="flex justify-between items-start gap-2">
                       <span className="text-xs text-gray-400 flex-shrink-0">Novo limite:</span>
-                      <span className="text-sm font-bold text-white text-right break-all">{formatCurrency(request.requested_limit)}</span>
+                      <span className="text-sm font-bold text-white text-right break-words">{formatCurrency(request.requested_limit)}</span>
                     </div>
+                    {(request.auction_name || request.lot_name) && (
+                      <div className="text-xs text-gray-500 space-y-0.5">
+                        {request.auction_name && <div>Leilão: {request.auction_name}</div>}
+                        {request.lot_name && <div>Lote: {request.lot_name}</div>}
+                      </div>
+                    )}
                     {request.reason && (
                       <p className="text-xs text-gray-400 break-words">"{request.reason}"</p>
                     )}
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs text-gray-500 flex-shrink-0">
                         {format(new Date(request.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                       </span>
                       <Button

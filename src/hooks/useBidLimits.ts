@@ -27,6 +27,8 @@ interface LimitRequest {
   reviewed_at?: string | null;
   created_at: string;
   updated_at: string;
+  auction_name?: string | null;
+  lot_name?: string | null;
   user?: {
     name: string;
     email: string;
@@ -104,7 +106,7 @@ export const useBidLimits = () => {
 
       if (error) throw error;
 
-      // Fetch user and reviewer names separately
+      // Fetch user, reviewer, auction and lot info separately
       const requestsWithUsers = await Promise.all((data || []).map(async (request) => {
         const [userProfile, reviewerProfile] = await Promise.all([
           supabase.from('profiles').select('name, email').eq('id', request.user_id).single(),
@@ -112,11 +114,35 @@ export const useBidLimits = () => {
             ? supabase.from('profiles').select('name, email').eq('id', request.reviewed_by).single()
             : Promise.resolve({ data: null })
         ]);
+
+        // Buscar a tentativa de lance mais recente do usuário para encontrar leilão e lote
+        const { data: recentAttempt } = await supabase
+          .from('failed_bid_attempts')
+          .select('auction_id, auction_item_id')
+          .eq('user_id', request.user_id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        let auctionName = null;
+        let lotName = null;
+
+        if (recentAttempt) {
+          const [auctionData, lotData] = await Promise.all([
+            supabase.from('auctions').select('name').eq('id', recentAttempt.auction_id).maybeSingle(),
+            supabase.from('auction_items').select('name').eq('id', recentAttempt.auction_item_id).maybeSingle()
+          ]);
+          
+          auctionName = auctionData.data?.name || null;
+          lotName = lotData.data?.name || null;
+        }
         
         return { 
           ...request, 
           user: userProfile.data,
-          reviewer: reviewerProfile.data 
+          reviewer: reviewerProfile.data,
+          auction_name: auctionName,
+          lot_name: lotName
         };
       }));
 
