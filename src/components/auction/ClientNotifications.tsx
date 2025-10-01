@@ -51,7 +51,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
 
     try {
       // Buscar lances do usuário
-      const { data: bidsData, error: bidsError } = await supabase
+      let bidsQuery = supabase
         .from('bids')
         .select(`
           id, status, client_notes, created_at, updated_at,
@@ -59,12 +59,17 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         `)
         .eq('user_id', user.id)
         .not('client_notes', 'is', null)
-        .neq('client_notes', '')
-        .eq(auctionId ? 'auction_id' : 'user_id', auctionId || user.id)
+        .neq('client_notes', '');
+      
+      if (auctionId) {
+        bidsQuery = bidsQuery.eq('auction_id', auctionId);
+      }
+      
+      const { data: bidsData, error: bidsError } = await bidsQuery
         .order('updated_at', { ascending: false });
 
       // Buscar habilitações do usuário
-      const { data: registrationsData, error: registrationsError } = await supabase
+      let registrationsQuery = supabase
         .from('auction_registrations')
         .select(`
           id, status, client_notes, created_at, updated_at,
@@ -72,16 +77,26 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         `)
         .eq('user_id', user.id)
         .not('client_notes', 'is', null)
-        .neq('client_notes', '')
-        .eq(auctionId ? 'auction_id' : 'user_id', auctionId || user.id)
+        .neq('client_notes', '');
+      
+      if (auctionId) {
+        registrationsQuery = registrationsQuery.eq('auction_id', auctionId);
+      }
+      
+      const { data: registrationsData, error: registrationsError } = await registrationsQuery
         .order('updated_at', { ascending: false });
 
       // Buscar respostas de limite do usuário
-      const { data: limitResponsesData, error: limitResponsesError } = await supabase
+      let limitResponsesQuery = supabase
         .from('limit_request_responses')
         .select('id, status, client_notes, created_at, reviewed_at, new_limit, auction_id')
-        .eq('user_id', user.id)
-        .eq(auctionId ? 'auction_id' : 'user_id', auctionId || user.id)
+        .eq('user_id', user.id);
+      
+      if (auctionId) {
+        limitResponsesQuery = limitResponsesQuery.eq('auction_id', auctionId);
+      }
+      
+      const { data: limitResponsesData, error: limitResponsesError } = await limitResponsesQuery
         .order('reviewed_at', { ascending: false });
 
       // Buscar notificações lidas
