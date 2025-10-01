@@ -38,8 +38,7 @@ export function BidLimitReachedDialog({
 }: BidLimitReachedDialogProps) {
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   
-  const remainingLimit = currentLimit - totalBidsUsed;
-  const exceedsBy = (totalBidsUsed + attemptedBidValue) - currentLimit;
+  const exceedsBy = attemptedBidValue - currentLimit;
 
   const handleRequestIncrease = () => {
     onOpenChange(false);
@@ -61,14 +60,6 @@ export function BidLimitReachedDialog({
                   <span className="text-gray-400">Limite total:</span>
                   <span className="text-white font-bold">{formatCurrency(currentLimit)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Já utilizado:</span>
-                  <span className="text-yellow-400 font-bold">{formatCurrency(totalBidsUsed)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Disponível:</span>
-                  <span className="text-green-400 font-bold">{formatCurrency(remainingLimit)}</span>
-                </div>
                 <div className="border-t border-gray-700 pt-2 mt-2">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Lance tentado:</span>
@@ -82,7 +73,7 @@ export function BidLimitReachedDialog({
               </div>
               
               <p className="text-center text-gray-400">
-                Você já utilizou {formatCurrency(totalBidsUsed)} do seu limite de {formatCurrency(currentLimit)} neste leilão.
+                Você só pode dar lances de até {formatCurrency(currentLimit)} por lote.
                 Para dar este lance, solicite um aumento de limite ao administrador.
               </p>
             </AlertDialogDescription>

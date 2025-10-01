@@ -46,26 +46,15 @@ export const useBidLimitValidation = () => {
         };
       }
 
-      // Calculate total approved bids for this auction
-      const { data: bidsData, error: bidsError } = await supabase
-        .from('bids')
-        .select('bid_value')
-        .eq('user_id', userId)
-        .eq('auction_id', auctionId)
-        .eq('status', 'approved');
-
-      if (bidsError) throw bidsError;
-
-      const totalBidsUsed = (bidsData || []).reduce((sum, bid) => sum + Number(bid.bid_value), 0);
-      const remainingLimit = currentLimit - totalBidsUsed;
-      const canBid = remainingLimit >= bidValue;
+      // Limit is per individual bid, not cumulative
+      const canBid = bidValue <= currentLimit;
 
       return {
         canBid,
         currentLimit,
-        totalBidsUsed,
+        totalBidsUsed: 0,
         isUnlimited: false,
-        remainingLimit
+        remainingLimit: currentLimit
       };
     } catch (error) {
       console.error('Error validating bid limit:', error);
