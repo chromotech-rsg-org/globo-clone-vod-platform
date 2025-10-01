@@ -87,13 +87,16 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         .order('updated_at', { ascending: false });
 
       // Buscar respostas de limite do usuário
+      // Limites são globais, então incluímos notificações com auction_id NULL
+      // ou que correspondem ao leilão atual
       let limitResponsesQuery = supabase
         .from('limit_request_responses')
         .select('id, status, client_notes, created_at, reviewed_at, new_limit, auction_id')
         .eq('user_id', user.id);
       
       if (auctionId) {
-        limitResponsesQuery = limitResponsesQuery.eq('auction_id', auctionId);
+        // Mostra notificações que são do leilão atual OU são globais (auction_id NULL)
+        limitResponsesQuery = limitResponsesQuery.or(`auction_id.eq.${auctionId},auction_id.is.null`);
       }
       
       const { data: limitResponsesData, error: limitResponsesError } = await limitResponsesQuery

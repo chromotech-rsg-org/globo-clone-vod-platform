@@ -259,19 +259,9 @@ export const useBidLimits = () => {
 
       if (fetchError) throw fetchError;
 
-      // Tentar buscar auction_id de registrations relacionadas ao usuário (mais recente)
-      let auctionId: string | null = null;
-      const { data: userRegistrations } = await supabase
-        .from('auction_registrations')
-        .select('auction_id')
-        .eq('user_id', fullRequest.user_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (userRegistrations) {
-        auctionId = userRegistrations.auction_id;
-      }
+      // Limites são globais, não específicos de um leilão
+      // Deixar auction_id como null para que apareça em todos os leilões
+      const auctionId: string | null = null;
 
       // Atualizar o status da solicitação
       const { data: request, error: requestError } = await supabase
