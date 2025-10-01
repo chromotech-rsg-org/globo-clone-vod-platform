@@ -214,23 +214,48 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
   const markAsRead = async (notificationId: string, notificationType: 'bid' | 'registration' | 'limit_request') => {
     if (!user) return;
 
+    console.log('📝 Marcando notificação como lida:', { notificationId, notificationType });
+
     try {
-      // Primeiro tenta inserir
+      // Primeiro verifica se já existe
+      const { data: existing } = await supabase
+        .from('user_notification_reads')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('notification_type', notificationType)
+        .eq('notification_id', notificationId)
+        .maybeSingle();
+
+      if (existing) {
+        console.log('✅ Notificação já está marcada como lida');
+        // Update local state anyway
+        setNotifications(prev => 
+          prev.map(notif => 
+            notif.id === notificationId && notif.type === notificationType
+              ? { ...notif, read: true, read_at: new Date().toISOString() }
+              : notif
+          )
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        return;
+      }
+
+      // Se não existe, insere
       const { error } = await supabase
         .from('user_notification_reads')
-        .upsert({
+        .insert({
           user_id: user.id,
           notification_type: notificationType,
           notification_id: notificationId,
           read_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,notification_type,notification_id'
         });
 
       if (error) {
-        console.error('Error marking notification as read:', error);
+        console.error('❌ Erro ao marcar notificação:', error);
         throw error;
       }
+
+      console.log('✅ Notificação marcada como lida com sucesso');
 
       // Update local state
       setNotifications(prev => 
@@ -244,8 +269,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
       setUnreadCount(prev => Math.max(0, prev - 1));
 
     } catch (error) {
-      console.error('Error marking notification as read:', error);
-      // Não mostrar toast de erro, apenas logar
+      console.error('❌ Erro ao marcar notificação como lida:', error);
     }
   };
 
@@ -287,6 +311,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
   };
 
   const acknowledgeRegistration = async (notificationId: string, notificationType: 'bid' | 'registration' | 'limit_request') => {
+    console.log('👍 Reconhecendo notificação:', { notificationId, notificationType });
     setAcknowledgedRegistrations(prev => new Set([...prev, notificationId]));
     // Mark as read when acknowledged
     await markAsRead(notificationId, notificationType);
