@@ -58,7 +58,7 @@ export const useBidLimitValidation = () => {
 
       const totalBidsUsed = (bidsData || []).reduce((sum, bid) => sum + Number(bid.bid_value), 0);
       const remainingLimit = currentLimit - totalBidsUsed;
-      const canBid = (totalBidsUsed + bidValue) <= currentLimit;
+      const canBid = remainingLimit >= bidValue;
 
       return {
         canBid,

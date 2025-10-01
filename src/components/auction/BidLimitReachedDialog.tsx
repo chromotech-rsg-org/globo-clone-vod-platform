@@ -58,15 +58,23 @@ export function BidLimitReachedDialog({
             <AlertDialogDescription className="text-gray-300 space-y-4">
               <div className="bg-gray-800 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Limite atual:</span>
+                  <span className="text-gray-400">Limite total:</span>
                   <span className="text-white font-bold">{formatCurrency(currentLimit)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Lance tentado:</span>
-                  <span className="text-red-400 font-bold">{formatCurrency(attemptedBidValue)}</span>
+                  <span className="text-gray-400">Já utilizado:</span>
+                  <span className="text-yellow-400 font-bold">{formatCurrency(totalBidsUsed)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Disponível:</span>
+                  <span className="text-green-400 font-bold">{formatCurrency(remainingLimit)}</span>
                 </div>
                 <div className="border-t border-gray-700 pt-2 mt-2">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Lance tentado:</span>
+                    <span className="text-red-400 font-bold">{formatCurrency(attemptedBidValue)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mt-1">
                     <span className="text-gray-500">Excede em:</span>
                     <span className="text-red-300 font-semibold">{formatCurrency(exceedsBy)}</span>
                   </div>
@@ -74,8 +82,8 @@ export function BidLimitReachedDialog({
               </div>
               
               <p className="text-center text-gray-400">
-                Seu limite excede este lance.
-                Solicite um aumento de limite ao administrador.
+                Você já utilizou {formatCurrency(totalBidsUsed)} do seu limite de {formatCurrency(currentLimit)} neste leilão.
+                Para dar este lance, solicite um aumento de limite ao administrador.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
