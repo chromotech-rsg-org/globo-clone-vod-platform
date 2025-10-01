@@ -489,6 +489,97 @@ const LimitesClientes: React.FC = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="tentativas" className="space-y-4">
+            <Card className="bg-admin-content-bg border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-table-text">
+                  Tentativas Bloqueadas ({failedAttempts.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-24 bg-gray-800" />
+                    ))}
+                  </div>
+                ) : failedAttempts.length === 0 ? (
+                  <div className="text-center text-admin-muted-foreground py-8">
+                    Nenhuma tentativa bloqueada encontrada
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {failedAttempts.map((attempt) => (
+                      <div key={attempt.id} className="border border-red-500/30 bg-red-900/10 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <AlertCircle className="h-5 w-5 text-red-400" />
+                              <h4 className="font-medium text-admin-table-text">
+                                {attempt.user?.name || 'Usuário Desconhecido'}
+                              </h4>
+                              <Badge className="bg-red-500/20 text-red-400 border-red-500/50">
+                                Bloqueado
+                              </Badge>
+                            </div>
+                            
+                            <div className="text-admin-muted-foreground text-sm mb-2">
+                              {attempt.user?.email || 'E-mail não disponível'}
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                              <div>
+                                <span className="text-admin-muted-foreground">Leilão:</span>
+                                <div className="text-admin-table-text font-medium">
+                                  {attempt.auction?.name || 'Leilão desconhecido'}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-admin-muted-foreground">Lote:</span>
+                                <div className="text-admin-table-text font-medium">
+                                  {attempt.auction_item?.name || 'Lote desconhecido'}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4 text-sm bg-gray-900/50 p-3 rounded">
+                              <div>
+                                <span className="text-admin-muted-foreground">Lance tentado:</span>
+                                <div className="text-red-400 font-bold">
+                                  {formatCurrency(attempt.attempted_bid_value)}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-admin-muted-foreground">Limite do cliente:</span>
+                                <div className="text-admin-table-text font-semibold">
+                                  {formatCurrency(attempt.current_limit)}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-admin-muted-foreground">Total em lances:</span>
+                                <div className="text-yellow-400 font-semibold">
+                                  {formatCurrency(attempt.total_bids_at_attempt)}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 text-xs text-gray-500">
+                              Motivo: {attempt.reason === 'limit_exceeded' ? 'Limite excedido' : attempt.reason}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-admin-muted-foreground">
+                          Tentativa em: {format(new Date(attempt.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         {/* Dialog de Revisão */}

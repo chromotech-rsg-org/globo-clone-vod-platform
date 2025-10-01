@@ -55,6 +55,10 @@ interface FailedBidAttempt {
   auction_item?: {
     name: string;
   } | null;
+  user?: {
+    name: string;
+    email: string;
+  } | null;
 }
 
 export const useBidLimits = () => {
@@ -166,17 +170,19 @@ export const useBidLimits = () => {
 
       if (error) throw error;
 
-      // Fetch auction and item names separately
+      // Fetch auction, item and user names separately
       const attemptsWithDetails = await Promise.all((data || []).map(async (attempt) => {
-        const [auctionData, itemData] = await Promise.all([
+        const [auctionData, itemData, userData] = await Promise.all([
           supabase.from('auctions').select('name').eq('id', attempt.auction_id).single(),
-          supabase.from('auction_items').select('name').eq('id', attempt.auction_item_id).single()
+          supabase.from('auction_items').select('name').eq('id', attempt.auction_item_id).single(),
+          supabase.from('profiles').select('name, email').eq('id', attempt.user_id).single()
         ]);
         
         return {
           ...attempt,
           auction: auctionData.data,
-          auction_item: itemData.data
+          auction_item: itemData.data,
+          user: userData.data
         };
       }));
 
