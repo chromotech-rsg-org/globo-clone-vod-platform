@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatCurrency } from '@/utils/formatters';
 import { TrendingUp, AlertCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -97,31 +98,33 @@ export function ClientLimitCard({
                 Solicitações Pendentes ({pendingRequests.length})
               </h4>
             </div>
-            <div className="space-y-2">
-              {pendingRequests.map((request) => (
-                <div key={request.id} className="bg-gray-900/50 rounded p-2 space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-400">Novo limite solicitado:</span>
-                    <span className="text-sm font-bold text-white">{formatCurrency(request.requested_limit)}</span>
+            <ScrollArea className="h-[160px] pr-2">
+              <div className="space-y-2">
+                {pendingRequests.map((request) => (
+                  <div key={request.id} className="bg-gray-900/50 rounded p-2 space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-400">Novo limite solicitado:</span>
+                      <span className="text-sm font-bold text-white">{formatCurrency(request.requested_limit)}</span>
+                    </div>
+                    {request.reason && (
+                      <p className="text-xs text-gray-400 break-words">"{request.reason}"</p>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">
+                        {format(new Date(request.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                      </span>
+                      <Button
+                        size="sm"
+                        onClick={() => onReviewRequest(request.id)}
+                        className="h-7 text-xs bg-green-600 hover:bg-green-700 flex-shrink-0"
+                      >
+                        Analisar
+                      </Button>
+                    </div>
                   </div>
-                  {request.reason && (
-                    <p className="text-xs text-gray-400">"{request.reason}"</p>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
-                      {format(new Date(request.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={() => onReviewRequest(request.id)}
-                      className="h-7 text-xs bg-green-600 hover:bg-green-700"
-                    >
-                      Analisar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
         )}
 
@@ -134,28 +137,25 @@ export function ClientLimitCard({
                 Tentativas Bloqueadas ({failedAttempts.length})
               </h4>
             </div>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {failedAttempts.slice(0, 5).map((attempt) => (
-                <div key={attempt.id} className="bg-gray-900/50 rounded p-2 text-xs space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Lance:</span>
-                    <span className="text-red-400 font-bold">{formatCurrency(attempt.attempted_bid_value)}</span>
+            <ScrollArea className="h-[160px] pr-2">
+              <div className="space-y-2">
+                {failedAttempts.map((attempt) => (
+                  <div key={attempt.id} className="bg-gray-900/50 rounded p-2 text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Lance:</span>
+                      <span className="text-red-400 font-bold">{formatCurrency(attempt.attempted_bid_value)}</span>
+                    </div>
+                    <div className="text-gray-500 break-words">
+                      <div>{attempt.auction_name}</div>
+                      <div>Lote: {attempt.lot_name}</div>
+                    </div>
+                    <div className="text-gray-600">
+                      {format(new Date(attempt.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                    </div>
                   </div>
-                  <div className="text-gray-500">
-                    <div>{attempt.auction_name}</div>
-                    <div>Lote: {attempt.lot_name}</div>
-                  </div>
-                  <div className="text-gray-600">
-                    {format(new Date(attempt.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                  </div>
-                </div>
-              ))}
-              {failedAttempts.length > 5 && (
-                <p className="text-xs text-gray-500 text-center">
-                  +{failedAttempts.length - 5} tentativas
-                </p>
-              )}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
         )}
 

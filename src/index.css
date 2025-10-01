@@ -262,4 +262,36 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
   }
+
+  /* Custom scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--admin-card));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--admin-primary) / 0.5);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--admin-primary) / 0.7);
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--admin-primary) / 0.5) hsl(var(--admin-card));
+  }
+
+  /* ScrollArea specific styling */
+  [data-radix-scroll-area-viewport] {
+    scrollbar-width: thin;
+  }
 }

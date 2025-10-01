@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatCurrency } from '@/utils/formatters';
 import { useBidLimits } from '@/hooks/useBidLimits';
 import { TrendingUp } from 'lucide-react';
@@ -63,7 +64,7 @@ export function RequestLimitIncreaseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-900 border-green-500/30">
+      <DialogContent className="bg-gray-900 border-green-500/30 max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
             <TrendingUp className="h-5 w-5 text-green-400" />
@@ -74,66 +75,69 @@ export function RequestLimitIncreaseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-gray-300">Limite Atual</Label>
-            <Input
-              type="text"
-              value={formatCurrency(currentLimit)}
-              disabled
-              className="bg-gray-800 border-gray-700 text-gray-400"
-            />
-          </div>
+        <ScrollArea className="flex-1 pr-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-gray-300">Limite Atual</Label>
+              <Input
+                type="text"
+                value={formatCurrency(currentLimit)}
+                disabled
+                className="bg-gray-800 border-gray-700 text-gray-400"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label className="text-gray-300">Novo Limite Solicitado *</Label>
-            <CurrencyInput
-              value={requestedLimit}
-              onChange={(value) => setRequestedLimit(value)}
-              placeholder="R$ 0,00"
-              disabled={submitting}
-              className="bg-gray-800 border-gray-700 text-white"
-            />
-            <p className="text-xs text-gray-500">
-              Mínimo: {formatCurrency(currentLimit + 1000)}
-            </p>
-          </div>
+            <div className="space-y-2">
+              <Label className="text-gray-300">Novo Limite Solicitado *</Label>
+              <CurrencyInput
+                value={requestedLimit}
+                onChange={(value) => setRequestedLimit(value)}
+                placeholder="R$ 0,00"
+                disabled={submitting}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+              <p className="text-xs text-gray-500">
+                Mínimo: {formatCurrency(currentLimit + 1000)}
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Label className="text-gray-300">Justificativa</Label>
-            <Textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white min-h-[100px]"
-              placeholder="Explique o motivo da solicitação de aumento (opcional)"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label className="text-gray-300">Justificativa</Label>
+              <Textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white min-h-[100px] resize-none"
+                placeholder="Explique o motivo da solicitação de aumento (opcional)"
+              />
+            </div>
 
-          <div className="bg-blue-900/20 rounded-lg p-3 border border-blue-500/30">
-            <p className="text-sm text-blue-300">
-              ℹ️ Sua solicitação será analisada pelo administrador. Você receberá uma notificação quando for aprovada ou rejeitada.
-            </p>
-          </div>
+            <div className="bg-blue-900/20 rounded-lg p-3 border border-blue-500/30">
+              <p className="text-sm text-blue-300">
+                ℹ️ Sua solicitação será analisada pelo administrador. Você receberá uma notificação quando for aprovada ou rejeitada.
+              </p>
+            </div>
+          </form>
+        </ScrollArea>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
-              className="bg-gray-800 hover:bg-gray-700"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {submitting ? 'Enviando...' : 'Enviar Solicitação'}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+            className="bg-gray-800 hover:bg-gray-700"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={submitting}
+            onClick={handleSubmit}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {submitting ? 'Enviando...' : 'Enviar Solicitação'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
