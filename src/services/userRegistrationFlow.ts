@@ -210,7 +210,7 @@ export class UserRegistrationFlowService {
   }
 
   // Cria usuário no nosso sistema
-  private static async createUserInSystem(userData: RegistrationData, motvData: MotvUserData, temporaryPassword: boolean = false): Promise<string | null> {
+  private static async createUserInSystem(userData: RegistrationData, motvData?: MotvUserData, temporaryPassword: boolean = false): Promise<string | null> {
     try {
       // Registra o usuário no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -230,8 +230,8 @@ export class UserRegistrationFlowService {
         return null;
       }
 
-      // Atualiza o perfil do usuário com o MOTV ID
-      if (authData.user) {
+      // Atualiza o perfil do usuário com o MOTV ID (se disponível)
+      if (authData.user && motvData?.viewers_id) {
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
@@ -360,14 +360,44 @@ export class UserRegistrationFlowService {
     try {
       console.log('Starting user registration flow for:', userData.email);
       
-      // Verificar se as configurações de integração estão ativas
+      // Verificar se as configurações de integração estão ativas (fallback para cadastro local)
+      let motvEnabled = true;
       try {
         await this.loadSettings();
       } catch (error) {
-        console.error('Integration settings error:', error);
+        console.warn('MOTV integration not configured. Proceeding with local-only registration.', error);
+        motvEnabled = false;
+      }
+
+      // Se integração não estiver configurada, realizar apenas cadastro local
+      if (!motvEnabled) {
+        const systemUserId = await this.createUserInSystem(userData);
+        if (!systemUserId) {
+          return { success: false, message: 'Erro ao criar usuário no sistema' };
+        }
+
+        if (userData.selectedPlanId) {
+          const { data: selectedPlan } = await supabase
+            .from('plans')
+            .select('package_id')
+            .eq('id', userData.selectedPlanId)
+            .single();
+
+          if (selectedPlan?.package_id) {
+            await this.assignPackageToUser(systemUserId, selectedPlan.package_id);
+          }
+        } else {
+          const suspensionPackage = await this.getSuspensionPackage();
+          if (suspensionPackage) {
+            await this.assignPackageToUser(systemUserId, suspensionPackage.id);
+          }
+        }
+
         return {
-          success: false,
-          message: 'Sistema de cadastro temporariamente indisponível. Entre em contato com o administrador.'
+          success: true,
+          message: 'Usuário criado com sucesso!',
+          autoLogin: true,
+          userId: systemUserId
         };
       }
       
