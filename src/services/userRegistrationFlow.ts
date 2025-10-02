@@ -360,6 +360,17 @@ export class UserRegistrationFlowService {
     try {
       console.log('Starting user registration flow for:', userData.email);
       
+      // Verificar se as configurações de integração estão ativas
+      try {
+        await this.loadSettings();
+      } catch (error) {
+        console.error('Integration settings error:', error);
+        return {
+          success: false,
+          message: 'Sistema de cadastro temporariamente indisponível. Entre em contato com o administrador.'
+        };
+      }
+      
       // 1. Verificar se o usuário existe no MOTV
       const existingMotvUser = await this.checkUserExistsInMotv(userData.email);
       
