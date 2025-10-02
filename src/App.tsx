@@ -49,6 +49,7 @@ import NotFound from "./pages/NotFound";
 import { useSiteTitle } from "./hooks/useSiteTitle";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { DynamicSEO } from "./components/DynamicSEO";
 
 const queryClient = new QueryClient();
 
@@ -105,7 +106,9 @@ function AppContent() {
   }, []);
 
   return (
-    <Routes>
+    <>
+      <DynamicSEO />
+      <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={
@@ -329,7 +332,8 @@ function AppContent() {
       } />
       
       <Route path="*" element={<NotFound />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 
