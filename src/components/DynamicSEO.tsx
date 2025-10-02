@@ -4,11 +4,11 @@ import { useCustomizations } from '@/hooks/useCustomizations';
 export const DynamicSEO = () => {
   const { getCustomization } = useCustomizations('home');
   
-  const siteName = getCustomization('global', 'site_name', 'Sistema de Leilões');
-  const siteDescription = getCustomization('global', 'site_description', 'Plataforma completa de leilões ao vivo com transmissão, lances em tempo real e gestão completa');
+  const siteName = getCustomization('global', 'site_name', 'Agromercado');
+  const siteDescription = getCustomization('global', 'site_description', 'Agora o conteúdo mais relevante do mercado agro está ao seu alcance, em qualquer lugar! Notícias, eventos e muitos mais na nossa plataforma de streaming.');
   const logoUrl = getCustomization('global', 'logo_url', '');
   const faviconUrl = getCustomization('global', 'favicon_image', '');
-  const siteKeywords = getCustomization('global', 'site_keywords', 'leilão, leilões online, leilão ao vivo, arrematação');
+  const siteKeywords = getCustomization('global', 'site_keywords', 'agromercado, agro, notícias, eventos, streaming, agricultura, pecuária, agronegócio');
   
   // Get current URL dynamically
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
