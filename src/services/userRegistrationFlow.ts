@@ -360,15 +360,44 @@ export class UserRegistrationFlowService {
     try {
       console.log('Starting user registration flow for:', userData.email);
       
-      // Carregar configurações da integração MOTV (obrigatório)
+      // Verificar se as configurações de integração estão ativas (fallback para cadastro local)
+      let motvEnabled = true;
       try {
         await this.loadSettings();
-        console.log('MOTV integration settings loaded successfully');
       } catch (error) {
-        console.error('Failed to load MOTV integration settings:', error);
+        console.warn('MOTV integration not configured. Proceeding with local-only registration.', error);
+        motvEnabled = false;
+      }
+
+      // Se integração não estiver configurada, realizar apenas cadastro local
+      if (!motvEnabled) {
+        const systemUserId = await this.createUserInSystem(userData);
+        if (!systemUserId) {
+          return { success: false, message: 'Erro ao criar usuário no sistema' };
+        }
+
+        if (userData.selectedPlanId) {
+          const { data: selectedPlan } = await supabase
+            .from('plans')
+            .select('package_id')
+            .eq('id', userData.selectedPlanId)
+            .single();
+
+          if (selectedPlan?.package_id) {
+            await this.assignPackageToUser(systemUserId, selectedPlan.package_id);
+          }
+        } else {
+          const suspensionPackage = await this.getSuspensionPackage();
+          if (suspensionPackage) {
+            await this.assignPackageToUser(systemUserId, suspensionPackage.id);
+          }
+        }
+
         return {
-          success: false,
-          message: 'Sistema de integração MOTV não configurado. Entre em contato com o administrador para configurar a integração.'
+          success: true,
+          message: 'Usuário criado com sucesso!',
+          autoLogin: true,
+          userId: systemUserId
         };
       }
       
