@@ -251,6 +251,19 @@ export class UserRegistrationFlowService {
     }
   }
 
+  // Deleta usuário do sistema em caso de rollback
+  private static async deleteUserFromSystem(userId: string): Promise<void> {
+    try {
+      // Deletar do auth (isso vai deletar automaticamente do profiles via cascade)
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) {
+        console.error('Error deleting user from system:', error);
+      }
+    } catch (error) {
+      console.error('Error in deleteUserFromSystem:', error);
+    }
+  }
+
   // Cancela todos os planos do usuário no MOTV
   private static async cancelAllPlansInMotv(viewersId: number): Promise<boolean> {
     try {
@@ -357,47 +370,19 @@ export class UserRegistrationFlowService {
 
   // Fluxo principal de cadastro
   public static async registerUser(userData: RegistrationData): Promise<RegistrationResult> {
+    let systemUserId: string | null = null;
+    
     try {
       console.log('Starting user registration flow for:', userData.email);
       
-      // Verificar se as configurações de integração estão ativas (fallback para cadastro local)
-      let motvEnabled = true;
+      // Verificar configuração da integração MOTV (obrigatório)
       try {
         await this.loadSettings();
       } catch (error) {
-        console.warn('MOTV integration not configured. Proceeding with local-only registration.', error);
-        motvEnabled = false;
-      }
-
-      // Se integração não estiver configurada, realizar apenas cadastro local
-      if (!motvEnabled) {
-        const systemUserId = await this.createUserInSystem(userData);
-        if (!systemUserId) {
-          return { success: false, message: 'Erro ao criar usuário no sistema' };
-        }
-
-        if (userData.selectedPlanId) {
-          const { data: selectedPlan } = await supabase
-            .from('plans')
-            .select('package_id')
-            .eq('id', userData.selectedPlanId)
-            .single();
-
-          if (selectedPlan?.package_id) {
-            await this.assignPackageToUser(systemUserId, selectedPlan.package_id);
-          }
-        } else {
-          const suspensionPackage = await this.getSuspensionPackage();
-          if (suspensionPackage) {
-            await this.assignPackageToUser(systemUserId, suspensionPackage.id);
-          }
-        }
-
-        return {
-          success: true,
-          message: 'Usuário criado com sucesso!',
-          autoLogin: true,
-          userId: systemUserId
+        console.error('MOTV integration not configured:', error);
+        return { 
+          success: false, 
+          message: 'Configuração da integração MOTV não encontrada. Configure no painel administrativo.' 
         };
       }
       
@@ -411,10 +396,10 @@ export class UserRegistrationFlowService {
         const authSuccess = await this.authenticateUserInMotv(userData.email, userData.password);
         
         if (authSuccess) {
-          // 2.1 Autenticação bem-sucedida
+          // 2.1 Autenticação bem-sucedida - criar no Supabase
           console.log('Authentication successful, creating user in system');
           
-          const systemUserId = await this.createUserInSystem(userData, existingMotvUser);
+          systemUserId = await this.createUserInSystem(userData, existingMotvUser);
           if (!systemUserId) {
             return { success: false, message: 'Erro ao criar usuário no sistema' };
           }
@@ -459,7 +444,7 @@ export class UserRegistrationFlowService {
           // 2.2 Autenticação falhou - senha incorreta
           console.log('Authentication failed, creating user with temporary password');
           
-          const systemUserId = await this.createUserInSystem(userData, existingMotvUser, true);
+          systemUserId = await this.createUserInSystem(userData, existingMotvUser, true);
           if (!systemUserId) {
             return { success: false, message: 'Erro ao criar usuário no sistema' };
           }
@@ -498,56 +483,80 @@ export class UserRegistrationFlowService {
           };
         }
       } else {
-        // 3. Usuário NÃO existe no MOTV - criar em ambos os sistemas
+        // 3. Usuário NÃO existe no MOTV - criar primeiro na MOTV
         console.log('User does not exist in MOTV, creating new user');
         
         const motvUser = await this.createUserInMotv(userData);
         if (!motvUser) {
-          return { success: false, message: 'Erro ao criar usuário no MOTV' };
+          return { success: false, message: 'Erro ao criar usuário no MOTV. Tente novamente.' };
         }
 
-        const systemUserId = await this.createUserInSystem(userData, motvUser);
-        if (!systemUserId) {
-          return { success: false, message: 'Erro ao criar usuário no sistema' };
-        }
-
-        // Atribuir plano selecionado
-        if (userData.selectedPlanId) {
-          // Buscar o código do pacote do plano
-          const { data: selectedPlan } = await supabase
-            .from('plans')
-            .select('package_id, packages(code)')
-            .eq('id', userData.selectedPlanId)
-            .single();
-
-          if (selectedPlan?.packages?.code) {
-            // Cancelar planos existentes e aplicar novo
-            await this.cancelAllPlansInMotv(motvUser.viewers_id);
-            await this.subscribePlanInMotv(motvUser.viewers_id, selectedPlan.packages.code);
-            await this.assignPackageToUser(systemUserId, selectedPlan.package_id);
+        try {
+          // Criar no Supabase após sucesso na MOTV
+          systemUserId = await this.createUserInSystem(userData, motvUser);
+          if (!systemUserId) {
+            // Se falhou ao criar no Supabase, retornar erro
+            // (não podemos deletar da MOTV facilmente)
+            return { success: false, message: 'Erro ao criar usuário no sistema. Contate o suporte.' };
           }
-        } else {
-          // Atribuir pacote de suspensão se não selecionou plano
-          const suspensionPackage = await this.getSuspensionPackage();
-          if (suspensionPackage) {
-            // Gerenciar pacote de suspensão
-            if (suspensionPackage.code === "0") {
+
+          // Atribuir plano selecionado
+          if (userData.selectedPlanId) {
+            // Buscar o código do pacote do plano
+            const { data: selectedPlan } = await supabase
+              .from('plans')
+              .select('package_id, packages(code)')
+              .eq('id', userData.selectedPlanId)
+              .single();
+
+            if (selectedPlan?.packages?.code) {
+              // Cancelar planos existentes e aplicar novo
               await this.cancelAllPlansInMotv(motvUser.viewers_id);
-            } else {
-              await this.cancelAllPlansInMotv(motvUser.viewers_id);
-              await this.subscribePlanInMotv(motvUser.viewers_id, suspensionPackage.code);
+              const subscribed = await this.subscribePlanInMotv(motvUser.viewers_id, selectedPlan.packages.code);
+              
+              if (!subscribed) {
+                // Rollback: deletar usuário do Supabase
+                await this.deleteUserFromSystem(systemUserId);
+                return { success: false, message: 'Erro ao assinar plano na MOTV. Tente novamente.' };
+              }
+              
+              await this.assignPackageToUser(systemUserId, selectedPlan.package_id);
             }
-            await this.assignPackageToUser(systemUserId, suspensionPackage.id);
+          } else {
+            // Atribuir pacote de suspensão se não selecionou plano
+            const suspensionPackage = await this.getSuspensionPackage();
+            if (suspensionPackage) {
+              // Gerenciar pacote de suspensão
+              if (suspensionPackage.code === "0") {
+                await this.cancelAllPlansInMotv(motvUser.viewers_id);
+              } else {
+                await this.cancelAllPlansInMotv(motvUser.viewers_id);
+                const subscribed = await this.subscribePlanInMotv(motvUser.viewers_id, suspensionPackage.code);
+                
+                if (!subscribed) {
+                  // Rollback: deletar usuário do Supabase
+                  await this.deleteUserFromSystem(systemUserId);
+                  return { success: false, message: 'Erro ao configurar pacote de suspensão. Tente novamente.' };
+                }
+              }
+              await this.assignPackageToUser(systemUserId, suspensionPackage.id);
+            }
           }
-        }
 
-        return {
-          success: true,
-          message: 'Usuário criado com sucesso!',
-          autoLogin: true,
-          userId: systemUserId,
-          motvUserId: motvUser.viewers_id.toString()
-        };
+          return {
+            success: true,
+            message: 'Usuário criado com sucesso!',
+            autoLogin: true,
+            userId: systemUserId,
+            motvUserId: motvUser.viewers_id.toString()
+          };
+        } catch (error) {
+          // Se qualquer erro ocorreu após criar no Supabase, fazer rollback
+          if (systemUserId) {
+            await this.deleteUserFromSystem(systemUserId);
+          }
+          throw error;
+        }
       }
     } catch (error) {
       console.error('Error in registration flow:', error);
