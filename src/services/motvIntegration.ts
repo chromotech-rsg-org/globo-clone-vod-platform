@@ -252,6 +252,24 @@ export class MotvIntegrationService {
   }
 
   // Utility methods for admin
+  static async checkIntegrationConfigured() {
+    try {
+      const { data, error } = await supabase.functions.invoke('motv-proxy', {
+        body: { op: 'check-config' }
+      });
+
+      if (error || !data?.ok) {
+        console.warn('MOTV integration not configured');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error checking MOTV config:', error);
+      return false;
+    }
+  }
+
   static async getIntegrationSettings() {
     const { data, error } = await supabase
       .from('integration_settings')
