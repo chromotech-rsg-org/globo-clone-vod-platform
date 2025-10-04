@@ -4,13 +4,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, cache-control, pragma, x-supabase-authorization",
 };
 
 interface IntegrationSettings {
   api_base_url: string;
   api_login: string;
   api_secret: string;
+  vendor_id?: number;
 }
 
 async function generateAuthToken(login: string, secret: string): Promise<string> {
@@ -46,21 +48,27 @@ function mapOpToEndpoint(op: string): { path: string; method: "POST" | "GET" } {
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+if (req.method === "OPTIONS") {
+  const reqHeaders = req.headers.get("Access-Control-Request-Headers");
+  const allowHeaders = reqHeaders || "authorization, x-client-info, apikey, content-type, cache-control, pragma, x-supabase-authorization";
+  return new Response(null, {
+    status: 204,
+    headers: { ...corsHeaders, "Access-Control-Allow-Headers": allowHeaders },
+  });
+}
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
-    const { op, payload } = await req.json();
+const { op, payload } = await req.json();
+const requestPayload: any = payload ?? {};
 
     // Buscar configurações ativas
     const { data: settings, error: settingsError } = await supabase
       .from("integration_settings")
-      .select("api_base_url, api_login, api_secret")
+      .select("api_base_url, api_login, api_secret, vendor_id")
       .eq("active", true)
       .single();
 
@@ -78,25 +86,32 @@ serve(async (req) => {
       );
     }
 
-    const { path, method } = mapOpToEndpoint(op);
-    const baseUrl = settings.api_base_url.replace(/\/$/, "");
-    const url = `${baseUrl}${path}`;
+const { path, method } = mapOpToEndpoint(op);
+const baseUrl = settings.api_base_url.replace(/\/$/, "");
+const url = `${baseUrl}${path}`;
 
-    const token = await generateAuthToken(settings.api_login, settings.api_secret);
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "Authorization": `Basic ${btoa(token)}`,
-    };
+// Inject vendor id for apiLogin if not provided
+if (op === "apiLogin" && requestPayload && requestPayload.vendors_id == null && (settings as any).vendor_id) {
+  requestPayload.vendors_id = (settings as any).vendor_id;
+}
 
-    const body = method === "POST" ? JSON.stringify({ data: payload ?? {} }) : undefined;
+const token = await generateAuthToken(settings.api_login, settings.api_secret);
+const headers: Record<string, string> = {
+  "Content-Type": "application/json",
+  "Authorization": `Basic ${btoa(token)}`,
+};
 
-    const response = await fetch(url, { method, headers, body });
-    let result: any = null;
-    try {
-      result = await response.json();
-    } catch (_) {
-      result = await response.text();
-    }
+const body = method === "POST" ? JSON.stringify({ data: requestPayload }) : undefined;
+
+console.log("[motv-proxy] calling MOTV", { op, method, url });
+const response = await fetch(url, { method, headers, body });
+console.log("[motv-proxy] MOTV response", { status: response.status });
+let result: any = null;
+try {
+  result = await response.json();
+} catch (_) {
+  result = await response.text();
+}
 
     return new Response(
       JSON.stringify({ ok: response.ok, status: response.status, result }),

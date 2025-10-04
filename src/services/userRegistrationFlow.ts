@@ -320,8 +320,7 @@ export class UserRegistrationFlowService {
           op: 'apiLogin',
           payload: {
             login: email,
-            password: password,
-            vendors_id: 6843842
+            password: password
           }
         }
       });
