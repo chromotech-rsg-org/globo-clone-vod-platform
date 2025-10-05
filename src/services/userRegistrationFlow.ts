@@ -120,16 +120,25 @@ export class UserRegistrationFlowService {
         supabaseUserId = createResult.user_id!;
         console.log('User created in Supabase:', supabaseUserId);
 
-        // 5. Associar plano no Supabase
-        if (userData.selectedPlanId) {
-          await this.assignPackageToUser(supabaseUserId, userData.selectedPlanId);
-        }
-
-        // 6. Auto-login
+        // 5. Auto-login primeiro para satisfazer políticas RLS
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: userData.email,
           password: userData.password
         });
+
+        if (signInError) {
+          console.error('Auto-login failed:', signInError);
+          return {
+            success: true,
+            message: 'Cadastro realizado com sucesso! Por favor, faça login.',
+            requiresPasswordReset: false
+          };
+        }
+
+        // 6. Associar plano no Supabase (já autenticado)
+        if (userData.selectedPlanId) {
+          await this.assignPackageToUser(supabaseUserId, userData.selectedPlanId);
+        }
 
         if (signInError) {
           console.error('Auto-login failed:', signInError);
@@ -236,6 +245,11 @@ export class UserRegistrationFlowService {
               .single();
 
             if (localPlan) {
+              // Auto-login antes de associar o plano (RLS)
+              await supabase.auth.signInWithPassword({
+                email: userData.email,
+                password: userData.password
+              });
               await this.assignPackageToUser(localUserId, localPlan.id);
             }
           }
