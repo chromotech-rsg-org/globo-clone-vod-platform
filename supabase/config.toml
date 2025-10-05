@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.auth-check-user]
 verify_jwt = false
+
+[functions.manage-subscription-motv]
+verify_jwt = false

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, CreditCard, Package, AlertCircle } from 'lucide-react';
 import { formatBillingCycle } from '@/utils/formatters';
+import { MotvPlanManager } from '@/services/motvPlanManager';
 interface Subscription {
   id: string;
   plan_id: string;
@@ -68,14 +69,24 @@ const Subscription = () => {
     }
   };
   const handleCancelSubscription = async () => {
-    if (!subscription) return;
+    if (!subscription || !user?.id) return;
     try {
+      // Cancelar no Supabase
       const {
         error
       } = await supabase.from('subscriptions').update({
         status: 'cancelled'
       }).eq('id', subscription.id);
       if (error) throw error;
+
+      // Cancelar/aplicar suspensão na MOTV
+      try {
+        await MotvPlanManager.cancelPlan(user.id);
+      } catch (motvError) {
+        console.error('Erro ao cancelar na MOTV:', motvError);
+        // Continua mesmo se falhar na MOTV
+      }
+
       setSubscription({
         ...subscription,
         status: 'cancelled'
@@ -93,7 +104,7 @@ const Subscription = () => {
     }
   };
   const handleUpgradePlan = async (newPlanId: string) => {
-    if (!subscription) return;
+    if (!subscription || !user?.id) return;
     try {
       // Calculate new end date based on plan billing cycle
       const selectedPlan = availablePlans.find(plan => plan.id === newPlanId);
@@ -104,6 +115,8 @@ const Subscription = () => {
       } else {
         newEndDate.setMonth(newEndDate.getMonth() + 1);
       }
+
+      // Atualizar no Supabase
       const {
         error
       } = await supabase.from('subscriptions').update({
@@ -111,6 +124,15 @@ const Subscription = () => {
         end_date: newEndDate.toISOString()
       }).eq('id', subscription.id);
       if (error) throw error;
+
+      // Trocar plano na MOTV
+      try {
+        await MotvPlanManager.changePlan(user.id, newPlanId);
+      } catch (motvError) {
+        console.error('Erro ao trocar plano na MOTV:', motvError);
+        // Continua mesmo se falhar na MOTV
+      }
+
       fetchSubscription();
       toast({
         title: "Plano atualizado",

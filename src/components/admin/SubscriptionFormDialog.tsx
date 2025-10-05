@@ -153,6 +153,9 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
       let subscriptionId: string;
 
       if (isEditing) {
+        // Verificar se o plano mudou
+        const planChanged = subscription.plan_id !== formData.plan_id;
+
         const { error } = await supabase
           .from('subscriptions')
           .update(submitData)
@@ -160,6 +163,26 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
 
         if (error) throw error;
         subscriptionId = subscription.id;
+
+        // Se o plano mudou, atualizar na MOTV
+        if (planChanged && formData.plan_id) {
+          try {
+            const { error: motvError } = await supabase.functions.invoke('manage-subscription-motv', {
+              body: {
+                userId: formData.user_id,
+                newPlanId: formData.plan_id,
+                action: 'change'
+              }
+            });
+
+            if (motvError) {
+              console.error('Erro ao trocar plano na MOTV:', motvError);
+              // Não falhar a operação principal
+            }
+          } catch (motvError) {
+            console.error('Erro ao chamar manage-subscription-motv:', motvError);
+          }
+        }
 
         toast({
           title: "Sucesso",

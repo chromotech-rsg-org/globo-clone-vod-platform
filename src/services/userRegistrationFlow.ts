@@ -444,7 +444,7 @@ export class UserRegistrationFlowService {
       const { data, error } = await supabase.functions.invoke('motv-proxy', {
         body: {
           op: 'cancelAll',
-          payload: { viewers_id: viewersId }
+          viewers_id: viewersId
         }
       });
 
