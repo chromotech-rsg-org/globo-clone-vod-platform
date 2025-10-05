@@ -72,23 +72,37 @@ export class UserRegistrationFlowService {
 
       console.log('User created in MOTV successfully:', motvUserResult.viewersId);
 
-      // 3. Aplicar plano na MOTV (ou pacote de suspensão)
+      // 3. Aplicar plano na MOTV usando o código do pacote
       let planCode: string | null = null;
       
       if (userData.selectedPlanId) {
-        const { data: plan } = await supabase
+        console.log('[UserRegistrationFlow] Looking for package code for plan:', userData.selectedPlanId);
+        
+        const { data: plan, error: planError } = await supabase
           .from('plans')
-          .select('package_id, packages(code)')
+          .select('id, name, package_id, packages!inner(id, code, name)')
           .eq('id', userData.selectedPlanId)
           .single();
 
+        console.log('[UserRegistrationFlow] Plan query result:', { plan, planError });
+
+        if (planError) {
+          console.error('[UserRegistrationFlow] Error fetching plan:', planError);
+        }
+
         if (plan?.packages?.code) {
           planCode = plan.packages.code;
-          console.log('Applying plan in MOTV:', planCode);
+          console.log('[UserRegistrationFlow] Found package code:', planCode, 'for plan:', plan.name);
           
           // Cancelar planos existentes e aplicar novo
+          console.log('[UserRegistrationFlow] Canceling existing plans for viewers_id:', motvUserResult.viewersId);
           await this.cancelAllPlansInMotv(motvUserResult.viewersId!);
+          
+          console.log('[UserRegistrationFlow] Subscribing to package:', planCode);
           await this.subscribePlanInMotv(motvUserResult.viewersId!, planCode);
+          console.log('[UserRegistrationFlow] Plan applied successfully in MOTV');
+        } else {
+          console.warn('[UserRegistrationFlow] No package code found for plan:', userData.selectedPlanId);
         }
       }
 
