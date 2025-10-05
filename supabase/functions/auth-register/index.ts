@@ -19,9 +19,11 @@ serve(async (req) => {
       auth: { persistSession: false }
     });
 
-    const { email, password, name, cpf, phone, motv_user_id } = await req.json();
+    const requestBody = await req.json();
+    const { email, password, name, cpf, phone, motv_user_id } = requestBody;
 
     console.log("Creating user with email:", email);
+    console.log("Request body:", { email, name, cpf: cpf ? "***" : null, phone, motv_user_id });
 
     // Create user with email already confirmed
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -34,8 +36,11 @@ serve(async (req) => {
     if (authError) {
       console.error("Error creating auth user:", authError);
       return new Response(
-        JSON.stringify({ success: false, error: authError.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          success: false, 
+          error: authError.message || "Erro ao criar usuário" 
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -58,10 +63,18 @@ serve(async (req) => {
     if (profileError) {
       console.error("Error creating profile:", profileError);
       // Rollback: delete the auth user
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      try {
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        console.log("Rollback successful: deleted auth user", authData.user.id);
+      } catch (rollbackError) {
+        console.error("Rollback failed:", rollbackError);
+      }
       return new Response(
-        JSON.stringify({ success: false, error: "Falha ao criar perfil do usuário" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          success: false, 
+          error: profileError.message || "Falha ao criar perfil do usuário" 
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -80,9 +93,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error instanceof Error ? error.message : "Erro desconhecido" 
+        error: error instanceof Error ? error.message : "Erro desconhecido ao processar cadastro" 
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

@@ -460,16 +460,37 @@ export class UserRegistrationFlowService {
     motv_user_id?: string;
   }) {
     try {
+      console.log('[UserRegistrationFlow] Calling auth-register with:', { 
+        email: data.email, 
+        name: data.name, 
+        motv_user_id: data.motv_user_id 
+      });
+
       const { data: result, error } = await supabase.functions.invoke('auth-register', {
         body: data
       });
 
-      if (error) throw error;
+      console.log('[UserRegistrationFlow] auth-register response:', { 
+        success: result?.success, 
+        error: error?.message || result?.error,
+        user_id: result?.user_id 
+      });
+
+      if (error) {
+        console.error('[UserRegistrationFlow] Edge function error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (!result?.success) {
+        console.error('[UserRegistrationFlow] Registration failed:', result?.error);
+        return { success: false, error: result?.error || 'Falha ao criar usuário' };
+      }
+
       return result;
 
     } catch (error: any) {
-      console.error('Error creating user in system:', error);
-      return { success: false, error: error.message };
+      console.error('[UserRegistrationFlow] Exception creating user in system:', error);
+      return { success: false, error: error.message || 'Erro ao criar usuário no sistema' };
     }
   }
 
