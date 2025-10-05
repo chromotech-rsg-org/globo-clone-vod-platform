@@ -285,23 +285,37 @@ export class UserRegistrationFlowService {
       if (error) throw error;
 
       const result = data?.result;
+      console.log('[UserRegistrationFlow] MOTV createCustomer result:', result);
+
+      // Se result for string, retornar como erro
+      if (typeof result === 'string') {
+        return { success: false, message: result };
+      }
       
       // Erro 104: usuário já existe
       if (result?.error === 104 || result?.code === 104) {
         return { success: false, error: 104, message: 'User already exists' };
       }
 
-      // Sucesso
-      if (result?.status === 1 && result?.data?.viewers_id) {
+      // Aceitar status como 1 ou "1"
+      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      
+      // Sucesso - aceitar viewers_id como number ou string
+      if (status === 1 && result?.data?.viewers_id) {
+        const viewersId = typeof result.data.viewers_id === 'number' 
+          ? result.data.viewers_id 
+          : parseInt(result.data.viewers_id);
+        
         return {
           success: true,
-          viewersId: result.data.viewers_id
+          viewersId
         };
       }
 
+      const errorMsg = result?.message || result?.error_message || result?.data?.message || JSON.stringify(result);
       return {
         success: false,
-        message: result?.message || 'Erro desconhecido ao criar usuário na MOTV'
+        message: errorMsg || 'Erro desconhecido ao criar usuário na MOTV'
       };
 
     } catch (error: any) {
@@ -376,14 +390,28 @@ export class UserRegistrationFlowService {
    */
   private static async cancelAllPlansInMotv(viewersId: number) {
     try {
-      await supabase.functions.invoke('motv-proxy', {
+      const { data, error } = await supabase.functions.invoke('motv-proxy', {
         body: {
           op: 'cancelAll',
           payload: { viewers_id: viewersId }
         }
       });
+
+      if (error) throw error;
+      
+      const result = data?.result;
+      console.log('[UserRegistrationFlow] cancelAllPlansInMotv result:', { status: result?.status, code: result?.code });
+      
+      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      if (status !== 1) {
+        const errorMsg = result?.message || result?.error_message || 'Erro ao cancelar planos na MOTV';
+        throw new Error(errorMsg);
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error canceling plans in MOTV:', error);
+      throw error;
     }
   }
 
@@ -392,7 +420,7 @@ export class UserRegistrationFlowService {
    */
   private static async subscribePlanInMotv(viewersId: number, planCode: string) {
     try {
-      await supabase.functions.invoke('motv-proxy', {
+      const { data, error } = await supabase.functions.invoke('motv-proxy', {
         body: {
           op: 'subscribe',
           payload: {
@@ -401,6 +429,19 @@ export class UserRegistrationFlowService {
           }
         }
       });
+
+      if (error) throw error;
+      
+      const result = data?.result;
+      console.log('[UserRegistrationFlow] subscribePlanInMotv result:', { status: result?.status, code: result?.code });
+      
+      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      if (status !== 1) {
+        const errorMsg = result?.message || result?.error_message || 'Erro ao assinar plano na MOTV';
+        throw new Error(errorMsg);
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error subscribing plan in MOTV:', error);
       throw error;

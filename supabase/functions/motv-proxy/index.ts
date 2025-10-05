@@ -98,19 +98,25 @@ if (op === "apiLogin" && requestPayload && requestPayload.vendors_id == null && 
 const token = await generateAuthToken(settings.api_login, settings.api_secret);
 const headers: Record<string, string> = {
   "Content-Type": "application/json",
-  "Authorization": `Basic ${btoa(token)}`,
+  "Accept": "application/json",
+  "Authorization": token,
 };
 
 const body = method === "POST" ? JSON.stringify({ data: requestPayload }) : undefined;
 
 console.log("[motv-proxy] calling MOTV", { op, method, url });
 const response = await fetch(url, { method, headers, body });
-console.log("[motv-proxy] MOTV response", { status: response.status });
 let result: any = null;
 try {
   result = await response.json();
+  console.log("[motv-proxy] MOTV response", { 
+    httpStatus: response.status, 
+    apiStatus: result?.status, 
+    apiCode: result?.code 
+  });
 } catch (_) {
   result = await response.text();
+  console.log("[motv-proxy] MOTV response (text)", { httpStatus: response.status });
 }
 
     return new Response(
