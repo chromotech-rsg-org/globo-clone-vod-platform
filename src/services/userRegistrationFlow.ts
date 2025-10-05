@@ -439,6 +439,8 @@ export class UserRegistrationFlowService {
    */
   private static async cancelAllPlansInMotv(viewersId: number) {
     try {
+      console.log('[UserRegistrationFlow] 🚫 Canceling all plans for viewers_id:', viewersId);
+      
       const { data, error } = await supabase.functions.invoke('motv-proxy', {
         body: {
           op: 'cancelAll',
@@ -446,20 +448,25 @@ export class UserRegistrationFlowService {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[UserRegistrationFlow] ❌ Edge function error on cancelAll:', error);
+        throw error;
+      }
       
       const result = data?.result;
-      console.log('[UserRegistrationFlow] cancelAllPlansInMotv result:', { status: result?.status, code: result?.code });
+      console.log('[UserRegistrationFlow] 📋 cancelAllPlansInMotv full result:', JSON.stringify(result, null, 2));
       
       const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
       if (status !== 1) {
         const errorMsg = result?.message || result?.error_message || 'Erro ao cancelar planos na MOTV';
+        console.error('[UserRegistrationFlow] ❌ Cancel failed with status:', status, 'message:', errorMsg);
         throw new Error(errorMsg);
       }
       
+      console.log('[UserRegistrationFlow] ✅ Plans canceled successfully');
       return result;
     } catch (error) {
-      console.error('Error canceling plans in MOTV:', error);
+      console.error('[UserRegistrationFlow] ❌ Error canceling plans in MOTV:', error);
       throw error;
     }
   }
@@ -469,6 +476,8 @@ export class UserRegistrationFlowService {
    */
   private static async subscribePlanInMotv(viewersId: number, planCode: string) {
     try {
+      console.log('[UserRegistrationFlow] 📦 Subscribing plan - viewers_id:', viewersId, 'package_code:', planCode);
+      
       const { data, error } = await supabase.functions.invoke('motv-proxy', {
         body: {
           op: 'subscribe',
@@ -479,20 +488,25 @@ export class UserRegistrationFlowService {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[UserRegistrationFlow] ❌ Edge function error on subscribe:', error);
+        throw error;
+      }
       
       const result = data?.result;
-      console.log('[UserRegistrationFlow] subscribePlanInMotv result:', { status: result?.status, code: result?.code });
+      console.log('[UserRegistrationFlow] 📋 subscribePlanInMotv full result:', JSON.stringify(result, null, 2));
       
       const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
       if (status !== 1) {
         const errorMsg = result?.message || result?.error_message || 'Erro ao assinar plano na MOTV';
+        console.error('[UserRegistrationFlow] ❌ Subscribe failed with status:', status, 'message:', errorMsg);
         throw new Error(errorMsg);
       }
       
+      console.log('[UserRegistrationFlow] ✅ Plan subscribed successfully to package:', planCode);
       return result;
     } catch (error) {
-      console.error('Error subscribing plan in MOTV:', error);
+      console.error('[UserRegistrationFlow] ❌ Error subscribing plan in MOTV:', error);
       throw error;
     }
   }
