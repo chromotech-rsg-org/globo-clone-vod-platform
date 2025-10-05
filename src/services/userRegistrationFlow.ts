@@ -314,22 +314,28 @@ export class UserRegistrationFlowService {
       // Aceitar status como 1 ou "1"
       const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
       
-      // Sucesso - aceitar viewers_id como number ou string
-      if (status === 1 && result?.data?.viewers_id) {
-        const viewersId = typeof result.data.viewers_id === 'number' 
-          ? result.data.viewers_id 
-          : parseInt(result.data.viewers_id);
+      // Sucesso - aceitar viewers_id de múltiplas possíveis localizações
+      if (status === 1) {
+        const rawId = result?.data?.viewers_id ?? result?.response ?? result?.viewers_id ?? result?.data?.response;
         
-        return {
-          success: true,
-          viewersId
-        };
+        if (rawId != null) {
+          const viewersId = typeof rawId === 'number' ? rawId : parseInt(String(rawId));
+          
+          if (!isNaN(viewersId)) {
+            console.log('[UserRegistrationFlow] MOTV user created successfully, viewers_id:', viewersId);
+            return {
+              success: true,
+              viewersId
+            };
+          }
+        }
       }
 
-      const errorMsg = result?.message || result?.error_message || result?.data?.message || JSON.stringify(result);
+      // Extrair mensagem de erro amigável
+      const errorMsg = result?.message || result?.error_message || result?.data?.message || 'Erro ao criar usuário na MOTV';
       return {
         success: false,
-        message: errorMsg || 'Erro desconhecido ao criar usuário na MOTV'
+        message: errorMsg
       };
 
     } catch (error: any) {
@@ -357,11 +363,22 @@ export class UserRegistrationFlowService {
 
       const result = data?.result;
       
-      if (result?.status === 1 && result?.data?.viewers_id) {
-        return {
-          success: true,
-          viewersId: result.data.viewers_id
-        };
+      // Aceitar status como number ou string "1"
+      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      
+      if (status === 1) {
+        const rawId = result?.data?.viewers_id ?? result?.response ?? result?.viewers_id;
+        
+        if (rawId != null) {
+          const viewersId = typeof rawId === 'number' ? rawId : parseInt(String(rawId));
+          
+          if (!isNaN(viewersId)) {
+            return {
+              success: true,
+              viewersId
+            };
+          }
+        }
       }
 
       return { success: false };
