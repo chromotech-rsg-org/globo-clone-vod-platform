@@ -107,11 +107,15 @@ export class UserRegistrationFlowService {
       }
 
       if (!planCode) {
-        // Sem plano selecionado: aplicar pacote de suspensão
-        const suspensionPackage = await this.getSuspensionPackage();
-        if (suspensionPackage) {
-          console.log('Applying suspension package:', suspensionPackage.code);
-          await this.subscribePlanInMotv(motvUserResult.viewersId!, suspensionPackage.code);
+        // Fallback: aplicar pacote padrão (861) quando não houver código vinculado
+        try {
+          const fallbackCode = '861';
+          console.log('[UserRegistrationFlow] No package code found, applying fallback code:', fallbackCode);
+          await this.cancelAllPlansInMotv(motvUserResult.viewersId!);
+          await this.subscribePlanInMotv(motvUserResult.viewersId!, fallbackCode);
+          planCode = fallbackCode;
+        } catch (e) {
+          console.error('[UserRegistrationFlow] Failed to apply fallback package 861:', e);
         }
       }
 
