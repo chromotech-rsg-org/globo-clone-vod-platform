@@ -116,6 +116,15 @@ const AdminRegistrations = () => {
 
   const handleApprove = async (id: string) => {
     try {
+      // Buscar registro para obter user_id
+      const { data: registration, error: fetchError } = await supabase
+        .from('auction_registrations')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const { error } = await supabase
         .from('auction_registrations')
         .update({ 
@@ -127,6 +136,28 @@ const AdminRegistrations = () => {
         .eq('id', id);
       
       if (error) throw error;
+
+      // Verificar se o usuário tem assinatura ativa
+      if (registration) {
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('plan_id')
+          .eq('user_id', registration.user_id)
+          .eq('status', 'active')
+          .single();
+
+        // Se tem plano ativo, aplicar na MOTV
+        if (subscription?.plan_id) {
+          try {
+            const { MotvPlanManager } = await import('@/services/motvPlanManager');
+            await MotvPlanManager.changePlan(registration.user_id, subscription.plan_id);
+            console.log('Plano aplicado na MOTV após aprovação de registro');
+          } catch (motvError) {
+            console.error('Erro ao aplicar plano na MOTV:', motvError);
+            // Não falhar a aprovação por erro na MOTV
+          }
+        }
+      }
       
       toast({
         title: "Sucesso",

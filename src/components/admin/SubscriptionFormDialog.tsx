@@ -184,6 +184,28 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           }
         }
 
+        // Verificar se o status mudou para canceled
+        const statusChangedToCanceled = subscription.status !== 'canceled' && formData.status === 'canceled';
+        
+        // Se o status mudou para canceled, aplicar pacote de suspensão ou cancelar na MOTV
+        if (statusChangedToCanceled) {
+          try {
+            const { error: motvError } = await supabase.functions.invoke('manage-subscription-motv', {
+              body: {
+                userId: formData.user_id,
+                action: 'cancel'
+              }
+            });
+
+            if (motvError) {
+              console.error('Erro ao cancelar plano na MOTV:', motvError);
+              // Não falhar a operação principal
+            }
+          } catch (motvError) {
+            console.error('Erro ao chamar manage-subscription-motv:', motvError);
+          }
+        }
+
         toast({
           title: "Sucesso",
           description: "Assinatura atualizada com sucesso"
@@ -242,20 +264,14 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           }
         }
 
-        // Chamar integração MOTV para criar/atualizar plano do usuário
+        // Atribuir plano na MOTV
         try {
-          const { MotvIntegrationService } = await import('@/services/motvIntegration');
-          await MotvIntegrationService.subscribeUser(formData.user_id, {
-            id: subscriptionId,
-            start_date: submitData.start_date,
-            end_date: submitData.end_date,
-            status: submitData.status
-          });
-          
-          console.log('Integração MOTV iniciada com sucesso');
-        } catch (integrationError) {
-          console.warn('Erro na integração MOTV:', integrationError);
-          // Não falhar a operação principal por causa da integração
+          const { MotvPlanManager } = await import('@/services/motvPlanManager');
+          await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
+          console.log('Plano atribuído na MOTV com sucesso');
+        } catch (motvError) {
+          console.error('Erro ao atribuir plano na MOTV:', motvError);
+          // Não falhar a operação principal
         }
 
         toast({
