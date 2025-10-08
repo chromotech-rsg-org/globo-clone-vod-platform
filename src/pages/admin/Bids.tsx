@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import DataTablePagination from '@/components/admin/DataTablePagination';
 import BidDetailsModal from '@/components/admin/BidDetailsModal';
 import { LotProgressionModal } from '@/components/admin/LotProgressionModal';
+import { formatCurrency } from '@/utils/formatters';
 
 interface Bid {
   id: string;
@@ -406,7 +407,7 @@ const AdminBids = () => {
                     <TableCell className="text-admin-table-text">{bid.auction_name || '-'}</TableCell>
                     <TableCell className="text-admin-table-text">{bid.lot_name || '-'}</TableCell>
                     <TableCell className="text-admin-table-text">{bid.user_name || '-'}</TableCell>
-                    <TableCell className="text-admin-table-text">R$ {bid.bid_value}</TableCell>
+                    <TableCell className="text-admin-table-text">{formatCurrency(bid.bid_value)}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(bid.status)}>
                         {getStatusDisplay(bid.status)}
