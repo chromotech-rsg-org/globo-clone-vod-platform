@@ -204,11 +204,11 @@ const CurrentLotDisplay = ({
         })()}
         </div>
 
-        {/* Botão Principal - Lance ou Habilitação - Habilitado enquanto houver lotes em aberto */}
-        {hasOpenLots && (
+        {/* Botão Principal - Lance ou Habilitação - Habilitado quando lote está em andamento */}
+        {(hasOpenLots || currentLot.status === 'in_progress') && (
           <Button 
             onClick={canBid ? onBidClick : stateInfo.onClick || onRequestRegistration} 
-            disabled={currentLot.status === 'finished' || stateInfo.disabled || submittingBid || userState === 'registration_pending'} 
+            disabled={(currentLot.status === 'finished' || submittingBid || userState === 'registration_pending') && currentLot.status !== 'in_progress'} 
             className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50" 
             variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
           >
