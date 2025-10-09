@@ -151,6 +151,18 @@ export class UserRegistrationFlowService {
           throw new Error('Falha ao aplicar plano na MOTV. Por favor, entre em contato com o suporte.');
         }
       }
+
+      // Sincronizar informações do plano com MOTV
+      if (planApplied && motvUserResult.viewersId) {
+        console.log('[UserRegistrationFlow] Step 3: Syncing plan info with MOTV...');
+        try {
+          await this.getCustomerSubscriptionInfo(motvUserResult.viewersId);
+          console.log('[UserRegistrationFlow] ✅ Plan info synced successfully');
+        } catch (syncError: any) {
+          console.error('[UserRegistrationFlow] ⚠️ Warning: Failed to sync plan info:', syncError.message);
+          // Não falha o cadastro se a sincronização falhar
+        }
+      }
       
       console.log('[UserRegistrationFlow] ========== PLAN ASSIGNMENT COMPLETED ==========');
       console.log('[UserRegistrationFlow] Plan applied:', planApplied, 'Package code:', planCode);
@@ -321,6 +333,18 @@ export class UserRegistrationFlowService {
         } catch (e) {
           console.error('[handleExistingMotvUser] ❌ CRITICAL: Failed to apply fallback package:', e);
           throw new Error('Falha ao aplicar plano na MOTV');
+        }
+      }
+
+      // Sincronizar informações do plano com MOTV
+      if (planApplied && motvUserId) {
+        console.log('[handleExistingMotvUser] Syncing plan info with MOTV...');
+        try {
+          await this.getCustomerSubscriptionInfo(motvUserId);
+          console.log('[handleExistingMotvUser] ✅ Plan info synced successfully');
+        } catch (syncError: any) {
+          console.error('[handleExistingMotvUser] ⚠️ Warning: Failed to sync plan info:', syncError.message);
+          // Não falha o cadastro se a sincronização falhar
         }
       }
 
@@ -622,6 +646,36 @@ export class UserRegistrationFlowService {
       return result;
     } catch (error) {
       console.error('[UserRegistrationFlow] ❌ Error subscribing plan in MOTV:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obter informações da assinatura do cliente na MOTV
+   */
+  private static async getCustomerSubscriptionInfo(viewersId: number) {
+    try {
+      const { data, error } = await supabase.functions.invoke('motv-proxy', {
+        body: {
+          op: 'getPlanInfo',
+          payload: {
+            viewers_id: viewersId
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      const result = data?.result;
+      console.log('[getCustomerSubscriptionInfo] Result:', result);
+
+      return {
+        success: true,
+        data: result
+      };
+
+    } catch (error: any) {
+      console.error('[getCustomerSubscriptionInfo] Error:', error);
       throw error;
     }
   }
