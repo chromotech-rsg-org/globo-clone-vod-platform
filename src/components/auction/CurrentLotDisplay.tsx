@@ -21,6 +21,7 @@ interface CurrentLotDisplayProps {
   userPendingBid: Bid | null;
   userId?: string;
   onRequestRegistration: () => void;
+  hasOpenLots: boolean;
 }
 const CurrentLotDisplay = ({
   currentLot,
@@ -36,7 +37,8 @@ const CurrentLotDisplay = ({
   submittingBid,
   userPendingBid,
   userId,
-  onRequestRegistration
+  onRequestRegistration,
+  hasOpenLots
 }: CurrentLotDisplayProps) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const baseIncrement = Number(currentLot.increment ?? auction.bid_increment);
@@ -143,10 +145,10 @@ const CurrentLotDisplay = ({
               <AlertDescription className="text-red-300">
                 <div className="text-center">
                   <p className="font-bold">
-                    {currentLot.status === 'finished' ? 'Lote Finalizado' : 'Transmissão Encerrada'}
+                    {currentLot.status === 'finished' ? 'Lote Finalizado' : hasOpenLots ? 'Transmissão Pausada' : 'Leilão Finalizado'}
                   </p>
                   <p>
-                    {currentLot.status === 'finished' ? 'Este lote já foi finalizado e não aceita mais lances.' : 'Não é mais possível fazer lances ou solicitar habilitação.'}
+                    {currentLot.status === 'finished' ? 'Este lote já foi finalizado e não aceita mais lances.' : hasOpenLots ? 'Aguardando início do próximo lote.' : 'Não é mais possível fazer lances ou solicitar habilitação.'}
                   </p>
                 </div>
               </AlertDescription>
@@ -196,7 +198,7 @@ const CurrentLotDisplay = ({
         </div>
 
         {/* Botão Principal - Lance ou Habilitação */}
-        {!((auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) || currentLot.status === 'finished') && (
+        {!((auction.status === 'inactive' && !auction.allow_pre_bidding && !hasOpenLots) || (!auction.is_live && !auction.allow_pre_bidding && !hasOpenLots) || currentLot.status === 'finished') && (
           <Button onClick={canBid ? onBidClick : stateInfo.onClick || onRequestRegistration} disabled={stateInfo.disabled || submittingBid || userState === 'registration_pending'} className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50" variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}>
             {submittingBid ? 'Enviando lance...' : canBid ? <>
                 <Gavel className="h-5 w-5 mr-2" />

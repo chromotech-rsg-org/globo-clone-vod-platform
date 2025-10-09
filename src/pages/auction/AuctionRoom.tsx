@@ -591,6 +591,7 @@ const recalculateNextBidValue = () => {
                 userPendingBid={userPendingBid}
                 userId={user?.id}
                 onRequestRegistration={requestRegistration}
+                hasOpenLots={!isAllFinished}
               />
             ) : hasPreBiddingLots && selectedPreBiddingLotId && preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) && stateInfo && userState === 'can_bid' ? (
               <PreBiddingLotDisplay
