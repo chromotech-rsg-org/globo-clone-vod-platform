@@ -155,6 +155,8 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
       if (isEditing) {
         // Verificar se o plano mudou
         const planChanged = subscription.plan_id !== formData.plan_id;
+        // Verificar se o status mudou para canceled
+        const statusChangedToCanceled = subscription.status !== 'canceled' && formData.status === 'canceled';
 
         const { error } = await supabase
           .from('subscriptions')
@@ -167,42 +169,32 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         // Se o plano mudou, atualizar na MOTV
         if (planChanged && formData.plan_id) {
           try {
-            const { error: motvError } = await supabase.functions.invoke('manage-subscription-motv', {
-              body: {
-                userId: formData.user_id,
-                newPlanId: formData.plan_id,
-                action: 'change'
-              }
-            });
-
-            if (motvError) {
-              console.error('Erro ao trocar plano na MOTV:', motvError);
-              // Não falhar a operação principal
-            }
+            const { MotvPlanManager } = await import('@/services/motvPlanManager');
+            await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
+            console.log('Plano trocado na MOTV com sucesso');
           } catch (motvError) {
-            console.error('Erro ao chamar manage-subscription-motv:', motvError);
+            console.error('Erro ao trocar plano na MOTV:', motvError);
+            toast({
+              title: "Atenção",
+              description: "Assinatura atualizada, mas houve erro ao sincronizar com MOTV",
+              variant: "destructive"
+            });
           }
         }
-
-        // Verificar se o status mudou para canceled
-        const statusChangedToCanceled = subscription.status !== 'canceled' && formData.status === 'canceled';
         
-        // Se o status mudou para canceled, aplicar pacote de suspensão ou cancelar na MOTV
+        // Se o status mudou para canceled, cancelar na MOTV
         if (statusChangedToCanceled) {
           try {
-            const { error: motvError } = await supabase.functions.invoke('manage-subscription-motv', {
-              body: {
-                userId: formData.user_id,
-                action: 'cancel'
-              }
-            });
-
-            if (motvError) {
-              console.error('Erro ao cancelar plano na MOTV:', motvError);
-              // Não falhar a operação principal
-            }
+            const { MotvPlanManager } = await import('@/services/motvPlanManager');
+            await MotvPlanManager.cancelPlan(formData.user_id);
+            console.log('Plano cancelado na MOTV com sucesso');
           } catch (motvError) {
-            console.error('Erro ao chamar manage-subscription-motv:', motvError);
+            console.error('Erro ao cancelar plano na MOTV:', motvError);
+            toast({
+              title: "Atenção",
+              description: "Assinatura cancelada, mas houve erro ao sincronizar com MOTV",
+              variant: "destructive"
+            });
           }
         }
 
@@ -221,63 +213,24 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         if (error) throw error;
         subscriptionId = newSubscription.id;
 
-        // Buscar plano selecionado para obter o pacote MOTV
-        const { data: planData, error: planError } = await supabase
-          .from('plans')
-          .select(`
-            *,
-            packages (
-              id,
-              name,
-              code,
-              vendor_id
-            )
-          `)
-          .eq('id', formData.plan_id)
-          .single();
-
-        if (planError) {
-          console.error('Erro ao buscar plano:', planError);
-        } else if (planData?.packages) {
-          // Associar o pacote ao plano se não estiver associado
-          if (!planData.package_id) {
-            await supabase
-              .from('plans')
-              .update({ package_id: planData.packages.id })
-              .eq('id', formData.plan_id);
-          }
-        } else {
-          // Se não há pacote associado ao plano, buscar um pacote MOTV padrão
-          const { data: defaultPackage } = await supabase
-            .from('packages')
-            .select('id, name, code, vendor_id')
-            .eq('active', true)
-            .eq('suspension_package', false)
-            .limit(1)
-            .single();
-
-          if (defaultPackage) {
-            await supabase
-              .from('plans')
-              .update({ package_id: defaultPackage.id })
-              .eq('id', formData.plan_id);
-          }
-        }
-
-        // Atribuir plano na MOTV
+        // Atribuir plano na MOTV (isso cancela planos antigos e assina o novo)
         try {
           const { MotvPlanManager } = await import('@/services/motvPlanManager');
           await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
-          console.log('Plano atribuído na MOTV com sucesso');
+          console.log('✅ Pacote MOTV atribuído ao usuário com sucesso');
+          
+          toast({
+            title: "Sucesso",
+            description: "Assinatura criada e pacote MOTV atribuído ao usuário"
+          });
         } catch (motvError) {
-          console.error('Erro ao atribuir plano na MOTV:', motvError);
-          // Não falhar a operação principal
+          console.error('❌ Erro ao atribuir plano na MOTV:', motvError);
+          toast({
+            title: "Atenção",
+            description: "Assinatura criada, mas houve erro ao sincronizar com MOTV",
+            variant: "destructive"
+          });
         }
-
-        toast({
-          title: "Sucesso",
-          description: "Assinatura criada com sucesso e pacote MOTV atribuído"
-        });
       }
 
       onSuccess();
