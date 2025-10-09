@@ -60,9 +60,12 @@ export class UserRegistrationFlowService {
       const motvUserResult = await this.createUserInMotv(userData);
       
       if (!motvUserResult.success) {
-        // Se erro 104 (usuário já existe na MOTV)
-        if (motvUserResult.error === 104) {
-          console.log('User already exists in MOTV (error 104), attempting authentication...');
+        // Se erro 104 (usuário já existe na MOTV) OU mensagem de email já em uso
+        const isEmailAlreadyUsed = motvUserResult.error === 104 || 
+          (motvUserResult.message && motvUserResult.message.toLowerCase().includes('already being used'));
+        
+        if (isEmailAlreadyUsed) {
+          console.log('User already exists in MOTV, fetching existing user...');
           return await this.handleExistingMotvUser(userData);
         }
         
@@ -195,37 +198,87 @@ export class UserRegistrationFlowService {
    * Trata usuário que já existe na MOTV (erro 104)
    */
   private static async handleExistingMotvUser(userData: RegistrationData): Promise<RegistrationResult> {
-    // Tentar autenticar na MOTV com credenciais fornecidas
-    const authResult = await this.authenticateUserInMotv(userData.email, userData.password);
+    console.log('[handleExistingMotvUser] Starting for email:', userData.email);
     
-    if (!authResult.success) {
-      // Autenticação falhou: usuário existe mas senha está errada
-      console.log('MOTV authentication failed for existing user');
-      return {
-        success: false,
-        message: 'Este e-mail já está cadastrado. Você pode fazer login ou usar "Esqueci minha senha" se não lembra da senha.'
-      };
+    // Primeiro, tentar buscar o usuário na MOTV pelo email
+    const findResult = await this.findCustomerByEmail(userData.email);
+    
+    let motvUserId: number | null = null;
+    
+    if (findResult.success && findResult.viewersId) {
+      console.log('[handleExistingMotvUser] Found existing MOTV user:', findResult.viewersId);
+      motvUserId = findResult.viewersId;
+    } else {
+      // Se não encontrou, tentar autenticar
+      console.log('[handleExistingMotvUser] Customer not found, trying authentication...');
+      const authResult = await this.authenticateUserInMotv(userData.email, userData.password);
+      
+      if (!authResult.success) {
+        // Não conseguiu nem encontrar nem autenticar
+        console.log('[handleExistingMotvUser] Authentication failed');
+        return {
+          success: false,
+          message: 'Este e-mail já está cadastrado. Você pode fazer login ou usar "Esqueci minha senha" se não lembra da senha.'
+        };
+      }
+      
+      motvUserId = authResult.viewersId!;
     }
 
-    console.log('MOTV authentication successful, checking local user...');
-    const motvUserId = authResult.viewersId!;
+    console.log('[handleExistingMotvUser] MOTV user ID:', motvUserId);
 
     // Verificar se já existe localmente
     const existsLocally = await this.checkUserExistsInSystem(userData.email);
     
     if (existsLocally.exists) {
       // Já existe no Supabase também
-      console.log('User exists both in MOTV and locally');
+      console.log('[handleExistingMotvUser] User exists both in MOTV and locally');
       return {
         success: false,
         message: 'Este e-mail já está cadastrado. Você pode fazer login ou usar "Esqueci minha senha" se não lembra da senha.'
       };
     }
 
-    // Existe na MOTV mas não localmente: criar usuário local e mapear plano
-    console.log('User exists in MOTV but not locally, creating local user...');
+    // Existe na MOTV mas não localmente: aplicar plano na MOTV e criar usuário local
+    console.log('[handleExistingMotvUser] User exists in MOTV but not locally, applying plan...');
     
     try {
+      // 1. Aplicar plano na MOTV
+      let planCode: string | null = null;
+      
+      if (userData.selectedPlanId) {
+        console.log('[handleExistingMotvUser] Looking for package code for plan:', userData.selectedPlanId);
+        
+        const { data: plan, error: planError } = await supabase
+          .from('plans')
+          .select('id, name, package_id, packages!inner(id, code, name)')
+          .eq('id', userData.selectedPlanId)
+          .single();
+
+        if (plan?.packages?.code) {
+          planCode = plan.packages.code;
+          console.log('[handleExistingMotvUser] Found package code:', planCode);
+          
+          // Cancelar planos existentes e aplicar novo
+          console.log('[handleExistingMotvUser] Canceling existing plans for viewers_id:', motvUserId);
+          await this.cancelAllPlansInMotv(motvUserId);
+          
+          console.log('[handleExistingMotvUser] Subscribing to package:', planCode);
+          await this.subscribePlanInMotv(motvUserId, planCode);
+          console.log('[handleExistingMotvUser] Plan applied successfully in MOTV');
+        }
+      }
+
+      // Fallback para pacote padrão se não tiver código
+      if (!planCode) {
+        const fallbackCode = '861';
+        console.log('[handleExistingMotvUser] No package code found, applying fallback code:', fallbackCode);
+        await this.cancelAllPlansInMotv(motvUserId);
+        await this.subscribePlanInMotv(motvUserId, fallbackCode);
+        planCode = fallbackCode;
+      }
+
+      // 2. Criar usuário local
       const createResult = await this.createUserInSystem({
         email: userData.email,
         password: userData.password,
@@ -241,44 +294,15 @@ export class UserRegistrationFlowService {
 
       const localUserId = createResult.user_id!;
 
-      // Buscar plano existente na MOTV
-      const planHistory = await this.getPlanHistoryFromMotv(motvUserId);
-      
-      if (planHistory?.status === 1 && planHistory.data?.plans?.length) {
-        const activePlan = planHistory.data.plans.find(p => p.status === 'active');
-        if (activePlan) {
-          const { data: existingPackage } = await supabase
-            .from('packages')
-            .select('id')
-            .eq('code', activePlan.package_code)
-            .eq('active', true)
-            .single();
-
-          if (existingPackage) {
-            const { data: localPlan } = await supabase
-              .from('plans')
-              .select('id')
-              .eq('package_id', existingPackage.id)
-              .eq('active', true)
-              .single();
-
-            if (localPlan) {
-              // Auto-login antes de associar o plano (RLS)
-              await supabase.auth.signInWithPassword({
-                email: userData.email,
-                password: userData.password
-              });
-              await this.assignPackageToUser(localUserId, localPlan.id);
-            }
-          }
-        }
-      }
-
-      // Auto-login
+      // 3. Auto-login e associar plano local
       await supabase.auth.signInWithPassword({
         email: userData.email,
         password: userData.password
       });
+
+      if (userData.selectedPlanId) {
+        await this.assignPackageToUser(localUserId, userData.selectedPlanId);
+      }
 
       return {
         success: true,
@@ -287,10 +311,10 @@ export class UserRegistrationFlowService {
       };
 
     } catch (error: any) {
-      console.error('Error creating local user for existing MOTV user:', error);
+      console.error('[handleExistingMotvUser] Error:', error);
       return {
         success: false,
-        message: 'Erro ao sincronizar cadastro. Por favor, faça login ou entre em contato com o suporte.'
+        message: error.message || 'Erro ao sincronizar cadastro. Por favor, tente novamente.'
       };
     }
   }
@@ -359,6 +383,51 @@ export class UserRegistrationFlowService {
     } catch (error: any) {
       console.error('Error creating user in MOTV:', error);
       return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Buscar cliente na MOTV pelo email
+   */
+  private static async findCustomerByEmail(email: string) {
+    try {
+      const { data, error } = await supabase.functions.invoke('motv-proxy', {
+        body: {
+          op: 'findCustomer',
+          payload: {
+            email: email
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      const result = data?.result;
+      console.log('[findCustomerByEmail] Result:', result);
+      
+      // Aceitar status como number ou string "1"
+      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      
+      if (status === 1) {
+        const rawId = result?.data?.viewers_id ?? result?.response ?? result?.viewers_id;
+        
+        if (rawId != null) {
+          const viewersId = typeof rawId === 'number' ? rawId : parseInt(String(rawId));
+          
+          if (!isNaN(viewersId)) {
+            return {
+              success: true,
+              viewersId
+            };
+          }
+        }
+      }
+
+      return { success: false };
+
+    } catch (error) {
+      console.error('Error finding customer in MOTV:', error);
+      return { success: false };
     }
   }
 
