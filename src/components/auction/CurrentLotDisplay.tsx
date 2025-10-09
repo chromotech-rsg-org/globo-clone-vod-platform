@@ -172,36 +172,6 @@ const CurrentLotDisplay = ({
                 </div>
               </AlertDescription>
             </Alert>}
-
-          {/* Mostrar se o usuário tem lance vencedor */}
-          {(() => {
-          const userWinningBid = bids.find(bid => bid.user_id === userId && bid.is_winner && bid.status === 'approved');
-          if (userWinningBid) {
-            return <Alert className="bg-green-900/20 border-green-500/50">
-                  <Trophy className="h-4 w-4 text-green-400" />
-                  <AlertDescription className="text-green-300">
-                    <div className="text-center">
-                      <p className="font-bold">🎉 Parabéns! Você é o vencedor!</p>
-                      <p>Lance vencedor: {formatCurrency(userWinningBid.bid_value)}</p>
-                    </div>
-                  </AlertDescription>
-                </Alert>;
-          }
-
-          // Verificar se há algum vencedor no leilão
-          const anyWinner = bids.find(bid => bid.is_winner);
-          if (anyWinner && anyWinner.user_id !== userId) {
-            return <Alert className="bg-orange-900/20 border-orange-500/50">
-                  <Trophy className="h-4 w-4 text-orange-400" />
-                  <AlertDescription className="text-orange-300">
-                    <div className="text-center">
-                      <p className="font-bold">Leilão Finalizado</p>
-                      <p>Lance vencedor: {formatCurrency(anyWinner.bid_value)}</p>
-                    </div>
-                  </AlertDescription>
-                </Alert>;
-          }
-        })()}
         </div>
 
         {/* Botão Principal - Lance ou Habilitação - Habilitado quando lote está em andamento */}
