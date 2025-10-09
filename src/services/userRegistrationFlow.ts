@@ -89,6 +89,10 @@ export class UserRegistrationFlowService {
       console.log('User created in MOTV successfully:', motvUserResult.viewersId);
 
       // 3. Aplicar plano na MOTV usando o código do pacote
+      console.log('[UserRegistrationFlow] ========== STARTING PLAN ASSIGNMENT ==========');
+      console.log('[UserRegistrationFlow] viewers_id:', motvUserResult.viewersId);
+      console.log('[UserRegistrationFlow] selectedPlanId:', userData.selectedPlanId);
+      
       let planCode: string | null = null;
       let planApplied = false;
       
@@ -130,19 +134,26 @@ export class UserRegistrationFlowService {
 
       // Fallback: aplicar pacote padrão (861) se nenhum plano foi aplicado
       if (!planApplied) {
+        console.log('[UserRegistrationFlow] ⚠️ No plan was applied yet, using fallback');
         try {
           const fallbackCode = '861';
           console.log('[UserRegistrationFlow] Applying fallback code:', fallbackCode);
+          console.log('[UserRegistrationFlow] Step 1: Canceling existing plans...');
           await this.cancelAllPlansInMotv(motvUserResult.viewersId!);
+          console.log('[UserRegistrationFlow] Step 2: Subscribing to fallback package...');
           await this.subscribePlanInMotv(motvUserResult.viewersId!, fallbackCode);
           planCode = fallbackCode;
           planApplied = true;
-          console.log('[UserRegistrationFlow] Fallback package applied successfully');
-        } catch (e) {
+          console.log('[UserRegistrationFlow] ✅ Fallback package applied successfully');
+        } catch (e: any) {
           console.error('[UserRegistrationFlow] ❌ CRITICAL: Failed to apply fallback package 861:', e);
+          console.error('[UserRegistrationFlow] Error details:', e.message, e.stack);
           throw new Error('Falha ao aplicar plano na MOTV. Por favor, entre em contato com o suporte.');
         }
       }
+      
+      console.log('[UserRegistrationFlow] ========== PLAN ASSIGNMENT COMPLETED ==========');
+      console.log('[UserRegistrationFlow] Plan applied:', planApplied, 'Package code:', planCode);
 
       // 4. Criar usuário no Supabase (apenas após sucesso na MOTV)
       let supabaseUserId: string | null = null;
