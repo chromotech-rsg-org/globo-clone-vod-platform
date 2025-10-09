@@ -49,7 +49,6 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
     navigate('/admin/habilitacoes');
     onOpenChange(false);
   };
-
   const handleGoToLimitRequests = () => {
     navigate('/admin/limites-clientes');
     onOpenChange(false);
@@ -204,7 +203,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                   <TrendingUp className="h-5 w-5" />
                   Aumento de Limite Pendentes ({pendingLimitRequests.length})
                 </h3>
-                {pendingLimitRequests.length > 0 && <Button onClick={handleGoToLimitRequests} variant="outline" size="sm" className="border-admin-border text-slate-950">
+                {pendingLimitRequests.length > 0 && <Button onClick={handleGoToLimitRequests} variant="outline" size="sm" className="border-admin-border text-center text-slate-50">
                     Ver Todos <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>}
               </div>
