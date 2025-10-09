@@ -139,17 +139,24 @@ const CurrentLotDisplay = ({
             </AlertDescription>
           </Alert>
 
-          {/* Verificar se a transmissão está encerrada ou lote finalizado */}
-          {((auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) || currentLot.status === 'finished') && <Alert className="bg-red-900/20 border-red-500/50">
+          {/* Verificar se não há mais lotes em aberto */}
+          {!hasOpenLots && ((auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding)) && <Alert className="bg-red-900/20 border-red-500/50">
               <AlertCircle className="h-4 w-4 text-red-400" />
               <AlertDescription className="text-red-300">
                 <div className="text-center">
-                  <p className="font-bold">
-                    {currentLot.status === 'finished' ? 'Lote Finalizado' : hasOpenLots ? 'Transmissão Pausada' : 'Leilão Finalizado'}
-                  </p>
-                  <p>
-                    {currentLot.status === 'finished' ? 'Este lote já foi finalizado e não aceita mais lances.' : hasOpenLots ? 'Aguardando início do próximo lote.' : 'Não é mais possível fazer lances ou solicitar habilitação.'}
-                  </p>
+                  <p className="font-bold">Leilão Finalizado</p>
+                  <p>Não é mais possível fazer lances ou solicitar habilitação.</p>
+                </div>
+              </AlertDescription>
+            </Alert>}
+          
+          {/* Lote atual finalizado mas ainda há lotes em aberto */}
+          {currentLot.status === 'finished' && hasOpenLots && <Alert className="bg-yellow-900/20 border-yellow-500/50">
+              <Clock className="h-4 w-4 text-yellow-400" />
+              <AlertDescription className="text-yellow-300">
+                <div className="text-center">
+                  <p className="font-bold">Lote Finalizado</p>
+                  <p>Aguardando próximo lote. A transmissão continua.</p>
                 </div>
               </AlertDescription>
             </Alert>}
@@ -197,10 +204,15 @@ const CurrentLotDisplay = ({
         })()}
         </div>
 
-        {/* Botão Principal - Lance ou Habilitação */}
-        {!((auction.status === 'inactive' && !auction.allow_pre_bidding && !hasOpenLots) || (!auction.is_live && !auction.allow_pre_bidding && !hasOpenLots) || currentLot.status === 'finished') && (
-          <Button onClick={canBid ? onBidClick : stateInfo.onClick || onRequestRegistration} disabled={stateInfo.disabled || submittingBid || userState === 'registration_pending'} className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50" variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}>
-            {submittingBid ? 'Enviando lance...' : canBid ? <>
+        {/* Botão Principal - Lance ou Habilitação - Habilitado enquanto houver lotes em aberto */}
+        {hasOpenLots && (
+          <Button 
+            onClick={canBid ? onBidClick : stateInfo.onClick || onRequestRegistration} 
+            disabled={currentLot.status === 'finished' || stateInfo.disabled || submittingBid || userState === 'registration_pending'} 
+            className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50" 
+            variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
+          >
+            {currentLot.status === 'finished' ? 'Aguardando próximo lote' : submittingBid ? 'Enviando lance...' : canBid ? <>
                 <Gavel className="h-5 w-5 mr-2" />
                 {`Fazer Lance - ${formatCurrency(nextBidValue)}`}
               </> : stateInfo.action || (userState === 'registration_pending' ? 'Habilitação em análise' : 'Indisponível')}
