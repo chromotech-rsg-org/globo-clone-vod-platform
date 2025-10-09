@@ -155,13 +155,10 @@ export class UserRegistrationFlowService {
       // Sincronizar informações do plano com MOTV
       if (planApplied && motvUserResult.viewersId) {
         console.log('[UserRegistrationFlow] Step 3: Syncing plan info with MOTV...');
-        try {
-          await this.getCustomerSubscriptionInfo(motvUserResult.viewersId);
-          console.log('[UserRegistrationFlow] ✅ Plan info synced successfully');
-        } catch (syncError: any) {
-          console.error('[UserRegistrationFlow] ⚠️ Warning: Failed to sync plan info:', syncError.message);
-          // Não falha o cadastro se a sincronização falhar
-        }
+        // Não bloqueia o cadastro se a sincronização falhar
+        this.getCustomerSubscriptionInfo(motvUserResult.viewersId)
+          .then(() => console.log('[UserRegistrationFlow] ✅ Plan info synced successfully'))
+          .catch((syncError: any) => console.error('[UserRegistrationFlow] ⚠️ Warning: Failed to sync plan info:', syncError.message));
       }
       
       console.log('[UserRegistrationFlow] ========== PLAN ASSIGNMENT COMPLETED ==========');
@@ -339,13 +336,10 @@ export class UserRegistrationFlowService {
       // Sincronizar informações do plano com MOTV
       if (planApplied && motvUserId) {
         console.log('[handleExistingMotvUser] Syncing plan info with MOTV...');
-        try {
-          await this.getCustomerSubscriptionInfo(motvUserId);
-          console.log('[handleExistingMotvUser] ✅ Plan info synced successfully');
-        } catch (syncError: any) {
-          console.error('[handleExistingMotvUser] ⚠️ Warning: Failed to sync plan info:', syncError.message);
-          // Não falha o cadastro se a sincronização falhar
-        }
+        // Não bloqueia o cadastro se a sincronização falhar
+        this.getCustomerSubscriptionInfo(motvUserId)
+          .then(() => console.log('[handleExistingMotvUser] ✅ Plan info synced successfully'))
+          .catch((syncError: any) => console.error('[handleExistingMotvUser] ⚠️ Warning: Failed to sync plan info:', syncError.message));
       }
 
       // 2. Criar usuário local
@@ -596,13 +590,15 @@ export class UserRegistrationFlowService {
       console.log('[UserRegistrationFlow] 📋 cancelAllPlansInMotv full result:', JSON.stringify(result, null, 2));
       
       const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
-      if (status !== 1) {
+      
+      // Status 1 = sucesso, Status 6 = sem planos para cancelar (também ok)
+      if (status !== 1 && status !== 6) {
         const errorMsg = result?.message || result?.error_message || 'Erro ao cancelar planos na MOTV';
         console.error('[UserRegistrationFlow] ❌ Cancel failed with status:', status, 'message:', errorMsg);
         throw new Error(errorMsg);
       }
       
-      console.log('[UserRegistrationFlow] ✅ Plans canceled successfully');
+      console.log('[UserRegistrationFlow] ✅ Plans canceled successfully (status:', status, ')');
       return result;
     } catch (error) {
       console.error('[UserRegistrationFlow] ❌ Error canceling plans in MOTV:', error);
