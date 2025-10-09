@@ -163,12 +163,13 @@ const CurrentLotDisplay = ({
           
 
           {/* Status do lance do usuário */}
-          {userPendingBid && <Alert className="bg-gray-900 border-yellow-600/30">
+          {userPendingBid && <Alert className="bg-yellow-900/20 border-yellow-500/50">
               <Clock className="h-4 w-4 text-yellow-400" />
-              <AlertDescription className="text-gray-300">
-                <div className="flex justify-between items-center">
-                  <span>Seu lance: {formatCurrency(userPendingBid.bid_value)}</span>
-                  <Badge variant="secondary" className="bg-yellow-600/20 text-yellow-400">Em análise</Badge>
+              <AlertDescription className="text-yellow-300">
+                <div className="text-center space-y-1">
+                  <p className="font-bold">Lance Pendente de Aprovação</p>
+                  <p>Valor do lance: {formatCurrency(userPendingBid.bid_value)}</p>
+                  <p className="text-sm">Aguardando análise do leiloeiro</p>
                 </div>
               </AlertDescription>
             </Alert>}
