@@ -90,48 +90,57 @@ export class UserRegistrationFlowService {
 
       // 3. Aplicar plano na MOTV usando o código do pacote
       let planCode: string | null = null;
+      let planApplied = false;
       
       if (userData.selectedPlanId) {
         console.log('[UserRegistrationFlow] Looking for package code for plan:', userData.selectedPlanId);
         
-        const { data: plan, error: planError } = await supabase
-          .from('plans')
-          .select('id, name, package_id, packages!inner(id, code, name)')
-          .eq('id', userData.selectedPlanId)
-          .single();
+        try {
+          const { data: plan, error: planError } = await supabase
+            .from('plans')
+            .select('id, name, package_id, packages(id, code, name)')
+            .eq('id', userData.selectedPlanId)
+            .maybeSingle();
 
-        console.log('[UserRegistrationFlow] Plan query result:', { plan, planError });
+          console.log('[UserRegistrationFlow] Plan query result:', { plan, planError });
 
-        if (planError) {
-          console.error('[UserRegistrationFlow] Error fetching plan:', planError);
-        }
+          if (planError) {
+            console.error('[UserRegistrationFlow] Error fetching plan:', planError);
+          }
 
-        if (plan?.packages?.code) {
-          planCode = plan.packages.code;
-          console.log('[UserRegistrationFlow] Found package code:', planCode, 'for plan:', plan.name);
-          
-          // Cancelar planos existentes e aplicar novo
-          console.log('[UserRegistrationFlow] Canceling existing plans for viewers_id:', motvUserResult.viewersId);
-          await this.cancelAllPlansInMotv(motvUserResult.viewersId!);
-          
-          console.log('[UserRegistrationFlow] Subscribing to package:', planCode);
-          await this.subscribePlanInMotv(motvUserResult.viewersId!, planCode);
-          console.log('[UserRegistrationFlow] Plan applied successfully in MOTV');
-        } else {
-          console.warn('[UserRegistrationFlow] No package code found for plan:', userData.selectedPlanId);
+          if (plan?.packages?.code) {
+            planCode = plan.packages.code;
+            console.log('[UserRegistrationFlow] Found package code:', planCode, 'for plan:', plan.name);
+            
+            // Cancelar planos existentes e aplicar novo
+            console.log('[UserRegistrationFlow] Canceling existing plans for viewers_id:', motvUserResult.viewersId);
+            await this.cancelAllPlansInMotv(motvUserResult.viewersId!);
+            
+            console.log('[UserRegistrationFlow] Subscribing to package:', planCode);
+            await this.subscribePlanInMotv(motvUserResult.viewersId!, planCode);
+            console.log('[UserRegistrationFlow] Plan applied successfully in MOTV');
+            planApplied = true;
+          } else {
+            console.warn('[UserRegistrationFlow] No package code found for plan:', userData.selectedPlanId);
+          }
+        } catch (planError) {
+          console.error('[UserRegistrationFlow] Error during plan application:', planError);
         }
       }
 
-      if (!planCode) {
-        // Fallback: aplicar pacote padrão (861) quando não houver código vinculado
+      // Fallback: aplicar pacote padrão (861) se nenhum plano foi aplicado
+      if (!planApplied) {
         try {
           const fallbackCode = '861';
-          console.log('[UserRegistrationFlow] No package code found, applying fallback code:', fallbackCode);
+          console.log('[UserRegistrationFlow] Applying fallback code:', fallbackCode);
           await this.cancelAllPlansInMotv(motvUserResult.viewersId!);
           await this.subscribePlanInMotv(motvUserResult.viewersId!, fallbackCode);
           planCode = fallbackCode;
+          planApplied = true;
+          console.log('[UserRegistrationFlow] Fallback package applied successfully');
         } catch (e) {
-          console.error('[UserRegistrationFlow] Failed to apply fallback package 861:', e);
+          console.error('[UserRegistrationFlow] ❌ CRITICAL: Failed to apply fallback package 861:', e);
+          throw new Error('Falha ao aplicar plano na MOTV. Por favor, entre em contato com o suporte.');
         }
       }
 
@@ -258,37 +267,50 @@ export class UserRegistrationFlowService {
     try {
       // 1. Aplicar plano na MOTV
       let planCode: string | null = null;
+      let planApplied = false;
       
       if (userData.selectedPlanId) {
         console.log('[handleExistingMotvUser] Looking for package code for plan:', userData.selectedPlanId);
         
-        const { data: plan, error: planError } = await supabase
-          .from('plans')
-          .select('id, name, package_id, packages!inner(id, code, name)')
-          .eq('id', userData.selectedPlanId)
-          .single();
+        try {
+          const { data: plan, error: planError } = await supabase
+            .from('plans')
+            .select('id, name, package_id, packages(id, code, name)')
+            .eq('id', userData.selectedPlanId)
+            .maybeSingle();
 
-        if (plan?.packages?.code) {
-          planCode = plan.packages.code;
-          console.log('[handleExistingMotvUser] Found package code:', planCode);
-          
-          // Cancelar planos existentes e aplicar novo
-          console.log('[handleExistingMotvUser] Canceling existing plans for viewers_id:', motvUserId);
-          await this.cancelAllPlansInMotv(motvUserId);
-          
-          console.log('[handleExistingMotvUser] Subscribing to package:', planCode);
-          await this.subscribePlanInMotv(motvUserId, planCode);
-          console.log('[handleExistingMotvUser] Plan applied successfully in MOTV');
+          if (plan?.packages?.code) {
+            planCode = plan.packages.code;
+            console.log('[handleExistingMotvUser] Found package code:', planCode);
+            
+            // Cancelar planos existentes e aplicar novo
+            console.log('[handleExistingMotvUser] Canceling existing plans for viewers_id:', motvUserId);
+            await this.cancelAllPlansInMotv(motvUserId);
+            
+            console.log('[handleExistingMotvUser] Subscribing to package:', planCode);
+            await this.subscribePlanInMotv(motvUserId, planCode);
+            console.log('[handleExistingMotvUser] Plan applied successfully in MOTV');
+            planApplied = true;
+          }
+        } catch (planError) {
+          console.error('[handleExistingMotvUser] Error fetching plan:', planError);
         }
       }
 
       // Fallback para pacote padrão se não tiver código
-      if (!planCode) {
-        const fallbackCode = '861';
-        console.log('[handleExistingMotvUser] No package code found, applying fallback code:', fallbackCode);
-        await this.cancelAllPlansInMotv(motvUserId);
-        await this.subscribePlanInMotv(motvUserId, fallbackCode);
-        planCode = fallbackCode;
+      if (!planApplied) {
+        try {
+          const fallbackCode = '861';
+          console.log('[handleExistingMotvUser] Applying fallback code:', fallbackCode);
+          await this.cancelAllPlansInMotv(motvUserId);
+          await this.subscribePlanInMotv(motvUserId, fallbackCode);
+          planCode = fallbackCode;
+          planApplied = true;
+          console.log('[handleExistingMotvUser] Fallback package applied successfully');
+        } catch (e) {
+          console.error('[handleExistingMotvUser] ❌ CRITICAL: Failed to apply fallback package:', e);
+          throw new Error('Falha ao aplicar plano na MOTV');
+        }
       }
 
       // 2. Criar usuário local
