@@ -129,13 +129,17 @@ const CurrentLotDisplay = ({
         {/* Status e Ações do Usuário */}
         <div className="bg-gray-800/30 rounded-lg p-4 space-y-4">
           <div className="flex items-center gap-2 text-center justify-center">
-            <stateInfo.icon size={20} className="text-green-400" />
-            <h4 className="text-lg font-semibold text-white">{stateInfo.title}</h4>
+            <PlayCircle size={20} className="text-green-400" />
+            <h4 className="text-lg font-semibold text-white">
+              {currentLot.status === 'in_progress' ? 'Em Andamento' : stateInfo.title}
+            </h4>
           </div>
           
           <Alert variant={stateInfo.variant === 'destructive' ? 'destructive' : 'default'} className="bg-gray-900 border-green-600/30">
             <AlertDescription className="text-gray-300">
-              {stateInfo.description}
+              {currentLot.status === 'in_progress' 
+                ? 'Este lote está recebendo lances. Faça sua oferta agora!' 
+                : stateInfo.description}
             </AlertDescription>
           </Alert>
 
