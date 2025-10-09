@@ -65,7 +65,20 @@ export class UserRegistrationFlowService {
           (motvUserResult.message && motvUserResult.message.toLowerCase().includes('already being used'));
         
         if (isEmailAlreadyUsed) {
-          console.log('User already exists in MOTV, fetching existing user...');
+          console.log('User already exists in MOTV, checking if user exists locally...');
+          
+          // Verificar se usuário já existe localmente
+          const existsLocally = await this.checkUserExistsInSystem(userData.email);
+          
+          if (existsLocally.exists) {
+            // Usuário já existe completamente - orientar para login
+            return {
+              success: false,
+              message: 'Este e-mail já está cadastrado. Por favor, faça login ou clique em "Esqueci minha senha" para recuperar seu acesso.'
+            };
+          }
+          
+          // Existe na MOTV mas não localmente - tentar sincronizar
           return await this.handleExistingMotvUser(userData);
         }
         
@@ -218,7 +231,7 @@ export class UserRegistrationFlowService {
         console.log('[handleExistingMotvUser] Authentication failed');
         return {
           success: false,
-          message: 'Este e-mail já está cadastrado. Você pode fazer login ou usar "Esqueci minha senha" se não lembra da senha.'
+          message: 'Este e-mail já está cadastrado. Por favor, faça login ou clique em "Esqueci minha senha" para recuperar seu acesso.'
         };
       }
       
@@ -235,7 +248,7 @@ export class UserRegistrationFlowService {
       console.log('[handleExistingMotvUser] User exists both in MOTV and locally');
       return {
         success: false,
-        message: 'Este e-mail já está cadastrado. Você pode fazer login ou usar "Esqueci minha senha" se não lembra da senha.'
+        message: 'Este e-mail já está cadastrado. Por favor, faça login ou clique em "Esqueci minha senha" para recuperar seu acesso.'
       };
     }
 
