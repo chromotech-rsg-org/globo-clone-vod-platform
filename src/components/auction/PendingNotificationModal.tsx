@@ -82,18 +82,30 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
         // Fetch full limit request details
         const {
           data: requestData,
-          error
+          error: requestError
         } = await supabase
           .from('limit_increase_requests')
-          .select(`
-            *,
-            user:profiles!limit_increase_requests_user_id_fkey(name, email)
-          `)
+          .select('*')
           .eq('id', item.id)
-          .single();
+          .maybeSingle();
         
-        if (error) throw error;
-        setSelectedLimitRequest(requestData);
+        if (requestError) throw requestError;
+        
+        if (!requestData) {
+          throw new Error('Solicitação não encontrada');
+        }
+
+        // Fetch user data separately
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('name, email')
+          .eq('id', requestData.user_id)
+          .maybeSingle();
+        
+        setSelectedLimitRequest({
+          ...requestData,
+          user: userData
+        });
         setLimitRequestModalOpen(true);
       }
     } catch (error) {
