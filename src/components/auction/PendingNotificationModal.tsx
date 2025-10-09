@@ -64,7 +64,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
         if (error) throw error;
         setSelectedBid(bidData);
         setBidModalOpen(true);
-      } else {
+      } else if (item.type === 'registration') {
         // Fetch full registration details
         const {
           data: registrationData,
@@ -73,6 +73,9 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
         if (error) throw error;
         setSelectedRegistration(registrationData);
         setRegistrationModalOpen(true);
+      } else if (item.type === 'limit_request') {
+        // Navigate to limit requests page for limit requests
+        handleGoToLimitRequests();
       }
     } catch (error) {
       console.error('Erro ao buscar detalhes:', error);
