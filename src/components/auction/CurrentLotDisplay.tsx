@@ -57,21 +57,19 @@ const CurrentLotDisplay = ({
         <CardTitle className="text-white flex items-center justify-center gap-2">
           <span>{currentLot.name}</span>
           {(() => {
-            // Lógica para leilão ao vivo
+            // Só mostrar badge se o lote está em andamento
             if (currentLot.status === 'in_progress') {
               return <Badge className="bg-green-600 text-white animate-pulse">
                 EM ANDAMENTO
               </Badge>;
             }
             
-            // Se o lote está aguardando e ainda há lotes em aberto
+            // Se o lote terminou mas ainda há lotes em aberto, não mostrar badge de encerrado
             if (currentLot.status === 'finished' && hasOpenLots) {
-              return <Badge className="bg-yellow-600 text-white">
-                AGUARDANDO
-              </Badge>;
+              return null;
             }
             
-            // Só mostrar finalizado se não houver mais lotes em aberto
+            // Só mostrar encerrado se NÃO houver mais lotes em aberto
             if (!hasOpenLots && !auction.is_live) {
               return <Badge className="bg-blue-600 text-white">
                 ENCERRADO
