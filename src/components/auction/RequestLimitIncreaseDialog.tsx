@@ -16,6 +16,7 @@ import { formatCurrency } from '@/utils/formatters';
 import { useBidLimits } from '@/hooks/useBidLimits';
 import { TrendingUp } from 'lucide-react';
 import CurrencyInput from '@/components/ui/currency-input';
+import { toast } from '@/hooks/use-toast';
 
 interface RequestLimitIncreaseDialogProps {
   open: boolean;
@@ -50,6 +51,10 @@ export function RequestLimitIncreaseDialog({
     setSubmitting(true);
     try {
       await requestLimitIncrease(userId, currentLimit, requestedLimit, reason);
+      toast({
+        title: "Solicitação enviada!",
+        description: "Sua solicitação de aumento de limite foi enviada e será analisada pelo administrador.",
+      });
       onOpenChange(false);
       setReason('');
       if (onRequestSent) {
@@ -57,6 +62,11 @@ export function RequestLimitIncreaseDialog({
       }
     } catch (error) {
       console.error('Error requesting limit increase:', error);
+      toast({
+        title: "Erro ao enviar solicitação",
+        description: "Ocorreu um erro ao enviar sua solicitação. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
