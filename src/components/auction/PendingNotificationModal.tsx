@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Gavel, Users, ArrowRight, Bell, TrendingUp } from 'lucide-react';
@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import PendingNotificationItem from './PendingNotificationItem';
 import BidDetailsModal from '@/components/admin/BidDetailsModal';
 import RegistrationDetailsModal from '@/components/admin/RegistrationDetailsModal';
+import { ReviewRequestModal } from '@/components/admin/ReviewRequestModal';
+import { useBidLimits } from '@/hooks/useBidLimits';
 interface PendingItem {
   id: string;
   type: 'bid' | 'registration' | 'limit_request';
@@ -39,8 +41,11 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   } = useToast();
   const [selectedBid, setSelectedBid] = useState<any>(null);
   const [selectedRegistration, setSelectedRegistration] = useState<any>(null);
+  const [selectedLimitRequest, setSelectedLimitRequest] = useState<any>(null);
   const [bidModalOpen, setBidModalOpen] = useState(false);
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
+  const [limitRequestModalOpen, setLimitRequestModalOpen] = useState(false);
+  const { reviewLimitRequest } = useBidLimits();
   const handleGoToBids = () => {
     navigate('/admin/lances');
     onOpenChange(false);
@@ -74,8 +79,22 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
         setSelectedRegistration(registrationData);
         setRegistrationModalOpen(true);
       } else if (item.type === 'limit_request') {
-        // Navigate to limit requests page for limit requests
-        handleGoToLimitRequests();
+        // Fetch full limit request details
+        const {
+          data: requestData,
+          error
+        } = await supabase
+          .from('limit_increase_requests')
+          .select(`
+            *,
+            user:profiles!limit_increase_requests_user_id_fkey(name, email)
+          `)
+          .eq('id', item.id)
+          .single();
+        
+        if (error) throw error;
+        setSelectedLimitRequest(requestData);
+        setLimitRequestModalOpen(true);
       }
     } catch (error) {
       console.error('Erro ao buscar detalhes:', error);
@@ -265,6 +284,40 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
       <BidDetailsModal open={bidModalOpen} onOpenChange={setBidModalOpen} bid={selectedBid} onApprove={handleBidApprove} onReject={handleBidReject} />
 
       <RegistrationDetailsModal open={registrationModalOpen} onOpenChange={setRegistrationModalOpen} registration={selectedRegistration} onApprove={handleRegistrationApprove} onReject={handleRegistrationReject} />
+
+      <Dialog open={limitRequestModalOpen} onOpenChange={setLimitRequestModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gray-900 border-green-500/30">
+          <DialogHeader>
+            <DialogTitle className="text-white">Revisão de Solicitação de Limite</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Analise os dados do cliente e aprove ou rejeite a solicitação de aumento de limite
+            </DialogDescription>
+          </DialogHeader>
+          {selectedLimitRequest && (
+            <ReviewRequestModal
+              request={selectedLimitRequest}
+              onApprove={async () => {
+                await reviewLimitRequest(selectedLimitRequest.id, true, selectedLimitRequest.requested_limit);
+                setLimitRequestModalOpen(false);
+                setSelectedLimitRequest(null);
+                toast({
+                  title: "Sucesso",
+                  description: "Solicitação aprovada com sucesso"
+                });
+              }}
+              onReject={async () => {
+                await reviewLimitRequest(selectedLimitRequest.id, false);
+                setLimitRequestModalOpen(false);
+                setSelectedLimitRequest(null);
+                toast({
+                  title: "Sucesso",
+                  description: "Solicitação rejeitada"
+                });
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>;
 };
 export default PendingNotificationModal;
