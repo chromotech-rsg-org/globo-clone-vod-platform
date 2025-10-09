@@ -57,24 +57,24 @@ const CurrentLotDisplay = ({
         <CardTitle className="text-white flex items-center justify-center gap-2">
           <span>{currentLot.name}</span>
           {(() => {
-            // Se o leilão não está ao vivo, determinar status baseado no lance vencedor
-            if (!auction.is_live) {
-              const hasWinningBid = bids.some(bid => bid.auction_item_id === currentLot.id && bid.is_winner);
-              if (hasWinningBid) {
-                return <Badge className="bg-blue-600 text-white">
-                  FINALIZADO
-                </Badge>;
-              } else {
-                return <Badge className="bg-red-600 text-white">
-                  INDISPONÍVEL
-                </Badge>;
-              }
-            }
-            
-            // Lógica original para leilão ao vivo
+            // Lógica para leilão ao vivo
             if (currentLot.status === 'in_progress') {
               return <Badge className="bg-green-600 text-white animate-pulse">
                 EM ANDAMENTO
+              </Badge>;
+            }
+            
+            // Se o lote está aguardando e ainda há lotes em aberto
+            if (currentLot.status === 'finished' && hasOpenLots) {
+              return <Badge className="bg-yellow-600 text-white">
+                AGUARDANDO
+              </Badge>;
+            }
+            
+            // Só mostrar finalizado se não houver mais lotes em aberto
+            if (!hasOpenLots && !auction.is_live) {
+              return <Badge className="bg-blue-600 text-white">
+                ENCERRADO
               </Badge>;
             }
             
@@ -139,24 +139,24 @@ const CurrentLotDisplay = ({
             </AlertDescription>
           </Alert>
 
-          {/* Verificar se não há mais lotes em aberto */}
-          {!hasOpenLots && ((auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding)) && <Alert className="bg-red-900/20 border-red-500/50">
-              <AlertCircle className="h-4 w-4 text-red-400" />
-              <AlertDescription className="text-red-300">
+          {/* Verificar se não há mais lotes em aberto - todos lotes finalizados */}
+          {!hasOpenLots && ((auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding)) && <Alert className="bg-blue-900/20 border-blue-500/50">
+              <AlertCircle className="h-4 w-4 text-blue-400" />
+              <AlertDescription className="text-blue-300">
                 <div className="text-center">
-                  <p className="font-bold">Leilão Finalizado</p>
-                  <p>Não é mais possível fazer lances ou solicitar habilitação.</p>
+                  <p className="font-bold">Todos os Lotes Encerrados</p>
+                  <p>Este leilão não possui mais lotes disponíveis.</p>
                 </div>
               </AlertDescription>
             </Alert>}
           
-          {/* Lote atual finalizado mas ainda há lotes em aberto */}
+          {/* Lote atual aguardando mas ainda há lotes em andamento */}
           {currentLot.status === 'finished' && hasOpenLots && <Alert className="bg-yellow-900/20 border-yellow-500/50">
               <Clock className="h-4 w-4 text-yellow-400" />
               <AlertDescription className="text-yellow-300">
                 <div className="text-center">
-                  <p className="font-bold">Lote Finalizado</p>
-                  <p>Aguardando próximo lote. A transmissão continua.</p>
+                  <p className="font-bold">Aguardando Próximo Lote</p>
+                  <p>A transmissão continua. Em breve será iniciado o próximo lote.</p>
                 </div>
               </AlertDescription>
             </Alert>}
