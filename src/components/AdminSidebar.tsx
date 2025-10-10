@@ -317,7 +317,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                   isActive ? 'scale-110' : 'group-hover:scale-105'
                 }`} />
                 {!isCollapsed && (
-                  <span className="ml-3 font-medium">{item.label}</span>
+                  <span className="ml-3 font-medium whitespace-nowrap">{item.label}</span>
                 )}
               </div>
               
