@@ -77,10 +77,10 @@ const AuctionHome = () => {
       {/* Content */}
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <Tabs defaultValue="live" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-8 bg-gray-900 border border-green-600/30 text-xs sm:text-sm">
+          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-8 bg-gray-900 border border-green-600/30 text-xs sm:text-sm p-0">
             <TabsTrigger 
               value="live" 
-              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2"
+              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2 rounded-none first:rounded-l-md last:rounded-r-md m-0"
             >
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
               <span className="hidden sm:inline">Leilões ao Vivo</span>
@@ -93,7 +93,7 @@ const AuctionHome = () => {
             </TabsTrigger>
             <TabsTrigger 
               value="pre-bidding" 
-              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2"
+              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2 rounded-none first:rounded-l-md last:rounded-r-md m-0"
             >
               <Target size={14} className="sm:w-4 sm:h-4" />
               <span>Pré Lance</span>
@@ -105,7 +105,7 @@ const AuctionHome = () => {
             </TabsTrigger>
             <TabsTrigger 
               value="recorded" 
-              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2"
+              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2 rounded-none first:rounded-l-md last:rounded-r-md m-0"
             >
               <Trophy size={14} className="sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Transmissões Encerradas</span>
