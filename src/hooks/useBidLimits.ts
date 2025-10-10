@@ -354,6 +354,37 @@ export const useBidLimits = () => {
     }
   };
 
+  const updateMinLimit = async (newMinLimit: number) => {
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: 'min_bid_limit',
+          value: newMinLimit.toString(),
+          description: 'Limite mínimo de lance que pode ser definido para clientes'
+        }, {
+          onConflict: 'key'
+        });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Limite mínimo atualizado",
+        description: `Limite mínimo definido para ${newMinLimit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+      });
+      
+      await fetchSystemSettings();
+    } catch (error) {
+      console.error('Error updating min limit:', error);
+      toast({
+        title: "Erro ao atualizar limite mínimo",
+        description: "Não foi possível atualizar o limite mínimo",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   const getUserLimit = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -396,6 +427,7 @@ export const useBidLimits = () => {
     requestLimitIncrease,
     reviewLimitRequest,
     getUserLimit,
-    refetch: () => Promise.all([fetchLimits(), fetchRequests(), fetchFailedAttempts()])
+    updateMinLimit,
+    refetch: () => Promise.all([fetchLimits(), fetchRequests(), fetchFailedAttempts(), fetchSystemSettings()])
   };
 };

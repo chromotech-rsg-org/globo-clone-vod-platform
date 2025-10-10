@@ -18,6 +18,7 @@ import { formatCurrency } from '@/utils/formatters';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface Client {
   id: string;
@@ -32,10 +33,12 @@ const LimitesClientes: React.FC = () => {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [minLimitDialogOpen, setMinLimitDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [loadingClients, setLoadingClients] = useState(false);
+  const [newMinLimit, setNewMinLimit] = useState(0);
   const [limitData, setLimitData] = useState({
     userId: '',
     maxLimit: 10000,
@@ -50,6 +53,7 @@ const LimitesClientes: React.FC = () => {
     systemSettings, 
     createOrUpdateLimit, 
     reviewLimitRequest,
+    updateMinLimit,
     refetch 
   } = useBidLimits();
 
@@ -102,11 +106,40 @@ const LimitesClientes: React.FC = () => {
   const handleCreateLimit = async () => {
     if (!limitData.userId) return;
     
+    // Validar se o limite não é menor que o mínimo (exceto se for ilimitado)
+    if (!limitData.isUnlimited && limitData.maxLimit < systemSettings.minLimit) {
+      toast({
+        title: "Limite inválido",
+        description: `O limite não pode ser menor que ${formatCurrency(systemSettings.minLimit)}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     await createOrUpdateLimit(limitData.userId, limitData.maxLimit, limitData.isUnlimited);
     setLimitDialogOpen(false);
     setLimitData({ userId: '', maxLimit: 10000, isUnlimited: false });
     setSelectedClient(null);
     await refetch();
+  };
+
+  const handleUpdateMinLimit = async () => {
+    if (newMinLimit <= 0) {
+      toast({
+        title: "Valor inválido",
+        description: "O limite mínimo deve ser maior que zero",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await updateMinLimit(newMinLimit);
+      setMinLimitDialogOpen(false);
+      await refetch();
+    } catch (error) {
+      // Erro já tratado no hook
+    }
   };
 
   const handleReviewRequest = async (approved: boolean, customLimit?: number) => {
@@ -285,15 +318,24 @@ const LimitesClientes: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-admin-content-bg border-admin-border">
+          <Card 
+            className="bg-admin-content-bg border-admin-border cursor-pointer hover:border-green-600/50 transition-colors"
+            onClick={() => {
+              setNewMinLimit(systemSettings.minLimit);
+              setMinLimitDialogOpen(true);
+            }}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-admin-table-text">Limite Padrão</CardTitle>
+              <CardTitle className="text-sm font-medium text-admin-table-text">Limite Mínimo</CardTitle>
               <DollarSign className="h-4 w-4 text-admin-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-400">
-                {formatCurrency(systemSettings.defaultLimit)}
+                {formatCurrency(systemSettings.minLimit)}
               </div>
+              <p className="text-xs text-admin-muted-foreground mt-1">
+                Clique para editar
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -589,6 +631,48 @@ const LimitesClientes: React.FC = () => {
               <DialogTitle className="text-admin-table-text">Revisar Solicitação de Limite</DialogTitle>
             </DialogHeader>
             {selectedRequest && <ReviewRequestModal request={selectedRequest} onApprove={() => handleReviewRequest(true, selectedRequest.requested_limit)} onReject={() => handleReviewRequest(false)} />}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para editar limite mínimo */}
+        <Dialog open={minLimitDialogOpen} onOpenChange={setMinLimitDialogOpen}>
+          <DialogContent className="bg-admin-content-bg border-admin-border max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-admin-table-text">Editar Limite Mínimo</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-admin-table-text">Limite Mínimo Global</Label>
+                <Input
+                  type="number"
+                  min={100}
+                  step={100}
+                  value={newMinLimit}
+                  onChange={(e) => setNewMinLimit(parseInt(e.target.value) || 0)}
+                  className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                />
+                <p className="text-xs text-admin-muted-foreground mt-2">
+                  Este será o valor mínimo que pode ser configurado para qualquer cliente. 
+                  Nenhum cliente poderá ter um limite menor que este valor.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setMinLimitDialogOpen(false)}
+                  className="text-admin-table-text border-admin-border"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleUpdateMinLimit}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Salvar
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
