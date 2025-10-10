@@ -57,11 +57,12 @@ const AuctionUserActions = ({
   // Verificar se a transmissão está encerrada
   const isTransmissionEnded = auction.status === 'inactive' || !auction.is_live;
   
-  // Verificar se está em modo pré-lance
-  const isPreBiddingMode = preBiddingLots.length > 0;
+  // Verificar se está em modo pré-lance (allow_pre_bidding ativo OU lotes com status 'pre_bidding')
+  const hasActivePreBidding = preBiddingLots.length > 0 && (auction.allow_pre_bidding || preBiddingLots.some(lot => lot.status === 'pre_bidding'));
+  const isPreBiddingMode = hasActivePreBidding;
   const hasMultiplePreBiddingLots = preBiddingLots.length > 1;
   
-  // Se está em modo pré-lance, permitir lances mesmo se transmissão estiver "encerrada"
+  // Se está em modo pré-lance, permitir lances/habilitação mesmo se transmissão estiver "encerrada"
   const shouldAllowBidding = isPreBiddingMode || !isTransmissionEnded;
   
   // Lote selecionado

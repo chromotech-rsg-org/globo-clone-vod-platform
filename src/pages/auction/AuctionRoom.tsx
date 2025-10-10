@@ -261,8 +261,9 @@ const recalculateNextBidValue = () => {
   const getUserStateInfo = () => {
     const hasWinner = bids.some(bid => bid.is_winner);
     const isAuctionFinished = hasWinner || auction?.status === 'inactive';
-    // Permitir ações se houver pré-lances disponíveis, mesmo se a transmissão estiver encerrada
-    const allowActionsForPreBidding = hasPreBiddingLots && auction?.allow_pre_bidding;
+    // Permitir ações se houver pré-lances disponíveis (allow_pre_bidding ativo OU lotes com status 'pre_bidding')
+    const hasActivePreBiddingLots = hasPreBiddingLots && (auction?.allow_pre_bidding || preBiddingLots.some(lot => lot.status === 'pre_bidding'));
+    const allowActionsForPreBidding = hasActivePreBiddingLots;
     
     switch (userState) {
       case 'need_registration':
