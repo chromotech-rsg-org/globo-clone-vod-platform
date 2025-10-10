@@ -150,15 +150,45 @@ const AdminAuctions = () => {
         status: 'inactive'
       };
 
-      const { error } = await supabase
+      const { data: newAuction, error } = await supabase
         .from('auctions')
-        .insert([duplicateData]);
+        .insert([duplicateData])
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Fetch original lots
+      const { data: originalLots, error: lotsError } = await supabase
+        .from('auction_items')
+        .select('*')
+        .eq('auction_id', auction.id)
+        .order('order_index', { ascending: true });
+
+      if (lotsError) throw lotsError;
+
+      // Duplicate lots if any exist
+      if (originalLots && originalLots.length > 0) {
+        const duplicateLots = originalLots.map(lot => {
+          const { id, created_at, updated_at, auction_id, ...lotData } = lot;
+          return {
+            ...lotData,
+            auction_id: newAuction.id,
+            is_current: false,
+            status: 'not_started'
+          };
+        });
+
+        const { error: lotsInsertError } = await supabase
+          .from('auction_items')
+          .insert(duplicateLots);
+
+        if (lotsInsertError) throw lotsInsertError;
+      }
+
       toast({
         title: "Sucesso",
-        description: "Leilão duplicado com sucesso"
+        description: `Leilão duplicado com ${originalLots?.length || 0} lote(s)`
       });
 
       fetchAuctions();
@@ -274,24 +304,58 @@ const AdminAuctions = () => {
     try {
       const auctionsToDuplicate = auctions.filter(a => ids.includes(a.id));
       
-      const duplicates = auctionsToDuplicate.map(auction => {
+      let totalLotsDuplicated = 0;
+
+      for (const auction of auctionsToDuplicate) {
         const { id, created_at, updated_at, ...auctionData } = auction;
-        return {
+        
+        const duplicateData = {
           ...auctionData,
           name: `${auction.name} - Cópia`,
           status: 'inactive'
         };
-      });
 
-      const { error } = await supabase
-        .from('auctions')
-        .insert(duplicates);
+        const { data: newAuction, error } = await supabase
+          .from('auctions')
+          .insert([duplicateData])
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
+
+        // Fetch and duplicate lots
+        const { data: originalLots, error: lotsError } = await supabase
+          .from('auction_items')
+          .select('*')
+          .eq('auction_id', auction.id)
+          .order('order_index', { ascending: true });
+
+        if (lotsError) throw lotsError;
+
+        if (originalLots && originalLots.length > 0) {
+          const duplicateLots = originalLots.map(lot => {
+            const { id, created_at, updated_at, auction_id, ...lotData } = lot;
+            return {
+              ...lotData,
+              auction_id: newAuction.id,
+              is_current: false,
+              status: 'not_started'
+            };
+          });
+
+          const { error: lotsInsertError } = await supabase
+            .from('auction_items')
+            .insert(duplicateLots);
+
+          if (lotsInsertError) throw lotsInsertError;
+          
+          totalLotsDuplicated += originalLots.length;
+        }
+      }
 
       toast({
         title: "Sucesso",
-        description: `${ids.length} leilão(ões) duplicado(s) com sucesso`
+        description: `${ids.length} leilão(ões) duplicado(s) com ${totalLotsDuplicated} lote(s)`
       });
 
       setSelectedIds([]);
