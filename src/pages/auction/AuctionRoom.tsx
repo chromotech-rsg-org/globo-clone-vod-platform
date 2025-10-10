@@ -261,10 +261,13 @@ const recalculateNextBidValue = () => {
   const getUserStateInfo = () => {
     const hasWinner = bids.some(bid => bid.is_winner);
     const isAuctionFinished = hasWinner || auction?.status === 'inactive';
+    // Permitir ações se houver pré-lances disponíveis, mesmo se a transmissão estiver encerrada
+    const allowActionsForPreBidding = hasPreBiddingLots && auction?.allow_pre_bidding;
     
     switch (userState) {
       case 'need_registration':
-        if (isAuctionFinished) {
+        // Se leilão está finalizado MAS tem pré-lance ativo, permitir habilitação
+        if (isAuctionFinished && !allowActionsForPreBidding) {
           return {
             title: hasWinner ? 'Leilão Finalizado' : 'Leilão Encerrado',
             description: hasWinner 
@@ -285,7 +288,9 @@ const recalculateNextBidValue = () => {
           title: wasManuallyDisabled ? 'Habilitação Desabilitada' : 'Habilitação Necessária',
           description: wasManuallyDisabled 
             ? 'Sua habilitação foi desabilitada. Você pode solicitar uma nova habilitação.' 
-            : 'Você precisa se habilitar para participar deste leilão.',
+            : allowActionsForPreBidding 
+              ? 'Habilite-se para fazer pré-lances nos lotes disponíveis.'
+              : 'Você precisa se habilitar para participar deste leilão.',
           action: wasManuallyDisabled ? 'Solicitar Nova Habilitação' : 'Solicitar Habilitação',
           variant: wasManuallyDisabled ? 'destructive' as const : 'default' as const,
           icon: wasManuallyDisabled ? AlertCircle : User,
@@ -315,7 +320,8 @@ const recalculateNextBidValue = () => {
       case 'can_bid':
         const anyPendingBid = bids.some(bid => bid.status === 'pending');
         
-        if (isAuctionFinished) {
+        // Se leilão está finalizado MAS tem pré-lance ativo, permitir lances
+        if (isAuctionFinished && !allowActionsForPreBidding) {
           return {
             title: hasWinner ? 'Leilão Finalizado' : 'Leilão Encerrado',
             description: hasWinner 
@@ -333,8 +339,10 @@ const recalculateNextBidValue = () => {
           title: 'Habilitado para Lançar',
           description: anyPendingBid && !userPendingBid 
             ? 'Há um lance em análise. Aguarde para fazer seu lance.' 
-            : 'Você está habilitado a participar do leilão.',
-          action: anyPendingBid && !userPendingBid ? 'Aguarde lance em análise' : 'Fazer Lance',
+            : allowActionsForPreBidding 
+              ? 'Você está habilitado para fazer pré-lances.'
+              : 'Você está habilitado a participar do leilão.',
+          action: anyPendingBid && !userPendingBid ? 'Aguarde lance em análise' : allowActionsForPreBidding ? 'Fazer Pré-Lance' : 'Fazer Lance',
           variant: 'default' as const,
           icon: CheckCircle,
           onClick: anyPendingBid && !userPendingBid ? null : openBidDialogComAtualizacao,
