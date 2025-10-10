@@ -562,61 +562,48 @@ const recalculateNextBidValue = () => {
             <AuctionVideoPlayer auction={auction} />
             
             {/* Botões de Ação Mobile - Logo após o vídeo */}
+            {/* Mobile: Usar componentes completos como no desktop */}
             <div className="xl:hidden mt-3 sm:mt-4">
-              {hasActiveLot && currentLot && stateInfo ? (
-                <div className="bg-black border border-green-500/50 rounded-lg p-3 sm:p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white font-semibold text-sm sm:text-base">{currentLot.name}</h3>
-                    {currentLot.status === 'in_progress' && (
-                      <Badge className="bg-green-600 text-white animate-pulse text-xs">EM ANDAMENTO</Badge>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3">
-                    <div className="bg-gray-800/50 rounded p-2 text-center">
-                      <p className="text-xs text-gray-400 mb-1">Lance Atual</p>
-                      <p className="text-sm sm:text-base font-bold text-green-400 break-words">
-                        {formatCurrency(Math.max(currentLot.current_value, ...bids.filter(bid => bid.auction_item_id === currentLot.id && bid.status === 'approved').map(bid => bid.bid_value)))}
-                      </p>
-                    </div>
-                    <div className="bg-gray-800/50 rounded p-2 text-center">
-                      <p className="text-xs text-gray-400 mb-1">Próximo Lance</p>
-                      <p className="text-sm sm:text-base font-bold text-white break-words">
-                        {formatCurrency(nextBidValue)}
-                      </p>
-                    </div>
-                  </div>
+              {!user && <GuestModeBanner />}
+              
+              {user && hasActiveLot && currentLot && stateInfo && (
+                <CurrentLotDisplay
+                  currentLot={currentLot}
+                  auction={auction}
+                  bids={bids}
+                  customIncrement={customIncrement}
+                  onIncrementChange={updateCustomIncrement}
+                  nextBidValue={nextBidValue}
+                  onBidClick={openBidDialogComAtualizacao}
+                  canBid={canBid}
+                  userState={userState}
+                  stateInfo={stateInfo}
+                  submittingBid={submittingBid}
+                  userPendingBid={userPendingBid}
+                  userId={user.id}
+                  onRequestRegistration={requestRegistration}
+                  hasOpenLots={!isAllFinished}
+                />
+              )}
 
-                  <Button 
-                    onClick={() => canBid ? openBidDialogComAtualizacao() : (stateInfo.onClick ? stateInfo.onClick() : requestRegistration())} 
-                    disabled={(currentLot.status === 'finished' || submittingBid || userState === 'registration_pending') && currentLot.status !== 'in_progress'} 
-                    className="w-full h-11 sm:h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-sm sm:text-base disabled:opacity-50" 
-                    variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
-                  >
-                    {currentLot.status === 'finished' ? 'Aguardando próximo lote' : submittingBid ? 'Enviando lance...' : canBid ? <>
-                        <Gavel className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                        <span className="truncate">{`Fazer Lance - ${formatCurrency(nextBidValue)}`}</span>
-                      </> : stateInfo.action || (userState === 'registration_pending' ? 'Habilitação em análise' : 'Indisponível')}
-                  </Button>
-                </div>
-              ) : hasPreBiddingLots && selectedPreBiddingLotId && preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) && stateInfo && userState === 'can_bid' ? (
-                <div className="bg-black border border-yellow-500/50 rounded-lg p-3 sm:p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white font-semibold text-sm sm:text-base break-words">
-                      {preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId)?.name}
-                    </h3>
-                    <Badge className="bg-yellow-600 text-white text-xs">PRÉ LANCE</Badge>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => openBidDialogComAtualizacao(selectedPreBiddingLotId)}
-                    disabled={submittingBid}
-                    className="w-full h-11 sm:h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-sm sm:text-base" 
-                  >
-                    {submittingBid ? 'Enviando...' : `Fazer Pré Lance - ${formatCurrency(nextBidValue)}`}
-                  </Button>
-                </div>
-              ) : !hasActiveLot && (!hasPreBiddingLots || !selectedPreBiddingLotId || userState !== 'can_bid') && stateInfo && (
+              {user && hasPreBiddingLots && canPreBid && !hasActiveLot && selectedPreBiddingLotId && (
+                <PreBiddingLotDisplay
+                  selectedLot={preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) || preBiddingLots[0]}
+                  preBiddingLots={preBiddingLots}
+                  auction={auction}
+                  bids={bids}
+                  customIncrement={customIncrement}
+                  onIncrementChange={updateCustomIncrement}
+                  nextBidValue={nextBidValue}
+                  onBidClick={() => openBidDialogComAtualizacao(selectedPreBiddingLotId)}
+                  onLotSelect={setSelectedPreBiddingLotId}
+                  submittingBid={submittingBid}
+                  userPendingBid={userPendingBid}
+                  userId={user.id}
+                />
+              )}
+
+              {user && !hasActiveLot && (!hasPreBiddingLots || !selectedPreBiddingLotId || !canPreBid) && stateInfo && (
                 <div className="bg-black border border-gray-600/50 rounded-lg p-3 sm:p-4">
                   <div className="text-center mb-3">
                     <h3 className="text-white font-semibold text-sm sm:text-base">{stateInfo.title}</h3>

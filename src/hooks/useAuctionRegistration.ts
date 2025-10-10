@@ -161,9 +161,7 @@ export const useAuctionRegistration = (auctionId: string) => {
       });
 
       // Atualização imediata após envio
-      setTimeout(() => {
-        fetchRegistration();
-      }, 500);
+      fetchRegistration();
 
     } catch (error: any) {
       console.error('❌ useAuctionRegistration: Erro ao solicitar habilitação:', error);
@@ -203,9 +201,7 @@ export const useAuctionRegistration = (auctionId: string) => {
       });
 
       // Atualização imediata
-      setTimeout(() => {
-        fetchRegistration();
-      }, 500);
+      fetchRegistration();
 
       return true;
     } catch (error: any) {
@@ -284,10 +280,8 @@ export const useAuctionRegistration = (auctionId: string) => {
         console.log('📝 useAuctionRegistration: Nova habilitação criada');
         setRegistration(payload.new);
       } else {
-        // Para outros eventos, atualizar com delay
-        setTimeout(() => {
-          fetchRegistration();
-        }, 1000);
+        // Para outros eventos, atualizar imediatamente também
+        fetchRegistration();
       }
     };
 

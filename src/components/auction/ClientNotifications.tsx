@@ -183,7 +183,36 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
 
     fetchNotifications();
 
-    // Real-time updates
+    // Real-time updates com handler para mostrar toasts
+    const handleRealtimeUpdate = (payload: any) => {
+      console.log('🔔 ClientNotifications: Real-time update:', payload);
+      
+      // Mostrar toast quando receber atualização
+      if (payload.eventType === 'UPDATE' && payload.new?.client_notes) {
+        const status = payload.new.status;
+        if (status === 'approved') {
+          toast({
+            title: "Atualização! ✅",
+            description: payload.new.client_notes,
+          });
+        } else if (status === 'rejected') {
+          toast({
+            title: "Atualização ❌",
+            description: payload.new.client_notes,
+            variant: "destructive",
+          });
+        }
+      } else if (payload.eventType === 'INSERT' && payload.new?.client_notes) {
+        toast({
+          title: "Nova Notificação! 🔔",
+          description: payload.new.client_notes,
+        });
+      }
+      
+      // Atualizar lista imediatamente
+      fetchNotifications();
+    };
+
     const channel = supabase
       .channel(`client-notifications-${user.id}`)
       .on('postgres_changes', {
@@ -191,25 +220,25 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
         schema: 'public',
         table: 'bids',
         filter: `user_id=eq.${user.id}`
-      }, fetchNotifications)
+      }, handleRealtimeUpdate)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'auction_registrations',
         filter: `user_id=eq.${user.id}`
-      }, fetchNotifications)
+      }, handleRealtimeUpdate)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'limit_request_responses',
         filter: `user_id=eq.${user.id}`
-      }, fetchNotifications)
+      }, handleRealtimeUpdate)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, auctionId]);
+  }, [user, auctionId, toast]);
 
   const markAsRead = async (notificationId: string, notificationType: 'bid' | 'registration' | 'limit_request') => {
     if (!user) return;

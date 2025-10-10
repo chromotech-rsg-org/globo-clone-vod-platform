@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 import { getUniqueChannelId, clearNotificationCache } from '@/utils/notificationCache';
 import { isProductionCustomDomain } from '@/utils/domainHealth';
 import { clearVercelCache } from '@/utils/vercelOptimizations';
@@ -27,6 +28,7 @@ export const usePendingNotifications = () => {
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [lastTotalCount, setLastTotalCount] = useState(0);
   const { user } = useAuth();
+  const { toast } = useToast();
   const mounted = useRef(true);
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = isProductionCustomDomain() ? 5 : 3;
@@ -263,17 +265,33 @@ export const usePendingNotifications = () => {
           // Immediate refresh for status changes - this ensures real-time updates
           fetchPendingItems();
         } else if (payload.eventType === 'INSERT') {
+          console.log('📥 usePendingNotifications: Nova solicitação detectada!');
+          
+          // Mostrar toast para admin sobre nova solicitação
+          if (payload.table === 'auction_registrations') {
+            toast({
+              title: "Nova Solicitação de Habilitação! 🔔",
+              description: "Um cliente solicitou habilitação para participar do leilão.",
+            });
+          } else if (payload.table === 'limit_increase_requests') {
+            toast({
+              title: "Nova Solicitação de Aumento de Limite! 🔔",
+              description: "Um cliente solicitou aumento do limite de lance.",
+            });
+          } else if (payload.table === 'bids') {
+            toast({
+              title: "Novo Lance Recebido! 🔔",
+              description: "Um novo lance foi recebido e está aguardando análise.",
+            });
+          }
+          
           setHasNewNotifications(true);
           setTimeout(() => setHasNewNotifications(false), 5000);
-          // Small delay for inserts to ensure data consistency
-          setTimeout(() => {
-            fetchPendingItems();
-          }, 500);
+          // Immediate refresh for inserts
+          fetchPendingItems();
         } else {
-          // For other events, still refresh but without immediate notification
-          setTimeout(() => {
-            fetchPendingItems();
-          }, 1000);
+          // For other events, still refresh immediately
+          fetchPendingItems();
         }
       }
     };
