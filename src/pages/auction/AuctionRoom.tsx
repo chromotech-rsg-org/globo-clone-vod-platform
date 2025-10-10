@@ -647,6 +647,25 @@ const recalculateNextBidValue = () => {
                 />
               </div>
             )}
+
+            {/* Status e Histórico - Visível no mobile, depois dos lotes */}
+            <div className="xl:hidden mt-4 space-y-4">
+              {/* Status Summary */}
+              <AuctionStatusSummary
+                lots={lots}
+                bids={bids}
+                currentUserId={user?.id}
+                preBiddingLots={preBiddingLots}
+              />
+
+              {/* Histórico de Lances */}
+              <BidHistoryWithFilters
+                bids={bids}
+                lots={lots}
+                loading={bidsLoading}
+                currentUserId={user?.id}
+              />
+            </div>
           </div>
 
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) - Oculta no mobile */}
