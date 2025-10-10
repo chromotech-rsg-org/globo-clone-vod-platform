@@ -61,6 +61,18 @@ const AuctionHome = () => {
 
       {/* Guest Mode Banner - show only if user is not logged in */}
       {!user && <GuestModeBanner className="container mx-auto px-4 mt-4" />}
+      
+      {/* Agroplay Button */}
+      <div className="container mx-auto px-2 sm:px-4 pt-4 pb-2">
+        <a
+          href="https://portal.agroplay.tv.br/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg"
+        >
+          <span>Acessar Agroplay</span>
+        </a>
+      </div>
 
       {/* Content */}
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">

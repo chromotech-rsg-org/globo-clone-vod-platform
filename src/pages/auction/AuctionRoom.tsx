@@ -8,7 +8,9 @@ import { useCustomIncrement } from '@/hooks/useCustomIncrement';
 import { useLotStatistics } from '@/hooks/useLotStatistics';
 import { useAuth } from '@/contexts/AuthContext';
 import { BidUserState } from '@/types/auction';
-import { User, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { User, AlertCircle, CheckCircle, Clock, Gavel } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import BidConfirmationDialog from '@/components/auction/BidConfirmationDialog';
 import { DuplicateBidModal } from '@/components/auction/DuplicateBidModal';
 import { OutbidNotificationModal } from '@/components/auction/OutbidNotificationModal';
@@ -559,6 +561,81 @@ const recalculateNextBidValue = () => {
             {/* Video Player */}
             <AuctionVideoPlayer auction={auction} />
             
+            {/* Botões de Ação Mobile - Logo após o vídeo */}
+            <div className="xl:hidden mt-3 sm:mt-4">
+              {hasActiveLot && currentLot && stateInfo ? (
+                <div className="bg-black border border-green-500/50 rounded-lg p-3 sm:p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-white font-semibold text-sm sm:text-base">{currentLot.name}</h3>
+                    {currentLot.status === 'in_progress' && (
+                      <Badge className="bg-green-600 text-white animate-pulse text-xs">EM ANDAMENTO</Badge>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3">
+                    <div className="bg-gray-800/50 rounded p-2 text-center">
+                      <p className="text-xs text-gray-400 mb-1">Lance Atual</p>
+                      <p className="text-sm sm:text-base font-bold text-green-400 break-words">
+                        {formatCurrency(Math.max(currentLot.current_value, ...bids.filter(bid => bid.auction_item_id === currentLot.id && bid.status === 'approved').map(bid => bid.bid_value)))}
+                      </p>
+                    </div>
+                    <div className="bg-gray-800/50 rounded p-2 text-center">
+                      <p className="text-xs text-gray-400 mb-1">Próximo Lance</p>
+                      <p className="text-sm sm:text-base font-bold text-white break-words">
+                        {formatCurrency(nextBidValue)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={() => canBid ? openBidDialogComAtualizacao() : (stateInfo.onClick ? stateInfo.onClick() : requestRegistration())} 
+                    disabled={(currentLot.status === 'finished' || submittingBid || userState === 'registration_pending') && currentLot.status !== 'in_progress'} 
+                    className="w-full h-11 sm:h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-sm sm:text-base disabled:opacity-50" 
+                    variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
+                  >
+                    {currentLot.status === 'finished' ? 'Aguardando próximo lote' : submittingBid ? 'Enviando lance...' : canBid ? <>
+                        <Gavel className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                        <span className="truncate">{`Fazer Lance - ${formatCurrency(nextBidValue)}`}</span>
+                      </> : stateInfo.action || (userState === 'registration_pending' ? 'Habilitação em análise' : 'Indisponível')}
+                  </Button>
+                </div>
+              ) : hasPreBiddingLots && selectedPreBiddingLotId && preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId) && stateInfo && userState === 'can_bid' ? (
+                <div className="bg-black border border-yellow-500/50 rounded-lg p-3 sm:p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-white font-semibold text-sm sm:text-base break-words">
+                      {preBiddingLots.find(lot => lot.id === selectedPreBiddingLotId)?.name}
+                    </h3>
+                    <Badge className="bg-yellow-600 text-white text-xs">PRÉ LANCE</Badge>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => openBidDialogComAtualizacao(selectedPreBiddingLotId)}
+                    disabled={submittingBid}
+                    className="w-full h-11 sm:h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-sm sm:text-base" 
+                  >
+                    {submittingBid ? 'Enviando...' : `Fazer Pré Lance - ${formatCurrency(nextBidValue)}`}
+                  </Button>
+                </div>
+              ) : !hasActiveLot && (!hasPreBiddingLots || !selectedPreBiddingLotId || userState !== 'can_bid') && stateInfo && (
+                <div className="bg-black border border-gray-600/50 rounded-lg p-3 sm:p-4">
+                  <div className="text-center mb-3">
+                    <h3 className="text-white font-semibold text-sm sm:text-base">{stateInfo.title}</h3>
+                    <p className="text-gray-400 text-xs sm:text-sm mt-1">{stateInfo.description}</p>
+                  </div>
+                  
+                  {stateInfo.action && stateInfo.onClick && (
+                    <Button 
+                      onClick={() => stateInfo.onClick && stateInfo.onClick()}
+                      disabled={stateInfo.disabled}
+                      className="w-full h-11 sm:h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-sm sm:text-base" 
+                    >
+                      {stateInfo.action}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+            
             {/* Lista de Lotes diretamente abaixo do vídeo */}
             {!lotsLoading && (
               <div className="mt-2 sm:mt-3 lg:mt-4">
@@ -572,8 +649,8 @@ const recalculateNextBidValue = () => {
             )}
           </div>
 
-          {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
-          <div className="flex flex-col space-y-3 sm:space-y-4">
+          {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) - Oculta no mobile */}
+          <div className="hidden xl:flex flex-col space-y-3 sm:space-y-4">
             {/* Display do Lote - Atual ou Pré-Lance */}
             {hasActiveLot && currentLot && stateInfo ? (
               <CurrentLotDisplay

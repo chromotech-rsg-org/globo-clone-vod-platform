@@ -264,6 +264,16 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                 <span className="ml-3 font-medium">Ver Leilões</span>
                 <ExternalLink className="h-4 w-4 ml-auto opacity-50" />
               </button>
+              <a
+                href="https://portal.agroplay.tv.br/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center w-full px-3 py-3 bg-green-600 hover:bg-green-700 text-white transition-all duration-200 rounded-lg"
+                title="Acessar Agroplay"
+              >
+                <ExternalLink className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+                <span className="ml-3 font-medium">Agroplay</span>
+              </a>
             </div>
           </div>
         )}
@@ -285,6 +295,15 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
             >
               <Gavel className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
             </button>
+            <a
+              href="https://portal.agroplay.tv.br/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center justify-center w-full px-3 py-3 bg-green-600 hover:bg-green-700 text-white transition-all duration-200 rounded-lg hover:scale-102"
+              title="Agroplay"
+            >
+              <ExternalLink className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+            </a>
           </div>
         )}
 

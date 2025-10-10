@@ -138,6 +138,14 @@ const Header = () => {
               <Gavel className="h-4 w-4" />
               <span>Leilões</span>
             </Link>
+            <a
+              href="https://portal.agroplay.tv.br/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2 transition-colors font-medium"
+            >
+              <span>Agroplay</span>
+            </a>
             {customButtonText && (
               <button
                 onClick={handleCustomButtonClick}
@@ -269,6 +277,15 @@ const Header = () => {
                 <Gavel className="h-4 w-4" />
                 <span>Leilões</span>
               </Link>
+              <a
+                href="https://portal.agroplay.tv.br/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-left bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md mt-4 flex items-center space-x-2 transition-colors font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <span>Agroplay</span>
+              </a>
               {customButtonText && (
                 <button
                   onClick={() => {
