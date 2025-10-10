@@ -172,7 +172,7 @@ const AuctionUserActions = ({
               
               <div className="rounded-lg px-4 py-2 min-w-[120px] text-center bg-gray-900">
                 <p className="text-sm text-gray-400">Incremento</p>
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-white break-words">
                   {formatCurrency(customIncrement)}
                 </p>
               </div>
@@ -189,7 +189,7 @@ const AuctionUserActions = ({
             
             <div className="text-center mt-3">
               <p className="text-sm text-gray-400">
-                Próximo lance: <span className="text-white font-medium">{formatCurrency(nextBidValue)}</span>
+                Próximo: <span className="text-white font-medium">{formatCurrency(nextBidValue)}</span>
               </p>
             </div>
           </div>
