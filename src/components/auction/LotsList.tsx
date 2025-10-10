@@ -206,19 +206,19 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
                         </div>
 
                       {/* Valores */}
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                         <div className="bg-black rounded p-2">
-                           <p className="text-xs text-gray-400 mb-1">Valor Inicial</p>
-                           <p className="text-sm font-bold text-white">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                         <div className="bg-black rounded p-2 overflow-hidden">
+                           <p className="text-[10px] sm:text-xs text-gray-400 mb-0.5 sm:mb-1 truncate">Valor Inicial</p>
+                           <p className="text-[11px] sm:text-sm font-bold text-white truncate">
                              {formatCurrency(lot.initial_value)}
                            </p>
                          </div>
                          
-                         <div className="bg-black rounded p-2">
-                           <p className="text-xs text-gray-400 mb-1">
+                         <div className="bg-black rounded p-2 overflow-hidden">
+                           <p className="text-[10px] sm:text-xs text-gray-400 mb-0.5 sm:mb-1 truncate">
                              {winner ? 'Valor Final' : 'Valor Atual'}
                            </p>
-                           <p className={`text-sm font-bold ${
+                           <p className={`text-[11px] sm:text-sm font-bold truncate ${
                              winner ? 'text-yellow-400' : 'text-green-400'
                            }`}>
                              {formatCurrency(winner?.bid_value || lot.current_value)}
@@ -226,9 +226,9 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
                          </div>
 
                          {lot.increment && (
-                           <div className="bg-black rounded p-2">
-                             <p className="text-xs text-gray-400 mb-1">Incremento</p>
-                             <p className="text-sm font-bold text-blue-400">
+                           <div className="bg-black rounded p-2 overflow-hidden">
+                             <p className="text-[10px] sm:text-xs text-gray-400 mb-0.5 sm:mb-1 truncate">Incremento</p>
+                             <p className="text-[11px] sm:text-sm font-bold text-blue-400 truncate">
                                {formatCurrency(lot.increment)}
                              </p>
                            </div>
@@ -237,9 +237,9 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
 
                       {/* Informações do Vencedor */}
                       {winner && (
-                        <div className="bg-yellow-900/20 border border-yellow-600/30 rounded p-2">
-                          <p className="text-xs text-yellow-400 mb-1">Vencedor</p>
-                          <p className="text-sm font-medium text-white">
+                        <div className="bg-yellow-900/20 border border-yellow-600/30 rounded p-2 overflow-hidden">
+                          <p className="text-[10px] sm:text-xs text-yellow-400 mb-0.5 sm:mb-1 truncate">Vencedor</p>
+                          <p className="text-xs sm:text-sm font-medium text-white truncate">
                             {isCurrentUserWinner ? 'Você' : 'Usuário'} • {formatCurrency(winner.bid_value)}
                           </p>
                         </div>
