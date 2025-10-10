@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomizations } from '@/hooks/useCustomizations';
+import { formatCpf, formatPhone } from '@/utils/formatters';
 
 interface User {
   id: string;
@@ -115,51 +116,51 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
           description: "Usuário atualizado com sucesso"
         });
       } else {
-        // Criar novo usuário
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: formData.email.trim(),
-          password: formData.password,
-          email_confirm: true,
-          user_metadata: {
-            name: formData.name.trim()
+        // Criar novo usuário via Edge Function (usa service role com segurança)
+        const { data: registerData, error: registerError } = await supabase.functions.invoke('auth-register', {
+          body: {
+            email: formData.email.trim(),
+            password: formData.password,
+            name: formData.name.trim(),
+            cpf: formData.cpf.trim() || null,
+            phone: formData.phone.trim() || null
           }
         });
 
-        if (authError) throw authError;
+        if (registerError) throw registerError;
+        if (!registerData?.success || !registerData?.user_id) {
+          throw new Error(registerData?.error || 'Falha ao criar usuário');
+        }
 
-        if (authData.user) {
-          const { error: profileError } = await supabase
+        const newUserId = registerData.user_id as string;
+
+        // Aplicar a função/role escolhida (edge cria como 'user' por padrão)
+        if (formData.role && formData.role !== 'user') {
+          const { error: roleError } = await supabase
             .from('profiles')
-            .insert({
-              id: authData.user.id,
-              name: formData.name.trim(),
-              email: formData.email.trim(),
-              cpf: formData.cpf.trim() || null,
-              phone: formData.phone.trim() || null,
-              role: formData.role
-            });
+            .update({ role: formData.role })
+            .eq('id', newUserId);
+          if (roleError) throw roleError;
+        }
 
-          if (profileError) throw profileError;
-
-          // Queue integration job for user creation
-          try {
-            const { MotvIntegrationService } = await import('@/services/motvIntegration');
-            await MotvIntegrationService.createUser(authData.user.id, {
-              name: formData.name.trim(),
-              email: formData.email.trim(),
-              cpf: formData.cpf.trim(),
-              phone: formData.phone.trim(),
-              role: formData.role
-            });
-          } catch (integrationError) {
-            console.warn('Integration creation failed:', integrationError);
-            // Don't fail the main operation for integration errors
-          }
+        // Disparar integração (não bloqueia cadastro)
+        try {
+          const { MotvIntegrationService } = await import('@/services/motvIntegration');
+          await MotvIntegrationService.createUser(newUserId, {
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            cpf: formData.cpf.trim(),
+            phone: formData.phone.trim(),
+            role: formData.role
+          });
+        } catch (integrationError) {
+          console.warn('Integration creation failed:', integrationError);
+          // Não falha a operação principal
         }
 
         toast({
-          title: "Sucesso",
-          description: "Usuário criado com sucesso"
+          title: 'Sucesso',
+          description: 'Usuário criado com sucesso'
         });
       }
 
@@ -237,7 +238,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               type="text"
               placeholder="000.000.000-00"
               value={formData.cpf}
-              onChange={(e) => setFormData(prev => ({ ...prev, cpf: e.target.value }))}
+              onChange={(e) => setFormData(prev => ({ ...prev, cpf: formatCpf(e.target.value) }))}
               className="bg-black border-gray-700 text-white placeholder:text-gray-500"
               disabled={isLoading}
             />
@@ -250,7 +251,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               type="text"
               placeholder="(00) 00000-0000"
               value={formData.phone}
-              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhone(e.target.value) }))}
               className="bg-black border-gray-700 text-white placeholder:text-gray-500"
               disabled={isLoading}
             />
