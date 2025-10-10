@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import CurrencyInput from '@/components/ui/currency-input';
 
 interface Client {
   id: string;
@@ -247,12 +248,11 @@ const LimitesClientes: React.FC = () => {
                 {!limitData.isUnlimited && (
                   <div>
                     <Label className="text-admin-table-text">Limite Máximo</Label>
-                    <Input
-                      type="number"
-                      min={systemSettings.minLimit}
+                    <CurrencyInput
                       value={limitData.maxLimit}
-                      onChange={(e) => setLimitData(prev => ({ ...prev, maxLimit: parseInt(e.target.value) || 0 }))}
+                      onChange={(value) => setLimitData(prev => ({ ...prev, maxLimit: value }))}
                       className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                      placeholder="R$ 0,00"
                     />
                     <p className="text-xs text-admin-muted-foreground mt-1">
                       Valor mínimo: {formatCurrency(systemSettings.minLimit)}
@@ -643,13 +643,11 @@ const LimitesClientes: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <Label className="text-admin-table-text">Limite Mínimo Global</Label>
-                <Input
-                  type="number"
-                  min={100}
-                  step={100}
+                <CurrencyInput
                   value={newMinLimit}
-                  onChange={(e) => setNewMinLimit(parseInt(e.target.value) || 0)}
+                  onChange={(value) => setNewMinLimit(value)}
                   className="bg-admin-content-bg border-admin-border text-admin-table-text"
+                  placeholder="R$ 0,00"
                 />
                 <p className="text-xs text-admin-muted-foreground mt-2">
                   Este será o valor mínimo que pode ser configurado para qualquer cliente. 
