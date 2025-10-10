@@ -3,9 +3,16 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Gavel, Clock, TrendingUp, Users, Award, Home, User, LogOut } from 'lucide-react';
+import { Gavel, Clock, TrendingUp, Users, Award, Home, User, LogOut, Menu } from 'lucide-react';
 import { useAuctions } from '@/hooks/useAuctions';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const AuctionPromoBanner = () => {
   const { auctions, loading } = useAuctions();
@@ -38,42 +45,111 @@ const AuctionPromoBanner = () => {
       <CardContent className="relative z-10 p-6">
         {/* Navigation Menu - only show when not on home page */}
         {!isHomePage && (
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-6">
-              <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
-                <Link to="/" className="flex items-center space-x-2">
-                  <Home className="h-4 w-4" />
-                  <span>Início</span>
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
-                <Link to="/dashboard" className="flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Dashboard</span>
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
-                <Link to="/profile" className="flex items-center space-x-2">
-                  <User className="h-4 w-4" />
-                  <span>Perfil</span>
-                </Link>
-              </Button>
+          <>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-6">
+                <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
+                  <Link to="/" className="flex items-center space-x-2">
+                    <Home className="h-4 w-4" />
+                    <span>Início</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
+                  <Link to="/dashboard" className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
+                  <Link to="/profile" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>Perfil</span>
+                  </Link>
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <a
+                  href="https://portal.agroplay.tv.br/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm shadow-lg"
+                >
+                  <span>Acessar Agroplay</span>
+                </a>
+                {user && (
+                  <span className="text-gray-300">Olá, {user.name || user.email}</span>
+                )}
+                <Button 
+                  onClick={logout}
+                  variant="ghost" 
+                  className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </Button>
+              </div>
             </div>
-            
-            <div className="flex items-center space-x-4">
+
+            {/* Mobile Navigation - Dropdown Menu */}
+            <div className="md:hidden flex items-center justify-between mb-6">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="bg-gray-800 border-green-600/30 text-white hover:bg-gray-700">
+                    <Menu className="h-4 w-4 mr-2" />
+                    <span>Menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-gray-900 border-green-600/30 text-white">
+                  <DropdownMenuItem asChild className="cursor-pointer hover:bg-gray-800">
+                    <Link to="/" className="flex items-center space-x-2 w-full">
+                      <Home className="h-4 w-4" />
+                      <span>Início</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer hover:bg-gray-800">
+                    <Link to="/dashboard" className="flex items-center space-x-2 w-full">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer hover:bg-gray-800">
+                    <Link to="/profile" className="flex items-center space-x-2 w-full">
+                      <User className="h-4 w-4" />
+                      <span>Perfil</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-green-600/30" />
+                  <DropdownMenuItem asChild className="cursor-pointer hover:bg-gray-800">
+                    <a
+                      href="https://portal.agroplay.tv.br/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 w-full text-green-400 font-medium"
+                    >
+                      <Gavel className="h-4 w-4" />
+                      <span>Acessar Agroplay</span>
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-green-600/30" />
+                  <DropdownMenuItem 
+                    onClick={logout}
+                    className="cursor-pointer text-red-400 hover:bg-red-900/20"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               {user && (
-                <span className="text-gray-300">Olá, {user.name || user.email}</span>
+                <span className="text-gray-300 text-sm truncate max-w-[150px]">
+                  {user.name || user.email}
+                </span>
               )}
-              <Button 
-                onClick={logout}
-                variant="ghost" 
-                className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
-              </Button>
             </div>
-          </div>
+          </>
         )}
 
         {/* Header Section - more compact */}
