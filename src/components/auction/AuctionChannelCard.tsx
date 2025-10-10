@@ -1,8 +1,10 @@
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Auction } from '@/types/auction';
 import { formatCurrency } from '@/utils/formatters';
-import { Play, Square, Trophy, Target, Clock, Zap, TrendingUp, Package } from 'lucide-react';
+import { Play, Square, Trophy, Target, Clock, Zap, TrendingUp, Package, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuctionStats } from '@/hooks/useAuctionStats';
 import { useAuctionItems } from '@/hooks/useAuctionItems';
@@ -12,6 +14,7 @@ interface AuctionChannelCardProps {
 }
 
 const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
+  const [isFlipped, setIsFlipped] = useState(false);
   const { stats, loading } = useAuctionStats(auction.id);
   const { items: lots, loading: lotsLoading } = useAuctionItems(auction.id);
 
@@ -93,8 +96,9 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
   const timeInfo = calculateTimeProgress();
 
   return (
-    <Link to={`/auctions/${auction.id}`} className="block h-full">
-      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-2xl sm:rounded-3xl w-full aspect-[2/3]">
+    <div className="block h-full relative">
+      <Link to={`/auctions/${auction.id}`} className="block h-full">
+        <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-2xl sm:rounded-3xl w-full aspect-[2/3]">
         {/* Background Image - Full coverage with rounded corners */}
         <div 
           className="absolute inset-0 transition-all duration-500 rounded-2xl sm:rounded-3xl overflow-hidden"
@@ -109,8 +113,20 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 group-hover:from-black/95 group-hover:via-black/80 group-hover:to-black/70 transition-all duration-500" />
         
+        {/* Mobile Flip Button - Only visible on mobile, not on hover */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsFlipped(!isFlipped);
+          }}
+          className="md:hidden absolute bottom-3 right-3 z-40 bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white p-2.5 rounded-full border border-white/30 transition-all shadow-lg"
+        >
+          {isFlipped ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+
         {/* Default visible content - Only badges */}
-        <div className="absolute inset-0 group-hover:opacity-0 transition-opacity duration-300">
+        <div className={`absolute inset-0 transition-opacity duration-300 ${isFlipped ? 'md:group-hover:opacity-0 opacity-0' : 'group-hover:opacity-0'}`}>
           {/* Live Indicator */}
           {auction.is_live && (
             <div className="absolute top-2 sm:top-3 lg:top-4 left-2 sm:left-3 lg:left-4 z-30">
@@ -144,8 +160,8 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
           )}
         </div>
 
-        {/* Hover Content - Full info */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 sm:p-3 lg:p-4 flex flex-col overflow-y-auto">
+        {/* Hover Content - Full info (desktop hover or mobile flipped) */}
+        <div className={`absolute inset-0 transition-all duration-300 p-2 sm:p-3 lg:p-4 flex flex-col overflow-y-auto ${isFlipped ? 'opacity-100 md:opacity-0 md:group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
           {/* Header with auction name */}
           <div className="text-center mb-2 sm:mb-3">
             <h3 className="text-white text-sm sm:text-base lg:text-lg font-bold leading-tight break-words">
@@ -483,6 +499,7 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
         </div>
       </Card>
     </Link>
+    </div>
   );
 };
 

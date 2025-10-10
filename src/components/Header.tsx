@@ -307,7 +307,7 @@ const Header = () => {
               
               {/* Mobile User Authentication Section */}
               {user ? (
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 pt-4 border-t border-gray-700 space-y-2">
                   <Link 
                     to="/dashboard" 
                     className="block hover:opacity-90 transition-opacity px-3 py-2 rounded-md text-left flex items-center space-x-2"
@@ -319,24 +319,28 @@ const Header = () => {
                     <BarChart3 className="h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>
-                  <Link
-                    to="/profile"
-                    className="block px-3 py-2"
-                    style={{ color: headerTextColor }}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Olá, {user.name || user.email}
-                  </Link>
+                  
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-lg px-3 py-2.5">
+                    <Link
+                      to="/profile"
+                      className="flex items-center space-x-2"
+                      style={{ color: headerTextColor }}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <User className="h-4 w-4 flex-shrink-0" />
+                      <span className="text-sm font-medium truncate">Olá, {user.name || user.email?.split('@')[0]}</span>
+                    </Link>
+                  </div>
+                  
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left hover:opacity-90 transition-opacity px-3 py-2 rounded-md flex items-center space-x-2"
+                    className="block w-full text-left hover:opacity-90 transition-opacity px-3 py-2.5 rounded-lg flex items-center justify-center space-x-2 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30"
                     style={{ 
-                      color: headerTextColor,
-                      backgroundColor: 'rgba(255,255,255,0.1)'
+                      color: '#ef4444'
                     }}
                   >
                     <LogOut className="h-4 w-4" />
-                    <span>Sair</span>
+                    <span className="font-medium">Sair</span>
                   </button>
                 </div>
               ) : (

@@ -52,10 +52,10 @@ const CurrentLotDisplay = ({
     const newIncrement = customIncrement + baseIncrement;
     onIncrementChange(newIncrement);
   };
-  return <Card className="bg-black border-green-500/50 shadow-xl h-full flex flex-col">
+  return <Card className="bg-black border-green-500/50 shadow-xl h-full flex flex-col overflow-hidden">
       <CardHeader className="text-center py-2 sm:py-3 lg:py-4 px-2 sm:px-4">
         <CardTitle className="text-white flex flex-col sm:flex-row items-center justify-center gap-2 text-sm sm:text-base lg:text-lg">
-          <span className="break-words text-center">{currentLot.name}</span>
+          <span className="break-words text-center max-w-full overflow-hidden">{currentLot.name}</span>
           {(() => {
             // Só mostrar badge se o lote está em andamento
             if (currentLot.status === 'in_progress') {
@@ -83,43 +83,43 @@ const CurrentLotDisplay = ({
       <CardContent className="space-y-2 sm:space-y-3 lg:space-y-4 flex-1 flex flex-col justify-between px-2 sm:px-4 py-3 sm:py-4">
         {/* Valores do Lote */}
         <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
-          <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 lg:p-4 text-center">
-            <p className="text-xs sm:text-sm text-gray-400 mb-1">Valor Inicial</p>
-            <p className="text-sm sm:text-base lg:text-lg font-bold text-white break-words">
+          <div className="bg-gray-800/50 rounded-lg p-1.5 sm:p-3 lg:p-4 text-center overflow-hidden">
+            <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate">Valor Inicial</p>
+            <p className="text-xs sm:text-base lg:text-lg font-bold text-white break-words overflow-hidden">
               {formatCurrency(currentLot.initial_value)}
             </p>
           </div>
-          <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 lg:p-4 text-center">
-            <p className="text-xs sm:text-sm text-gray-400 mb-1">Lance Atual</p>
-            <p className="text-base sm:text-lg lg:text-xl font-bold text-green-400 break-words">
+          <div className="bg-gray-800/50 rounded-lg p-1.5 sm:p-3 lg:p-4 text-center overflow-hidden">
+            <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate">Lance Atual</p>
+            <p className="text-sm sm:text-lg lg:text-xl font-bold text-green-400 break-words overflow-hidden">
               {formatCurrency(currentBidValue)}
             </p>
           </div>
         </div>
 
         {/* Controles de Incremento */}
-        <div className={`rounded-lg p-2 sm:p-3 lg:p-4 ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'bg-gray-900/50' : 'bg-gray-800/30'}`}>
-          <p className={`text-xs sm:text-sm mb-2 sm:mb-3 text-center ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'text-gray-500' : 'text-gray-400'}`}>Incremento de Lance</p>
-          <div className="flex items-center justify-center gap-2 sm:gap-3">
-            <Button variant="outline" size="sm" onClick={handleIncrementDecrease} disabled={customIncrement <= minIncrement || (auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) || currentLot.status === 'finished'} className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30">
+        <div className={`rounded-lg p-2 sm:p-3 lg:p-4 overflow-hidden ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'bg-gray-900/50' : 'bg-gray-800/30'}`}>
+          <p className={`text-xs sm:text-sm mb-2 sm:mb-3 text-center truncate ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'text-gray-500' : 'text-gray-400'}`}>Incremento de Lance</p>
+          <div className="flex items-center justify-center gap-1.5 sm:gap-3">
+            <Button variant="outline" size="sm" onClick={handleIncrementDecrease} disabled={customIncrement <= minIncrement || (auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) || currentLot.status === 'finished'} className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30 flex-shrink-0">
               <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
             
-            <div className={`rounded-lg px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 min-w-[100px] sm:min-w-[120px] text-center ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'bg-gray-900/80' : 'bg-gray-900'}`}>
-              <p className={`text-xs sm:text-sm ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'text-gray-500' : 'text-gray-400'}`}>Incremento</p>
-              <p className={`text-sm sm:text-base lg:text-lg font-bold break-words ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'text-gray-500' : 'text-white'}`}>
+            <div className={`rounded-lg px-1.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 min-w-[90px] sm:min-w-[120px] text-center overflow-hidden ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'bg-gray-900/80' : 'bg-gray-900'}`}>
+              <p className={`text-[10px] sm:text-sm truncate ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'text-gray-500' : 'text-gray-400'}`}>Incremento</p>
+              <p className={`text-xs sm:text-base lg:text-lg font-bold break-words overflow-hidden ${(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) ? 'text-gray-500' : 'text-white'}`}>
                 {formatCurrency(customIncrement)}
               </p>
             </div>
             
-            <Button variant="outline" size="sm" onClick={handleIncrementIncrease} disabled={(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) || currentLot.status === 'finished'} className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30">
+            <Button variant="outline" size="sm" onClick={handleIncrementIncrease} disabled={(auction.status === 'inactive' && !auction.allow_pre_bidding) || (!auction.is_live && !auction.allow_pre_bidding) || currentLot.status === 'finished'} className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-gray-600 hover:border-gray-500 disabled:opacity-30 flex-shrink-0">
               <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
           
-          <div className="text-center mt-2 sm:mt-3">
-            <p className="text-xs sm:text-sm text-gray-400">
-              Próximo lance: <span className="text-white font-medium break-words">{formatCurrency(nextBidValue)}</span>
+          <div className="text-center mt-2 sm:mt-3 overflow-hidden">
+            <p className="text-xs sm:text-sm text-gray-400 break-words">
+              Próximo lance: <span className="text-white font-medium">{formatCurrency(nextBidValue)}</span>
             </p>
           </div>
         </div>
@@ -182,13 +182,21 @@ const CurrentLotDisplay = ({
           <Button 
             onClick={canBid ? onBidClick : stateInfo.onClick || onRequestRegistration} 
             disabled={(currentLot.status === 'finished' || submittingBid || userState === 'registration_pending') && currentLot.status !== 'in_progress'} 
-            className="w-full h-10 sm:h-11 lg:h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-sm sm:text-base lg:text-lg disabled:opacity-50" 
+            className="w-full h-10 sm:h-11 lg:h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-xs sm:text-base lg:text-lg disabled:opacity-50 overflow-hidden" 
             variant={stateInfo.variant === 'destructive' ? 'outline' : 'default'}
           >
-            {currentLot.status === 'finished' ? 'Aguardando próximo lote' : submittingBid ? 'Enviando lance...' : canBid ? <>
-                <Gavel className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                <span className="truncate">{`Fazer Lance - ${formatCurrency(nextBidValue)}`}</span>
-              </> : stateInfo.action || (userState === 'registration_pending' ? 'Habilitação em análise' : 'Indisponível')}
+            {currentLot.status === 'finished' ? (
+              <span className="truncate">Aguardando próximo lote</span>
+            ) : submittingBid ? (
+              <span className="truncate">Enviando lance...</span>
+            ) : canBid ? (
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 w-full overflow-hidden">
+                <Gavel className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="truncate text-xs sm:text-base">{`Lance - ${formatCurrency(nextBidValue)}`}</span>
+              </div>
+            ) : (
+              <span className="truncate">{stateInfo.action || (userState === 'registration_pending' ? 'Habilitação em análise' : 'Indisponível')}</span>
+            )}
           </Button>
         )}
       </CardContent>
