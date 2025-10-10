@@ -10,6 +10,10 @@ interface DashboardStats {
   pending_registrations: number;
   documents_count: number;
   limit_requests_pending: number;
+  live_auctions: number;
+  lots_in_progress: number;
+  lots_not_started: number;
+  pre_bidding_auctions: number;
 }
 
 interface FinancialStats {
@@ -43,7 +47,11 @@ export const useDashboardStats = () => {
         { count: activeAuctions },
         { count: pendingRegistrations },
         { count: documentsCount },
-        { count: limitRequestsPending }
+        { count: limitRequestsPending },
+        { count: liveAuctions },
+        { count: lotsInProgress },
+        { count: lotsNotStarted },
+        { count: preBiddingAuctions }
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('auctions').select('*', { count: 'exact', head: true }),
@@ -51,7 +59,11 @@ export const useDashboardStats = () => {
         supabase.from('auctions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('auction_registrations').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('client_documents').select('*', { count: 'exact', head: true }),
-        supabase.from('limit_increase_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+        supabase.from('limit_increase_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('auctions').select('*', { count: 'exact', head: true }).eq('is_live', true),
+        supabase.from('auction_items').select('*', { count: 'exact', head: true }).eq('status', 'in_progress'),
+        supabase.from('auction_items').select('*', { count: 'exact', head: true }).eq('status', 'not_started'),
+        supabase.from('auctions').select('*', { count: 'exact', head: true }).eq('allow_pre_bidding', true)
       ]);
 
       // Calculate total revenue
@@ -71,7 +83,11 @@ export const useDashboardStats = () => {
         active_auctions: activeAuctions || 0,
         pending_registrations: pendingRegistrations || 0,
         documents_count: documentsCount || 0,
-        limit_requests_pending: limitRequestsPending || 0
+        limit_requests_pending: limitRequestsPending || 0,
+        live_auctions: liveAuctions || 0,
+        lots_in_progress: lotsInProgress || 0,
+        lots_not_started: lotsNotStarted || 0,
+        pre_bidding_auctions: preBiddingAuctions || 0
       });
     } catch (err) {
       console.error('Error fetching general stats:', err);

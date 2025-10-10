@@ -102,13 +102,31 @@ const DashboardFinanceiro: React.FC = () => {
                     </Badge>
                   </div>
                   <div className="flex justify-between text-admin-table-text">
-                    <span>Registros Pendentes:</span>
-                    <Badge variant="outline" className="text-yellow-400 border-yellow-400">
-                      {generalStats?.pending_registrations || 0}
+                    <span>Leilões ao Vivo:</span>
+                    <Badge variant="outline" className="text-red-400 border-red-400">
+                      {generalStats?.live_auctions || 0}
                     </Badge>
                   </div>
                   <div className="flex justify-between text-admin-table-text">
-                    <span>Solicitações de Limite:</span>
+                    <span>Pré Lance Ativos:</span>
+                    <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+                      {generalStats?.pre_bidding_auctions || 0}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between text-admin-table-text">
+                    <span>Lotes em Andamento:</span>
+                    <Badge variant="outline" className="text-blue-400 border-blue-400">
+                      {generalStats?.lots_in_progress || 0}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between text-admin-table-text">
+                    <span>Lotes Não Iniciados:</span>
+                    <Badge variant="outline" className="text-gray-400 border-gray-400">
+                      {generalStats?.lots_not_started || 0}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between text-admin-table-text">
+                    <span>Limites Pendentes:</span>
                     <Badge variant="outline" className="text-orange-400 border-orange-400">
                       {generalStats?.limit_requests_pending || 0}
                     </Badge>
