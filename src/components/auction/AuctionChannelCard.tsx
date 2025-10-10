@@ -111,7 +111,11 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
         />
         
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 group-hover:from-black/95 group-hover:via-black/80 group-hover:to-black/70 transition-all duration-500" />
+        <div className={`absolute inset-0 transition-all duration-500 ${
+          isFlipped 
+            ? 'bg-black/90 md:bg-gradient-to-t md:from-black/40 md:via-transparent md:to-black/20 md:group-hover:from-black/95 md:group-hover:via-black/80 md:group-hover:to-black/70' 
+            : 'bg-gradient-to-t from-black/40 via-transparent to-black/20 group-hover:from-black/95 group-hover:via-black/80 group-hover:to-black/70'
+        }`} />
         
         {/* Mobile Flip Button - Only visible on mobile, not on hover */}
         <button
