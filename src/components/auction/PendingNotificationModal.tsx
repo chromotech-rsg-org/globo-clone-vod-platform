@@ -45,7 +45,9 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
   const [bidModalOpen, setBidModalOpen] = useState(false);
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
   const [limitRequestModalOpen, setLimitRequestModalOpen] = useState(false);
-  const { reviewLimitRequest } = useBidLimits();
+  const {
+    reviewLimitRequest
+  } = useBidLimits();
   const handleGoToBids = () => {
     navigate('/admin/lances');
     onOpenChange(false);
@@ -83,25 +85,16 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
         const {
           data: requestData,
           error: requestError
-        } = await supabase
-          .from('limit_increase_requests')
-          .select('*')
-          .eq('id', item.id)
-          .maybeSingle();
-        
+        } = await supabase.from('limit_increase_requests').select('*').eq('id', item.id).maybeSingle();
         if (requestError) throw requestError;
-        
         if (!requestData) {
           throw new Error('Solicitação não encontrada');
         }
 
         // Fetch user data separately
-        const { data: userData } = await supabase
-          .from('profiles')
-          .select('name, email')
-          .eq('id', requestData.user_id)
-          .maybeSingle();
-        
+        const {
+          data: userData
+        } = await supabase.from('profiles').select('name, email').eq('id', requestData.user_id).maybeSingle();
         setSelectedLimitRequest({
           ...requestData,
           user: userData
@@ -260,7 +253,7 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
                   <Users className="h-5 w-5" />
                   Habilitações Pendentes ({pendingRegistrations.length})
                 </h3>
-                {pendingRegistrations.length > 0 && <Button onClick={handleGoToRegistrations} variant="outline" size="sm" className="border-admin-border text-slate-950">
+                {pendingRegistrations.length > 0 && <Button onClick={handleGoToRegistrations} variant="outline" size="sm" className="border-admin-border text-slate-50">
                     Ver Todas <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>}
               </div>
@@ -305,29 +298,23 @@ const PendingNotificationModal: React.FC<PendingNotificationModalProps> = ({
               Analise os dados do cliente e aprove ou rejeite a solicitação de aumento de limite
             </DialogDescription>
           </DialogHeader>
-          {selectedLimitRequest && (
-            <ReviewRequestModal
-              request={selectedLimitRequest}
-              onApprove={async () => {
-                await reviewLimitRequest(selectedLimitRequest.id, true, selectedLimitRequest.requested_limit);
-                setLimitRequestModalOpen(false);
-                setSelectedLimitRequest(null);
-                toast({
-                  title: "Sucesso",
-                  description: "Solicitação aprovada com sucesso"
-                });
-              }}
-              onReject={async () => {
-                await reviewLimitRequest(selectedLimitRequest.id, false);
-                setLimitRequestModalOpen(false);
-                setSelectedLimitRequest(null);
-                toast({
-                  title: "Sucesso",
-                  description: "Solicitação rejeitada"
-                });
-              }}
-            />
-          )}
+          {selectedLimitRequest && <ReviewRequestModal request={selectedLimitRequest} onApprove={async () => {
+          await reviewLimitRequest(selectedLimitRequest.id, true, selectedLimitRequest.requested_limit);
+          setLimitRequestModalOpen(false);
+          setSelectedLimitRequest(null);
+          toast({
+            title: "Sucesso",
+            description: "Solicitação aprovada com sucesso"
+          });
+        }} onReject={async () => {
+          await reviewLimitRequest(selectedLimitRequest.id, false);
+          setLimitRequestModalOpen(false);
+          setSelectedLimitRequest(null);
+          toast({
+            title: "Sucesso",
+            description: "Solicitação rejeitada"
+          });
+        }} />}
         </DialogContent>
       </Dialog>
     </>;
