@@ -19,7 +19,7 @@ const AuctionHome = () => {
   const { user } = useAuth();
 
   const liveAuctions = auctions.filter(auction => auction.is_live);
-  const recordedAuctions = auctions.filter(auction => !auction.is_live);
+  const recordedAuctions = auctions.filter(auction => !auction.is_live && !auction.allow_pre_bidding);
   const preBiddingAuctions = auctions.filter(auction => auction.allow_pre_bidding && !auction.is_live);
 
   console.log('🏠 AuctionHome: Current state:', {
