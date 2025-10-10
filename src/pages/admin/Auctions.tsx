@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Trash2, Plus, Search, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +14,7 @@ import { Auction } from '@/types/auction';
 import DataTablePagination from '@/components/admin/DataTablePagination';
 import AuctionEditModal from '@/components/admin/AuctionEditModal';
 import AuctionCreateModal from '@/components/admin/AuctionCreateModal';
+import BulkActionsToolbar from '@/components/admin/BulkActionsToolbar';
 
 const AdminAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -29,6 +31,7 @@ const AdminAuctions = () => {
   const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -223,7 +226,89 @@ const AdminAuctions = () => {
     setInputValue(e.target.value);
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(auctions.map(a => a.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds([...selectedIds, id]);
+    } else {
+      setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
+    }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    if (!confirm(`Tem certeza que deseja excluir ${ids.length} leilão(ões)?`)) return;
+    
+    try {
+      const { error } = await supabase
+        .from('auctions')
+        .delete()
+        .in('id', ids);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: `${ids.length} leilão(ões) excluído(s) com sucesso`
+      });
+      
+      setSelectedIds([]);
+      fetchAuctions();
+    } catch (error) {
+      console.error('Erro ao excluir em massa:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir os leilões selecionados",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkDuplicate = async (ids: string[]) => {
+    try {
+      const auctionsToDuplicate = auctions.filter(a => ids.includes(a.id));
+      
+      const duplicates = auctionsToDuplicate.map(auction => {
+        const { id, created_at, updated_at, ...auctionData } = auction;
+        return {
+          ...auctionData,
+          name: `${auction.name} - Cópia`,
+          status: 'inactive'
+        };
+      });
+
+      const { error } = await supabase
+        .from('auctions')
+        .insert(duplicates);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `${ids.length} leilão(ões) duplicado(s) com sucesso`
+      });
+
+      setSelectedIds([]);
+      fetchAuctions();
+    } catch (error: any) {
+      console.error('Erro ao duplicar em massa:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível duplicar os leilões selecionados",
+        variant: "destructive"
+      });
+    }
+  };
+
   const totalPages = Math.ceil(totalItems / pageSize);
+  const allSelected = auctions.length > 0 && selectedIds.length === auctions.length;
+  const someSelected = selectedIds.length > 0 && selectedIds.length < auctions.length;
 
   if (loading) {
     return <div className="p-6">
@@ -258,43 +343,39 @@ const AdminAuctions = () => {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="bg-admin-muted border-admin-border">
-            <TabsTrigger value="all" className="text-admin-muted-foreground data-[state=active]:text-admin-primary-foreground">
-              Todos os Leilões
-            </TabsTrigger>
-            <TabsTrigger value="pre-bidding" className="text-admin-muted-foreground data-[state=active]:text-admin-primary-foreground">
-              Pré Lance
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-shrink-0">
+            <TabsList className="bg-admin-muted border-admin-border">
+              <TabsTrigger value="all" className="text-admin-muted-foreground data-[state=active]:text-admin-primary-foreground">
+                Todos os Leilões
+              </TabsTrigger>
+              <TabsTrigger value="pre-bidding" className="text-admin-muted-foreground data-[state=active]:text-admin-primary-foreground">
+                Pré Lance
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="flex flex-col">
-            <label className="text-sm text-admin-muted-foreground mb-1">Status</label>
+          <div className="flex flex-wrap gap-3 flex-1">
             <select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded"
+              className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded text-sm min-w-[140px]"
             >
               <option value="all">Todos os Status</option>
               <option value="active">Ativo</option>
               <option value="inactive">Inativo</option>
             </select>
-          </div>
-          
-          <div className="flex flex-col">
-            <label className="text-sm text-admin-muted-foreground mb-1">Transmissão</label>
+            
             <select
               value={liveFilter}
               onChange={(e) => {
                 setLiveFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded"
+              className="px-3 py-2 bg-admin-input border border-admin-border text-admin-foreground rounded text-sm min-w-[120px]"
             >
               <option value="all">Todos</option>
               <option value="live">Ao Vivo</option>
@@ -303,12 +384,43 @@ const AdminAuctions = () => {
           </div>
         </div>
 
+        <BulkActionsToolbar
+          selectedIds={selectedIds}
+          totalSelected={selectedIds.length}
+          onClearSelection={() => setSelectedIds([])}
+          table="auctions"
+          customActions={[
+            {
+              key: 'duplicate',
+              label: 'Duplicar Selecionados',
+              icon: Copy,
+              action: handleBulkDuplicate
+            },
+            {
+              key: 'delete',
+              label: 'Excluir Selecionados',
+              icon: Trash2,
+              variant: 'destructive',
+              action: handleBulkDelete
+            }
+          ]}
+          exportColumns={['name', 'status', 'is_live', 'start_date', 'end_date']}
+          exportFileName="leiloes"
+        />
+
         {/* Auctions Table */}
         <Card className="bg-black border-green-600/30">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-700">
+                  <TableHead className="text-gray-300 w-12">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Selecionar todos"
+                    />
+                  </TableHead>
                   <TableHead className="text-gray-300">Nome</TableHead>
                   <TableHead className="text-gray-300">Status</TableHead>
                   <TableHead className="text-gray-300">Ao Vivo</TableHead>
@@ -321,6 +433,13 @@ const AdminAuctions = () => {
               <TableBody>
                 {auctions.map(auction => (
                   <TableRow key={auction.id} className="border-gray-700">
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(auction.id)}
+                        onCheckedChange={(checked) => handleSelectOne(auction.id, checked as boolean)}
+                        aria-label={`Selecionar ${auction.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="text-white">{auction.name}</TableCell>
                      <TableCell>
                        <div className="flex flex-col gap-1">
