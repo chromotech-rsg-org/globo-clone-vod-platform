@@ -64,7 +64,7 @@ const BidConfirmationDialog = ({
                 <p className="font-medium text-green-300 mb-1">
                   Atenção
                 </p>
-                <p className="text-green-200">Seu lance será enviado. Confirme se o valor está correto, pois o arremate pode ocorrer por nesse valor.</p>
+                <p className="text-green-200">Seu lance será enviado. Confirme se o valor está correto, pois o arremate pode ocorrer nesse valor.</p>
               </div>
             </div>
           </div>
