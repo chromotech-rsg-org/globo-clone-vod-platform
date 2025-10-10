@@ -55,18 +55,18 @@ const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
             </div>
           )}
         </div>
-        <div className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-white mb-2">
+        <div className="p-3 sm:p-4 lg:p-6">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-3 mb-3 sm:mb-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-2 break-words">
                 {auction.name}
               </h1>
               {auction.description && (
                 <div className="space-y-2">
                   <p 
-                    className={`text-gray-300 leading-relaxed cursor-pointer transition-all duration-200 ${
+                    className={`text-sm sm:text-base text-gray-300 leading-relaxed cursor-pointer transition-all duration-200 break-words ${
                       !isDescriptionExpanded 
-                        ? 'line-clamp-1 hover:text-white' 
+                        ? 'line-clamp-2 sm:line-clamp-1 hover:text-white' 
                         : ''
                     }`}
                     onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
@@ -78,16 +78,16 @@ const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                      className="p-0 h-auto text-gray-400 hover:text-white text-sm"
+                      className="p-0 h-auto text-gray-400 hover:text-white text-xs sm:text-sm"
                     >
                       {isDescriptionExpanded ? (
                         <>
-                          <ChevronUp className="h-4 w-4 mr-1" />
+                          <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Mostrar menos
                         </>
                       ) : (
                         <>
-                          <ChevronDown className="h-4 w-4 mr-1" />
+                          <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Mostrar mais
                         </>
                       )}
@@ -96,15 +96,15 @@ const AuctionVideoPlayer = ({ auction }: AuctionVideoPlayerProps) => {
                 </div>
               )}
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex sm:flex-col gap-2 flex-shrink-0">
               <Badge 
                 variant={auction.is_live ? "default" : "secondary"}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 text-xs whitespace-nowrap"
               >
-                {auction.is_live ? <Play size={12} /> : <Square size={12} />}
+                {auction.is_live ? <Play size={10} className="sm:w-3 sm:h-3" /> : <Square size={10} className="sm:w-3 sm:h-3" />}
                 {auction.is_live ? 'AO VIVO' : 'GRAVADO'}
               </Badge>
-              <Badge variant="outline" className="border-green-600/30 text-green-400">
+              <Badge variant="outline" className="border-green-600/30 text-green-400 text-xs whitespace-nowrap">
                 {auction.auction_type === 'rural' ? 'Rural' : 'Judicial'}
               </Badge>
             </div>

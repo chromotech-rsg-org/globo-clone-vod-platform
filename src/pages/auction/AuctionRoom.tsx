@@ -549,11 +549,11 @@ const recalculateNextBidValue = () => {
       {/* Guest Mode Banner - show only if user is not logged in */}
       {!user && <GuestModeBanner className="container mx-auto px-4 mb-4" />}
       
-      <div className="p-6 space-y-6 bg-black">
+      <div className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6 bg-black">
         {/* Header do Leilão */}
         <AuctionHeader auction={auction} lots={lots} />
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {/* Coluna Principal - Transmissão (2/3 da tela) */}
           <div className="xl:col-span-2 space-y-0">
             {/* Video Player */}
@@ -561,7 +561,7 @@ const recalculateNextBidValue = () => {
             
             {/* Lista de Lotes diretamente abaixo do vídeo */}
             {!lotsLoading && (
-              <div className="mt-4">
+              <div className="mt-2 sm:mt-3 lg:mt-4">
                 <LotsList
                   lots={lots}
                   bids={bids}
@@ -573,7 +573,7 @@ const recalculateNextBidValue = () => {
           </div>
 
           {/* Coluna Lateral - Lote Atual e Ações (1/3 da tela) */}
-          <div className="flex flex-col space-y-4" style={{ minHeight: 'calc(56.25vw * 2/3 + 200px)' }}>
+          <div className="flex flex-col space-y-3 sm:space-y-4">
             {/* Display do Lote - Atual ou Pré-Lance */}
             {hasActiveLot && currentLot && stateInfo ? (
               <CurrentLotDisplay
@@ -701,7 +701,7 @@ const recalculateNextBidValue = () => {
 )}
 
       {/* Client Notifications - Fixed position */}
-      <div className="fixed top-20 right-4 z-40">
+      <div className="fixed top-16 sm:top-20 right-2 sm:right-4 z-40 max-w-[calc(100vw-1rem)] sm:max-w-none">
         <ClientNotifications auctionId={id} />
       </div>
     </div>

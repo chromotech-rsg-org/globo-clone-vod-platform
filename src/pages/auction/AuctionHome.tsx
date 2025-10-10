@@ -63,41 +63,43 @@ const AuctionHome = () => {
       {!user && <GuestModeBanner className="container mx-auto px-4 mt-4" />}
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <Tabs defaultValue="live" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-gray-900 border border-green-600/30">
+          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-8 bg-gray-900 border border-green-600/30 text-xs sm:text-sm">
             <TabsTrigger 
               value="live" 
-              className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2"
             >
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              Leilões ao Vivo
+              <span className="hidden sm:inline">Leilões ao Vivo</span>
+              <span className="sm:hidden">Ao Vivo</span>
               {liveAuctions.length > 0 && (
-                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2">
+                <span className="bg-red-500 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ml-1">
                   {liveAuctions.length}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="pre-bidding" 
-              className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2"
             >
-              <Target size={16} />
-              Pré Lance
+              <Target size={14} className="sm:w-4 sm:h-4" />
+              <span>Pré Lance</span>
               {preBiddingAuctions.length > 0 && (
-                <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full ml-2">
+                <span className="bg-yellow-500 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ml-1">
                   {preBiddingAuctions.length}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="recorded" 
-              className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+              className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 px-2 py-2"
             >
-              <Trophy size={16} />
-              Transmissões Encerradas
+              <Trophy size={14} className="sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Transmissões Encerradas</span>
+              <span className="sm:hidden">Encerradas</span>
               {recordedAuctions.length > 0 && (
-                <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full ml-2">
+                <span className="bg-gray-600 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ml-1">
                   {recordedAuctions.length}
                 </span>
               )}
@@ -120,18 +122,9 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2 sm:px-4">
                 {liveAuctions.map((auction) => (
-                  <div 
-                    key={auction.id} 
-                    className="flex-shrink-0" 
-                    style={{ 
-                      width: 'calc((100% - 2.4cm) / 3)', 
-                      minWidth: '280px',
-                      maxWidth: '420px',
-                      marginBottom: '1cm'
-                    }}
-                  >
+                  <div key={auction.id} className="w-full">
                     <AuctionChannelCard auction={auction} />
                   </div>
                 ))}
@@ -155,18 +148,9 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2 sm:px-4">
                 {preBiddingAuctions.map((auction) => (
-                  <div 
-                    key={auction.id} 
-                    className="flex-shrink-0" 
-                    style={{ 
-                      width: 'calc((100% - 2.4cm) / 3)', 
-                      minWidth: '280px',
-                      maxWidth: '420px',
-                      marginBottom: '1cm'
-                    }}
-                  >
+                  <div key={auction.id} className="w-full">
                     <AuctionChannelCard auction={auction} />
                   </div>
                 ))}
@@ -190,18 +174,9 @@ const AuctionHome = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="flex flex-wrap justify-center gap-[0.8cm] px-[0.5cm]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2 sm:px-4">
                 {recordedAuctions.map((auction) => (
-                  <div 
-                    key={auction.id} 
-                    className="flex-shrink-0" 
-                    style={{ 
-                      width: 'calc((100% - 2.4cm) / 3)', 
-                      minWidth: '280px',
-                      maxWidth: '420px',
-                      marginBottom: '1cm'
-                    }}
-                  >
+                  <div key={auction.id} className="w-full">
                     <AuctionChannelCard auction={auction} />
                   </div>
                 ))}

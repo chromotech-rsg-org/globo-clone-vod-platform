@@ -94,10 +94,10 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
 
   return (
     <Link to={`/auctions/${auction.id}`} className="block h-full">
-      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-3xl w-full aspect-[2/3]">
+      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/50 hover:border-primary/50 rounded-2xl sm:rounded-3xl w-full aspect-[2/3]">
         {/* Background Image - Full coverage with rounded corners */}
         <div 
-          className="absolute inset-0 transition-all duration-500 rounded-3xl overflow-hidden"
+          className="absolute inset-0 transition-all duration-500 rounded-2xl sm:rounded-3xl overflow-hidden"
           style={{
             backgroundImage: `url('${auction.image_url || '/assets/auction-channel-bg-mobile.jpg'}')`,
             backgroundSize: 'cover',
@@ -113,69 +113,71 @@ const AuctionChannelCard = ({ auction }: AuctionChannelCardProps) => {
         <div className="absolute inset-0 group-hover:opacity-0 transition-opacity duration-300">
           {/* Live Indicator */}
           {auction.is_live && (
-            <div className="absolute top-4 left-4 z-30">
-              <Badge className="bg-red-500 text-white animate-pulse border-red-400 text-sm px-3 py-1.5 flex items-center gap-2 shadow-lg">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                AO VIVO
+            <div className="absolute top-2 sm:top-3 lg:top-4 left-2 sm:left-3 lg:left-4 z-30">
+              <Badge className="bg-red-500 text-white animate-pulse border-red-400 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 flex items-center gap-1.5 sm:gap-2 shadow-lg">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse"></div>
+                <span className="hidden sm:inline">AO VIVO</span>
+                <span className="sm:hidden">VIVO</span>
               </Badge>
             </div>
           )}
 
           {/* Winner Badge */}
           {hasWinner && (
-            <div className="absolute top-4 right-4 z-30">
-              <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white flex items-center gap-2 text-sm px-3 py-1.5 shadow-lg">
-                <Trophy size={16} />
-                FINALIZADO
+            <div className="absolute top-2 sm:top-3 lg:top-4 right-2 sm:right-3 lg:right-4 z-30">
+              <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 shadow-lg">
+                <Trophy size={12} className="sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">FINALIZADO</span>
+                <span className="sm:hidden">FIM</span>
               </Badge>
             </div>
           )}
 
           {/* Pre-bidding Badge */}
           {auction.allow_pre_bidding && !hasWinner && (
-            <div className="absolute top-4 right-4 z-30">
-              <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white flex items-center gap-2 text-sm px-3 py-1.5 shadow-lg">
-                <Target size={16} />
-                PRÉ LANCE
+            <div className="absolute top-2 sm:top-3 lg:top-4 right-2 sm:right-3 lg:right-4 z-30">
+              <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 shadow-lg">
+                <Target size={12} className="sm:w-4 sm:h-4" />
+                <span>PRÉ LANCE</span>
               </Badge>
             </div>
           )}
         </div>
 
         {/* Hover Content - Full info */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 p-4 flex flex-col">
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 sm:p-3 lg:p-4 flex flex-col overflow-y-auto">
           {/* Header with auction name */}
-          <div className="text-center mb-3">
-            <h3 className="text-white text-lg font-bold leading-tight">
+          <div className="text-center mb-2 sm:mb-3">
+            <h3 className="text-white text-sm sm:text-base lg:text-lg font-bold leading-tight break-words">
               {auction.name}
             </h3>
           </div>
 
           {/* Comprehensive Lot Information */}
-          <div className="flex-1 space-y-2 mb-3">
+          <div className="flex-1 space-y-1.5 sm:space-y-2 mb-2 sm:mb-3 overflow-y-auto">
             {/* Lot Summary */}
-            <div className="bg-black/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-              <div className="flex items-center gap-2 mb-2">
-                <Package size={14} className="text-blue-400" />
-                <span className="text-white font-semibold text-sm">Resumo dos Lotes</span>
+            <div className="bg-black/60 backdrop-blur-sm rounded-lg p-2 sm:p-2.5 lg:p-3 border border-white/20">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                <Package size={12} className="sm:w-3.5 sm:h-3.5 text-blue-400 flex-shrink-0" />
+                <span className="text-white font-semibold text-xs sm:text-sm">Resumo dos Lotes</span>
               </div>
               
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center">
                 <div>
-                  <div className="text-blue-400 font-bold text-base">{totalLots}</div>
-                  <div className="text-xs text-gray-300">Total</div>
+                  <div className="text-blue-400 font-bold text-sm sm:text-base">{totalLots}</div>
+                  <div className="text-[10px] sm:text-xs text-gray-300">Total</div>
                 </div>
                 <div>
-                  <div className="text-green-400 font-bold text-base">
+                  <div className="text-green-400 font-bold text-sm sm:text-base">
                     {lots?.filter(lot => lot.status === 'finished').length || 0}
                   </div>
-                  <div className="text-xs text-gray-300">Finalizados</div>
+                  <div className="text-[10px] sm:text-xs text-gray-300 break-words">Finalizados</div>
                 </div>
                 <div>
-                  <div className="text-yellow-400 font-bold text-base">
+                  <div className="text-yellow-400 font-bold text-sm sm:text-base">
                     {lots?.filter(lot => lot.status === 'in_progress').length || 0}
                   </div>
-                  <div className="text-xs text-gray-300">Em Andamento</div>
+                  <div className="text-[10px] sm:text-xs text-gray-300 break-words">Andamento</div>
                 </div>
               </div>
             </div>
