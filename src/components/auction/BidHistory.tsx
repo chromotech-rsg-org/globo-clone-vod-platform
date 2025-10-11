@@ -134,7 +134,7 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                     <p className="font-medium text-white text-sm truncate">
                       {bid.user_id === currentUserId 
                         ? `${bid.user_name || 'Você'} (Você)`
-                        : 'Usuário'
+                        : 'Investidor'
                       }
                     </p>
                     <p className="text-xs text-gray-400">

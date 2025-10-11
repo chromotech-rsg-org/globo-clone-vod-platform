@@ -241,111 +241,124 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
                         <div className="bg-yellow-900/20 border border-yellow-600/30 rounded p-2 overflow-hidden">
                           <p className="text-xs text-yellow-400 mb-1 truncate">Vencedor</p>
                           <p className="text-sm font-medium text-white truncate">
-                            {isCurrentUserWinner ? 'Você' : 'Usuário'} • {formatCurrency(winner.bid_value)}
+                            {isCurrentUserWinner ? 'Você' : 'Investidor'} • {formatCurrency(winner.bid_value)}
                           </p>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Layout Mobile - Vertical */}
+                  {/* Layout Mobile - Vertical com cards clicáveis */}
                   <div className="md:hidden space-y-3">
-                    {/* Título */}
-                    <h4 className="text-base font-bold text-white">{lot.name}</h4>
-
-                    {/* Imagem */}
-                    <div className="flex justify-center">
-                      {lot.image_url ? (
-                        <div className="relative w-full max-w-[280px]">
-                          <img 
-                            src={lot.image_url} 
-                            alt={lot.name}
-                            className="w-full h-auto aspect-square object-cover rounded-lg border-2 border-gray-600/50 shadow-lg"
-                          />
-                          <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/20 to-transparent" />
+                    {/* Card compacto - clicável */}
+                    <div 
+                      className="cursor-pointer" 
+                      onClick={() => toggleDescription(lot.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Thumbnail pequena */}
+                        <div className="flex-shrink-0">
+                          {lot.image_url ? (
+                            <img 
+                              src={lot.image_url} 
+                              alt={lot.name}
+                              className="w-16 h-16 object-cover rounded border border-gray-600/50"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-black/50 rounded border border-gray-600/50 flex items-center justify-center">
+                              <Package className="h-6 w-6 text-gray-400" />
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                         <div className="w-full max-w-[280px] aspect-square bg-black/50 rounded-lg border-2 border-gray-600/50 flex items-center justify-center">
-                           <Package className="h-16 w-16 text-gray-400" />
-                         </div>
-                      )}
+                        
+                        {/* Informações compactas */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-bold text-white truncate">{lot.name}</h4>
+                          <p className={`text-base font-bold ${winner ? 'text-yellow-400' : 'text-green-400'}`}>
+                            {formatCurrency(winner?.bid_value || lot.current_value)}
+                          </p>
+                        </div>
+
+                        {/* Ícone expandir/recolher */}
+                        <div className="flex-shrink-0">
+                          {expandedDescriptions.has(lot.id) ? (
+                            <ChevronUp className="h-5 w-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-gray-400" />
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Descrição */}
-                    {lot.description && (
-                      <div className="space-y-2">
-                        <p 
-                          className={`text-sm text-gray-300 leading-relaxed cursor-pointer transition-all duration-200 ${
-                            !expandedDescriptions.has(lot.id) 
-                              ? 'line-clamp-3 hover:text-white' 
-                              : ''
-                          }`}
-                          onClick={() => toggleDescription(lot.id)}
-                        >
-                          {lot.description}
-                        </p>
-                        {lot.description.length > 120 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleDescription(lot.id)}
-                            className="p-0 h-auto text-gray-400 hover:text-white text-sm"
-                          >
-                            {expandedDescriptions.has(lot.id) ? (
-                              <>
-                                <ChevronUp className="h-4 w-4 mr-1" />
-                                Mostrar menos
-                              </>
-                            ) : (
-                              <>
-                                <ChevronDown className="h-4 w-4 mr-1" />
-                                Mostrar mais
-                              </>
-                            )}
-                          </Button>
+                    {/* Detalhes expandidos */}
+                    {expandedDescriptions.has(lot.id) && (
+                      <div className="space-y-3 pt-2 border-t border-gray-700">
+                        {/* Imagem grande */}
+                        <div className="flex justify-center">
+                          {lot.image_url ? (
+                            <div className="relative w-full max-w-[280px]">
+                              <img 
+                                src={lot.image_url} 
+                                alt={lot.name}
+                                className="w-full h-auto aspect-square object-cover rounded-lg border-2 border-gray-600/50 shadow-lg"
+                              />
+                              <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/20 to-transparent" />
+                            </div>
+                          ) : (
+                            <div className="w-full max-w-[280px] aspect-square bg-black/50 rounded-lg border-2 border-gray-600/50 flex items-center justify-center">
+                              <Package className="h-16 w-16 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Descrição completa */}
+                        {lot.description && (
+                          <p className="text-sm text-gray-300 leading-relaxed">
+                            {lot.description}
+                          </p>
                         )}
+
+                        {/* Valores detalhados */}
+                        <div className="space-y-2">
+                          <div className="bg-black rounded p-3">
+                            <p className="text-xs text-gray-400 mb-1">Valor Inicial</p>
+                            <p className="text-base font-bold text-white">
+                              {formatCurrency(lot.initial_value)}
+                            </p>
+                          </div>
+                          
+                          <div className="bg-black rounded p-3">
+                            <p className="text-xs text-gray-400 mb-1">
+                              {winner ? 'Valor Final' : 'Valor Atual'}
+                            </p>
+                            <p className={`text-base font-bold ${
+                              winner ? 'text-yellow-400' : 'text-green-400'
+                            }`}>
+                              {formatCurrency(winner?.bid_value || lot.current_value)}
+                            </p>
+                          </div>
+
+                          {lot.increment && (
+                            <div className="bg-black rounded p-3">
+                              <p className="text-xs text-gray-400 mb-1">Incremento</p>
+                              <p className="text-base font-bold text-blue-400">
+                                {formatCurrency(lot.increment)}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Informações do Vencedor */}
+                          {winner && (
+                            <div className="bg-yellow-900/20 border border-yellow-600/30 rounded p-3">
+                              <p className="text-xs text-yellow-400 mb-1">Vencedor</p>
+                              <p className="text-sm font-medium text-white">
+                                {isCurrentUserWinner ? 'Você' : 'Investidor'} • {formatCurrency(winner.bid_value)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
-
-                    {/* Valores - Um embaixo do outro */}
-                    <div className="space-y-2">
-                      <div className="bg-black rounded p-3">
-                        <p className="text-xs text-gray-400 mb-1">Valor Inicial</p>
-                        <p className="text-base font-bold text-white">
-                          {formatCurrency(lot.initial_value)}
-                        </p>
-                      </div>
-                      
-                      <div className="bg-black rounded p-3">
-                        <p className="text-xs text-gray-400 mb-1">
-                          {winner ? 'Valor Final' : 'Valor Atual'}
-                        </p>
-                        <p className={`text-base font-bold ${
-                          winner ? 'text-yellow-400' : 'text-green-400'
-                        }`}>
-                          {formatCurrency(winner?.bid_value || lot.current_value)}
-                        </p>
-                      </div>
-
-                      {lot.increment && (
-                        <div className="bg-black rounded p-3">
-                          <p className="text-xs text-gray-400 mb-1">Incremento</p>
-                          <p className="text-base font-bold text-blue-400">
-                            {formatCurrency(lot.increment)}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Informações do Vencedor */}
-                      {winner && (
-                        <div className="bg-yellow-900/20 border border-yellow-600/30 rounded p-3">
-                          <p className="text-xs text-yellow-400 mb-1">Vencedor</p>
-                          <p className="text-sm font-medium text-white">
-                            {isCurrentUserWinner ? 'Você' : 'Usuário'} • {formatCurrency(winner.bid_value)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
               </div>

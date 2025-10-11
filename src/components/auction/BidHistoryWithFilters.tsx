@@ -204,7 +204,7 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
                         <p className="font-medium text-white text-sm truncate">
                           {isCurrentUser 
                             ? `${bid.user_name || 'Você'} (Você)`
-                            : 'Usuário'
+                            : 'Investidor'
                           }
                         </p>
                         <p className="text-xs text-gray-400">

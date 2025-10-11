@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomizations } from '@/hooks/useCustomizations';
 import { formatCpf, formatPhone } from '@/utils/formatters';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface User {
   id: string;
@@ -38,8 +39,10 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const { customizations } = useCustomizations('home');
   const projectName = customizations['global_global_site_name'] || 'MOTV';
+  const isDeveloper = currentUser?.role === 'desenvolvedor';
 
   // Update form data when user prop changes
   React.useEffect(() => {
@@ -270,7 +273,9 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
               <SelectContent className="bg-black border-gray-700">
                 <SelectItem value="user">Usuário</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="desenvolvedor">Desenvolvedor</SelectItem>
+                {isDeveloper && (
+                  <SelectItem value="desenvolvedor">Desenvolvedor</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

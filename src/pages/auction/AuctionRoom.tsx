@@ -267,7 +267,20 @@ const recalculateNextBidValue = () => {
     
     switch (userState) {
       case 'need_registration':
-        // Se leilão está finalizado MAS tem pré-lance ativo, permitir habilitação
+        // SEMPRE mostrar botão de habilitação em pré-lance
+        if (allowActionsForPreBidding) {
+          return {
+            title: 'Habilitação Necessária',
+            description: 'Habilite-se para fazer pré-lances nos lotes disponíveis.',
+            action: 'Solicitar Habilitação',
+            variant: 'default' as const,
+            icon: CheckCircle,
+            onClick: requestRegistration,
+            disabled: false
+          };
+        }
+        
+        // Se leilão está finalizado e NÃO tem pré-lance ativo, não permitir habilitação
         if (isAuctionFinished && !allowActionsForPreBidding) {
           return {
             title: hasWinner ? 'Leilão Finalizado' : 'Leilão Encerrado',
