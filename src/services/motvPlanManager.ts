@@ -151,7 +151,15 @@ export class MotvPlanManager {
     const result = data?.result;
     console.log('[MotvPlanManager] 📋 cancelAll result:', JSON.stringify(result, null, 2));
 
-    const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+    // Validar status com segurança
+    const rawStatus = result?.status || result?.code;
+    const status = typeof rawStatus === 'number' ? rawStatus : (rawStatus ? parseInt(String(rawStatus)) : NaN);
+    
+    if (isNaN(status)) {
+      console.error('[MotvPlanManager] ❌ Invalid status from MOTV:', { rawStatus, result });
+      throw new Error('Resposta inválida da MOTV ao cancelar planos');
+    }
+    
     if (status !== 1) {
       const errorMsg = result?.message || result?.error_message || 'Erro ao cancelar planos na MOTV';
       console.error('[MotvPlanManager] ❌ Cancel failed with status:', status, 'message:', errorMsg);
@@ -185,7 +193,15 @@ export class MotvPlanManager {
     const result = data?.result;
     console.log('[MotvPlanManager] 📋 subscribe result:', JSON.stringify(result, null, 2));
 
-    const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+    // Validar status com segurança
+    const rawStatus = result?.status || result?.code;
+    const status = typeof rawStatus === 'number' ? rawStatus : (rawStatus ? parseInt(String(rawStatus)) : NaN);
+    
+    if (isNaN(status)) {
+      console.error('[MotvPlanManager] ❌ Invalid status from MOTV:', { rawStatus, result });
+      throw new Error('Resposta inválida da MOTV ao assinar plano');
+    }
+    
     if (status !== 1) {
       const errorMsg = result?.message || result?.error_message || 'Erro ao assinar plano na MOTV';
       console.error('[MotvPlanManager] ❌ Subscribe failed with status:', status, 'message:', errorMsg);

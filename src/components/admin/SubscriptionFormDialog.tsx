@@ -235,29 +235,54 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
             
             const { data: createResult, error: createError } = await supabase.functions.invoke('motv-proxy', {
               body: {
-                op: 'create',
+                op: 'createCustomer',
                 payload: {
                   name: profile.name,
                   login: profile.email,
                   password: randomPassword,
                   email: profile.email,
-                  cpf: profile.cpf || undefined,
-                  phone: profile.phone || undefined
+                  cpf: profile.cpf ? profile.cpf.replace(/\D/g, '') : '',
+                  phone: profile.phone ? profile.phone.replace(/\D/g, '') : ''
                 }
               }
             });
 
             if (createError) {
-              console.error('❌ [SubscriptionFormDialog] Error creating MOTV user:', createError);
+              console.error('❌ [SubscriptionFormDialog] Edge function error:', createError);
               throw new Error('Erro ao criar usuário na MOTV: ' + createError.message);
             }
 
-            const result = createResult?.result;
-            const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+            console.log('🔍 [SubscriptionFormDialog] MOTV response:', createResult);
+
+            // Validar se a resposta tem a estrutura esperada
+            if (!createResult || typeof createResult !== 'object') {
+              throw new Error('Resposta inválida da MOTV');
+            }
+
+            const result = createResult.result;
+            console.log('🔍 [SubscriptionFormDialog] Result object:', result);
+
+            // Validar status
+            const rawStatus = result?.status || result?.code;
+            const status = typeof rawStatus === 'number' ? rawStatus : (rawStatus ? parseInt(String(rawStatus)) : NaN);
             
-            if (status === 1 && result?.data?.viewers_id) {
-              // Update profile with new motv_user_id
-              const motvUserId = String(result.data.viewers_id);
+            if (isNaN(status)) {
+              console.error('❌ [SubscriptionFormDialog] Invalid status from MOTV:', { rawStatus, result });
+              throw new Error('Resposta inválida da MOTV: status não encontrado');
+            }
+            
+            console.log('📊 [SubscriptionFormDialog] Parsed status:', status);
+
+            if (status === 1) {
+              // Sucesso - buscar viewers_id
+              const rawId = result?.data?.viewers_id ?? result?.response ?? result?.viewers_id ?? result?.data?.response;
+              
+              if (!rawId) {
+                console.error('❌ [SubscriptionFormDialog] No viewers_id in response:', result);
+                throw new Error('Usuário criado mas ID não retornado pela MOTV');
+              }
+
+              const motvUserId = String(rawId);
               const { error: updateError } = await supabase
                 .from('profiles')
                 .update({ motv_user_id: motvUserId })
@@ -265,14 +290,16 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
 
               if (updateError) {
                 console.error('⚠️ Failed to update profile with motv_user_id:', updateError);
-              } else {
-                console.log('✅ [SubscriptionFormDialog] User created in MOTV with ID:', motvUserId);
+                throw new Error('Erro ao salvar ID MOTV no perfil');
               }
-            } else if (status === 104) {
-              // User already exists in MOTV (código 104)
-              console.log('ℹ️ [SubscriptionFormDialog] User already exists in MOTV (code 104), continuing...');
+              
+              console.log('✅ [SubscriptionFormDialog] User created in MOTV with ID:', motvUserId);
+            } else if (status === 104 || status === 106) {
+              // User already exists in MOTV (código 104 ou 106)
+              console.log('ℹ️ [SubscriptionFormDialog] User already exists in MOTV (code ' + status + '), continuing...');
             } else {
-              throw new Error(`Erro ao criar usuário na MOTV: ${result?.message || 'Status ' + status}`);
+              const errorMsg = result?.message || result?.error_message || 'Status ' + status;
+              throw new Error(`Erro ao criar usuário na MOTV: ${errorMsg}`);
             }
           } else {
             console.log('✅ [SubscriptionFormDialog] User already has motv_user_id:', profile.motv_user_id);

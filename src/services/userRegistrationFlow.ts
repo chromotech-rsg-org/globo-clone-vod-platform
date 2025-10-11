@@ -448,8 +448,17 @@ export class UserRegistrationFlowService {
         }
       }
 
-      // Aceitar status como 1 ou "1"
-      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      // Validar status com segurança
+      const rawStatus = result?.status || result?.code;
+      const status = typeof rawStatus === 'number' ? rawStatus : (rawStatus ? parseInt(String(rawStatus)) : NaN);
+      
+      if (isNaN(status)) {
+        console.error('[createUserInMotv] Invalid status from MOTV:', { rawStatus, result });
+        return { 
+          success: false, 
+          message: 'Resposta inválida da MOTV. Por favor, verifique as configurações de integração.' 
+        };
+      }
       
       // Sucesso - aceitar viewers_id de múltiplas possíveis localizações
       if (status === 1) {
@@ -500,8 +509,9 @@ export class UserRegistrationFlowService {
       const result = data?.result;
       console.log('[findCustomerByEmail] Result:', result);
       
-      // Aceitar status como number ou string "1"
-      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      // Validar status com segurança
+      const rawStatus = result?.status || result?.code;
+      const status = typeof rawStatus === 'number' ? rawStatus : (rawStatus ? parseInt(String(rawStatus)) : NaN);
       
       if (status === 1) {
         const rawId = result?.data?.viewers_id ?? result?.response ?? result?.viewers_id;
@@ -545,8 +555,9 @@ export class UserRegistrationFlowService {
 
       const result = data?.result;
       
-      // Aceitar status como number ou string "1"
-      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      // Validar status com segurança
+      const rawStatus = result?.status || result?.code;
+      const status = typeof rawStatus === 'number' ? rawStatus : (rawStatus ? parseInt(String(rawStatus)) : NaN);
       
       if (status === 1) {
         const rawId = result?.data?.viewers_id ?? result?.response ?? result?.viewers_id;
@@ -620,7 +631,14 @@ export class UserRegistrationFlowService {
       const result = data?.result;
       console.log('[UserRegistrationFlow] 📋 cancelAllPlansInMotv full result:', JSON.stringify(result, null, 2));
       
-      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      // Validar status com segurança
+      const rawStatus = result?.status || result?.code;
+      const status = typeof rawStatus === 'number' ? rawStatus : (rawStatus ? parseInt(String(rawStatus)) : NaN);
+      
+      if (isNaN(status)) {
+        console.error('[UserRegistrationFlow] ❌ Invalid status from MOTV on cancelAll:', { rawStatus, result });
+        throw new Error('Resposta inválida da MOTV ao cancelar planos');
+      }
       
       // Status 1 = sucesso, Status 6 = sem planos para cancelar (também ok)
       if (status !== 1 && status !== 6) {
@@ -662,7 +680,15 @@ export class UserRegistrationFlowService {
       const result = data?.result;
       console.log('[UserRegistrationFlow] 📋 subscribePlanInMotv full result:', JSON.stringify(result, null, 2));
       
-      const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+      // Validar status com segurança
+      const rawStatus = result?.status || result?.code;
+      const status = typeof rawStatus === 'number' ? rawStatus : (rawStatus ? parseInt(String(rawStatus)) : NaN);
+      
+      if (isNaN(status)) {
+        console.error('[UserRegistrationFlow] ❌ Invalid status from MOTV on subscribe:', { rawStatus, result });
+        throw new Error('Resposta inválida da MOTV ao assinar plano');
+      }
+      
       if (status !== 1) {
         const errorMsg = result?.message || result?.error_message || 'Erro ao assinar plano na MOTV';
         console.error('[UserRegistrationFlow] ❌ Subscribe failed with status:', status, 'message:', errorMsg);
