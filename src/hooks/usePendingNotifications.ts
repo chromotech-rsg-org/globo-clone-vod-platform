@@ -232,7 +232,7 @@ export const usePendingNotifications = () => {
         console.log('✨ usePendingNotifications: Busca finalizada');
       }
     }
-  }, [user, retryCount, maxRetries, lastTotalCount]);
+  }, [user, retryCount, maxRetries, toast]);
 
   useEffect(() => {
     if (!user) return;
@@ -351,7 +351,7 @@ export const usePendingNotifications = () => {
         supabase.removeChannel(subscription);
       }
     };
-  }, [user?.id, fetchPendingItems]);
+  }, [user?.id, fetchPendingItems, toast]);
 
   const totalPending = pendingBids.length + pendingRegistrations.length + pendingLimitRequests.length;
 
