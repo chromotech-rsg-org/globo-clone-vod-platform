@@ -13,6 +13,8 @@ interface Bid {
   is_winner: boolean;
   created_at: string;
   user_name?: string;
+  bid_origin?: 'pre_bidding' | 'live';
+  lot_status_at_bid?: string;
   auction_item?: {
     status?: string;
   };
@@ -25,11 +27,11 @@ interface BidHistoryProps {
 }
 
 const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId }) => {
-  const getStatusIcon = (status: string, isWinner: boolean, lotStatus?: string) => {
+  const getStatusIcon = (status: string, isWinner: boolean, bidOrigin?: string, lotStatus?: string) => {
     if (isWinner) return <Trophy className="h-3 w-3 text-green-400" />;
     
-    // Se é um lance de pré leilão (lote com status pre_bidding)
-    if (lotStatus === 'pre_bidding' || status === 'pre_bidding') {
+    // Priorizar bid_origin para identificar pré-lances
+    if (bidOrigin === 'pre_bidding' || lotStatus === 'pre_bidding' || status === 'pre_bidding') {
       return <Clock className="h-3 w-3 text-yellow-500" />;
     }
     
@@ -47,11 +49,11 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
     }
   };
 
-  const getStatusVariant = (status: string, isWinner: boolean, lotStatus?: string) => {
+  const getStatusVariant = (status: string, isWinner: boolean, bidOrigin?: string, lotStatus?: string) => {
     if (isWinner) return 'default';
     
-    // Se é um lance de pré leilão
-    if (lotStatus === 'pre_bidding' || status === 'pre_bidding') {
+    // Priorizar bid_origin para identificar pré-lances
+    if (bidOrigin === 'pre_bidding' || lotStatus === 'pre_bidding' || status === 'pre_bidding') {
       return 'secondary' as const;
     }
     
@@ -69,11 +71,11 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
     }
   };
 
-  const getStatusText = (status: string, isWinner: boolean, lotStatus?: string) => {
+  const getStatusText = (status: string, isWinner: boolean, bidOrigin?: string, lotStatus?: string) => {
     if (isWinner) return 'Vencedor';
     
-    // Se é um lance de pré leilão
-    if (lotStatus === 'pre_bidding' || status === 'pre_bidding') {
+    // Priorizar bid_origin para identificar pré-lances
+    if (bidOrigin === 'pre_bidding' || lotStatus === 'pre_bidding' || status === 'pre_bidding') {
       return 'Pré Lance';
     }
     
@@ -146,11 +148,11 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                       {formatCurrency(bid.bid_value)}
                     </p>
                     <Badge 
-                      variant={getStatusVariant(bid.status, bid.is_winner, bid.auction_item?.status)}
+                      variant={getStatusVariant(bid.status, bid.is_winner, bid.bid_origin, bid.lot_status_at_bid)}
                       className={`flex items-center gap-1 text-xs h-5 px-1.5 ${
                         bid.is_winner 
                           ? 'bg-green-500 text-white hover:bg-green-600 border-green-400' 
-                          : (bid.auction_item?.status === 'pre_bidding' || bid.status === 'pre_bidding')
+                          : (bid.bid_origin === 'pre_bidding' || bid.lot_status_at_bid === 'pre_bidding')
                           ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30 hover:bg-yellow-500/30'
                           : bid.status === 'approved'
                           ? 'bg-green-600/20 text-green-400 border-green-600/30 hover:bg-green-600/30'
@@ -161,9 +163,9 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                           : 'bg-gray-600/20 text-gray-400 border-gray-600/30'
                       }`}
                     >
-                      {getStatusIcon(bid.status, bid.is_winner, bid.auction_item?.status)}
+                      {getStatusIcon(bid.status, bid.is_winner, bid.bid_origin, bid.lot_status_at_bid)}
                       <span className="truncate max-w-16">
-                        {getStatusText(bid.status, bid.is_winner, bid.auction_item?.status)}
+                        {getStatusText(bid.status, bid.is_winner, bid.bid_origin, bid.lot_status_at_bid)}
                       </span>
                     </Badge>
                   </div>

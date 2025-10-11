@@ -142,6 +142,7 @@ export const useAuctionBids = (auctionId: string) => {
       // Se lotId específico foi fornecido (pré-lance), usar esse lote
       type ExistingItem = { id: string; current_value: number; increment: number | null; status: string; is_current: boolean };
       let auctionItem: ExistingItem;
+      let lotStatus: string = 'not_started';
 
       if (lotId) {
         // Buscar lote específico para pré-lance
@@ -158,6 +159,7 @@ export const useAuctionBids = (auctionId: string) => {
         }
 
         auctionItem = specificItem as ExistingItem;
+        lotStatus = specificItem.status;
       } else {
         // Lógica original para lotes ativos
         const { data: existingItem, error: itemError } = await supabase
@@ -209,6 +211,7 @@ export const useAuctionBids = (auctionId: string) => {
           }
         } else {
           auctionItem = existingItem as ExistingItem;
+          lotStatus = existingItem.status;
         }
       }
 
@@ -244,6 +247,9 @@ export const useAuctionBids = (auctionId: string) => {
         return { success: false, message };
       }
 
+      // Determine bid origin based on lot status
+      const bidOrigin = lotStatus === 'pre_bidding' ? 'pre_bidding' : 'live';
+      
       const { data, error } = await supabase
         .from('bids')
         .insert([{
@@ -251,10 +257,14 @@ export const useAuctionBids = (auctionId: string) => {
           auction_id: auctionId,
           auction_item_id: auctionItem.id,
           bid_value: bidValue,
-          status: 'pending'
+          status: 'pending',
+          bid_origin: bidOrigin,
+          lot_status_at_bid: lotStatus
         }])
         .select()
         .single();
+      
+      console.log('📝 Bid inserted with origin:', { bidOrigin, lotStatus });
 
       if (error) {
         console.error('Supabase error:', error);

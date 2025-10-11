@@ -250,12 +250,14 @@ export type Database = {
           approved_by: string | null
           auction_id: string
           auction_item_id: string
+          bid_origin: string | null
           bid_value: number
           client_notes: string | null
           created_at: string
           id: string
           internal_notes: string | null
           is_winner: boolean
+          lot_status_at_bid: string | null
           status: string
           updated_at: string
           user_id: string
@@ -264,12 +266,14 @@ export type Database = {
           approved_by?: string | null
           auction_id: string
           auction_item_id: string
+          bid_origin?: string | null
           bid_value: number
           client_notes?: string | null
           created_at?: string
           id?: string
           internal_notes?: string | null
           is_winner?: boolean
+          lot_status_at_bid?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -278,12 +282,14 @@ export type Database = {
           approved_by?: string | null
           auction_id?: string
           auction_item_id?: string
+          bid_origin?: string | null
           bid_value?: number
           client_notes?: string | null
           created_at?: string
           id?: string
           internal_notes?: string | null
           is_winner?: boolean
+          lot_status_at_bid?: string | null
           status?: string
           updated_at?: string
           user_id?: string

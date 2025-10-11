@@ -74,8 +74,9 @@ const AuctionPromoBanner = () => {
                   href="https://portal.agroplay.tv.br/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm shadow-lg"
+                  className="inline-flex items-center gap-2 border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm shadow-lg"
                 >
+                  <Gavel className="h-4 w-4" />
                   <span>Acessar Agroplay</span>
                 </a>
                 {user && (
@@ -126,7 +127,7 @@ const AuctionPromoBanner = () => {
                       href="https://portal.agroplay.tv.br/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-2 w-full text-green-400 font-medium"
+                      className="flex items-center space-x-2 w-full text-green-600 font-medium hover:text-green-400"
                     >
                       <Gavel className="h-4 w-4" />
                       <span>Acessar Agroplay</span>

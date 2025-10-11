@@ -142,8 +142,11 @@ const Header = () => {
               href="https://portal.agroplay.tv.br/"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2 transition-colors font-medium"
+              className="border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors font-medium"
             >
+              {logoImage && (
+                <img src={logoImage} alt="" className="h-5 w-5" />
+              )}
               <span>Agroplay</span>
             </a>
             {customButtonText && (
@@ -281,9 +284,12 @@ const Header = () => {
                 href="https://portal.agroplay.tv.br/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full text-left bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md mt-4 flex items-center space-x-2 transition-colors font-medium"
+                className="block w-full text-left border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-4 py-2 rounded-lg mt-4 flex items-center space-x-2 transition-colors font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
+                {logoImage && (
+                  <img src={logoImage} alt="" className="h-5 w-5" />
+                )}
                 <span>Agroplay</span>
               </a>
               {customButtonText && (

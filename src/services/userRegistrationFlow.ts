@@ -388,33 +388,64 @@ export class UserRegistrationFlowService {
    */
   private static async createUserInMotv(userData: RegistrationData) {
     try {
+      // Log payload being sent
+      const payload = {
+        name: userData.name,
+        login: userData.email,
+        password: userData.password,
+        email: userData.email,
+        cpf: userData.cpf && userData.cpf.trim().length > 0 ? userData.cpf.replace(/\D/g, '') : '',
+        phone: userData.phone && userData.phone.trim().length > 0 ? userData.phone.replace(/\D/g, '') : ''
+      };
+      
+      console.log('[createUserInMotv] Sending payload to MOTV:', {
+        name: payload.name,
+        login: payload.login,
+        email: payload.email,
+        cpf: payload.cpf ? `${payload.cpf.substring(0, 3)}***` : '(vazio)',
+        phone: payload.phone ? `${payload.phone.substring(0, 2)}***` : '(vazio)'
+      });
+      
       const { data, error } = await supabase.functions.invoke('motv-proxy', {
         body: {
           op: 'createCustomer',
-          payload: {
-            name: userData.name,
-            login: userData.email,
-            password: userData.password,
-            email: userData.email,
-            cpf: userData.cpf || '',
-            phone: userData.phone || ''
-          }
+          payload
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[createUserInMotv] Edge function error:', error);
+        throw error;
+      }
 
       const result = data?.result;
-      console.log('[UserRegistrationFlow] MOTV createCustomer result:', result);
+      console.log('[createUserInMotv] MOTV API response:', result);
 
       // Se result for string, retornar como erro
       if (typeof result === 'string') {
+        console.error('[createUserInMotv] String error response:', result);
         return { success: false, message: result };
       }
       
-      // Erro 104: usuário já existe
-      if (result?.error === 104 || result?.code === 104) {
-        return { success: false, error: 104, message: 'User already exists' };
+      // Tratar códigos de erro específicos da MOTV
+      const errorCode = result?.error || result?.code;
+      if (errorCode) {
+        console.warn('[createUserInMotv] MOTV error code:', errorCode);
+        
+        switch(errorCode) {
+          case 104:
+            return { success: false, error: 104, message: 'Usuário já existe na MOTV' };
+          case 105:
+            return { success: false, error: 105, message: 'CPF inválido. Verifique o CPF informado.' };
+          case 106:
+            return { success: false, error: 106, message: 'Email já está em uso.' };
+          default:
+            return { 
+              success: false, 
+              error: errorCode,
+              message: result?.message || result?.error_message || 'Erro desconhecido ao criar usuário na MOTV' 
+            };
+        }
       }
 
       // Aceitar status como 1 ou "1"

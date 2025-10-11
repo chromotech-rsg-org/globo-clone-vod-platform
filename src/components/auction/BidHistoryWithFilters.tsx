@@ -17,6 +17,7 @@ interface BidHistoryWithFiltersProps {
 const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistoryWithFiltersProps) => {
   const [selectedLotId, setSelectedLotId] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [originFilter, setOriginFilter] = useState<string>('all');
 
   const filteredBids = useMemo(() => {
     let filtered = [...bids];
@@ -31,8 +32,16 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
       filtered = filtered.filter(bid => bid.status === statusFilter);
     }
 
+    // Filtrar por origem
+    if (originFilter !== 'all') {
+      filtered = filtered.filter(bid => {
+        const origin = (bid as any).bid_origin || 'live';
+        return origin === originFilter;
+      });
+    }
+
     return filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [bids, selectedLotId, statusFilter]);
+  }, [bids, selectedLotId, statusFilter, originFilter]);
 
   const getLotName = (lotId: string) => {
     const lot = lots.find(l => l.id === lotId);
@@ -40,7 +49,7 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
     return lot ? `Lote ${lotIndex} - ${lot.name}` : `Lote ${lotId.slice(-4)}`;
   };
 
-  const getStatusInfo = (status: string, isWinner: boolean, lotStatus?: string) => {
+  const getStatusInfo = (status: string, isWinner: boolean, bidOrigin?: string, lotStatus?: string) => {
     if (isWinner) {
       return {
         icon: <Trophy className="h-3 w-3" />,
@@ -49,8 +58,8 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
       };
     }
 
-    // Se é um lance de pré leilão
-    if (lotStatus === 'pre_bidding' || status === 'pre_bidding') {
+    // Priorizar bid_origin para identificar pré-lances
+    if (bidOrigin === 'pre_bidding' || lotStatus === 'pre_bidding' || status === 'pre_bidding') {
       return {
         icon: <Clock className="h-3 w-3" />,
         label: 'Pré Lance',
@@ -95,6 +104,7 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
   const clearFilters = () => {
     setSelectedLotId('all');
     setStatusFilter('all');
+    setOriginFilter('all');
   };
 
   if (loading) {
@@ -158,10 +168,25 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Filtro por Origem */}
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">Filtrar por Origem</label>
+              <Select value={originFilter} onValueChange={setOriginFilter}>
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                  <SelectValue placeholder="Todas as origens" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-600">
+                  <SelectItem value="all" className="text-white">Todas as origens</SelectItem>
+                  <SelectItem value="live" className="text-white">Lances ao Vivo</SelectItem>
+                  <SelectItem value="pre_bidding" className="text-white">Pré-Lances</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Botão para limpar filtros */}
-          {(selectedLotId !== 'all' || statusFilter !== 'all') && (
+          {(selectedLotId !== 'all' || statusFilter !== 'all' || originFilter !== 'all') && (
             <Button
               variant="outline"
               size="sm"
@@ -185,7 +210,8 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
           <div className="space-y-2 max-h-64 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-green-500">
             {filteredBids.map((bid) => {
               const lot = lots.find(l => l.id === bid.auction_item_id);
-              const statusInfo = getStatusInfo(bid.status, bid.is_winner, lot?.status);
+              const bidOrigin = (bid as any).bid_origin;
+              const statusInfo = getStatusInfo(bid.status, bid.is_winner, bidOrigin, lot?.status);
               const isCurrentUser = bid.user_id === currentUserId;
 
               return (

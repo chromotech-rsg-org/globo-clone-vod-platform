@@ -268,10 +268,12 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                 href="https://portal.agroplay.tv.br/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center w-full px-3 py-3 bg-green-600 hover:bg-green-700 text-white transition-all duration-200 rounded-lg"
+                className="group flex items-center w-full px-3 py-3 border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-all duration-200 rounded-lg"
                 title="Acessar Agroplay"
               >
-                <ExternalLink className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+                {adminLogo && (
+                  <img src={adminLogo} alt="" className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+                )}
                 <span className="ml-3 font-medium">Agroplay</span>
               </a>
             </div>
@@ -299,10 +301,14 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
               href="https://portal.agroplay.tv.br/"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center justify-center w-full px-3 py-3 bg-green-600 hover:bg-green-700 text-white transition-all duration-200 rounded-lg hover:scale-102"
+              className="group flex items-center justify-center w-full px-3 py-3 border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-all duration-200 rounded-lg hover:scale-102"
               title="Agroplay"
             >
-              <ExternalLink className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+              {adminLogo ? (
+                <img src={adminLogo} alt="" className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+              ) : (
+                <ExternalLink className="h-5 w-5 min-w-[20px] group-hover:scale-105 transition-transform" />
+              )}
             </a>
           </div>
         )}
