@@ -1,12 +1,13 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { createInstanceId } from '@/utils/realtime';
 
 export const useSubscriptionCheck = () => {
   const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const instanceIdRef = useRef<string>('');
 
   const checkSubscription = async () => {
     if (!user?.id) {
@@ -102,31 +103,39 @@ export const useSubscriptionCheck = () => {
 
     // Set up real-time subscription for subscription changes
     if (user?.id) {
-      console.log('📡 useSubscriptionCheck: Setting up real-time subscription monitoring');
+      // Create stable instance ID
+      if (!instanceIdRef.current) {
+        instanceIdRef.current = createInstanceId();
+      }
+
+      const channelName = `subscription-changes-${user.id}-${instanceIdRef.current}`;
+      console.log('📡 [useSubscriptionCheck] Setting up real-time subscription monitoring');
+      console.log(`📡 [useSubscriptionCheck] Creating channel: ${channelName}`);
       
       const channel = supabase
-        .channel(`subscription-changes-${user.id}`)
+        .channel(channelName)
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
           table: 'subscriptions',
           filter: `user_id=eq.${user.id}`
         }, (payload) => {
-          console.log('🔔 useSubscriptionCheck: Subscription change detected:', payload);
+          console.log('🔔 [useSubscriptionCheck] Subscription change detected:', payload);
           // Small delay to ensure database consistency
           setTimeout(() => {
             checkSubscription();
           }, 500);
         })
         .subscribe((status) => {
-          console.log('📡 useSubscriptionCheck: Realtime subscription status:', status);
+          console.log('📡 [useSubscriptionCheck] Realtime subscription status:', status);
         });
 
       return () => {
-        console.log('🔌 useSubscriptionCheck: Cleaning up subscription monitoring');
+        console.log(`📡 [useSubscriptionCheck] Removing channel: ${channelName}`);
         supabase.removeChannel(channel);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   return { 

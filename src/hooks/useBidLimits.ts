@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { createInstanceId } from '@/utils/realtime';
 
 interface BidLimit {
   id: string;
@@ -71,6 +72,7 @@ export const useBidLimits = () => {
     minLimit: 1000,
     defaultLimit: 10000
   });
+  const instanceIdRef = useRef<string>('');
 
   const fetchLimits = async () => {
     try {
@@ -404,6 +406,11 @@ export const useBidLimits = () => {
   };
 
   useEffect(() => {
+    // Create stable instance ID
+    if (!instanceIdRef.current) {
+      instanceIdRef.current = createInstanceId();
+    }
+
     const loadData = async () => {
       setLoading(true);
       await Promise.all([
@@ -417,9 +424,12 @@ export const useBidLimits = () => {
 
     loadData();
 
-    // Set up real-time subscription for limit requests - ENHANCED for instant updates
+    // Set up real-time subscription for limit requests with unique channel name
+    const channelName = `limit-requests-updates-${instanceIdRef.current}`;
+    console.log(`📡 [useBidLimits] Creating channel: ${channelName}`);
+    
     const subscription = supabase
-      .channel('limit-requests-updates')
+      .channel(channelName)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -439,8 +449,10 @@ export const useBidLimits = () => {
       .subscribe();
 
     return () => {
+      console.log(`📡 [useBidLimits] Removing channel: ${channelName}`);
       supabase.removeChannel(subscription);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Check for pending requests for current user

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Auction } from '@/types/auction';
 import { useToast } from '@/components/ui/use-toast';
+import { createInstanceId } from '@/utils/realtime';
 
 export const useAuctions = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -55,6 +56,7 @@ export const useAuctions = () => {
 export const useAuctionDetails = (auctionId: string) => {
   const [auction, setAuction] = useState<Auction | null>(null);
   const [loading, setLoading] = useState(true);
+  const instanceIdRef = useRef<string>('');
   const { toast } = useToast();
 
   const fetchAuction = async () => {
@@ -80,26 +82,37 @@ export const useAuctionDetails = (auctionId: string) => {
   };
 
   useEffect(() => {
+    // Create stable instance ID
+    if (!instanceIdRef.current) {
+      instanceIdRef.current = createInstanceId();
+    }
+
     if (auctionId) {
       fetchAuction();
       
-      // Set up real-time subscription for auction changes
+      // Set up real-time subscription for auction changes with unique channel
+      const channelName = `auction-details-${auctionId}-${instanceIdRef.current}`;
+      console.log(`📡 [useAuctionDetails] Creating channel: ${channelName}`);
+      
       const subscription = supabase
-        .channel(`auction-details-${auctionId}`)
+        .channel(channelName)
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
           table: 'auctions',
           filter: `id=eq.${auctionId}`
         }, () => {
+          console.log('🔔 [useAuctionDetails] Real-time auction update');
           fetchAuction();
         })
         .subscribe();
 
       return () => {
+        console.log(`📡 [useAuctionDetails] Removing channel: ${channelName}`);
         supabase.removeChannel(subscription);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auctionId]);
 
   return { auction, loading, refetch: fetchAuction };

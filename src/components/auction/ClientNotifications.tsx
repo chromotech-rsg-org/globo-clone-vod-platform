@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { createInstanceId } from '@/utils/realtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
   const [unreadCount, setUnreadCount] = useState(0);
   const [acknowledgedRegistrations, setAcknowledgedRegistrations] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  const instanceIdRef = useRef<string>('');
 
   // Initialize modal state on component mount
   useEffect(() => {
@@ -181,11 +183,16 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
   useEffect(() => {
     if (!user) return;
 
+    // Create stable instance ID
+    if (!instanceIdRef.current) {
+      instanceIdRef.current = createInstanceId();
+    }
+
     fetchNotifications();
 
     // Real-time updates com handler para mostrar toasts
     const handleRealtimeUpdate = (payload: any) => {
-      console.log('🔔 ClientNotifications: Real-time update:', payload);
+      console.log('🔔 [ClientNotifications] Real-time update:', payload);
       
       // Mostrar toast quando receber atualização
       if (payload.eventType === 'UPDATE' && payload.new?.client_notes) {
@@ -213,8 +220,11 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
       fetchNotifications();
     };
 
+    const channelName = `client-notifications-${user.id}-${instanceIdRef.current}`;
+    console.log(`📡 [ClientNotifications] Creating channel: ${channelName}`);
+    
     const channel = supabase
-      .channel(`client-notifications-${user.id}`)
+      .channel(channelName)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
@@ -236,9 +246,11 @@ const ClientNotifications: React.FC<ClientNotificationsProps> = ({ auctionId }) 
       .subscribe();
 
     return () => {
+      console.log(`📡 [ClientNotifications] Removing channel: ${channelName}`);
       supabase.removeChannel(channel);
     };
-  }, [user, auctionId, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, auctionId]);
 
   const markAsRead = async (notificationId: string, notificationType: 'bid' | 'registration' | 'limit_request') => {
     if (!user) return;
