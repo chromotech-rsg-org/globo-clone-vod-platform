@@ -213,21 +213,85 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         if (error) throw error;
         subscriptionId = newSubscription.id;
 
-        // Atribuir plano na MOTV (isso cancela planos antigos e assina o novo)
+        // MOTV Integration: Check if user exists in MOTV, create if not, then apply plan
         try {
+          console.log('🔄 [SubscriptionFormDialog] Checking MOTV user existence...');
+          
+          // Get user profile with motv_user_id
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('motv_user_id, name, email, cpf, phone')
+            .eq('id', formData.user_id)
+            .single();
+
+          if (profileError) throw profileError;
+
+          // If user doesn't have motv_user_id, create user in MOTV first
+          if (!profile.motv_user_id) {
+            console.log('⚠️ [SubscriptionFormDialog] User has no motv_user_id, creating in MOTV...');
+            
+            // Generate random password for MOTV user
+            const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10).toUpperCase() + '!@#';
+            
+            const { data: createResult, error: createError } = await supabase.functions.invoke('motv-proxy', {
+              body: {
+                op: 'create',
+                payload: {
+                  name: profile.name,
+                  login: profile.email,
+                  password: randomPassword,
+                  email: profile.email,
+                  cpf: profile.cpf || undefined,
+                  phone: profile.phone || undefined
+                }
+              }
+            });
+
+            if (createError) {
+              console.error('❌ [SubscriptionFormDialog] Error creating MOTV user:', createError);
+              throw new Error('Erro ao criar usuário na MOTV: ' + createError.message);
+            }
+
+            const result = createResult?.result;
+            const status = typeof result?.status === 'number' ? result.status : parseInt(result?.status);
+            
+            if (status === 1 && result?.data?.viewers_id) {
+              // Update profile with new motv_user_id
+              const motvUserId = String(result.data.viewers_id);
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ motv_user_id: motvUserId })
+                .eq('id', formData.user_id);
+
+              if (updateError) {
+                console.error('⚠️ Failed to update profile with motv_user_id:', updateError);
+              } else {
+                console.log('✅ [SubscriptionFormDialog] User created in MOTV with ID:', motvUserId);
+              }
+            } else if (status === 104) {
+              // User already exists in MOTV (código 104)
+              console.log('ℹ️ [SubscriptionFormDialog] User already exists in MOTV (code 104), continuing...');
+            } else {
+              throw new Error(`Erro ao criar usuário na MOTV: ${result?.message || 'Status ' + status}`);
+            }
+          } else {
+            console.log('✅ [SubscriptionFormDialog] User already has motv_user_id:', profile.motv_user_id);
+          }
+
+          // Now apply the plan in MOTV
           const { MotvPlanManager } = await import('@/services/motvPlanManager');
           await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
-          console.log('✅ Pacote MOTV atribuído ao usuário com sucesso');
+          console.log('✅ [SubscriptionFormDialog] Plan applied successfully in MOTV');
           
           toast({
             title: "Sucesso",
             description: "Assinatura criada e pacote MOTV atribuído ao usuário"
           });
-        } catch (motvError) {
-          console.error('❌ Erro ao atribuir plano na MOTV:', motvError);
+        } catch (motvError: any) {
+          console.error('❌ [SubscriptionFormDialog] Error in MOTV integration:', motvError);
           toast({
             title: "Atenção",
-            description: "Assinatura criada, mas houve erro ao sincronizar com MOTV",
+            description: "Assinatura criada, mas houve erro ao sincronizar com MOTV: " + (motvError.message || 'Erro desconhecido'),
             variant: "destructive"
           });
         }

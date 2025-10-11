@@ -29,6 +29,7 @@ import BidHistoryWithFilters from '@/components/auction/BidHistoryWithFilters';
 import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency } from '@/utils/formatters';
 import { useBidLimitValidation } from '@/hooks/useBidLimitValidation';
+import { useBidLimits } from '@/hooks/useBidLimits';
 
 const AuctionRoom = () => {
   const { id } = useParams<{ id: string }>();
@@ -74,8 +75,9 @@ const [duplicateBidValue, setDuplicateBidValue] = useState(0);
 const [originalBidValue, setOriginalBidValue] = useState(0);
 const [nextBidValue, setNextBidValue] = useState(0);
 const [currentBaseValue, setCurrentBaseValue] = useState(0);
-const { toast } = useToast();
-const { validateBidLimit, logFailedBidAttempt } = useBidLimitValidation();
+  const { toast } = useToast();
+  const { validateBidLimit, logFailedBidAttempt } = useBidLimitValidation();
+  const { hasPendingRequest } = useBidLimits();
 
   useEffect(() => {
     if (!registration) {
@@ -333,6 +335,19 @@ const recalculateNextBidValue = () => {
         };
       case 'can_bid':
         const anyPendingBid = bids.some(bid => bid.status === 'pending');
+        
+        // Check if user has pending limit increase request - BLOCK BIDDING
+        if (hasPendingRequest) {
+          return {
+            title: 'Aumento de Limite em Análise',
+            description: 'Você solicitou um aumento de limite. Aguarde a aprovação para voltar a dar lances.',
+            action: 'Aguarde aprovação do limite',
+            variant: 'default' as const,
+            icon: Clock,
+            onClick: null,
+            disabled: true
+          };
+        }
         
         // Se leilão está finalizado MAS tem pré-lance ativo, permitir lances
         if (isAuctionFinished && !allowActionsForPreBidding) {

@@ -228,7 +228,7 @@ export const useAuctionRegistration = (auctionId: string) => {
     
     fetchRegistration();
     
-    // Setup real-time subscription com ID único
+    // Setup real-time subscription com ID único - ENHANCED for instant updates
     const channelName = getUniqueChannelId(`registration-${auctionId}-${user.id}`);
     
     const handleRegistrationChange = (payload: any) => {
@@ -239,7 +239,7 @@ export const useAuctionRegistration = (auctionId: string) => {
       }
       clearNotificationCache();
       
-      // Para atualizações de status, mostrar toast e atualizar imediatamente
+      // Para atualizações de status, atualizar imediatamente e mostrar toast
       if (payload.eventType === 'UPDATE' && payload.new?.user_id === user.id) {
         const newStatus = payload.new.status;
         const oldStatus = payload.old?.status;
@@ -247,16 +247,19 @@ export const useAuctionRegistration = (auctionId: string) => {
         if (newStatus !== oldStatus) {
           console.log('✨ useAuctionRegistration: Mudança de status detectada:', oldStatus, '->', newStatus);
           
-          // Mostrar toast apropriado
+          // UPDATE STATE IMMEDIATELY for instant UI response
+          setRegistration(payload.new as any);
+          
+          // Then show toast
           if (newStatus === 'approved') {
             toast({
               title: "Habilitação Aprovada! ✅",
-              description: "Sua habilitação foi aprovada! Agora você pode participar do leilão.",
+              description: "Você já pode dar lances neste leilão.",
             });
           } else if (newStatus === 'rejected') {
             toast({
               title: "Habilitação Rejeitada ❌",
-              description: payload.new.client_notes || "Sua habilitação foi rejeitada.",
+              description: payload.new.client_notes || "Sua solicitação foi rejeitada.",
               variant: "destructive"
             });
           } else if (newStatus === 'canceled') {
@@ -267,22 +270,19 @@ export const useAuctionRegistration = (auctionId: string) => {
             });
           } else if (newStatus === 'disabled') {
             toast({
-              title: "Habilitação Desabilitada ⛔",
-              description: "Sua habilitação foi desabilitada pelo administrador. Você pode solicitar uma nova habilitação.",
+              title: "Habilitação Desabilitada",
+              description: "Sua habilitação foi desabilitada pelo administrador.",
               variant: "destructive"
             });
           }
-          
-          // Atualização imediata para mudanças de status
-          setRegistration(payload.new);
         }
       } else if (payload.eventType === 'INSERT' && payload.new?.user_id === user.id) {
         console.log('📝 useAuctionRegistration: Nova habilitação criada');
-        setRegistration(payload.new);
-      } else {
-        // Para outros eventos, atualizar imediatamente também
-        fetchRegistration();
+        setRegistration(payload.new as any);
       }
+      
+      // Always fetch for accuracy after immediate update
+      fetchRegistration();
     };
 
     let subscription: any;

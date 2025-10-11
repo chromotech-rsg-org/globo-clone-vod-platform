@@ -105,8 +105,44 @@ const AdminSubscriptions = () => {
     if (!subscriptionToDelete) return;
     
     try {
+      // Get subscription details
+      const { data: subscription, error: fetchError } = await supabase
+        .from('subscriptions')
+        .select('user_id, profiles(name)')
+        .eq('id', subscriptionToDelete)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete from database
       const { error } = await supabase.from('subscriptions').delete().eq('id', subscriptionToDelete);
       if (error) throw error;
+
+      // Apply suspension plan or cancel in MOTV
+      try {
+        console.log('🔄 Applying suspension/cancellation in MOTV for user:', subscription.user_id);
+        
+        // Check if suspension package exists
+        const { data: suspensionPackage } = await supabase
+          .from('packages')
+          .select('id, code')
+          .eq('suspension_package', true)
+          .eq('active', true)
+          .maybeSingle();
+
+        await supabase.functions.invoke('manage-subscription-motv', {
+          body: {
+            userId: subscription.user_id,
+            action: suspensionPackage ? 'cancel' : 'cancel', // Will apply suspension if exists, or cancel
+            suspensionPackageCode: suspensionPackage?.code
+          }
+        });
+
+        console.log('✅ MOTV plan updated successfully');
+      } catch (motvError) {
+        console.error('⚠️ Error updating MOTV:', motvError);
+        // Don't fail the deletion if MOTV update fails
+      }
       
       toast({
         title: "Sucesso",

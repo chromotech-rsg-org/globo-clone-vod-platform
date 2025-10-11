@@ -256,13 +256,21 @@ export const usePendingNotifications = () => {
         }
         clearNotificationCache();
         
-        // For approvals/rejections, trigger immediate refresh with visual notification
+        // For approvals/rejections, trigger immediate refresh and REMOVE from pending list
         if (payload.eventType === 'UPDATE' && 
             (payload.new?.status === 'approved' || payload.new?.status === 'rejected')) {
-          console.log('🎯 usePendingNotifications: Status change detected, refreshing immediately');
-          setHasNewNotifications(true);
-          setTimeout(() => setHasNewNotifications(false), 5000);
-          // Immediate refresh for status changes - this ensures real-time updates
+          console.log('🎯 usePendingNotifications: Status change detected, removing from pending list immediately');
+          
+          // Immediately remove from state for instant UI update
+          if (payload.table === 'auction_registrations') {
+            setPendingRegistrations(prev => prev.filter(item => item.id !== payload.new.id));
+          } else if (payload.table === 'limit_increase_requests') {
+            setPendingLimitRequests(prev => prev.filter(item => item.id !== payload.new.id));
+          } else if (payload.table === 'bids') {
+            setPendingBids(prev => prev.filter(item => item.id !== payload.new.id));
+          }
+          
+          // Then fetch for accuracy
           fetchPendingItems();
         } else if (payload.eventType === 'INSERT') {
           console.log('📥 usePendingNotifications: Nova solicitação detectada!');

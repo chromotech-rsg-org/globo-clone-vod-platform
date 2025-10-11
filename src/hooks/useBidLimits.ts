@@ -66,6 +66,7 @@ export const useBidLimits = () => {
   const [requests, setRequests] = useState<LimitRequest[]>([]);
   const [failedAttempts, setFailedAttempts] = useState<FailedBidAttempt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [systemSettings, setSystemSettings] = useState({
     minLimit: 1000,
     defaultLimit: 10000
@@ -415,13 +416,64 @@ export const useBidLimits = () => {
     };
 
     loadData();
+
+    // Set up real-time subscription for limit requests - ENHANCED for instant updates
+    const subscription = supabase
+      .channel('limit-requests-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'limit_increase_requests'
+      }, (payload) => {
+        console.log('🔔 [useBidLimits] Real-time limit request update:', payload);
+        fetchRequests();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'client_bid_limits'
+      }, (payload) => {
+        console.log('🔔 [useBidLimits] Real-time bid limit update:', payload);
+        fetchLimits();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
+
+  // Check for pending requests for current user
+  useEffect(() => {
+    const checkPendingRequests = async () => {
+      try {
+        const { data: currentUser } = await supabase.auth.getUser();
+        if (!currentUser.user) return;
+
+        const { data, error } = await supabase
+          .from('limit_increase_requests')
+          .select('id')
+          .eq('user_id', currentUser.user.id)
+          .eq('status', 'pending')
+          .limit(1);
+
+        if (error) throw error;
+        setHasPendingRequest((data && data.length > 0) || false);
+      } catch (error) {
+        console.error('Error checking pending requests:', error);
+        setHasPendingRequest(false);
+      }
+    };
+
+    checkPendingRequests();
+  }, [requests]);
 
   return {
     limits,
     requests,
     failedAttempts,
     loading,
+    hasPendingRequest,
     systemSettings,
     createOrUpdateLimit,
     requestLimitIncrease,
