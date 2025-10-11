@@ -30,6 +30,7 @@ export const usePendingNotifications = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const mounted = useRef(true);
+  const instanceSuffixRef = useRef<string>('');
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = isProductionCustomDomain() ? 5 : 3;
 
@@ -246,7 +247,11 @@ export const usePendingNotifications = () => {
     
     fetchPendingItems();
 
-    const channelName = getUniqueChannelId(user.id);
+    // Ensure unique channel per component instance to avoid subscribe conflicts
+    if (!instanceSuffixRef.current) {
+      instanceSuffixRef.current = Math.random().toString(36).slice(2, 8);
+    }
+    const channelName = `${getUniqueChannelId(user.id)}-${instanceSuffixRef.current}`;
     
     const handlePendingChange = (payload: any) => {
       if (mounted.current) {
