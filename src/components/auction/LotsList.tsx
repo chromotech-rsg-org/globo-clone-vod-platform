@@ -105,7 +105,7 @@ const LotsList = ({ lots, bids, currentUserId, currentLotId }: LotsListProps) =>
           Todos os Lotes ({lots.length})
         </CardTitle>
       </CardHeader>
-      <CardContent className="bg-black flex-1 overflow-y-auto">
+      <CardContent className="bg-black flex-1 overflow-y-auto max-h-[calc(2*280px+1rem)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-green-500">
         <div className="space-y-4">
           {sortedLots.map((lot, index) => {
             const statusInfo = getStatusInfo(lot);
