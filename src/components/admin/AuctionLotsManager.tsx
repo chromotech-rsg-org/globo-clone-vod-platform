@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, GripVertical, Edit2, Trash2, Save, X, ArrowUpDown } from 'lucide-react';
+import { Plus, GripVertical, Edit2, Trash2, Save, X, ArrowUpDown, Copy } from 'lucide-react';
 import ImageUpload from '@/components/ui/image-upload';
 import { useAuctionItems } from '@/hooks/useAuctionItems';
 
@@ -70,7 +70,8 @@ const StatusBadge = ({ status }: { status: AuctionItem['status'] }) => {
 
 const SortableItem = ({ 
   item, 
-  onDelete, 
+  onDelete,
+  onDuplicate,
   onQuickStatusUpdate,
   onChange,
   isExpanded = false,
@@ -78,6 +79,7 @@ const SortableItem = ({
 }: {
   item: AuctionItem;
   onDelete: () => void;
+  onDuplicate: () => void;
   onQuickStatusUpdate: (itemId: string, status: string) => void;
   onChange: (itemId: string, changes: Partial<LotFormData>) => void;
   isExpanded?: boolean;
@@ -285,6 +287,19 @@ const SortableItem = ({
             </Button>
           </div>
           <StatusBadge status={item.status} />
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDuplicate();
+            }}
+            className="border-blue-600 text-blue-400 hover:bg-blue-900/30"
+            title="Duplicar Lote"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
           <Button size="sm" variant="destructive" onClick={onDelete} className="bg-red-900 hover:bg-red-800 text-white">
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -571,6 +586,101 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     }
   };
 
+  const handleDuplicate = async (item: AuctionItem) => {
+    try {
+      let duplicatedImageUrl = '';
+      
+      // Se houver imagem, copiar para o storage
+      if (item.image_url) {
+        try {
+          // Extrair o path da imagem original
+          const originalPath = item.image_url.includes('auction-items/') 
+            ? item.image_url.split('auction-items/')[1] 
+            : item.image_url.split('/').pop() || '';
+          
+          if (originalPath) {
+            // Baixar a imagem original
+            const { data: fileData, error: downloadError } = await supabase.storage
+              .from('site-images')
+              .download(`auction-items/${originalPath}`);
+            
+            if (!downloadError && fileData) {
+              // Gerar novo nome de arquivo com timestamp
+              const fileExtension = originalPath.split('.').pop();
+              const timestamp = Date.now();
+              const newFileName = `${timestamp}_copy_${originalPath}`;
+              
+              // Upload da cópia
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('site-images')
+                .upload(`auction-items/${newFileName}`, fileData, {
+                  contentType: fileData.type,
+                  upsert: false
+                });
+              
+              if (!uploadError && uploadData) {
+                // Obter URL pública da nova imagem
+                const { data: urlData } = supabase.storage
+                  .from('site-images')
+                  .getPublicUrl(`auction-items/${newFileName}`);
+                
+                duplicatedImageUrl = urlData.publicUrl;
+              }
+            }
+          }
+        } catch (imageError) {
+          console.warn('Erro ao copiar imagem, continuando sem imagem:', imageError);
+          // Continua sem imagem se houver erro
+        }
+      }
+      
+      // Reordenar lotes subsequentes
+      const itemsToReorder = items.filter(lot => 
+        lot.order_index > item.order_index
+      );
+      
+      for (const lot of itemsToReorder) {
+        await supabase
+          .from('auction_items')
+          .update({ order_index: lot.order_index + 1 })
+          .eq('id', lot.id);
+      }
+      
+      // Criar o novo lote duplicado
+      const { error } = await supabase
+        .from('auction_items')
+        .insert({
+          auction_id: auctionId,
+          name: `Cópia de ${item.name}`,
+          description: item.description,
+          initial_value: item.initial_value,
+          current_value: item.initial_value,
+          increment: item.increment,
+          status: 'not_started', // Sempre criar como não iniciado
+          image_url: duplicatedImageUrl || '',
+          order_index: item.order_index + 1
+        });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Lote duplicado",
+        description: duplicatedImageUrl 
+          ? "O lote foi duplicado com sucesso, incluindo a imagem."
+          : "O lote foi duplicado com sucesso.",
+      });
+
+      refetch();
+    } catch (error: any) {
+      console.error('Error duplicating lot:', error);
+      toast({
+        title: "Erro ao duplicar lote",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   // Expose methods to parent through ref
   React.useImperativeHandle(ref, () => ({
     savePendingChanges: async () => {
@@ -767,6 +877,7 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
                    key={item.id}
                    item={getUpdatedItem(item)}
                    onDelete={() => handleDelete(item.id)}
+                   onDuplicate={() => handleDuplicate(item)}
                    onQuickStatusUpdate={handleQuickStatusUpdate}
                    onChange={handleLotChange}
                    isExpanded={expandedLots.has(item.id)}
