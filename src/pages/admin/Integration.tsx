@@ -2060,7 +2060,7 @@ export default function AdminIntegration() {
                     </SelectContent>
                   </Select>
                   <span className="text-sm text-admin-muted-foreground">por página</span>
-                  <Button onClick={() => loadPersistedTestHistory(testHistoryPage, testHistoryItemsPerPage)} disabled={testHistoryLoading} variant="outline" size="sm" className="gap-2 border-admin-border text-black hover:bg-black hover:text-white">
+                  <Button onClick={() => loadPersistedTestHistory(testHistoryPage, testHistoryItemsPerPage)} disabled={testHistoryLoading} variant="outline" size="sm" className="gap-2 border-admin-border text-white hover:bg-black hover:text-white">
                     <RefreshCw className={`h-4 w-4 ${testHistoryLoading ? 'animate-spin' : ''}`} />
                     Atualizar
                   </Button>
