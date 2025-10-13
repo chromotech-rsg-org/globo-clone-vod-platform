@@ -1656,7 +1656,7 @@ export default function AdminIntegration() {
   return <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-white">Integração MOTV</h1>
-        <Button onClick={loadJobsHistory} variant="outline" size="sm" className="gap-2 border-admin-border text-black hover:bg-black hover:text-white">
+        <Button onClick={loadJobsHistory} variant="outline" size="sm" className="gap-2 border-admin-border text-white hover:bg-black hover:text-white">
           <RefreshCw className="h-4 w-4" />
           Atualizar
         </Button>
