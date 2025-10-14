@@ -27,8 +27,13 @@ export class MotvPlanManager {
 
       console.log('[MotvPlanManager] 📦 Package code:', packageCode, 'for MOTV user:', motvUserId);
 
-      // 3. Cancelar todos os planos atuais
-      await this.cancelAllPlans(motvUserId);
+      // 3. Cancelar todos os planos atuais (se houver)
+      try {
+        await this.cancelAllPlans(motvUserId);
+      } catch (error: any) {
+        // Se falhar ao cancelar (ex: usuário novo sem planos), apenas loga e continua
+        console.warn('[MotvPlanManager] ⚠️ Could not cancel plans (user may not have any):', error.message);
+      }
 
       // 4. Aplicar novo plano
       await this.subscribePlan(motvUserId, packageCode);

@@ -305,7 +305,19 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
             console.log('✅ [SubscriptionFormDialog] User already has motv_user_id:', profile.motv_user_id);
           }
 
-          // Now apply the plan in MOTV
+          // Now apply the plan in MOTV - get updated motv_user_id
+          const { data: updatedProfile, error: updatedProfileError } = await supabase
+            .from('profiles')
+            .select('motv_user_id')
+            .eq('id', formData.user_id)
+            .single();
+
+          if (updatedProfileError || !updatedProfile?.motv_user_id) {
+            throw new Error('Não foi possível obter o ID MOTV do usuário');
+          }
+
+          console.log('🔄 [SubscriptionFormDialog] Applying plan with motv_user_id:', updatedProfile.motv_user_id);
+
           const { MotvPlanManager } = await import('@/services/motvPlanManager');
           await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
           console.log('✅ [SubscriptionFormDialog] Plan applied successfully in MOTV');
