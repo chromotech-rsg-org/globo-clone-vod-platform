@@ -226,8 +226,10 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
 
           if (profileError) throw profileError;
 
+          let finalMotvUserId = profile.motv_user_id;
+
           // If user doesn't have motv_user_id, create user in MOTV first
-          if (!profile.motv_user_id) {
+          if (!finalMotvUserId) {
             console.log('⚠️ [SubscriptionFormDialog] User has no motv_user_id, creating in MOTV...');
             
             // Generate random password for MOTV user
@@ -282,10 +284,10 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
                 throw new Error('Usuário criado mas ID não retornado pela MOTV');
               }
 
-              const motvUserId = String(rawId);
+              finalMotvUserId = String(rawId);
               const { error: updateError } = await supabase
                 .from('profiles')
-                .update({ motv_user_id: motvUserId })
+                .update({ motv_user_id: finalMotvUserId })
                 .eq('id', formData.user_id);
 
               if (updateError) {
@@ -293,7 +295,7 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
                 throw new Error('Erro ao salvar ID MOTV no perfil');
               }
               
-              console.log('✅ [SubscriptionFormDialog] User created in MOTV with ID:', motvUserId);
+              console.log('✅ [SubscriptionFormDialog] User created in MOTV with ID:', finalMotvUserId);
             } else if (status === 104 || status === 106) {
               // User already exists in MOTV (código 104 ou 106)
               console.log('ℹ️ [SubscriptionFormDialog] User already exists in MOTV (code ' + status + '), continuing...');
@@ -302,21 +304,15 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
               throw new Error(`Erro ao criar usuário na MOTV: ${errorMsg}`);
             }
           } else {
-            console.log('✅ [SubscriptionFormDialog] User already has motv_user_id:', profile.motv_user_id);
+            console.log('✅ [SubscriptionFormDialog] User already has motv_user_id:', finalMotvUserId);
           }
 
-          // Now apply the plan in MOTV - get updated motv_user_id
-          const { data: updatedProfile, error: updatedProfileError } = await supabase
-            .from('profiles')
-            .select('motv_user_id')
-            .eq('id', formData.user_id)
-            .single();
-
-          if (updatedProfileError || !updatedProfile?.motv_user_id) {
+          // Verify we have a motv_user_id before applying plan
+          if (!finalMotvUserId) {
             throw new Error('Não foi possível obter o ID MOTV do usuário');
           }
 
-          console.log('🔄 [SubscriptionFormDialog] Applying plan with motv_user_id:', updatedProfile.motv_user_id);
+          console.log('🔄 [SubscriptionFormDialog] Applying plan with motv_user_id:', finalMotvUserId);
 
           const { MotvPlanManager } = await import('@/services/motvPlanManager');
           await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
