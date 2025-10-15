@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Subscription {
   id: string;
@@ -61,6 +62,9 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
     end_date: '',
     motv_password: '', // New field for MOTV password
   });
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordDialogData, setPasswordDialogData] = useState<{email: string, profile: any} | null>(null);
+  const [tempPassword, setTempPassword] = useState('');
   const { toast } = useToast();
 
   const isEditing = !!subscription;
@@ -310,7 +314,11 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
               
               // Verify if password was provided
               if (!formData.motv_password) {
-                throw new Error('Este usuário já existe na MOTV. Por favor, informe a senha MOTV do usuário no campo "Senha MOTV".');
+                // Open password dialog instead of throwing error
+                setPasswordDialogData({ email: profile.email, profile });
+                setShowPasswordDialog(true);
+                setLoading(false);
+                return;
               }
               
               // Try to authenticate with provided password
@@ -347,8 +355,8 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
                   // Authentication failed - wrong password
                   console.error('❌ [SubscriptionFormDialog] Authentication failed:', authData);
                   
-                  // Ask if user wants to update password
-                  const updatePassword = confirm(
+                  // Ask if user wants to update password using confirm dialog
+                  const updatePassword = window.confirm(
                     'A senha informada não corresponde à senha atual na MOTV.\n\n' +
                     'Deseja atualizar a senha MOTV do usuário com a senha informada?'
                   );
@@ -462,7 +470,138 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
     }
   };
 
+  const handlePasswordDialogSubmit = async () => {
+    if (!tempPassword || !passwordDialogData) {
+      toast({
+        title: "Erro",
+        description: "Digite a senha MOTV",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setShowPasswordDialog(false);
+    setLoading(true);
+
+    try {
+      const { email, profile } = passwordDialogData;
+      let finalMotvUserId = profile.motv_user_id;
+
+      // Try to authenticate with provided password
+      console.log('🔐 [SubscriptionFormDialog] Attempting authentication with provided password...');
+      const { data: authResult, error: authError } = await supabase.functions.invoke('motv-proxy', {
+        body: {
+          op: 'apiLogin',
+          payload: {
+            login: email,
+            password: tempPassword
+          }
+        }
+      });
+
+      if (authError) {
+        throw new Error('Erro ao autenticar: ' + authError.message);
+      }
+
+      const authData = authResult?.result;
+      const authStatus = authData?.status || authData?.code;
+      
+      if (authStatus === 1 && authData?.data?.viewers_id) {
+        // Authentication successful
+        finalMotvUserId = String(authData.data.viewers_id);
+        console.log('✅ [SubscriptionFormDialog] Authentication successful, got viewers_id:', finalMotvUserId);
+        
+        // Save to profile
+        await supabase
+          .from('profiles')
+          .update({ motv_user_id: finalMotvUserId })
+          .eq('id', formData.user_id);
+
+        // Update form with password and continue submission
+        setFormData(prev => ({ ...prev, motv_password: tempPassword }));
+        
+        // Retry the submission with the password
+        setTimeout(() => handleSubmit(new Event('submit') as any), 100);
+      } else {
+        // Authentication failed - ask to update password
+        const updatePassword = window.confirm(
+          'A senha informada não corresponde à senha atual na MOTV.\n\n' +
+          'Deseja atualizar a senha MOTV do usuário com a senha informada?'
+        );
+        
+        if (!updatePassword) {
+          throw new Error('Senha incorreta. Operação cancelada.');
+        }
+        
+        // Find user to get viewers_id
+        const { data: findResult, error: findError } = await supabase.functions.invoke('motv-proxy', {
+          body: {
+            op: 'findCustomer',
+            payload: { email }
+          }
+        });
+
+        if (findError || !findResult?.result?.data?.viewers_id) {
+          throw new Error('Não foi possível localizar o usuário na MOTV para atualizar a senha.');
+        }
+
+        finalMotvUserId = String(findResult.result.data.viewers_id);
+        
+        // Update password in MOTV
+        const { data: updateResult, error: updateError } = await supabase.functions.invoke('motv-proxy', {
+          body: {
+            op: 'updateCustomer',
+            payload: {
+              viewers_id: finalMotvUserId,
+              password: tempPassword
+            }
+          }
+        });
+
+        if (updateError) {
+          throw new Error('Erro ao atualizar senha na MOTV: ' + updateError.message);
+        }
+
+        const updateData = updateResult?.result;
+        const updateStatus = updateData?.status || updateData?.code;
+        
+        if (updateStatus !== 1) {
+          throw new Error('Falha ao atualizar senha na MOTV');
+        }
+
+        // Save to profile
+        await supabase
+          .from('profiles')
+          .update({ motv_user_id: finalMotvUserId })
+          .eq('id', formData.user_id);
+
+        toast({
+          title: "Senha atualizada",
+          description: "Senha MOTV atualizada com sucesso"
+        });
+
+        // Update form with password and continue submission
+        setFormData(prev => ({ ...prev, motv_password: tempPassword }));
+        
+        // Retry the submission
+        setTimeout(() => handleSubmit(new Event('submit') as any), 100);
+      }
+    } catch (error: any) {
+      console.error('Error in password dialog:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao processar senha",
+        variant: "destructive"
+      });
+      setLoading(false);
+    } finally {
+      setTempPassword('');
+      setPasswordDialogData(null);
+    }
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-black text-white border-green-600/30">
         <DialogHeader>
@@ -591,6 +730,59 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         </form>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+      <AlertDialogContent className="bg-gray-900 border-green-600">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-white">
+            Senha MOTV Necessária
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-gray-300">
+            Este usuário já existe na MOTV. Por favor, informe a senha MOTV do usuário para continuar.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        
+        <div className="space-y-2 py-4">
+          <Label htmlFor="temp_password" className="text-white">
+            Senha MOTV
+          </Label>
+          <Input
+            id="temp_password"
+            type="password"
+            value={tempPassword}
+            onChange={(e) => setTempPassword(e.target.value)}
+            placeholder="Digite a senha MOTV do usuário"
+            className="bg-black border-green-600/30 text-white"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handlePasswordDialogSubmit();
+              }
+            }}
+          />
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel 
+            className="text-white hover:bg-gray-800"
+            onClick={() => {
+              setTempPassword('');
+              setPasswordDialogData(null);
+              setLoading(false);
+            }}
+          >
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-green-600 hover:bg-green-700 text-white"
+            onClick={handlePasswordDialogSubmit}
+          >
+            Confirmar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
