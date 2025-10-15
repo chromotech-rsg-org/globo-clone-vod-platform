@@ -306,7 +306,43 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
               console.log('✅ [SubscriptionFormDialog] User created in MOTV with ID:', finalMotvUserId);
             } else if (status === 104 || status === 106) {
               // User already exists in MOTV (código 104 ou 106)
-              console.log('ℹ️ [SubscriptionFormDialog] User already exists in MOTV (code ' + status + '), continuing...');
+              console.log('ℹ️ [SubscriptionFormDialog] User already exists in MOTV (code ' + status + '), fetching ID...');
+              
+              // Try to find user by email to get viewers_id
+              try {
+                const { data: findResult, error: findError } = await supabase.functions.invoke('motv-proxy', {
+                  body: {
+                    op: 'findCustomer',
+                    payload: {
+                      email: profile.email
+                    }
+                  }
+                });
+
+                if (findError) {
+                  throw new Error('Erro ao buscar usuário MOTV: ' + findError.message);
+                }
+
+                const findData = findResult?.result;
+                const findStatus = findData?.status || findData?.code;
+                
+                if (findStatus === 1 && findData?.data?.viewers_id) {
+                  finalMotvUserId = String(findData.data.viewers_id);
+                  console.log('✅ [SubscriptionFormDialog] Found existing MOTV user ID:', finalMotvUserId);
+                  
+                  // Save to profile
+                  await supabase
+                    .from('profiles')
+                    .update({ motv_user_id: finalMotvUserId })
+                    .eq('id', formData.user_id);
+                } else {
+                  console.error('❌ [SubscriptionFormDialog] Could not find MOTV user:', findData);
+                  throw new Error('Usuário existe na MOTV mas não foi possível obter o ID. Contate o suporte.');
+                }
+              } catch (findErr: any) {
+                console.error('❌ [SubscriptionFormDialog] Error finding MOTV user:', findErr);
+                throw new Error('Erro ao buscar usuário MOTV existente: ' + findErr.message);
+              }
             } else {
               const errorMsg = result?.message || result?.error_message || 'Status ' + status;
               throw new Error(`Erro ao criar usuário na MOTV: ${errorMsg}`);
