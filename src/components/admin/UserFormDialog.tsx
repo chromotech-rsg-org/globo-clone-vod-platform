@@ -99,19 +99,21 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
 
         if (error) throw error;
 
-        // Queue integration job for user update
-        try {
-          const { MotvIntegrationService } = await import('@/services/motvIntegration');
-          await MotvIntegrationService.updateUser(user.id, {
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            cpf: formData.cpf.trim(),
-            phone: formData.phone.trim(),
-            role: formData.role
-          });
-        } catch (integrationError) {
-          console.warn('Integration update failed:', integrationError);
-          // Don't fail the main operation for integration errors
+        // Sync with MOTV if user has motv_user_id
+        if (user.motv_user_id) {
+          try {
+            const { MotvApiService } = await import('@/services/motvApiService');
+            const names = formData.name.trim().split(' ');
+            await MotvApiService.customerUpdate(parseInt(user.motv_user_id), {
+              email: formData.email.trim(),
+              profileName: formData.name.trim(),
+              firstname: names[0],
+              lastname: names.slice(1).join(' '),
+              phone: formData.phone.trim()
+            });
+          } catch (motvError) {
+            console.warn('MOTV update failed:', motvError);
+          }
         }
 
         toast({

@@ -105,10 +105,10 @@ export function UserRegistrationForm() {
       toast({
         title: "Cadastro realizado",
         description: result.message,
-        variant: result.requiresPasswordReset ? "default" : "default"
+        variant: result.requiresPasswordUpdate ? "default" : "default"
       });
 
-      if (result.requiresPasswordReset) {
+      if (result.requiresPasswordUpdate) {
         // Redirecionar para redefinição de senha
         navigate('/reset-password', { 
           state: { 

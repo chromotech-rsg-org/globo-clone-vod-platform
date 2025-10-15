@@ -34,10 +34,20 @@ function mapOpToEndpoint(op: string): { path: string; method: "POST" | "GET" } {
       return { path: "/api/customer/getDataV2", method: "POST" };
     case "findCustomerForSales":
       return { path: "/api/customer/findCustomerForSales", method: "POST" };
+    case "customerSearch":
+      return { path: "/api/customer/findCustomerForSales", method: "POST" };
+    case "customerFind":
+      return { path: "/api/customer/getDataV2", method: "POST" };
     case "apiLogin":
+      return { path: "/api/devices/motv/apiLoginV2", method: "POST" };
+    case "customerAuthenticate":
       return { path: "/api/devices/motv/apiLoginV2", method: "POST" };
     case "getPlanInfo":
       return { path: "/api/subscription/getCustomerSubscriptionInfo", method: "POST" };
+    case "planHistory":
+      return { path: "/api/subscription/planHistory", method: "POST" };
+    case "planList":
+      return { path: "/api/subscription/planList", method: "POST" };
     case "createCustomer":
       return { path: "/api/integration/createMotvCustomer", method: "POST" };
     case "updateCustomer":

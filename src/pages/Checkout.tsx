@@ -97,8 +97,8 @@ const Checkout = () => {
         return;
       }
 
-      // If registration requires password reset, show appropriate message
-      if (registrationResult.requiresPasswordReset) {
+      // If registration requires password update, show appropriate message
+      if (registrationResult.requiresPasswordUpdate) {
         toast({
           title: "Atenção",
           description: registrationResult.message,

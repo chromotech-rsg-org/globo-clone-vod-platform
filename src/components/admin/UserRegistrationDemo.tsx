@@ -29,7 +29,7 @@ export function UserRegistrationDemo() {
         toast({
           title: "Teste de cadastro concluído",
           description: result.message,
-          variant: result.requiresPasswordReset ? "default" : "default"
+          variant: result.requiresPasswordUpdate ? "default" : "default"
         });
       } else {
         toast({

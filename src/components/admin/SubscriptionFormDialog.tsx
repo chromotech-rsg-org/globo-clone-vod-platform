@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { MotvPlanManager } from '@/services/motvPlanManager';
 
 interface Subscription {
   id: string;
@@ -176,7 +177,6 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         // Se o plano mudou, atualizar na MOTV
         if (planChanged && formData.plan_id) {
           try {
-            const { MotvPlanManager } = await import('@/services/motvPlanManager');
             await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
             console.log('Plano trocado na MOTV com sucesso');
           } catch (motvError) {
@@ -192,7 +192,6 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         // Se o status mudou para canceled, cancelar na MOTV
         if (statusChangedToCanceled) {
           try {
-            const { MotvPlanManager } = await import('@/services/motvPlanManager');
             await MotvPlanManager.cancelPlan(formData.user_id);
             console.log('Plano cancelado na MOTV com sucesso');
           } catch (motvError) {
@@ -220,11 +219,11 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
         if (error) throw error;
         subscriptionId = newSubscription.id;
 
-        // MOTV Integration: Check if user exists in MOTV, create if not, then apply plan
+        // MOTV Integration: Use new MotvApiService
         try {
-          console.log('🔄 [SubscriptionFormDialog] Checking MOTV user existence...');
+          console.log('🔄 [SubscriptionFormDialog] Managing MOTV plan...');
           
-          // Get user profile with motv_user_id
+          // Get user profile
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('motv_user_id, name, email, cpf, phone')
@@ -232,6 +231,9 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
             .single();
 
           if (profileError) throw profileError;
+          
+          // Use MotvPlanManager to handle plan
+          await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
 
           let finalMotvUserId = profile.motv_user_id;
 
@@ -438,7 +440,6 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
 
           console.log('🔄 [SubscriptionFormDialog] Applying plan with motv_user_id:', finalMotvUserId);
 
-          const { MotvPlanManager } = await import('@/services/motvPlanManager');
           await MotvPlanManager.changePlan(formData.user_id, formData.plan_id);
           console.log('✅ [SubscriptionFormDialog] Plan applied successfully in MOTV');
           
