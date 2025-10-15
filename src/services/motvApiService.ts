@@ -261,7 +261,19 @@ export class MotvApiService {
         return { success: false, message: result };
       }
 
-      const errorCode = result?.error || result?.code;
+      const status = result?.status;
+      
+      // Status 1 = sucesso
+      if (status === 1 && result?.data?.viewers_id) {
+        return {
+          success: true,
+          viewersId: result.data.viewers_id,
+          message: 'Cliente criado com sucesso'
+        };
+      }
+
+      // Qualquer outro status ou se tiver error/code é erro
+      const errorCode = result?.error || result?.code || (status !== 1 ? status : null);
       if (errorCode) {
         // Mapear códigos de erro conhecidos
         switch(errorCode) {
@@ -278,15 +290,6 @@ export class MotvApiService {
               message: result?.message || 'Erro desconhecido ao criar usuário' 
             };
         }
-      }
-
-      const status = result?.status;
-      if (status === 1 && result?.data?.viewers_id) {
-        return {
-          success: true,
-          viewersId: result.data.viewers_id,
-          message: 'Cliente criado com sucesso'
-        };
       }
 
       return { success: false, message: result?.message || 'Erro ao criar cliente' };
