@@ -232,8 +232,11 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           if (!finalMotvUserId) {
             console.log('⚠️ [SubscriptionFormDialog] User has no motv_user_id, creating in MOTV...');
             
-            // Generate random password for MOTV user
-            const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10).toUpperCase() + '!@#';
+            // Use CPF (numbers only) as password, or fallback to email if CPF not available
+            const cleanCpf = profile.cpf ? profile.cpf.replace(/\D/g, '') : '';
+            const motvPassword = cleanCpf || profile.email.split('@')[0];
+            
+            console.log('🔐 [SubscriptionFormDialog] Using password:', motvPassword ? 'CPF (numbers only)' : 'email prefix');
             
             const { data: createResult, error: createError } = await supabase.functions.invoke('motv-proxy', {
               body: {
@@ -241,9 +244,9 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
                 payload: {
                   name: profile.name,
                   login: profile.email,
-                  password: randomPassword,
+                  password: motvPassword,
                   email: profile.email,
-                  cpf: profile.cpf ? profile.cpf.replace(/\D/g, '') : '',
+                  cpf: cleanCpf,
                   phone: profile.phone ? profile.phone.replace(/\D/g, '') : ''
                 }
               }
