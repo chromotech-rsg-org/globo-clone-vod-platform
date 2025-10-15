@@ -32,6 +32,8 @@ function mapOpToEndpoint(op: string): { path: string; method: "POST" | "GET" } {
       return { path: "/api/customer/getDataV2", method: "POST" };
     case "findCustomer":
       return { path: "/api/customer/getDataV2", method: "POST" };
+    case "findCustomerForSales":
+      return { path: "/api/customer/findCustomerForSales", method: "POST" };
     case "apiLogin":
       return { path: "/api/devices/motv/apiLoginV2", method: "POST" };
     case "getPlanInfo":

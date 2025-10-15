@@ -996,11 +996,15 @@ export default function AdminIntegration() {
     lastname: '',
     phone: ''
   });
+  const [customerSearchData, setCustomerSearchData] = useState({
+    wild_search: ''
+  });
   const [testingCustomerFind, setTestingCustomerFind] = useState(false);
   const [testingPlanHistory, setTestingPlanHistory] = useState(false);
   const [testingPlanList, setTestingPlanList] = useState(false);
   const [testingAuthenticate, setTestingAuthenticate] = useState(false);
   const [testingCustomerUpdate, setTestingCustomerUpdate] = useState(false);
+  const [testingCustomerSearch, setTestingCustomerSearch] = useState(false);
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
   const [selectedJsonData, setSelectedJsonData] = useState<{
     request: any;
@@ -1709,6 +1713,78 @@ export default function AdminIntegration() {
       setTestingCustomerUpdate(false);
     }
   };
+
+  const handleTestCustomerSearch = async () => {
+    if (!customerSearchData.wild_search) {
+      toast({
+        title: "Campo obrigatório",
+        description: "O campo de busca é obrigatório",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setTestingCustomerSearch(true);
+    try {
+      const authToken = generateAuthToken();
+      
+      const requestData = {
+        data: {
+          search: {
+            wild_search: customerSearchData.wild_search
+          }
+        }
+      };
+
+      const response = await fetch(`${settings.api_base_url}/api/customer/findCustomerForSales`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authToken
+        },
+        body: JSON.stringify(requestData)
+      });
+      const result = await response.json();
+
+      // Check API success
+      const apiSuccess = result.status === 1 || result.status === '1';
+
+      addToTestHistory('api/customer/findCustomerForSales', 'POST', requestData, result, response.status, apiSuccess, settings.api_login);
+      
+      if (apiSuccess) {
+        const count = result.data?.length || 0;
+        toast({
+          title: "Busca realizada com sucesso!",
+          description: `${count} cliente(s) encontrado(s). Verifique o console para detalhes.`
+        });
+        console.log('Customer search results:', result.data);
+      } else {
+        const errorCode = result.status || result.code || result.status_code || result.error_code;
+        const errorInfo = getErrorDescription(errorCode);
+        const errorMessage = errorInfo ? `Código ${errorCode}: ${errorInfo.pt}` : `Erro ${errorCode || 'desconhecido'}: ${result.message || 'Erro desconhecido'}`;
+        toast({
+          title: "Erro na busca",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error searching customers:', error);
+      addToTestHistory('api/customer/findCustomerForSales', 'POST', {
+        data: { search: customerSearchData }
+      }, {
+        error: error.message
+      }, 0, false, settings.api_login);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a busca de clientes. Verifique a configuração da API.",
+        variant: "destructive"
+      });
+    } finally {
+      setTestingCustomerSearch(false);
+    }
+  };
   
   const generateRandomCustomerData = () => {
     const randomId = Math.floor(Math.random() * 10000);
@@ -2242,6 +2318,46 @@ export default function AdminIntegration() {
                     >
                       <RefreshCw className="h-4 w-4" />
                       {testingCustomerUpdate ? "Atualizando..." : "Testar Atualização de Usuário"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Customer Search Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Customer Search (Buscar Clientes)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Endpoint: api/customer/findCustomerForSales - Busque clientes por nome, telefone, email ou login
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="wild_search" className="text-admin-foreground">
+                      Busca <span className="text-destructive">*</span>
+                    </Label>
+                    <Input 
+                      id="wild_search" 
+                      value={customerSearchData.wild_search} 
+                      onChange={e => setCustomerSearchData({ wild_search: e.target.value })} 
+                      className="bg-admin-input border-admin-border text-admin-foreground" 
+                      placeholder="Digite nome, email, telefone ou login..."
+                    />
+                    <p className="text-xs text-admin-muted-foreground">
+                      Digite qualquer parte do nome, email, telefone ou login para buscar clientes
+                    </p>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button 
+                      onClick={handleTestCustomerSearch} 
+                      disabled={testingCustomerSearch || !settings.api_base_url || !customerSearchData.wild_search} 
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      {testingCustomerSearch ? "Buscando..." : "Buscar Clientes"}
                     </Button>
                   </div>
                 </div>
