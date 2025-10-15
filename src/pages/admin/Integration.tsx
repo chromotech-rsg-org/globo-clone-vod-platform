@@ -1756,9 +1756,9 @@ export default function AdminIntegration() {
         const count = result.data?.length || 0;
         toast({
           title: "Busca realizada com sucesso!",
-          description: `${count} cliente(s) encontrado(s). Verifique o console para detalhes.`
+          description: JSON.stringify(result, null, 2)
         });
-        console.log('Customer search results:', result.data);
+        console.log('Customer search results:', result);
       } else {
         const errorCode = result.status || result.code || result.status_code || result.error_code;
         const errorInfo = getErrorDescription(errorCode);
