@@ -141,10 +141,16 @@ export class MotvPlanManager {
   private static async cancelAllPlans(motvUserId: string): Promise<void> {
     console.log('[MotvPlanManager] 🚫 Canceling all plans for MOTV user:', motvUserId);
 
+    // Convert viewers_id to integer as API expects
+    const viewersIdInt = parseInt(motvUserId, 10);
+    if (isNaN(viewersIdInt)) {
+      throw new Error(`Invalid MOTV user ID: ${motvUserId}`);
+    }
+
     const { data, error } = await supabase.functions.invoke('motv-proxy', {
       body: {
         op: 'cancelAll',
-        viewers_id: motvUserId
+        viewers_id: viewersIdInt
       }
     });
 
@@ -187,12 +193,26 @@ export class MotvPlanManager {
   private static async subscribePlan(motvUserId: string, packageCode: string): Promise<void> {
     console.log('[MotvPlanManager] 📦 Subscribing plan - MOTV user:', motvUserId, 'package:', packageCode);
 
+    // Convert viewers_id and products_id to integers as API expects
+    const viewersIdInt = parseInt(motvUserId, 10);
+    const productsIdInt = parseInt(packageCode, 10);
+    
+    if (isNaN(viewersIdInt)) {
+      throw new Error(`Invalid MOTV user ID: ${motvUserId}`);
+    }
+    
+    if (isNaN(productsIdInt)) {
+      throw new Error(`Invalid package code: ${packageCode}`);
+    }
+
+    console.log('[MotvPlanManager] 🔢 Converted to integers - viewers_id:', viewersIdInt, 'products_id:', productsIdInt);
+
     const { data, error } = await supabase.functions.invoke('motv-proxy', {
       body: {
         op: 'subscribe',
         payload: {
-          viewers_id: motvUserId,
-          products_id: packageCode
+          viewers_id: viewersIdInt,
+          products_id: productsIdInt
         }
       }
     });
