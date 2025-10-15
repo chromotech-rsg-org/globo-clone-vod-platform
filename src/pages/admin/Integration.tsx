@@ -987,10 +987,20 @@ export default function AdminIntegration() {
   const [planHistoryData, setPlanHistoryData] = useState(savedTestData.planHistoryData);
   const [planListData, setPlanListData] = useState(savedTestData.planListData);
   const [authenticateData, setAuthenticateData] = useState(savedTestData.authenticateData);
+  const [updateCustomerData, setUpdateCustomerData] = useState({
+    viewers_id: 0,
+    password: '',
+    email: '',
+    profileName: '',
+    firstname: '',
+    lastname: '',
+    phone: ''
+  });
   const [testingCustomerFind, setTestingCustomerFind] = useState(false);
   const [testingPlanHistory, setTestingPlanHistory] = useState(false);
   const [testingPlanList, setTestingPlanList] = useState(false);
   const [testingAuthenticate, setTestingAuthenticate] = useState(false);
+  const [testingCustomerUpdate, setTestingCustomerUpdate] = useState(false);
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
   const [selectedJsonData, setSelectedJsonData] = useState<{
     request: any;
@@ -1600,7 +1610,7 @@ export default function AdminIntegration() {
         const errorInfo = getErrorDescription(result.code || result.status_code || result.error_code);
         const errorMessage = errorInfo ? `Código ${errorInfo.code}: ${errorInfo.pt}` : `Erro ${response.status}: ${result.message || 'Erro desconhecido'}`;
         toast({
-          title: "Erro na autenticação",
+          title: "Erro ao autenticar",
           description: errorMessage,
           variant: "destructive"
         });
@@ -1621,6 +1631,85 @@ export default function AdminIntegration() {
       setTestingAuthenticate(false);
     }
   };
+
+  const handleTestCustomerUpdate = async () => {
+    setTestingCustomerUpdate(true);
+    try {
+      const authToken = generateAuthToken();
+      
+      // Build payload only with filled fields
+      const payload: any = {};
+      
+      if (updateCustomerData.viewers_id) payload.viewers_id = updateCustomerData.viewers_id;
+      if (updateCustomerData.password) payload.password = updateCustomerData.password;
+      if (updateCustomerData.email) payload.email = updateCustomerData.email;
+      if (updateCustomerData.profileName) payload.profileName = updateCustomerData.profileName;
+      if (updateCustomerData.firstname) payload.firstname = updateCustomerData.firstname;
+      if (updateCustomerData.lastname) payload.lastname = updateCustomerData.lastname;
+      if (updateCustomerData.phone) payload.phone = updateCustomerData.phone;
+
+      if (!payload.viewers_id) {
+        toast({
+          title: "Campo obrigatório",
+          description: "O campo viewers_id é obrigatório",
+          variant: "destructive"
+        });
+        setTestingCustomerUpdate(false);
+        return;
+      }
+
+      const requestData = {
+        data: payload
+      };
+
+      const response = await fetch(`${settings.api_base_url}/api/integration/updateMotvCustomer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authToken
+        },
+        body: JSON.stringify(requestData)
+      });
+      const result = await response.json();
+
+      // Check API success
+      const apiSuccess = result.status === 1 || result.status === '1';
+
+      addToTestHistory('api/integration/updateMotvCustomer', 'POST', requestData, result, response.status, apiSuccess, settings.api_login);
+      
+      if (apiSuccess) {
+        toast({
+          title: "Usuário atualizado com sucesso!",
+          description: `Resposta da API: ${JSON.stringify(result)}`
+        });
+      } else {
+        const errorCode = result.status || result.code || result.status_code || result.error_code;
+        const errorInfo = getErrorDescription(errorCode);
+        const errorMessage = errorInfo ? `Código ${errorCode}: ${errorInfo.pt}` : `Erro ${errorCode || 'desconhecido'}: ${result.message || 'Erro desconhecido'}`;
+        toast({
+          title: "Erro ao atualizar usuário",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      addToTestHistory('api/integration/updateMotvCustomer', 'POST', {
+        data: updateCustomerData
+      }, {
+        error: error.message
+      }, 0, false, settings.api_login);
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a atualização do usuário. Verifique a configuração da API.",
+        variant: "destructive"
+      });
+    } finally {
+      setTestingCustomerUpdate(false);
+    }
+  };
+  
   const generateRandomCustomerData = () => {
     const randomId = Math.floor(Math.random() * 10000);
     const randomName = `Usuario${randomId}`;
@@ -2025,6 +2114,134 @@ export default function AdminIntegration() {
                     <Button onClick={handleTestAuthenticate} disabled={testingAuthenticate || !settings.api_base_url} className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90">
                       <Wifi className="h-4 w-4" />
                       {testingAuthenticate ? "Autenticando..." : "Testar Autenticação"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Customer Update Test */}
+            <Card className="bg-admin-card border-admin-border">
+              <CardHeader>
+                <CardTitle className="text-admin-foreground">Customer Update (Atualizar Usuário)</CardTitle>
+                <CardDescription className="text-admin-muted-foreground">
+                  Teste de atualização de dados do usuário via API MOTV. Preencha apenas os campos que deseja atualizar.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="update_viewers_id" className="text-admin-foreground">
+                      Viewers ID <span className="text-destructive">*</span>
+                    </Label>
+                    <Input 
+                      id="update_viewers_id" 
+                      type="number" 
+                      value={updateCustomerData.viewers_id || ''} 
+                      onChange={e => setUpdateCustomerData(prev => ({
+                        ...prev,
+                        viewers_id: parseInt(e.target.value) || 0
+                      }))} 
+                      className="bg-admin-input border-admin-border text-admin-foreground" 
+                      placeholder="7175714"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="update_password" className="text-admin-foreground">Password</Label>
+                    <Input 
+                      id="update_password" 
+                      type="password"
+                      value={updateCustomerData.password} 
+                      onChange={e => setUpdateCustomerData(prev => ({
+                        ...prev,
+                        password: e.target.value
+                      }))} 
+                      className="bg-admin-input border-admin-border text-admin-foreground" 
+                      placeholder="123456"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="update_email" className="text-admin-foreground">Email</Label>
+                    <Input 
+                      id="update_email" 
+                      type="email"
+                      value={updateCustomerData.email} 
+                      onChange={e => setUpdateCustomerData(prev => ({
+                        ...prev,
+                        email: e.target.value
+                      }))} 
+                      className="bg-admin-input border-admin-border text-admin-foreground" 
+                      placeholder="agro25@chromotech.com.br"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="update_profileName" className="text-admin-foreground">Profile Name</Label>
+                    <Input 
+                      id="update_profileName" 
+                      value={updateCustomerData.profileName} 
+                      onChange={e => setUpdateCustomerData(prev => ({
+                        ...prev,
+                        profileName: e.target.value
+                      }))} 
+                      className="bg-admin-input border-admin-border text-admin-foreground" 
+                      placeholder="agro25"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="update_firstname" className="text-admin-foreground">First Name</Label>
+                      <Input 
+                        id="update_firstname" 
+                        value={updateCustomerData.firstname} 
+                        onChange={e => setUpdateCustomerData(prev => ({
+                          ...prev,
+                          firstname: e.target.value
+                        }))} 
+                        className="bg-admin-input border-admin-border text-admin-foreground" 
+                        placeholder="agro25"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="update_lastname" className="text-admin-foreground">Last Name</Label>
+                      <Input 
+                        id="update_lastname" 
+                        value={updateCustomerData.lastname} 
+                        onChange={e => setUpdateCustomerData(prev => ({
+                          ...prev,
+                          lastname: e.target.value
+                        }))} 
+                        className="bg-admin-input border-admin-border text-admin-foreground" 
+                        placeholder="agro25"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="update_phone" className="text-admin-foreground">Phone</Label>
+                    <Input 
+                      id="update_phone" 
+                      value={updateCustomerData.phone} 
+                      onChange={e => setUpdateCustomerData(prev => ({
+                        ...prev,
+                        phone: e.target.value
+                      }))} 
+                      className="bg-admin-input border-admin-border text-admin-foreground" 
+                      placeholder="22222222222"
+                    />
+                  </div>
+
+                  <div className="pt-4">
+                    <Button 
+                      onClick={handleTestCustomerUpdate} 
+                      disabled={testingCustomerUpdate || !settings.api_base_url || !updateCustomerData.viewers_id} 
+                      className="gap-2 bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      {testingCustomerUpdate ? "Atualizando..." : "Testar Atualização de Usuário"}
                     </Button>
                   </div>
                 </div>
