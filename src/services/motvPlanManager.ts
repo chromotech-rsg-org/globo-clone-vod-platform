@@ -153,6 +153,8 @@ export class MotvPlanManager {
       throw error;
     }
 
+    console.log('[MotvPlanManager] 📋 Full cancelAll response:', JSON.stringify(data, null, 2));
+    
     const result = data?.result;
     console.log('[MotvPlanManager] 📋 cancelAll result:', JSON.stringify(result, null, 2));
 
@@ -165,13 +167,18 @@ export class MotvPlanManager {
       throw new Error('Resposta inválida da MOTV ao cancelar planos');
     }
     
-    if (status !== 1) {
-      const errorMsg = result?.message || result?.error_message || 'Erro ao cancelar planos na MOTV';
+    // Status 1 = sucesso, Status 6 pode ser "nenhum plano ativo"
+    if (status !== 1 && status !== 6) {
+      const errorMsg = result?.message || result?.error_message || result?.response || `Erro ao cancelar planos na MOTV (status: ${status})`;
       console.error('[MotvPlanManager] ❌ Cancel failed with status:', status, 'message:', errorMsg);
       throw new Error(errorMsg);
     }
 
-    console.log('[MotvPlanManager] ✅ Plans canceled successfully');
+    if (status === 6) {
+      console.log('[MotvPlanManager] ℹ️ No active plans to cancel (status 6)');
+    } else {
+      console.log('[MotvPlanManager] ✅ Plans canceled successfully');
+    }
   }
 
   /**
@@ -195,6 +202,8 @@ export class MotvPlanManager {
       throw error;
     }
 
+    console.log('[MotvPlanManager] 📋 Full subscribe response:', JSON.stringify(data, null, 2));
+    
     const result = data?.result;
     console.log('[MotvPlanManager] 📋 subscribe result:', JSON.stringify(result, null, 2));
 
@@ -207,10 +216,13 @@ export class MotvPlanManager {
       throw new Error('Resposta inválida da MOTV ao assinar plano');
     }
     
+    // Status 1 = sucesso, Status 10 pode ser "plano já ativo" ou outro erro
     if (status !== 1) {
-      const errorMsg = result?.message || result?.error_message || 'Erro ao assinar plano na MOTV';
-      console.error('[MotvPlanManager] ❌ Subscribe failed with status:', status, 'message:', errorMsg);
-      throw new Error(errorMsg);
+      const errorMsg = result?.message || result?.error_message || result?.response || `Erro ao assinar plano na MOTV (status: ${status})`;
+      const fullError = `Status ${status}: ${errorMsg}. Viewers ID: ${motvUserId}, Package: ${packageCode}`;
+      console.error('[MotvPlanManager] ❌ Subscribe failed:', fullError);
+      console.error('[MotvPlanManager] 📋 Full result object:', result);
+      throw new Error(fullError);
     }
 
     console.log('[MotvPlanManager] ✅ Plan subscribed successfully to package:', packageCode);
