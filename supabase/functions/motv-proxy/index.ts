@@ -38,6 +38,8 @@ function mapOpToEndpoint(op: string): { path: string; method: "POST" | "GET" } {
       return { path: "/api/subscription/getCustomerSubscriptionInfo", method: "POST" };
     case "createCustomer":
       return { path: "/api/integration/createMotvCustomer", method: "POST" };
+    case "updateCustomer":
+      return { path: "/api/integration/updateMotvCustomer", method: "POST" };
     case "cancelAll":
       return { path: "/api/integration/cancel", method: "POST" };
     case "subscribe":

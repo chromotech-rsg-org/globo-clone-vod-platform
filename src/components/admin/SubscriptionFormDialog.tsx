@@ -306,29 +306,37 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
               console.log('✅ [SubscriptionFormDialog] User created in MOTV with ID:', finalMotvUserId);
             } else if (status === 104 || status === 106) {
               // User already exists in MOTV (código 104 ou 106)
-              console.log('ℹ️ [SubscriptionFormDialog] User already exists in MOTV (code ' + status + '), fetching ID...');
+              console.log('ℹ️ [SubscriptionFormDialog] User already exists in MOTV (code ' + status + ')');
               
-              // Try to find user by email to get viewers_id
+              // Verify if password was provided
+              if (!formData.motv_password) {
+                throw new Error('Este usuário já existe na MOTV. Por favor, informe a senha MOTV do usuário no campo "Senha MOTV".');
+              }
+              
+              // Try to authenticate with provided password
+              console.log('🔐 [SubscriptionFormDialog] Attempting authentication with provided password...');
               try {
-                const { data: findResult, error: findError } = await supabase.functions.invoke('motv-proxy', {
+                const { data: authResult, error: authError } = await supabase.functions.invoke('motv-proxy', {
                   body: {
-                    op: 'findCustomer',
+                    op: 'apiLogin',
                     payload: {
-                      email: profile.email
+                      login: profile.email,
+                      password: formData.motv_password
                     }
                   }
                 });
 
-                if (findError) {
-                  throw new Error('Erro ao buscar usuário MOTV: ' + findError.message);
+                if (authError) {
+                  throw new Error('Erro ao autenticar: ' + authError.message);
                 }
 
-                const findData = findResult?.result;
-                const findStatus = findData?.status || findData?.code;
+                const authData = authResult?.result;
+                const authStatus = authData?.status || authData?.code;
                 
-                if (findStatus === 1 && findData?.data?.viewers_id) {
-                  finalMotvUserId = String(findData.data.viewers_id);
-                  console.log('✅ [SubscriptionFormDialog] Found existing MOTV user ID:', finalMotvUserId);
+                if (authStatus === 1 && authData?.data?.viewers_id) {
+                  // Authentication successful - got viewers_id
+                  finalMotvUserId = String(authData.data.viewers_id);
+                  console.log('✅ [SubscriptionFormDialog] Authentication successful, got viewers_id:', finalMotvUserId);
                   
                   // Save to profile
                   await supabase
@@ -336,12 +344,76 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
                     .update({ motv_user_id: finalMotvUserId })
                     .eq('id', formData.user_id);
                 } else {
-                  console.error('❌ [SubscriptionFormDialog] Could not find MOTV user:', findData);
-                  throw new Error('Usuário existe na MOTV mas não foi possível obter o ID. Contate o suporte.');
+                  // Authentication failed - wrong password
+                  console.error('❌ [SubscriptionFormDialog] Authentication failed:', authData);
+                  
+                  // Ask if user wants to update password
+                  const updatePassword = confirm(
+                    'A senha informada não corresponde à senha atual na MOTV.\n\n' +
+                    'Deseja atualizar a senha MOTV do usuário com a senha informada?'
+                  );
+                  
+                  if (!updatePassword) {
+                    throw new Error('Senha incorreta. Operação cancelada.');
+                  }
+                  
+                  // First, find the user to get viewers_id
+                  console.log('🔍 [SubscriptionFormDialog] Finding user to update password...');
+                  const { data: findResult, error: findError } = await supabase.functions.invoke('motv-proxy', {
+                    body: {
+                      op: 'findCustomer',
+                      payload: {
+                        email: profile.email
+                      }
+                    }
+                  });
+
+                  if (findError || !findResult?.result?.data?.viewers_id) {
+                    throw new Error('Não foi possível localizar o usuário na MOTV para atualizar a senha.');
+                  }
+
+                  finalMotvUserId = String(findResult.result.data.viewers_id);
+                  console.log('✅ [SubscriptionFormDialog] Found viewers_id:', finalMotvUserId);
+                  
+                  // Update password in MOTV
+                  console.log('🔄 [SubscriptionFormDialog] Updating password in MOTV...');
+                  const { data: updateResult, error: updateError } = await supabase.functions.invoke('motv-proxy', {
+                    body: {
+                      op: 'updateCustomer',
+                      payload: {
+                        viewers_id: parseInt(finalMotvUserId, 10),
+                        password: formData.motv_password
+                      }
+                    }
+                  });
+
+                  if (updateError) {
+                    throw new Error('Erro ao atualizar senha na MOTV: ' + updateError.message);
+                  }
+
+                  const updateData = updateResult?.result;
+                  const updateStatus = updateData?.status || updateData?.code;
+                  
+                  if (updateStatus !== 1) {
+                    throw new Error('Falha ao atualizar senha na MOTV: ' + (updateData?.message || 'Erro desconhecido'));
+                  }
+                  
+                  console.log('✅ [SubscriptionFormDialog] Password updated successfully in MOTV');
+                  
+                  // Save viewers_id to profile
+                  await supabase
+                    .from('profiles')
+                    .update({ motv_user_id: finalMotvUserId })
+                    .eq('id', formData.user_id);
+                  
+                  toast({
+                    title: "Senha atualizada",
+                    description: "A senha MOTV foi atualizada com sucesso"
+                  });
                 }
-              } catch (findErr: any) {
-                console.error('❌ [SubscriptionFormDialog] Error finding MOTV user:', findErr);
-                throw new Error('Erro ao buscar usuário MOTV existente: ' + findErr.message);
+              } catch (authErr: any) {
+                console.error('❌ [SubscriptionFormDialog] Error during authentication/update:', authErr);
+                throw new Error(authErr.message || 'Erro ao validar senha MOTV');
               }
             } else {
               const errorMsg = result?.message || result?.error_message || 'Status ' + status;
@@ -482,18 +554,19 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           {!isEditing && (
             <div className="space-y-2">
               <Label htmlFor="motv_password" className="text-white">
-                Senha MOTV (opcional)
+                Senha MOTV {formData.user_id && '(obrigatória se usuário já existe na MOTV)'}
               </Label>
               <Input
                 id="motv_password"
                 type="password"
                 value={formData.motv_password}
                 onChange={(e) => setFormData(prev => ({ ...prev, motv_password: e.target.value }))}
-                placeholder="Deixe vazio para usar CPF como senha"
+                placeholder="Digite a senha MOTV do usuário"
                 className="bg-black border-green-600/30 text-white"
               />
               <p className="text-xs text-gray-400">
-                Se não informar, será usado: 1º CPF, 2º prefixo do email
+                • Se usuário não existe na MOTV: será criado com esta senha (ou CPF se vazio)<br />
+                • Se usuário já existe na MOTV: será validada e pode ser atualizada se incorreta
               </p>
             </div>
           )}
