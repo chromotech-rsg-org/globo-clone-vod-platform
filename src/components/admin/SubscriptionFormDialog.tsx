@@ -59,6 +59,7 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
     status: 'active',
     start_date: '',
     end_date: '',
+    motv_password: '', // New field for MOTV password
   });
   const { toast } = useToast();
 
@@ -83,6 +84,7 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           status: subscription.status,
           start_date: subscription.start_date ? new Date(subscription.start_date).toISOString().split('T')[0] : '',
           end_date: subscription.end_date ? new Date(subscription.end_date).toISOString().split('T')[0] : '',
+          motv_password: '', // Reset password field on edit
         });
       } else {
         // New subscription mode - use preSelectedUserId if provided
@@ -92,6 +94,7 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           status: 'active',
           start_date: new Date().toISOString().split('T')[0],
           end_date: '',
+          motv_password: '', // Empty for new subscription
         });
       }
     }
@@ -232,11 +235,13 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
           if (!finalMotvUserId) {
             console.log('⚠️ [SubscriptionFormDialog] User has no motv_user_id, creating in MOTV...');
             
-            // Use CPF (numbers only) as password, or fallback to email if CPF not available
+            // Use provided password, fallback to CPF, then email prefix
             const cleanCpf = profile.cpf ? profile.cpf.replace(/\D/g, '') : '';
-            const motvPassword = cleanCpf || profile.email.split('@')[0];
+            const motvPassword = formData.motv_password || cleanCpf || profile.email.split('@')[0];
             
-            console.log('🔐 [SubscriptionFormDialog] Using password:', motvPassword ? 'CPF (numbers only)' : 'email prefix');
+            if (!formData.motv_password) {
+              console.log('⚠️ [SubscriptionFormDialog] No password provided, using fallback:', cleanCpf ? 'CPF' : 'email prefix');
+            }
             
             const { data: createResult, error: createError } = await supabase.functions.invoke('motv-proxy', {
               body: {
@@ -437,6 +442,25 @@ const SubscriptionFormDialog: React.FC<SubscriptionFormDialogProps> = ({
               className="bg-black border-green-600/30 text-white"
             />
           </div>
+
+          {!isEditing && (
+            <div className="space-y-2">
+              <Label htmlFor="motv_password" className="text-white">
+                Senha MOTV (opcional)
+              </Label>
+              <Input
+                id="motv_password"
+                type="password"
+                value={formData.motv_password}
+                onChange={(e) => setFormData(prev => ({ ...prev, motv_password: e.target.value }))}
+                placeholder="Deixe vazio para usar CPF como senha"
+                className="bg-black border-green-600/30 text-white"
+              />
+              <p className="text-xs text-gray-400">
+                Se não informar, será usado: 1º CPF, 2º prefixo do email
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4">
             <Button 
