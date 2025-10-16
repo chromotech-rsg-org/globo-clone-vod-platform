@@ -85,7 +85,8 @@ export class UserRegistrationFlowService {
           };
         } else {
           // Outro erro ao criar
-          const errorInfo = MotvErrorHandler.handleError(createResult.error, 'criar usuário no MOTV');
+          const errorPayload = createResult.error ?? { message: createResult.message || 'Erro ao criar usuário no MOTV' };
+          const errorInfo = MotvErrorHandler.handleError(errorPayload, 'criar usuário no MOTV', { createResult });
           return {
             success: false,
             message: MotvErrorHandler.formatUserMessage(errorInfo)
