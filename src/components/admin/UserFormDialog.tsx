@@ -35,6 +35,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
     phone: user?.phone || '',
     role: user?.role || 'user',
     password: '',
+    confirmPassword: '',
     motv_user_id: user?.motv_user_id || ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +55,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
         phone: user.phone || '',
         role: user.role || 'user',
         password: '',
+        confirmPassword: '',
         motv_user_id: user.motv_user_id || ''
       });
     }
@@ -75,6 +77,15 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
       toast({
         title: "Erro",
         description: "Senha é obrigatória para novos usuários",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!user && formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
         variant: "destructive"
       });
       return;
@@ -152,29 +163,35 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
           if (roleError) throw roleError;
         }
 
-        // Criar no MOTV usando a mesma senha do sistema
+        // Criar usuário no MOTV SEM pacote/plano
         try {
-          const { MotvApiService } = await import('@/services/motvApiService');
-          const names = formData.name.trim().split(' ');
-          const motvResult = await MotvApiService.customerCreate({
-            name: formData.name.trim(),
-            login: formData.email.trim(),
-            password: formData.password,
-            email: formData.email.trim(),
-            cpf: formData.cpf.trim(),
-            phone: formData.phone.trim()
+          const { data: motvResult, error: motvError } = await supabase.functions.invoke('motv-proxy', {
+            body: {
+              op: 'createCustomer',
+              payload: {
+                name: formData.name.trim(),
+                login: formData.email.trim(),
+                password: formData.password,
+                email: formData.email.trim(),
+                cpf: formData.cpf.trim().replace(/\D/g, ''),
+                phone: formData.phone.trim().replace(/\D/g, '')
+              }
+            }
           });
 
-          if (motvResult.success && motvResult.viewersId) {
-            // Salvar viewers_id no profile
-            await supabase
-              .from('profiles')
-              .update({ motv_user_id: motvResult.viewersId.toString() })
-              .eq('id', newUserId);
-            
-            console.log('[UserFormDialog] Usuário criado no MOTV:', motvResult.viewersId);
+          if (motvError) {
+            console.error('[UserFormDialog] Erro ao criar no MOTV:', motvError);
+          } else if (motvResult?.result?.status === 1) {
+            const viewersId = motvResult.result.data?.viewers_id ?? motvResult.result.response;
+            if (viewersId) {
+              await supabase
+                .from('profiles')
+                .update({ motv_user_id: String(viewersId) })
+                .eq('id', newUserId);
+              console.log('[UserFormDialog] Usuário criado no MOTV:', viewersId);
+            }
           } else {
-            console.warn('[UserFormDialog] Falha ao criar no MOTV:', motvResult.message);
+            console.warn('[UserFormDialog] Falha ao criar no MOTV:', motvResult?.result?.message);
           }
         } catch (motvError) {
           console.warn('[UserFormDialog] Erro ao criar no MOTV:', motvError);
@@ -210,6 +227,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
         phone: '',
         role: 'user',
         password: '',
+        confirmPassword: '',
         motv_user_id: ''
       });
       onClose();
@@ -301,23 +319,40 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
           </div>
 
           {!user && (
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300">Senha *</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Senha para sistema e MOTV"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
-                disabled={isLoading}
-                minLength={6}
-                required
-              />
-              <p className="text-xs text-gray-400">
-                Esta senha será usada tanto no sistema quanto no {projectName}
-              </p>
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-300">Senha *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Digite a senha"
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+                  disabled={isLoading}
+                  minLength={6}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-gray-300">Confirmar Senha *</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Digite a senha novamente"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+                  disabled={isLoading}
+                  minLength={6}
+                  required
+                />
+                <p className="text-xs text-gray-400">
+                  Esta senha será usada tanto no sistema quanto no {projectName}
+                </p>
+              </div>
+            </>
           )}
 
           {user && user.motv_user_id && (
