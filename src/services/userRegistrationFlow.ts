@@ -72,17 +72,27 @@ export class UserRegistrationFlowService {
           phone: userData.phone
         });
 
+        console.log('[UserRegistrationFlow] 📋 MOTV createResult:', {
+          success: createResult.success,
+          viewersId: createResult.viewersId,
+          error: createResult.error,
+          message: createResult.message
+        });
+
         if (createResult.success && createResult.viewersId) {
           console.log('[UserRegistrationFlow] ✅ User created in MOTV:', createResult.viewersId);
           motvUserId = createResult.viewersId;
         } else if (MotvErrorHandler.isUserExistsError(createResult.error)) {
-          // Usuário já existe no MOTV - tentar localizar pelo e-mail e prosseguir
-          console.log('[UserRegistrationFlow] ⚠️ User exists in MOTV, attempting lookup by email...');
+          // Usuário já existe no MOTV - tentar localizar e prosseguir
+          console.log('[UserRegistrationFlow] ⚠️ User exists in MOTV, attempting lookup...');
           const search = await MotvApiService.customerSearch(userData.email);
-          const found = search.success && search.customers?.find(c => c.email?.toLowerCase() === userData.email.toLowerCase());
+          const emailLower = userData.email.toLowerCase();
+          const found = search.success && search.customers?.find(c => 
+            c.email?.toLowerCase() === emailLower || c.login?.toLowerCase() === emailLower
+          );
           if (found?.viewers_id) {
             motvUserId = found.viewers_id;
-            console.log('[UserRegistrationFlow] 🔎 Found existing MOTV user by email:', motvUserId);
+            console.log('[UserRegistrationFlow] 🔎 Found existing MOTV user:', motvUserId);
           } else {
             return {
               success: false,
@@ -91,20 +101,33 @@ export class UserRegistrationFlowService {
             };
           }
         } else {
-          // Outro erro ao criar - tentar fallback buscando por e-mail (pode ter criado mesmo com resposta de erro)
-          console.log('[UserRegistrationFlow] ⚠️ MOTV create returned error, attempting lookup by email as fallback');
-          const search = await MotvApiService.customerSearch(userData.email);
-          const found = search.success && search.customers?.find(c => c.email?.toLowerCase() === userData.email.toLowerCase());
-          if (found?.viewers_id) {
-            motvUserId = found.viewers_id;
-            console.log('[UserRegistrationFlow] ✅ Fallback succeeded, MOTV user exists with id:', motvUserId);
+          // Outro erro - tentar reautenticar para verificar se criou mesmo assim
+          console.log('[UserRegistrationFlow] ⚠️ MOTV create returned error, attempting re-authentication...');
+          const reauth = await MotvApiService.customerAuthenticate(userData.email, userData.password);
+          
+          if (reauth.success && reauth.viewersId) {
+            motvUserId = reauth.viewersId;
+            console.log('[UserRegistrationFlow] ✅ Re-authentication succeeded, user exists with id:', motvUserId);
           } else {
-            const errorPayload = createResult.error ?? { message: createResult.message || 'Erro ao criar usuário no MOTV' };
-            const errorInfo = MotvErrorHandler.handleError(errorPayload, 'criar usuário no MOTV', { createResult });
-            return {
-              success: false,
-              message: MotvErrorHandler.formatUserMessage(errorInfo)
-            };
+            // Se reauth falhou, tentar busca por email/login
+            console.log('[UserRegistrationFlow] 🔎 Re-auth failed, attempting search fallback...');
+            const search = await MotvApiService.customerSearch(userData.email);
+            const emailLower = userData.email.toLowerCase();
+            const found = search.success && search.customers?.find(c => 
+              c.email?.toLowerCase() === emailLower || c.login?.toLowerCase() === emailLower
+            );
+            
+            if (found?.viewers_id) {
+              motvUserId = found.viewers_id;
+              console.log('[UserRegistrationFlow] ✅ Search fallback succeeded, found user:', motvUserId);
+            } else {
+              const errorPayload = createResult.error ?? { message: createResult.message || 'Erro ao criar usuário no MOTV' };
+              const errorInfo = MotvErrorHandler.handleError(errorPayload, 'criar usuário no MOTV', { createResult });
+              return {
+                success: false,
+                message: MotvErrorHandler.formatUserMessage(errorInfo)
+              };
+            }
           }
         }
       }

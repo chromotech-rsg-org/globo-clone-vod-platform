@@ -16,8 +16,9 @@ export interface SearchResult {
   success: boolean;
   customers?: Array<{
     viewers_id: number;
-    email: string;
-    name: string;
+    email?: string;
+    login?: string;
+    name?: string;
   }>;
   message?: string;
 }
