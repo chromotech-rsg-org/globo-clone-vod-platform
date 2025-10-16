@@ -76,21 +76,36 @@ export class UserRegistrationFlowService {
           console.log('[UserRegistrationFlow] ✅ User created in MOTV:', createResult.viewersId);
           motvUserId = createResult.viewersId;
         } else if (MotvErrorHandler.isUserExistsError(createResult.error)) {
-          // Erro 104/106: usuário já existe no MOTV
-          console.log('[UserRegistrationFlow] ⚠️ User exists in MOTV but wrong password');
-          return {
-            success: false,
-            requiresPasswordUpdate: true,
-            message: 'Usuário já existe no MOTV. Por favor, tente fazer login ou recuperar sua senha.'
-          };
+          // Usuário já existe no MOTV - tentar localizar pelo e-mail e prosseguir
+          console.log('[UserRegistrationFlow] ⚠️ User exists in MOTV, attempting lookup by email...');
+          const search = await MotvApiService.customerSearch(userData.email);
+          const found = search.success && search.customers?.find(c => c.email?.toLowerCase() === userData.email.toLowerCase());
+          if (found?.viewers_id) {
+            motvUserId = found.viewers_id;
+            console.log('[UserRegistrationFlow] 🔎 Found existing MOTV user by email:', motvUserId);
+          } else {
+            return {
+              success: false,
+              requiresPasswordUpdate: true,
+              message: 'Usuário já existe no MOTV. Por favor, tente fazer login ou recuperar sua senha.'
+            };
+          }
         } else {
-          // Outro erro ao criar
-          const errorPayload = createResult.error ?? { message: createResult.message || 'Erro ao criar usuário no MOTV' };
-          const errorInfo = MotvErrorHandler.handleError(errorPayload, 'criar usuário no MOTV', { createResult });
-          return {
-            success: false,
-            message: MotvErrorHandler.formatUserMessage(errorInfo)
-          };
+          // Outro erro ao criar - tentar fallback buscando por e-mail (pode ter criado mesmo com resposta de erro)
+          console.log('[UserRegistrationFlow] ⚠️ MOTV create returned error, attempting lookup by email as fallback');
+          const search = await MotvApiService.customerSearch(userData.email);
+          const found = search.success && search.customers?.find(c => c.email?.toLowerCase() === userData.email.toLowerCase());
+          if (found?.viewers_id) {
+            motvUserId = found.viewers_id;
+            console.log('[UserRegistrationFlow] ✅ Fallback succeeded, MOTV user exists with id:', motvUserId);
+          } else {
+            const errorPayload = createResult.error ?? { message: createResult.message || 'Erro ao criar usuário no MOTV' };
+            const errorInfo = MotvErrorHandler.handleError(errorPayload, 'criar usuário no MOTV', { createResult });
+            return {
+              success: false,
+              message: MotvErrorHandler.formatUserMessage(errorInfo)
+            };
+          }
         }
       }
 
@@ -98,10 +113,9 @@ export class UserRegistrationFlowService {
         throw new Error('Falha ao obter ID do usuário MOTV');
       }
 
-      // PASSO 4: Gerenciar plano no MOTV (se selecionado)
+      // PASSO 4: Adiar atribuição de plano no MOTV para depois de criar usuário local e assinatura
       if (userData.selectedPlanId) {
-        console.log('[UserRegistrationFlow] 📦 Managing plan in MOTV...');
-        await this.managePlanInMotv(motvUserId, userData.selectedPlanId);
+        console.log('[UserRegistrationFlow] ⏭️ Deferring MOTV plan assignment until after local subscription');
       } else {
         console.log('[UserRegistrationFlow] ℹ️ No plan selected, skipping plan assignment');
       }
@@ -140,9 +154,16 @@ export class UserRegistrationFlowService {
         };
       }
 
-      // Associar plano local (se selecionado)
+      // Associar plano local (se selecionado) e, em seguida, atribuir plano no MOTV
       if (userData.selectedPlanId) {
         await this.assignPackageToUser(localUserId, userData.selectedPlanId);
+        try {
+          console.log('[UserRegistrationFlow] 📦 Now assigning plan in MOTV...');
+          await this.managePlanInMotv(motvUserId, userData.selectedPlanId);
+        } catch (e) {
+          console.error('[UserRegistrationFlow] ❌ Failed to assign plan in MOTV after local subscription', e);
+          throw e;
+        }
       }
 
       console.log('[UserRegistrationFlow] ✅ Registration completed successfully');
