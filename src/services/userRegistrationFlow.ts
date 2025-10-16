@@ -50,18 +50,25 @@ export class UserRegistrationFlowService {
         };
       }
 
-      // PASSO 2: Tentar autenticar no MOTV (verifica se já existe)
-      console.log('[UserRegistrationFlow] 🔐 Attempting MOTV authentication...');
-      const authResult = await MotvApiService.customerAuthenticate(userData.email, userData.password);
-      
+      // PASSO 2: Verificar existência no MOTV (primeiro via busca)
+      console.log('[UserRegistrationFlow] 🔎 Checking MOTV for existing user...');
       let motvUserId: number | null = null;
+      let motvPlanAssigned = false;
 
-      if (authResult.success && authResult.viewersId) {
-        // Usuário existe no MOTV com essa senha
-        console.log('[UserRegistrationFlow] ✅ User exists in MOTV:', authResult.viewersId);
-        motvUserId = authResult.viewersId;
-      } else {
-        // PASSO 3: Tentar criar no MOTV
+      const searchInitial = await MotvApiService.customerSearch(userData.email);
+      if (searchInitial.success) {
+        const emailLower = userData.email.toLowerCase();
+        const foundInitial = searchInitial.customers?.find(c =>
+          c.email?.toLowerCase() === emailLower || c.login?.toLowerCase() === emailLower
+        );
+        if (foundInitial?.viewers_id) {
+          motvUserId = foundInitial.viewers_id;
+          console.log('[UserRegistrationFlow] ✅ Found existing MOTV user:', motvUserId);
+        }
+      }
+
+      if (!motvUserId) {
+        // Não encontrado: criar no MOTV
         console.log('[UserRegistrationFlow] 📝 Creating user in MOTV...');
         const createResult = await MotvApiService.customerCreate({
           name: userData.name,
@@ -136,11 +143,18 @@ export class UserRegistrationFlowService {
         throw new Error('Falha ao obter ID do usuário MOTV');
       }
 
-      // PASSO 4: Adiar atribuição de plano no MOTV para depois de criar usuário local e assinatura
+      // PASSO 3: Atribuir plano no MOTV ANTES de criar usuário local
       if (userData.selectedPlanId) {
-        console.log('[UserRegistrationFlow] ⏭️ Deferring MOTV plan assignment until after local subscription');
+        try {
+          console.log('[UserRegistrationFlow] 📦 Assigning plan in MOTV before local creation...');
+          await this.managePlanInMotv(motvUserId, userData.selectedPlanId);
+          motvPlanAssigned = true;
+        } catch (e) {
+          console.error('[UserRegistrationFlow] ❌ Failed to assign plan in MOTV before local creation', e);
+          throw e;
+        }
       } else {
-        console.log('[UserRegistrationFlow] ℹ️ No plan selected, skipping plan assignment');
+        console.log('[UserRegistrationFlow] ℹ️ No plan selected, skipping MOTV plan assignment');
       }
 
       // PASSO 5: Criar usuário no sistema interno
@@ -181,8 +195,12 @@ export class UserRegistrationFlowService {
       if (userData.selectedPlanId) {
         await this.assignPackageToUser(localUserId, userData.selectedPlanId);
         try {
-          console.log('[UserRegistrationFlow] 📦 Now assigning plan in MOTV...');
-          await this.managePlanInMotv(motvUserId, userData.selectedPlanId);
+          if (!motvPlanAssigned) {
+            console.log('[UserRegistrationFlow] 📦 Now assigning plan in MOTV...');
+            await this.managePlanInMotv(motvUserId, userData.selectedPlanId);
+          } else {
+            console.log('[UserRegistrationFlow] ℹ️ Plan already assigned in MOTV earlier');
+          }
         } catch (e) {
           console.error('[UserRegistrationFlow] ❌ Failed to assign plan in MOTV after local subscription', e);
           throw e;
