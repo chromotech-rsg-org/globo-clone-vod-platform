@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,9 +36,11 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
     phone: user?.phone || '',
     role: user?.role || 'user',
     password: '',
+    motvPassword: '',
     motv_user_id: user?.motv_user_id || ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPasswordMismatchDialog, setShowPasswordMismatchDialog] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { customizations } = useCustomizations('home');
@@ -54,6 +57,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
         phone: user.phone || '',
         role: user.role || 'user',
         password: '',
+        motvPassword: '',
         motv_user_id: user.motv_user_id || ''
       });
     }
@@ -80,6 +84,25 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
       return;
     }
 
+    if (!user && !formData.motvPassword.trim()) {
+      toast({
+        title: "Erro",
+        description: "Senha MOTV é obrigatória",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validar se senhas conferem (somente para novos usuários)
+    if (!user && formData.password !== formData.motvPassword) {
+      setShowPasswordMismatchDialog(true);
+      return;
+    }
+
+    await processUserCreation();
+  };
+
+  const processUserCreation = async () => {
     try {
       setIsLoading(true);
 
@@ -148,19 +171,33 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
           if (roleError) throw roleError;
         }
 
-        // Disparar integração (não bloqueia cadastro)
+        // Criar no MOTV usando a senha validada
         try {
-          const { MotvIntegrationService } = await import('@/services/motvIntegration');
-          await MotvIntegrationService.createUser(newUserId, {
+          const { MotvApiService } = await import('@/services/motvApiService');
+          const names = formData.name.trim().split(' ');
+          const motvResult = await MotvApiService.customerCreate({
             name: formData.name.trim(),
+            login: formData.email.trim(),
+            password: formData.motvPassword,
             email: formData.email.trim(),
             cpf: formData.cpf.trim(),
-            phone: formData.phone.trim(),
-            role: formData.role
+            phone: formData.phone.trim()
           });
-        } catch (integrationError) {
-          console.warn('Integration creation failed:', integrationError);
-          // Não falha a operação principal
+
+          if (motvResult.success && motvResult.viewersId) {
+            // Salvar viewers_id no profile
+            await supabase
+              .from('profiles')
+              .update({ motv_user_id: motvResult.viewersId.toString() })
+              .eq('id', newUserId);
+            
+            console.log('[UserFormDialog] Usuário criado no MOTV:', motvResult.viewersId);
+          } else {
+            console.warn('[UserFormDialog] Falha ao criar no MOTV:', motvResult.message);
+          }
+        } catch (motvError) {
+          console.warn('[UserFormDialog] Erro ao criar no MOTV:', motvError);
+          // Não bloqueia o cadastro
         }
 
         toast({
@@ -192,20 +229,53 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
         phone: '',
         role: 'user',
         password: '',
+        motvPassword: '',
         motv_user_id: ''
       });
+      setShowPasswordMismatchDialog(false);
       onClose();
     }
   };
 
+  const handleUpdatePassword = () => {
+    // Atualizar senha MOTV para ser igual à senha local
+    setFormData(prev => ({ ...prev, motvPassword: prev.password }));
+    setShowPasswordMismatchDialog(false);
+    // Prosseguir com criação
+    setTimeout(() => processUserCreation(), 100);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-black border-green-600/30 text-white max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-white">
-            {user ? 'Editar Usuário' : 'Novo Usuário'}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <AlertDialog open={showPasswordMismatchDialog} onOpenChange={setShowPasswordMismatchDialog}>
+        <AlertDialogContent className="bg-black border-green-600/30 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Senhas não conferem</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              A senha MOTV informada não é igual à senha do sistema. Deseja atualizar a senha MOTV para usar a mesma senha do sistema?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-gray-600 text-white hover:bg-gray-800">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleUpdatePassword}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Atualizar Senha MOTV
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="bg-black border-green-600/30 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {user ? 'Editar Usuário' : 'Novo Usuário'}
+            </DialogTitle>
+          </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -283,20 +353,40 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
           </div>
 
           {!user && (
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300">Senha *</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Senha (mínimo 6 caracteres)"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
-                disabled={isLoading}
-                minLength={6}
-                required
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-300">Senha (Sistema) *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Senha para login no sistema"
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+                  disabled={isLoading}
+                  minLength={6}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="motvPassword" className="text-gray-300">Senha {projectName} *</Label>
+                <Input
+                  id="motvPassword"
+                  type="password"
+                  placeholder={`Senha para ${projectName}`}
+                  value={formData.motvPassword}
+                  onChange={(e) => setFormData(prev => ({ ...prev, motvPassword: e.target.value }))}
+                  className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+                  disabled={isLoading}
+                  minLength={6}
+                  required
+                />
+                <p className="text-xs text-gray-400">
+                  As senhas devem ser iguais para criar o usuário
+                </p>
+              </div>
+            </>
           )}
 
           {user && user.motv_user_id && (
@@ -334,6 +424,7 @@ const UserFormDialog = ({ open, onClose, user, onSuccess }: UserFormDialogProps)
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
