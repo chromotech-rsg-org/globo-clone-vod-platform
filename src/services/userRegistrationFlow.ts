@@ -51,6 +51,16 @@ export class UserRegistrationFlowService {
       }
 
       // PASSO 2: Verificar existência no MOTV (primeiro via busca)
+      // Pré-validação: obter código do pacote do plano antes de criar usuário no portal
+      if (userData.selectedPlanId) {
+        try {
+          console.log('[UserRegistrationFlow] 🔎 Pre-validating plan package code...');
+          await this.getPackageCodeForPlan(userData.selectedPlanId);
+        } catch (e) {
+          console.error('[UserRegistrationFlow] ❌ Plan pre-validation failed:', e);
+          throw e;
+        }
+      }
       console.log('[UserRegistrationFlow] 🔎 Checking MOTV for existing user...');
       let motvUserId: number | null = null;
       let motvPlanAssigned = false;
@@ -231,22 +241,18 @@ export class UserRegistrationFlowService {
    * - Cancela planos existentes
    * - Cria novo plano
    */
-  private static async managePlanInMotv(motvUserId: number, planId: string): Promise<void> {
-    console.log('[UserRegistrationFlow] 📦 Looking for package code for plan:', planId);
+  // Helper: resolver código do pacote (products_id) para um plano
+  private static async getPackageCodeForPlan(planId: string): Promise<string> {
+    console.log('[UserRegistrationFlow] 🔎 Resolving package code for plan:', planId);
 
-    // Buscar package_code do plano
+    // Buscar plano básico
     const { data: plan, error: planError } = await supabase
       .from('plans')
-      .select('id, name, package_id, packages(code)')
+      .select('id, name, package_id')
       .eq('id', planId)
       .maybeSingle();
 
-    console.log('[UserRegistrationFlow] 📋 Plan query result:', { 
-      plan, 
-      planError,
-      packageId: plan?.package_id,
-      packages: plan?.packages 
-    });
+    console.log('[UserRegistrationFlow] 🧭 Plan base result:', { plan, planError });
 
     if (planError) {
       console.error('[UserRegistrationFlow] ❌ Error fetching plan:', planError);
@@ -258,14 +264,57 @@ export class UserRegistrationFlowService {
       throw new Error('Plano não encontrado');
     }
 
-    const packageCode = (plan?.packages as any)?.code;
-    console.log('[UserRegistrationFlow] 📦 Package code extracted:', packageCode);
-    
+    // Tentar via coluna direta package_id
+    if ((plan as any).package_id) {
+      const { data: pkg, error: pkgError } = await supabase
+        .from('packages')
+        .select('code, active, suspension_package')
+        .eq('id', (plan as any).package_id)
+        .maybeSingle();
+
+      console.log('[UserRegistrationFlow] 🧭 Package via plan.package_id:', { pkg, pkgError });
+
+      if (pkgError) {
+        console.error('[UserRegistrationFlow] ❌ Error fetching package:', pkgError);
+        throw new Error('Erro ao buscar informações do pacote');
+      }
+
+      if ((pkg as any)?.code) {
+        return String((pkg as any).code);
+      }
+    }
+
+    // Fallback: relação many-to-many via plan_packages
+    const { data: planPkgs, error: ppError } = await supabase
+      .from('plan_packages')
+      .select('package_id, packages:package_id(code, active, suspension_package)')
+      .eq('plan_id', planId);
+
+    console.log('[UserRegistrationFlow] 🧭 plan_packages result:', { planPkgs, ppError });
+
+    if (ppError) {
+      console.error('[UserRegistrationFlow] ❌ Error fetching plan packages:', ppError);
+      throw new Error('Erro ao buscar pacotes do plano');
+    }
+
+    const candidates = (planPkgs || []).map((pp: any) => (pp as any).packages).filter(Boolean);
+    const preferred = candidates.find((p: any) => p.active === true && p.suspension_package !== true) || candidates[0];
+
+    const packageCode = (preferred as any)?.code;
+
     if (!packageCode) {
-      console.error('[UserRegistrationFlow] ❌ No package code found for plan. Plan data:', JSON.stringify(plan));
+      console.error('[UserRegistrationFlow] ❌ No package code found for plan. Plan packages data:', JSON.stringify(planPkgs));
       throw new Error('Código do pacote não configurado. Por favor, configure o código do pacote no plano antes de continuar.');
     }
 
+    return String(packageCode);
+  }
+
+  private static async managePlanInMotv(motvUserId: number, planId: string): Promise<void> {
+    console.log('[UserRegistrationFlow] 📦 Looking for package code for plan:', planId);
+
+    // Resolver package_code do plano
+    const packageCode = await this.getPackageCodeForPlan(planId);
     console.log('[UserRegistrationFlow] 📦 Package code found:', packageCode);
 
     // Verificar planos atuais
