@@ -69,45 +69,74 @@ export class UserRegistrationFlowService {
       // PASSO 3: Verificar existência no portal (via busca)
       console.log('[UserRegistrationFlow] 🔎 Checking portal for existing user...');
       let motvUserId: number | null = null;
+      let userExistsInPortal = false;
       
-      const searchResult = await MotvApiService.customerSearch(userData.email);
-      
-      if (searchResult.success && searchResult.customers && searchResult.customers.length > 0) {
-        // Usuário já existe no portal - buscar pelo email exato
-        const emailLower = userData.email.toLowerCase();
-        const foundUser = searchResult.customers.find(c => 
-          c.email?.toLowerCase() === emailLower || c.login?.toLowerCase() === emailLower
-        );
+      try {
+        const searchResult = await MotvApiService.customerSearch(userData.email);
         
-        if (foundUser?.viewers_id) {
-          motvUserId = foundUser.viewers_id;
-          console.log('[UserRegistrationFlow] ✅ User found in portal:', motvUserId);
-          console.log('[UserRegistrationFlow] 🔄 Will proceed with existing portal user and assign plan');
+        if (searchResult.success && searchResult.customers && searchResult.customers.length > 0) {
+          // Usuário já existe no portal - buscar pelo email exato
+          const emailLower = userData.email.toLowerCase();
+          const foundUser = searchResult.customers.find(c => 
+            c.email?.toLowerCase() === emailLower || c.login?.toLowerCase() === emailLower
+          );
+          
+          if (foundUser?.viewers_id) {
+            motvUserId = foundUser.viewers_id;
+            userExistsInPortal = true;
+            console.log('[UserRegistrationFlow] ✅ User found in portal:', motvUserId);
+            console.log('[UserRegistrationFlow] 🔄 Will proceed with existing portal user and assign plan');
+          }
+        }
+      } catch (error: any) {
+        console.error('[UserRegistrationFlow] ❌ Error searching for user in portal:', error);
+        throw new Error('Erro ao verificar usuário no portal. Tente novamente.');
+      }
+
+      // PASSO 4: Se precisar atribuir plano E usuário existe, validar acesso ao portal ANTES de criar local
+      if (userData.selectedPlanId && motvUserId && packageCode && userExistsInPortal) {
+        console.log('[UserRegistrationFlow] 🔍 Pre-validating portal access for existing user...');
+        try {
+          // Tenta buscar histórico de planos para validar que o portal está acessível
+          const historyResult = await MotvApiService.planHistory(motvUserId);
+          if (!historyResult.success) {
+            console.error('[UserRegistrationFlow] ❌ Portal validation failed:', historyResult.message);
+            throw new Error('Não foi possível acessar o portal. Tente novamente mais tarde.');
+          }
+          console.log('[UserRegistrationFlow] ✅ Portal access validated');
+        } catch (error: any) {
+          console.error('[UserRegistrationFlow] ❌ Portal pre-validation error:', error);
+          throw new Error('Erro ao acessar o portal. Tente novamente. Se o problema persistir, entre em contato com o suporte.');
         }
       }
       
+      // PASSO 5: Criar usuário no portal (apenas se não existir)
       if (!motvUserId) {
-        // PASSO 4: Criar usuário no portal
         console.log('[UserRegistrationFlow] 📝 Creating user in portal...');
-        const createResult = await MotvApiService.customerCreate({
-          name: userData.name,
-          login: userData.email,
-          email: userData.email,
-          password: userData.password,
-          cpf: userData.cpf,
-          phone: userData.phone
-        });
+        try {
+          const createResult = await MotvApiService.customerCreate({
+            name: userData.name,
+            login: userData.email,
+            email: userData.email,
+            password: userData.password,
+            cpf: userData.cpf,
+            phone: userData.phone
+          });
 
-        if (!createResult.success || !createResult.viewersId) {
-          console.error('[UserRegistrationFlow] ❌ Failed to create user in portal:', createResult.message);
-          throw new Error(createResult.message || 'Erro ao criar usuário no portal');
+          if (!createResult.success || !createResult.viewersId) {
+            console.error('[UserRegistrationFlow] ❌ Failed to create user in portal:', createResult.message);
+            throw new Error(createResult.message || 'Erro ao criar usuário no portal');
+          }
+
+          motvUserId = createResult.viewersId;
+          console.log('[UserRegistrationFlow] ✅ User created in portal:', motvUserId);
+        } catch (error: any) {
+          console.error('[UserRegistrationFlow] ❌ Error creating user in portal:', error);
+          throw new Error(error.message || 'Erro ao criar usuário no portal. Tente novamente.');
         }
-
-        motvUserId = createResult.viewersId;
-        console.log('[UserRegistrationFlow] ✅ User created in portal:', motvUserId);
       }
 
-      // PASSO 5: Atribuir plano no portal (se fornecido e necessário)
+      // PASSO 6: Atribuir plano no portal (se fornecido)
       if (userData.selectedPlanId && motvUserId && packageCode) {
         console.log('[UserRegistrationFlow] 📦 Assigning plan in portal...');
         try {
@@ -116,11 +145,12 @@ export class UserRegistrationFlowService {
         } catch (error: any) {
           console.error('[UserRegistrationFlow] ❌ Failed to assign plan in portal:', error);
           // Se falhou a atribuição do plano, não criar usuário local
+          // Usuário fica no portal mas sem plano (pode ser corrigido em nova tentativa)
           throw new Error('Erro ao atribuir o plano no portal. Tente novamente. Se o problema persistir, entre em contato com o suporte.');
         }
       }
 
-      // PASSO 6: Criar usuário no sistema interno (só depois do plano ser atribuído no portal)
+      // PASSO 7: Criar usuário no sistema interno (só depois do plano ser atribuído no portal)
       console.log('[UserRegistrationFlow] 👤 Creating user in internal system...');
       const createUserResult = await this.createUserInSystem({
         email: userData.email,
@@ -139,7 +169,7 @@ export class UserRegistrationFlowService {
       const userId = createUserResult.user_id;
       console.log('[UserRegistrationFlow] ✅ User created in system:', userId);
 
-      // PASSO 7: Criar assinatura local
+      // PASSO 8: Criar assinatura local
       if (userData.selectedPlanId) {
         console.log('[UserRegistrationFlow] 📋 Creating local subscription...');
         await this.assignPackageToUser(userId, userData.selectedPlanId);
@@ -196,42 +226,48 @@ export class UserRegistrationFlowService {
   private static async managePlanInMotv(motvUserId: number, packageCode: string): Promise<void> {
     console.log('[UserRegistrationFlow] 📦 Managing plan in portal for user:', motvUserId, 'with package:', packageCode);
 
-    // Step 1: Check current plans
-    console.log('[UserRegistrationFlow] 🔍 Checking current plans...');
-    const historyResult = await MotvApiService.planHistory(motvUserId);
-    
-    if (!historyResult.success) {
-      console.error('[UserRegistrationFlow] ❌ Failed to get plan history:', historyResult.message);
-      throw new Error('Erro ao verificar planos existentes no portal');
-    }
-
-    // Step 2: Cancel active plans
-    const activePlans = historyResult.plans?.filter(p => p.status?.toLowerCase() === 'ativo') || [];
-    
-    if (activePlans.length > 0) {
-      console.log('[UserRegistrationFlow] 🗑️ Canceling', activePlans.length, 'active plan(s)');
-      const cancelResult = await MotvApiService.planCancelAll(motvUserId);
+    try {
+      // Step 1: Check current plans
+      console.log('[UserRegistrationFlow] 🔍 Checking current plans...');
+      const historyResult = await MotvApiService.planHistory(motvUserId);
       
-      if (!cancelResult.success) {
-        console.error('[UserRegistrationFlow] ❌ Failed to cancel plans:', cancelResult.message);
-        throw new Error('Erro ao cancelar planos existentes no portal');
+      if (!historyResult.success) {
+        console.error('[UserRegistrationFlow] ❌ Failed to get plan history:', historyResult.message);
+        throw new Error('Erro ao verificar planos existentes no portal');
       }
+
+      // Step 2: Cancel active plans
+      const activePlans = historyResult.plans?.filter(p => p.status?.toLowerCase() === 'ativo') || [];
       
-      console.log('[UserRegistrationFlow] ✅ Active plans canceled');
-    }
+      if (activePlans.length > 0) {
+        console.log('[UserRegistrationFlow] 🗑️ Canceling', activePlans.length, 'active plan(s)');
+        const cancelResult = await MotvApiService.planCancelAll(motvUserId);
+        
+        if (!cancelResult.success) {
+          console.error('[UserRegistrationFlow] ❌ Failed to cancel plans:', cancelResult.message);
+          throw new Error('Erro ao cancelar planos existentes no portal');
+        }
+        
+        console.log('[UserRegistrationFlow] ✅ Active plans canceled');
+      }
 
-    // Step 3: Create new plan with the validated package code
-    console.log('[UserRegistrationFlow] 📦 Creating new plan - User:', motvUserId, 'Package:', packageCode);
-    
-    const createPlanResult = await MotvApiService.planCreate(motvUserId, Number(packageCode));
-    console.log('[UserRegistrationFlow] 📋 Create plan result:', createPlanResult);
-    
-    if (!createPlanResult.success) {
-      console.error('[UserRegistrationFlow] ❌ Failed to create plan:', createPlanResult.message);
-      throw new Error('Erro ao atribuir plano no portal: ' + (createPlanResult.message || 'Erro desconhecido'));
-    }
+      // Step 3: Create new plan with the validated package code
+      console.log('[UserRegistrationFlow] 📦 Creating new plan - User:', motvUserId, 'Package:', packageCode);
+      
+      const createPlanResult = await MotvApiService.planCreate(motvUserId, Number(packageCode));
+      console.log('[UserRegistrationFlow] 📋 Create plan result:', createPlanResult);
+      
+      if (!createPlanResult.success) {
+        console.error('[UserRegistrationFlow] ❌ Failed to create plan:', createPlanResult.message);
+        throw new Error('Erro ao atribuir plano no portal: ' + (createPlanResult.message || 'Erro desconhecido'));
+      }
 
-    console.log('[UserRegistrationFlow] ✅ Plan successfully assigned in portal');
+      console.log('[UserRegistrationFlow] ✅ Plan successfully assigned in portal');
+    } catch (error: any) {
+      console.error('[UserRegistrationFlow] ❌ Error in managePlanInMotv:', error);
+      // Re-throw com mensagem mais clara
+      throw new Error(error.message || 'Erro ao gerenciar plano no portal');
+    }
   }
 
   /**
