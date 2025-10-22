@@ -467,6 +467,8 @@ export class MotvApiService {
    */
   static async planCreate(viewersId: number, productsId: number): Promise<PlanCreateResult> {
     try {
+      console.log('[MotvApiService] 📤 planCreate request:', { viewersId, productsId });
+      
       const { data, error } = await supabase.functions.invoke('motv-proxy', {
         body: {
           op: 'subscribe',
@@ -477,6 +479,8 @@ export class MotvApiService {
         }
       });
 
+      console.log('[MotvApiService] 📥 planCreate response:', { data, error });
+
       if (error) {
         console.error('[MotvApiService] planCreate error:', error);
         return { success: false, message: 'Erro ao criar plano' };
@@ -484,6 +488,8 @@ export class MotvApiService {
 
       const result = data?.result;
       const status = result?.status || result?.code;
+      
+      console.log('[MotvApiService] 📋 planCreate status:', status, 'message:', result?.message);
 
       if (status === 1) {
         return { success: true, message: 'Plano atribuído com sucesso' };

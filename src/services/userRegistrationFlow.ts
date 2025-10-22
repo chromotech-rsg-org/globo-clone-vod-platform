@@ -241,15 +241,29 @@ export class UserRegistrationFlowService {
       .eq('id', planId)
       .maybeSingle();
 
+    console.log('[UserRegistrationFlow] 📋 Plan query result:', { 
+      plan, 
+      planError,
+      packageId: plan?.package_id,
+      packages: plan?.packages 
+    });
+
     if (planError) {
       console.error('[UserRegistrationFlow] ❌ Error fetching plan:', planError);
       throw new Error('Erro ao buscar informações do plano');
     }
 
+    if (!plan) {
+      console.error('[UserRegistrationFlow] ❌ Plan not found:', planId);
+      throw new Error('Plano não encontrado');
+    }
+
     const packageCode = (plan?.packages as any)?.code;
+    console.log('[UserRegistrationFlow] 📦 Package code extracted:', packageCode);
+    
     if (!packageCode) {
-      console.warn('[UserRegistrationFlow] ⚠️ No package code found for plan');
-      return; // Não bloqueia o cadastro se não tiver código
+      console.error('[UserRegistrationFlow] ❌ No package code found for plan. Plan data:', JSON.stringify(plan));
+      throw new Error('Código do pacote não configurado. Por favor, configure o código do pacote no plano antes de continuar.');
     }
 
     console.log('[UserRegistrationFlow] 📦 Package code found:', packageCode);
@@ -274,16 +288,24 @@ export class UserRegistrationFlowService {
     }
 
     // Criar novo plano
-    console.log('[UserRegistrationFlow] ➕ Creating new plan...');
+    console.log('[UserRegistrationFlow] ➕ Creating new plan with motvUserId:', motvUserId, 'productsId:', packageCode);
     const productsId = parseInt(packageCode, 10);
+    
+    if (isNaN(productsId)) {
+      console.error('[UserRegistrationFlow] ❌ Invalid products_id:', packageCode);
+      throw new Error('Código do pacote inválido');
+    }
+
+    console.log('[UserRegistrationFlow] 📤 Calling planCreate with viewersId:', motvUserId, 'productsId:', productsId);
     const createPlanResult = await MotvApiService.planCreate(motvUserId, productsId);
+    console.log('[UserRegistrationFlow] 📥 Plan creation result:', createPlanResult);
 
     if (!createPlanResult.success) {
-      console.error('[UserRegistrationFlow] ❌ Failed to create plan:', createPlanResult.message);
+      console.error('[UserRegistrationFlow] ❌ Failed to create plan:', createPlanResult.message, 'Error code:', createPlanResult.error);
       throw new Error(createPlanResult.message || 'Erro ao atribuir plano no portal');
     }
 
-    console.log('[UserRegistrationFlow] ✅ Plan assigned successfully');
+    console.log('[UserRegistrationFlow] ✅ Plan assigned successfully in portal');
   }
 
   /**
