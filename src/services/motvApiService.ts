@@ -412,10 +412,14 @@ export class MotvApiService {
       const result = data?.result;
       const status = result?.status || result?.code;
 
-      if (status === 1) {
+      // MOTV behavior:
+      // - status === 1 => sucesso com possivelmente uma lista de planos
+      // - status === 5 => sem planos encontrados (não é erro)
+      if (status === 1 || status === 5) {
+        const plans = result?.data?.plans || [];
         return {
           success: true,
-          plans: result?.data?.plans || []
+          plans
         };
       }
 
@@ -514,7 +518,9 @@ export class MotvApiService {
       const { data, error } = await supabase.functions.invoke('motv-proxy', {
         body: {
           op: 'cancelAll',
-          viewers_id: viewersId
+          payload: {
+            viewers_id: viewersId
+          }
         }
       });
 
