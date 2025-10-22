@@ -108,8 +108,28 @@ export interface SubscriptionInfo {
  * Garante chamadas consistentes e tratamento de erros padronizado
  */
 export class MotvApiService {
+  // Helper para extrair viewers_id de respostas variadas
+  private static extractViewersId(result: any): number | undefined {
+    if (!result) return undefined;
+    const r = result;
+    const d = r.data || r;
+    const candidates = [
+      d?.viewers_id,
+      d?.viewer_id,
+      d?.viewersId,
+      d?.user?.viewers_id,
+      d?.customer?.viewers_id,
+      r?.response
+    ];
+    for (const val of candidates) {
+      const n = typeof val === 'string' ? parseInt(val, 10) : val;
+      if (typeof n === 'number' && !isNaN(n)) return n;
+    }
+    return undefined;
+  }
+
   /**
-   * Autenticar usuário no MOTV
+   * Autenticar usuário no portal
    */
   static async customerAuthenticate(email: string, password: string): Promise<AuthResult> {
     try {
@@ -125,18 +145,32 @@ export class MotvApiService {
 
       if (error) {
         console.error('[MotvApiService] customerAuthenticate error:', error);
-        return { success: false, message: 'Erro ao autenticar no MOTV' };
+        return { success: false, message: 'Erro ao autenticar no portal' };
       }
 
       const result = data?.result;
       const status = result?.status || result?.code;
 
-      if (status === 1 && result?.data) {
+      if (status === 1 && result) {
+        let viewersId = MotvApiService.extractViewersId(result);
+
+        // Se não veio o viewers_id, tentar localizar via busca por email/login
+        if (!viewersId) {
+          const search = await this.customerSearch(email);
+          if (search.success) {
+            const emailLower = email.toLowerCase();
+            const found = search.customers?.find(c =>
+              c.email?.toLowerCase() === emailLower || c.login?.toLowerCase() === emailLower
+            );
+            if (found?.viewers_id) viewersId = found.viewers_id;
+          }
+        }
+
         return {
           success: true,
-          viewersId: result.data.viewers_id,
-          email: result.data.email,
-          name: result.data.name
+          viewersId,
+          email: result?.data?.email,
+          name: result?.data?.name
         };
       }
 
@@ -265,10 +299,22 @@ export class MotvApiService {
       const status = result?.status;
       
       // Status 1 = sucesso
-      if (status === 1 && result?.data?.viewers_id) {
+      if (status === 1) {
+        let viewersId = MotvApiService.extractViewersId(result);
+        if (!viewersId) {
+          // Buscar por email/login para obter viewers_id
+          const search = await this.customerSearch(userData.email);
+          if (search.success) {
+            const emailLower = userData.email.toLowerCase();
+            const found = search.customers?.find(c =>
+              c.email?.toLowerCase() === emailLower || c.login?.toLowerCase() === emailLower
+            );
+            if (found?.viewers_id) viewersId = found.viewers_id;
+          }
+        }
         return {
           success: true,
-          viewersId: result.data.viewers_id,
+          viewersId,
           message: 'Cliente criado com sucesso'
         };
       }
@@ -279,7 +325,7 @@ export class MotvApiService {
         // Mapear códigos de erro conhecidos
         switch(errorCode) {
           case 104:
-            return { success: false, error: 104, message: 'Usuário já existe no MOTV' };
+            return { success: false, error: 104, message: 'Usuário já existe no portal' };
           case 105:
             return { success: false, error: 105, message: 'CPF inválido' };
           case 106:

@@ -3,7 +3,7 @@
  */
 const MOTV_ERROR_MESSAGES: Record<number, { message: string; action?: string }> = {
   104: {
-    message: 'Usuário já existe no MOTV',
+    message: 'Usuário já existe no portal',
     action: 'Tente fazer login ou recuperar sua senha'
   },
   105: {
@@ -27,11 +27,11 @@ const MOTV_ERROR_MESSAGES: Record<number, { message: string; action?: string }> 
     action: 'Verifique seu email e senha'
   },
   404: {
-    message: 'Usuário não encontrado no MOTV',
+    message: 'Usuário não encontrado no portal',
     action: 'Cadastre-se primeiro'
   },
   500: {
-    message: 'Erro interno do servidor MOTV',
+    message: 'Erro interno do servidor do portal',
     action: 'Tente novamente mais tarde ou contate o suporte'
   }
 };
@@ -86,7 +86,7 @@ export class MotvErrorHandler {
 
     // Erro genérico
     return {
-      userMessage: `Erro de sincronização com MOTV durante ${operation}. Tente novamente.`,
+      userMessage: `Erro de sincronização com o portal durante ${operation}. Tente novamente.`,
       technicalMessage: `Unknown error in ${operation}: ${JSON.stringify(error)}`,
       shouldRetry: true,
       actionSuggestion: 'Se o problema persistir, contate o suporte'

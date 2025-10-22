@@ -104,7 +104,7 @@ export class UserRegistrationFlowService {
             return {
               success: false,
               requiresPasswordUpdate: true,
-              message: 'Usuário já existe no MOTV. Por favor, tente fazer login ou recuperar sua senha.'
+              message: 'Usuário já existe no portal. Por favor, tente fazer login ou recuperar sua senha.'
             };
           }
         } else {
@@ -129,7 +129,7 @@ export class UserRegistrationFlowService {
               console.log('[UserRegistrationFlow] ✅ Search fallback succeeded, found user:', motvUserId);
             } else {
               const errorPayload = createResult.error ?? { message: createResult.message || 'Erro ao criar usuário no MOTV' };
-              const errorInfo = MotvErrorHandler.handleError(errorPayload, 'criar usuário no MOTV', { createResult });
+              const errorInfo = MotvErrorHandler.handleError(errorPayload, 'criar usuário no portal', { createResult });
               return {
                 success: false,
                 message: MotvErrorHandler.formatUserMessage(errorInfo)
@@ -140,7 +140,7 @@ export class UserRegistrationFlowService {
       }
 
       if (!motvUserId) {
-        throw new Error('Falha ao obter ID do usuário MOTV');
+        throw new Error('Falha ao obter ID do usuário no portal');
       }
 
       // PASSO 3: Atribuir plano no MOTV ANTES de criar usuário local
@@ -280,7 +280,7 @@ export class UserRegistrationFlowService {
 
     if (!createPlanResult.success) {
       console.error('[UserRegistrationFlow] ❌ Failed to create plan:', createPlanResult.message);
-      throw new Error(createPlanResult.message || 'Erro ao atribuir plano no MOTV');
+      throw new Error(createPlanResult.message || 'Erro ao atribuir plano no portal');
     }
 
     console.log('[UserRegistrationFlow] ✅ Plan assigned successfully');
