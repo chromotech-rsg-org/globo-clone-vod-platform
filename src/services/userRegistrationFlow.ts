@@ -236,20 +236,14 @@ export class UserRegistrationFlowService {
         throw new Error('Erro ao verificar planos existentes no portal');
       }
 
-      // Step 2: Cancel active plans
-      const activePlans = historyResult.plans?.filter(p => p.status?.toLowerCase() === 'ativo') || [];
-      
-      if (activePlans.length > 0) {
-        console.log('[UserRegistrationFlow] 🗑️ Canceling', activePlans.length, 'active plan(s)');
-        const cancelResult = await MotvApiService.planCancelAll(motvUserId);
-        
-        if (!cancelResult.success) {
-          console.error('[UserRegistrationFlow] ❌ Failed to cancel plans:', cancelResult.message);
-          throw new Error('Erro ao cancelar planos existentes no portal');
-        }
-        
-        console.log('[UserRegistrationFlow] ✅ Active plans canceled');
+      // Step 2: Cancel all active plans (idempotent)
+      console.log('[UserRegistrationFlow] 🗑️ Canceling any existing active plans (idempotent)');
+      const cancelResult = await MotvApiService.planCancelAll(motvUserId);
+      if (!cancelResult.success) {
+        console.error('[UserRegistrationFlow] ❌ Failed to cancel plans:', cancelResult.message);
+        throw new Error('Erro ao cancelar planos existentes no portal');
       }
+      console.log('[UserRegistrationFlow] ✅ Cancel step completed');
 
       // Step 3: Create new plan with the validated package code
       console.log('[UserRegistrationFlow] 📦 Creating new plan - User:', motvUserId, 'Package:', packageCode);

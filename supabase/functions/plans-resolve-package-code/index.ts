@@ -10,7 +10,14 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const reqHeaders = req.headers.get('Access-Control-Request-Headers') ?? '';
+    const dynamicCors = {
+      ...corsHeaders,
+      'Access-Control-Allow-Headers': reqHeaders || 'authorization, x-client-info, apikey, content-type, cache-control, pragma, x-supabase-authorization, checkout-uri',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    };
+    console.log('[plans-resolve-package-code] 🛂 Preflight requested headers:', reqHeaders);
+    return new Response(null, { headers: dynamicCors });
   }
 
   try {
