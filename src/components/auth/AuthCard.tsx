@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import { RegisterData } from '@/types/auth';
 import { useCustomizations } from '@/hooks/useCustomizations';
+import { navigateToSection } from '@/utils/scrollToSection';
 
 interface AuthCardProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -16,14 +17,21 @@ interface AuthCardProps {
 
 const AuthCard = ({ onLogin, onRegister, isSubmitting }: AuthCardProps) => {
   const { getCustomization } = useCustomizations('global');
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const siteName = getCustomization('global_site_name', 'Globoplay');
   const logoUrl = getCustomization('global_logo_url', '');
+  
+  const handlePlansClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigateToSection(navigate, '/#plans', location.pathname);
+  };
 
   return (
     <div className="max-w-md w-full">
       <div className="text-center mb-8">
-        <Link to="/" className="inline-flex items-center space-x-2">
+        <button onClick={() => navigate('/')} className="inline-flex items-center space-x-2">
           {logoUrl ? (
             <img src={logoUrl} alt={siteName} className="h-8 w-auto" />
           ) : (
@@ -32,7 +40,7 @@ const AuthCard = ({ onLogin, onRegister, isSubmitting }: AuthCardProps) => {
             </div>
           )}
           <span className="text-white font-bold text-2xl">{siteName}</span>
-        </Link>
+        </button>
       </div>
 
       <Card className="bg-gray-800 border-gray-700">
@@ -61,9 +69,12 @@ const AuthCard = ({ onLogin, onRegister, isSubmitting }: AuthCardProps) => {
           <div className="mt-6 text-center">
             <p className="text-gray-400 text-sm">
               Não tem uma conta?{' '}
-              <Link to="/#plans" className="text-blue-400 hover:text-blue-300">
+              <button
+                onClick={handlePlansClick}
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
                 Assine agora
-              </Link>
+              </button>
             </p>
           </div>
         </CardContent>

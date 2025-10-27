@@ -1,11 +1,19 @@
 
 import React from 'react';
 import { Play } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCustomizations } from '@/hooks/useCustomizations';
+import { navigateToSection } from '@/utils/scrollToSection';
 
 const HeroBanner = () => {
   const { getCustomization, loading } = useCustomizations('home');
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const handlePlansClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigateToSection(navigate, '/#plans', location.pathname);
+  };
 
   // Don't show default content while loading
   if (loading) {
@@ -53,13 +61,13 @@ const HeroBanner = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link 
-                to="/#plans"
+              <button
+                onClick={handlePlansClick}
                 className="px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-semibold flex items-center justify-center space-x-2 transition-colors"
               >
                 <Play className="h-5 w-5 fill-current" />
                 <span>{buttonText}</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>

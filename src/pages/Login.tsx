@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCustomizations } from '@/hooks/useCustomizations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { LoginSuccessModal } from '@/components/auth/LoginSuccessModal';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { supabase } from '@/integrations/supabase/client';
+import { navigateToSection } from '@/utils/scrollToSection';
 
 const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +31,13 @@ const Login = () => {
   
   const { login, register, user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { getCustomization } = useCustomizations('login');
+  
+  const handlePlansClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigateToSection(navigate, '/#plans', location.pathname);
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -307,13 +314,13 @@ const Login = () => {
           <div className="text-center space-y-4">
             <p className="text-sm" style={{ color: textColor }}>
               {registerText.split('Cadastre-se')[0]}
-              <Link 
-                to="/#plans" 
-                className="font-medium transition-colors hover:opacity-75"
+              <button
+                onClick={handlePlansClick}
+                className="font-medium transition-colors hover:opacity-75 underline"
                 style={{ color: primaryColor }}
               >
                 Cadastre-se
-              </Link>
+              </button>
             </p>
             
             <div className="text-center">

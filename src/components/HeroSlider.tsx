@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCustomizations } from '@/hooks/useCustomizations';
+import { navigateToSection } from '@/utils/scrollToSection';
 
 interface HeroSlide {
   id: string;
@@ -29,7 +30,14 @@ const defaultSlide: HeroSlide = {
 
 const HeroSlider = () => {
   const { getCustomization, loading } = useCustomizations('home');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const handlePlansClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigateToSection(navigate, '/#plans', location.pathname);
+  };
 
   // Get slider configuration - sem memoização para evitar loops infinitos
   const slideImages = getCustomization('hero', 'hero_slider_images', '');
@@ -159,8 +167,8 @@ const HeroSlider = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link 
-                to="/#plans"
+              <button
+                onClick={handlePlansClick}
                 className="px-8 py-3 rounded-md font-semibold flex items-center justify-center space-x-2 hover:opacity-90 transition-colors"
                 style={{ 
                   backgroundColor: currentSlideData.buttonBackgroundColor,
@@ -169,7 +177,7 @@ const HeroSlider = () => {
               >
                 <Play className="h-5 w-5 fill-current" />
                 <span>{currentSlideData.buttonText}</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
