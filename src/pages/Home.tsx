@@ -19,20 +19,29 @@ const Home = () => {
 
   // Scroll suave para âncora após carregamento
   useEffect(() => {
-    if (!customizationsLoading && location.hash) {
+    if (!customizationsLoading && !loading && location.hash) {
       const elementId = location.hash.replace('#', '');
-      const element = document.getElementById(elementId);
       
-      if (element) {
-        setTimeout(() => {
-          element.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          });
-        }, 100);
-      }
+      // Tentar encontrar o elemento com retry
+      const scrollToElement = (attempts = 0) => {
+        const element = document.getElementById(elementId);
+        
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            });
+          }, 200);
+        } else if (attempts < 5) {
+          // Tentar novamente após 200ms se o elemento não existir ainda
+          setTimeout(() => scrollToElement(attempts + 1), 200);
+        }
+      };
+      
+      scrollToElement();
     }
-  }, [location.hash, customizationsLoading]);
+  }, [location.hash, customizationsLoading, loading]);
 
   const siteBgColor = getCustomization('global', 'site_background_color', '#0f172a');
   const heroSliderImages = getCustomization('hero', 'hero_slider_images', '');
