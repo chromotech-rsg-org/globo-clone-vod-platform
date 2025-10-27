@@ -277,7 +277,7 @@ const Login = () => {
             <p className="text-sm" style={{ color: textColor }}>
               {registerText.split('Cadastre-se')[0]}
               <a 
-                href="/#planos" 
+                href="/#plans" 
                 className="font-medium transition-colors hover:opacity-75"
                 style={{ color: primaryColor }}
               >

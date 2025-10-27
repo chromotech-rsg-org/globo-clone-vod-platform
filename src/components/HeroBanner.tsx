@@ -52,10 +52,13 @@ const HeroBanner = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-semibold flex items-center justify-center space-x-2 transition-colors">
+              <a 
+                href="/#plans"
+                className="px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-semibold flex items-center justify-center space-x-2 transition-colors"
+              >
                 <Play className="h-5 w-5 fill-current" />
                 <span>{buttonText}</span>
-              </button>
+              </a>
             </div>
           </div>
         </div>

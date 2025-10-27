@@ -158,7 +158,8 @@ const HeroSlider = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <button 
+              <a 
+                href="/#plans"
                 className="px-8 py-3 rounded-md font-semibold flex items-center justify-center space-x-2 hover:opacity-90 transition-colors"
                 style={{ 
                   backgroundColor: currentSlideData.buttonBackgroundColor,
@@ -167,7 +168,7 @@ const HeroSlider = () => {
               >
                 <Play className="h-5 w-5 fill-current" />
                 <span>{currentSlideData.buttonText}</span>
-              </button>
+              </a>
             </div>
           </div>
         </div>
