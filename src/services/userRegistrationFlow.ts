@@ -158,7 +158,8 @@ export class UserRegistrationFlowService {
         name: userData.name,
         cpf: userData.cpf,
         phone: userData.phone,
-        motvUserId: motvUserId?.toString()
+        motvUserId: motvUserId?.toString(),
+        planId: userData.selectedPlanId
       });
 
       if (!createUserResult.success || !createUserResult.user_id) {
@@ -168,11 +169,8 @@ export class UserRegistrationFlowService {
 
       const userId = createUserResult.user_id;
       console.log('[UserRegistrationFlow] ✅ User created in system:', userId);
-
-      // PASSO 8: Criar assinatura local
+      
       if (userData.selectedPlanId) {
-        console.log('[UserRegistrationFlow] 📋 Creating local subscription...');
-        await this.assignPackageToUser(userId, userData.selectedPlanId);
         console.log('[UserRegistrationFlow] ✅ Local subscription created');
       }
 
@@ -298,6 +296,7 @@ export class UserRegistrationFlowService {
     cpf?: string;
     phone?: string;
     motvUserId?: string;
+    planId?: string;
   }): Promise<{ success: boolean; user_id?: string; error?: string }> {
     try {
       const { data: result, error } = await supabase.functions.invoke('auth-register', {
@@ -314,22 +313,4 @@ export class UserRegistrationFlowService {
     }
   }
 
-  /**
-   * Associar plano ao usuário no sistema
-   */
-  private static async assignPackageToUser(userId: string, planId: string): Promise<void> {
-    const { error } = await supabase
-      .from('subscriptions')
-      .insert({
-        user_id: userId,
-        plan_id: planId,
-        status: 'active',
-        start_date: new Date().toISOString()
-      });
-
-    if (error) {
-      console.error('[UserRegistrationFlow] Error assigning package:', error);
-      throw error;
-    }
-  }
 }

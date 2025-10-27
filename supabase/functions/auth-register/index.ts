@@ -23,10 +23,10 @@ serve(async (req) => {
     });
 
     const requestBody = await req.json();
-    const { email, password, name, cpf, phone, motv_user_id } = requestBody;
+    const { email, password, name, cpf, phone, motv_user_id, plan_id } = requestBody;
 
     console.log("Creating user with email:", email);
-    console.log("Request body:", { email, name, cpf: cpf ? "***" : null, phone, motv_user_id });
+    console.log("Request body:", { email, name, cpf: cpf ? "***" : null, phone, motv_user_id, plan_id });
 
     // Create user with email already confirmed
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -82,6 +82,26 @@ serve(async (req) => {
     }
 
     console.log("Profile created successfully");
+
+    // Create subscription if plan_id is provided
+    if (plan_id) {
+      console.log("Creating subscription for plan:", plan_id);
+      const { error: subscriptionError } = await supabase
+        .from("subscriptions")
+        .insert({
+          user_id: authData.user.id,
+          plan_id: plan_id,
+          status: "active",
+          start_date: new Date().toISOString()
+        });
+
+      if (subscriptionError) {
+        console.error("Error creating subscription:", subscriptionError);
+        // Don't rollback - user is created, they can be assigned a plan later
+      } else {
+        console.log("Subscription created successfully");
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
