@@ -101,17 +101,23 @@ export class UserRegistrationFlowService {
             const authResult = await MotvApiService.customerAuthenticate(userData.email, userData.password);
             
             if (authResult.success) {
-              // Senha correta! Cadastrar no sistema "minha conta" e atualizar MOTV
-              console.log('[UserRegistrationFlow] ✅ Password validated! Will create in system and update MOTV');
+              // Senha correta! Atualizar dados no MOTV e seguir para criar no sistema
+              console.log('[UserRegistrationFlow] ✅ Password validated! Will update MOTV and create in system');
               
-              // Atualizar dados no MOTV com os dados fornecidos
-              await MotvApiService.customerUpdate(motvUserId, {
-                email: userData.email,
-                profileName: userData.name,
-                phone: userData.phone
-              });
+              try {
+                // Atualizar dados no MOTV com os dados fornecidos
+                await MotvApiService.customerUpdate(motvUserId, {
+                  email: userData.email,
+                  profileName: userData.name,
+                  phone: userData.phone
+                });
+                console.log('[UserRegistrationFlow] ✅ User data updated in MOTV');
+              } catch (updateError) {
+                console.error('[UserRegistrationFlow] ⚠️ Failed to update MOTV data, but will continue:', updateError);
+              }
               
-              // Continuar fluxo normal para criar usuário no sistema
+              // Continuar fluxo: pular criação no portal e ir direto para gestão de plano
+              // (motvUserId já está definido, então não entrará no bloco de criação)
             } else {
               // Senha não confere! Criar usuário com senha hash impossível e enviar reset
               console.log('[UserRegistrationFlow] ⚠️ Password mismatch! Will create with random password and send reset email');
@@ -119,7 +125,7 @@ export class UserRegistrationFlowService {
               // Gerar senha hash impossível de reproduzir
               const randomPassword = crypto.randomUUID() + '-' + Date.now() + '-' + Math.random();
               
-              // Criar usuário no sistema com senha impossível
+              // Criar usuário no sistema com senha impossível e dados do portal
               const createResult = await this.createUserInSystem({
                 email: userData.email,
                 password: randomPassword,
