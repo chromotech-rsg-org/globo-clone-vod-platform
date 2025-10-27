@@ -61,9 +61,9 @@ const AuthCard = ({ onLogin, onRegister, isSubmitting }: AuthCardProps) => {
           <div className="mt-6 text-center">
             <p className="text-gray-400 text-sm">
               Não tem uma conta?{' '}
-              <a href="/#plans" className="text-blue-400 hover:text-blue-300">
+              <Link to="/#plans" className="text-blue-400 hover:text-blue-300">
                 Assine agora
-              </a>
+              </Link>
             </p>
           </div>
         </CardContent>

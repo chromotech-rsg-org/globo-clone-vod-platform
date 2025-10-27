@@ -276,13 +276,13 @@ const Login = () => {
           <div className="text-center space-y-4">
             <p className="text-sm" style={{ color: textColor }}>
               {registerText.split('Cadastre-se')[0]}
-              <a 
-                href="/#plans" 
+              <Link 
+                to="/#plans" 
                 className="font-medium transition-colors hover:opacity-75"
                 style={{ color: primaryColor }}
               >
                 Cadastre-se
-              </a>
+              </Link>
             </p>
             
             <div className="text-center">

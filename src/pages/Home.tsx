@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import HeroBanner from '@/components/HeroBanner';
 import HeroSlider from '@/components/HeroSlider';
@@ -14,6 +15,24 @@ import { useCustomizations } from '@/hooks/useCustomizations';
 const Home = () => {
   const { sections, loading } = useContentSections('home');
   const { getCustomization, loading: customizationsLoading } = useCustomizations('home');
+  const location = useLocation();
+
+  // Scroll suave para âncora após carregamento
+  useEffect(() => {
+    if (!customizationsLoading && location.hash) {
+      const elementId = location.hash.replace('#', '');
+      const element = document.getElementById(elementId);
+      
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }, 100);
+      }
+    }
+  }, [location.hash, customizationsLoading]);
 
   const siteBgColor = getCustomization('global', 'site_background_color', '#0f172a');
   const heroSliderImages = getCustomization('hero', 'hero_slider_images', '');

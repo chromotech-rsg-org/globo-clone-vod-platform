@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCustomizations } from '@/hooks/useCustomizations';
 
 const HeroBanner = () => {
@@ -52,13 +53,13 @@ const HeroBanner = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <a 
-                href="/#plans"
+              <Link 
+                to="/#plans"
                 className="px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-semibold flex items-center justify-center space-x-2 transition-colors"
               >
                 <Play className="h-5 w-5 fill-current" />
                 <span>{buttonText}</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
