@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { UserRegistrationFlowService, RegistrationData, RegistrationResult } from "@/services/userRegistrationFlow";
 import { Loader2, Eye, EyeOff, User, Mail, Lock, Phone, CreditCard, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { RegistrationSuccessModal } from "@/components/auth/RegistrationSuccessModal";
+import { EmailAlreadyExistsModal } from "@/components/auth/EmailAlreadyExistsModal";
+import { ErrorModal } from "@/components/auth/ErrorModal";
 
 interface Plan {
   id: string;
@@ -19,7 +21,6 @@ interface Plan {
 }
 
 export function UserRegistrationForm() {
-  const { toast } = useToast();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,17 @@ export function UserRegistrationForm() {
     phone: '',
     selectedPlanId: ''
   });
+
+  // Estados dos modais
+  const [modalState, setModalState] = useState<{
+    type: 'success' | 'emailExists' | 'error' | null;
+    data?: any;
+  }>({ type: null });
+
+  const getCustomization = (key: string, fallback: string) => {
+    // Pegar URL do portal de customizações ou usar fallback
+    return fallback;
+  };
 
   // Carrega os planos disponíveis
   const loadPlans = async () => {
@@ -70,28 +82,37 @@ export function UserRegistrationForm() {
   // Valida o formulário
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      toast({
-        title: "Erro de validação",
-        description: "Nome é obrigatório",
-        variant: "destructive"
+      setModalState({
+        type: 'error',
+        data: {
+          title: 'Dados Inválidos',
+          message: 'Nome é obrigatório.',
+          errorType: 'validation'
+        }
       });
       return false;
     }
 
     if (!formData.email.trim() || !formData.email.includes('@')) {
-      toast({
-        title: "Erro de validação", 
-        description: "E-mail válido é obrigatório",
-        variant: "destructive"
+      setModalState({
+        type: 'error',
+        data: {
+          title: 'Dados Inválidos',
+          message: 'E-mail válido é obrigatório.',
+          errorType: 'validation'
+        }
       });
       return false;
     }
 
     if (!formData.password || formData.password.length < 6) {
-      toast({
-        title: "Erro de validação",
-        description: "Senha deve ter pelo menos 6 caracteres",
-        variant: "destructive"
+      setModalState({
+        type: 'error',
+        data: {
+          title: 'Dados Inválidos',
+          message: 'A senha deve ter pelo menos 6 caracteres.',
+          errorType: 'validation'
+        }
       });
       return false;
     }
@@ -102,37 +123,41 @@ export function UserRegistrationForm() {
   // Processa o resultado do cadastro
   const handleRegistrationResult = (result: RegistrationResult) => {
     if (result.success) {
-      toast({
-        title: "Cadastro realizado",
-        description: result.message,
-        variant: result.requiresPasswordUpdate ? "default" : "default"
+      // Buscar nome do plano selecionado
+      const selectedPlan = plans.find(p => p.id === formData.selectedPlanId);
+      
+      setModalState({
+        type: 'success',
+        data: {
+          userName: formData.name,
+          planName: selectedPlan?.name
+        }
       });
-
-      if (result.requiresPasswordUpdate) {
-        // Redirecionar para redefinição de senha
-        navigate('/reset-password', { 
-          state: { 
-            email: formData.email,
-            message: "Complete o cadastro redefinindo sua senha"
-          }
+    } else {
+      // Verificar se é erro de email duplicado
+      if (result.message.includes('já está cadastrado') || 
+          result.message.includes('já existe')) {
+        setModalState({
+          type: 'emailExists',
+          data: { email: formData.email }
         });
-      } else if (result.autoLogin) {
-        // Login automático realizado
-        navigate('/dashboard');
       } else {
-        // Redirecionar para login
-        navigate('/login', {
-          state: {
-            message: "Cadastro realizado com sucesso. Faça login para continuar."
+        // Verificar tipo de erro
+        let errorType: 'portal' | 'connection' | 'generic' = 'generic';
+        if (result.message.includes('portal')) {
+          errorType = 'portal';
+        } else if (result.message.includes('conexão') || result.message.includes('conectar')) {
+          errorType = 'connection';
+        }
+
+        setModalState({
+          type: 'error',
+          data: {
+            message: result.message,
+            errorType
           }
         });
       }
-    } else {
-      toast({
-        title: "Erro no cadastro",
-        description: result.message,
-        variant: "destructive"
-      });
     }
   };
 
@@ -149,14 +174,60 @@ export function UserRegistrationForm() {
       handleRegistrationResult(result);
     } catch (error) {
       console.error('Registration error:', error);
-      toast({
-        title: "Erro no cadastro",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive"
+      setModalState({
+        type: 'error',
+        data: {
+          message: 'Ocorreu um erro inesperado. Tente novamente.',
+          errorType: 'generic'
+        }
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handlers dos modais
+  const handleAccessAccount = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
+      });
+      
+      if (!error) {
+        navigate('/dashboard');
+      } else {
+        navigate('/login', { state: { email: formData.email } });
+      }
+    } catch (e) {
+      navigate('/login', { state: { email: formData.email } });
+    }
+  };
+
+  const handleGoToPortal = () => {
+    const portalUrl = getCustomization('portal_url', 'https://agromercado.tv.br');
+    window.open(portalUrl, '_blank');
+  };
+
+  const handleLogin = () => {
+    navigate('/login', { state: { email: formData.email } });
+  };
+
+  const handleResetPassword = () => {
+    navigate('/reset-password', { state: { email: formData.email } });
+  };
+
+  const handleTryAnotherEmail = () => {
+    setModalState({ type: null });
+    setFormData(prev => ({ ...prev, email: '' }));
+  };
+
+  const handleCloseErrorModal = () => {
+    setModalState({ type: null });
+  };
+
+  const handleRetry = () => {
+    setModalState({ type: null });
   };
 
   return (
@@ -333,6 +404,32 @@ export function UserRegistrationForm() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Modais */}
+      <RegistrationSuccessModal
+        isOpen={modalState.type === 'success'}
+        userName={modalState.data?.userName || ''}
+        planName={modalState.data?.planName}
+        onAccessAccount={handleAccessAccount}
+        onGoToPortal={handleGoToPortal}
+      />
+
+      <EmailAlreadyExistsModal
+        isOpen={modalState.type === 'emailExists'}
+        email={modalState.data?.email || ''}
+        onLogin={handleLogin}
+        onResetPassword={handleResetPassword}
+        onTryAnotherEmail={handleTryAnotherEmail}
+      />
+
+      <ErrorModal
+        isOpen={modalState.type === 'error'}
+        title={modalState.data?.title}
+        message={modalState.data?.message || ''}
+        errorType={modalState.data?.errorType}
+        onRetry={handleRetry}
+        onClose={handleCloseErrorModal}
+      />
     </div>
   );
 }

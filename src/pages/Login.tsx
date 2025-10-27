@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { useCustomizations } from '@/hooks/useCustomizations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { LoginSuccessModal } from '@/components/auth/LoginSuccessModal';
+import { ErrorModal } from '@/components/auth/ErrorModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,9 +22,14 @@ const Login = () => {
     name: '', email: '', password: '', cpf: '', phone: ''
   });
   
+  // Estados dos modais
+  const [modalState, setModalState] = useState<{
+    type: 'success' | 'error' | null;
+    data?: any;
+  }>({ type: null });
+  
   const { login, register, user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { getCustomization } = useCustomizations('login');
 
   // Redirect if already logged in
@@ -45,24 +52,60 @@ const Login = () => {
       
       if (error) {
         console.error('Login error:', error);
-        toast({
-          title: "Erro no login",
-          description: error.message || "Credenciais inválidas. Tente novamente.",
-          variant: "destructive"
+        
+        // Traduzir mensagens de erro para português
+        let errorMessage = error.message || '';
+        let errorTitle = 'Erro no Login';
+        
+        if (errorMessage.includes('Invalid login credentials') || 
+            errorMessage.includes('Email or password')) {
+          errorTitle = 'Credenciais Inválidas';
+          errorMessage = 'E-mail ou senha incorretos. Verifique suas credenciais e tente novamente.';
+        } else if (errorMessage.includes('Email not confirmed')) {
+          errorTitle = 'E-mail Não Confirmado';
+          errorMessage = 'Por favor, confirme seu e-mail antes de fazer login.';
+        } else if (errorMessage.includes('rate limit')) {
+          errorTitle = 'Muitas Tentativas';
+          errorMessage = 'Por segurança, aguarde alguns minutos antes de tentar novamente.';
+        } else {
+          errorMessage = 'Não foi possível fazer login. Verifique suas credenciais e tente novamente.';
+        }
+        
+        setModalState({
+          type: 'error',
+          data: {
+            title: errorTitle,
+            message: errorMessage,
+            errorType: 'validation'
+          }
         });
       } else {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Redirecionando para o dashboard..."
-        });
-        // Navigation will happen automatically via useEffect
+        // Buscar nome do usuário
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', currentUser.id)
+            .single();
+          
+          setModalState({
+            type: 'success',
+            data: {
+              userName: profile?.name || currentUser.email?.split('@')[0] || 'Usuário'
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('Login exception:', error);
-      toast({
-        title: "Erro no login",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive"
+      setModalState({
+        type: 'error',
+        data: {
+          title: 'Erro Inesperado',
+          message: 'Ocorreu um erro inesperado. Tente novamente.',
+          errorType: 'generic'
+        }
       });
     } finally {
       setIsSubmitting(false);
@@ -71,35 +114,23 @@ const Login = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
+    // Redirecionar para página de registro dedicada
+    navigate('/register');
+  };
 
-    try {
-      const { error } = await register(registerData);
-      
-      if (error) {
-        toast({
-          title: "Erro no cadastro",
-          description: error.message || "Não foi possível criar a conta. Tente novamente.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Cadastro realizado com sucesso!",
-          description: "Verifique seu email para confirmar a conta."
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro no cadastro",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Handlers dos modais
+  const handleAutoClose = () => {
+    setModalState({ type: null });
+    // Navigation will happen automatically via useEffect when user state updates
+  };
+
+  const handleCloseError = () => {
+    setModalState({ type: null });
+  };
+
+  const handleGoToResetPassword = () => {
+    navigate('/reset-password', { state: { email: loginData.email } });
+    setModalState({ type: null });
   };
 
   // Show loading while checking authentication state
@@ -383,6 +414,21 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {/* Modais */}
+      <LoginSuccessModal
+        isOpen={modalState.type === 'success'}
+        userName={modalState.data?.userName || ''}
+        onAutoClose={handleAutoClose}
+      />
+
+      <ErrorModal
+        isOpen={modalState.type === 'error'}
+        title={modalState.data?.title}
+        message={modalState.data?.message || ''}
+        errorType={modalState.data?.errorType}
+        onClose={handleCloseError}
+      />
     </div>
   );
 };
