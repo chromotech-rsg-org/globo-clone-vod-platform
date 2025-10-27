@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRegistrationFlowService } from '@/services/userRegistrationFlow';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import CheckoutFooter from '@/components/checkout/CheckoutFooter';
 import CheckoutSteps from '@/components/checkout/CheckoutSteps';
+import { CheckoutSuccessModal } from '@/components/checkout/CheckoutSuccessModal';
+import { EmailAlreadyExistsModal } from '@/components/auth/EmailAlreadyExistsModal';
+import { CheckoutErrorModal } from '@/components/checkout/CheckoutErrorModal';
+import { PasswordMismatchModal } from '@/components/checkout/PasswordMismatchModal';
 
 interface Plan {
   id: string;
@@ -19,13 +22,20 @@ interface Plan {
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   
   // Accept planId from both location.state and URL params
   const planId = location.state?.planId || searchParams.get('planId');
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Estados dos modais
+  const [modalState, setModalState] = useState<{
+    type: 'success' | 'emailExists' | 'error' | 'passwordMismatch' | null;
+    data?: any;
+  }>({ type: null });
+  
+  const [formDataCache, setFormDataCache] = useState<any>(null);
 
   useEffect(() => {
     const fetchPlan = async () => {
@@ -43,10 +53,12 @@ const Checkout = () => {
           .single();
 
         if (error || !data) {
-          toast({
-            title: "Erro",
-            description: "Plano não encontrado.",
-            variant: "destructive"
+          setModalState({
+            type: 'error',
+            data: {
+              message: 'Plano não encontrado.',
+              errorType: 'validation'
+            }
           });
           navigate('/');
           return;
@@ -60,24 +72,16 @@ const Checkout = () => {
     };
 
     fetchPlan();
-  }, [planId, navigate, toast]);
+  }, [planId, navigate]);
 
   const handleFormSubmit = async (formData: any) => {
     const { selectedPlan: currentPlan } = formData;
     if (!currentPlan) return;
     
     setIsLoading(true);
+    setFormDataCache(formData);
 
     try {
-      // Calculate final price with coupon discount
-      let finalPrice = currentPlan.price;
-      let discountAmount = 0;
-      
-      if (formData.coupon) {
-        discountAmount = (currentPlan.price * formData.coupon.discount_percentage) / 100;
-        finalPrice = currentPlan.price - discountAmount;
-      }
-
       // Use UserRegistrationFlowService to handle complete registration
       const registrationResult = await UserRegistrationFlowService.registerUser({
         name: formData.name,
@@ -89,47 +93,103 @@ const Checkout = () => {
       });
 
       if (!registrationResult.success) {
-        toast({
-          title: "Erro",
-          description: registrationResult.message || "Erro ao criar conta. Tente novamente.",
-          variant: "destructive"
-        });
+        // Verificar tipo de erro
+        if (registrationResult.errorType === 'emailExists') {
+          setModalState({
+            type: 'emailExists',
+            data: { email: formData.email }
+          });
+        } else if (registrationResult.requiresPasswordUpdate && registrationResult.maskedEmail) {
+          setModalState({
+            type: 'passwordMismatch',
+            data: { maskedEmail: registrationResult.maskedEmail }
+          });
+        } else {
+          setModalState({
+            type: 'error',
+            data: {
+              message: registrationResult.message || 'Erro ao criar conta. Tente novamente.',
+              errorType: registrationResult.errorType || 'generic'
+            }
+          });
+        }
         return;
       }
 
-      // If registration requires password update, show appropriate message
-      if (registrationResult.requiresPasswordUpdate) {
-        toast({
-          title: "Atenção",
-          description: registrationResult.message,
-          variant: "destructive"
-        });
-        navigate('/reset-password');
-        return;
-      }
-
-      // Navigate to dashboard on success
-      navigate('/dashboard');
-      
-      const successMessage = formData.coupon 
-        ? `Conta criada com sucesso! Desconto aplicado: R$ ${discountAmount.toFixed(2)}`
-        : registrationResult.message || `Bem-vindo ao ${currentPlan.name}`;
-        
-      toast({
-        title: "Conta criada com sucesso!",
-        description: successMessage
+      // Sucesso!
+      setModalState({
+        type: 'success',
+        data: {
+          userName: formData.name,
+          planName: currentPlan.name
+        }
       });
 
     } catch (error) {
       console.error('Registration error:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao criar conta. Tente novamente.",
-        variant: "destructive"
+      setModalState({
+        type: 'error',
+        data: {
+          message: 'Erro ao criar conta. Tente novamente.',
+          errorType: 'generic'
+        }
       });
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Handlers dos modais
+  const handleAccessAccount = async () => {
+    if (!formDataCache) return;
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formDataCache.email,
+        password: formDataCache.password
+      });
+      
+      if (!error) {
+        navigate('/dashboard');
+      } else {
+        navigate('/login', { state: { email: formDataCache.email } });
+      }
+    } catch (e) {
+      navigate('/login', { state: { email: formDataCache.email } });
+    }
+  };
+  
+  const handleGoToPortal = () => {
+    const portalUrl = 'https://agromercado.tv.br';
+    window.open(portalUrl, '_blank');
+  };
+  
+  const handleLogin = () => {
+    if (formDataCache) {
+      navigate('/login', { state: { email: formDataCache.email } });
+    } else {
+      navigate('/login');
+    }
+  };
+  
+  const handleResetPassword = () => {
+    if (formDataCache) {
+      navigate('/reset-password', { state: { email: formDataCache.email } });
+    } else {
+      navigate('/reset-password');
+    }
+  };
+  
+  const handleTryAnotherEmail = () => {
+    setModalState({ type: null });
+  };
+  
+  const handleCloseModal = () => {
+    setModalState({ type: null });
+  };
+  
+  const handleRetry = () => {
+    setModalState({ type: null });
   };
 
   if (!selectedPlan) {
@@ -152,6 +212,38 @@ const Checkout = () => {
         />
         <CheckoutFooter />
       </div>
+      
+      {/* Modais */}
+      <CheckoutSuccessModal
+        isOpen={modalState.type === 'success'}
+        userName={modalState.data?.userName || ''}
+        planName={modalState.data?.planName}
+        onAccessAccount={handleAccessAccount}
+        onGoToPortal={handleGoToPortal}
+      />
+      
+      <EmailAlreadyExistsModal
+        isOpen={modalState.type === 'emailExists'}
+        email={modalState.data?.email || ''}
+        onLogin={handleLogin}
+        onResetPassword={handleResetPassword}
+        onTryAnotherEmail={handleTryAnotherEmail}
+      />
+      
+      <PasswordMismatchModal
+        isOpen={modalState.type === 'passwordMismatch'}
+        maskedEmail={modalState.data?.maskedEmail || ''}
+        onClose={handleCloseModal}
+      />
+      
+      <CheckoutErrorModal
+        isOpen={modalState.type === 'error'}
+        title={modalState.data?.title}
+        message={modalState.data?.message || ''}
+        errorType={modalState.data?.errorType}
+        onRetry={handleRetry}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };

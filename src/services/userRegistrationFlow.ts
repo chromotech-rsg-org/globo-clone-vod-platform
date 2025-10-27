@@ -18,6 +18,8 @@ export interface RegistrationResult {
   userId?: string;
   motvUserId?: string;
   autoLogin?: boolean;
+  maskedEmail?: string;
+  errorType?: 'portal' | 'validation' | 'connection' | 'generic' | 'emailExists';
 }
 
 /**
@@ -62,7 +64,8 @@ export class UserRegistrationFlowService {
         console.log('[UserRegistrationFlow] ⚠️ User already exists in system:', existingUser.userId);
         return {
           success: false,
-          message: 'Este e-mail já está cadastrado no sistema.'
+          message: 'Este e-mail já está cadastrado no sistema.',
+          errorType: 'emailExists'
         };
       }
 
@@ -70,6 +73,7 @@ export class UserRegistrationFlowService {
       console.log('[UserRegistrationFlow] 🔎 Checking portal for existing user...');
       let motvUserId: number | null = null;
       let userExistsInPortal = false;
+      let portalUserData: any = null;
       
       try {
         const searchResult = await MotvApiService.customerSearch(userData.email);
@@ -85,12 +89,83 @@ export class UserRegistrationFlowService {
             motvUserId = foundUser.viewers_id;
             userExistsInPortal = true;
             console.log('[UserRegistrationFlow] ✅ User found in portal:', motvUserId);
-            console.log('[UserRegistrationFlow] 🔄 Will proceed with existing portal user and assign plan');
+            
+            // Buscar dados completos do usuário
+            const customerData = await MotvApiService.customerFind(motvUserId);
+            if (customerData.success) {
+              portalUserData = customerData;
+            }
+            
+            // NOVO FLUXO: Validar senha do usuário existente no portal
+            console.log('[UserRegistrationFlow] 🔐 Validating password for existing portal user...');
+            const authResult = await MotvApiService.customerAuthenticate(userData.email, userData.password);
+            
+            if (authResult.success) {
+              // Senha correta! Cadastrar no sistema "minha conta" e atualizar MOTV
+              console.log('[UserRegistrationFlow] ✅ Password validated! Will create in system and update MOTV');
+              
+              // Atualizar dados no MOTV com os dados fornecidos
+              await MotvApiService.customerUpdate(motvUserId, {
+                email: userData.email,
+                profileName: userData.name,
+                phone: userData.phone
+              });
+              
+              // Continuar fluxo normal para criar usuário no sistema
+            } else {
+              // Senha não confere! Criar usuário com senha hash impossível e enviar reset
+              console.log('[UserRegistrationFlow] ⚠️ Password mismatch! Will create with random password and send reset email');
+              
+              // Gerar senha hash impossível de reproduzir
+              const randomPassword = crypto.randomUUID() + '-' + Date.now() + '-' + Math.random();
+              
+              // Criar usuário no sistema com senha impossível
+              const createResult = await this.createUserInSystem({
+                email: userData.email,
+                password: randomPassword,
+                name: portalUserData?.name || userData.name,
+                cpf: portalUserData?.cpf || userData.cpf,
+                phone: portalUserData?.phone || userData.phone,
+                motvUserId: motvUserId?.toString(),
+                planId: userData.selectedPlanId
+              });
+              
+              if (!createResult.success) {
+                throw new Error('Erro ao criar usuário no sistema');
+              }
+              
+              // Enviar email de reset de senha
+              const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+                userData.email,
+                {
+                  redirectTo: `${window.location.origin}/reset-password-confirm`
+                }
+              );
+              
+              if (resetError) {
+                console.error('[UserRegistrationFlow] ❌ Failed to send reset email:', resetError);
+              }
+              
+              // Mascarar email para exibição
+              const maskedEmail = this.maskEmail(userData.email);
+              
+              return {
+                success: false,
+                requiresPasswordUpdate: true,
+                maskedEmail,
+                message: 'Usuário já existe no portal mas a senha não confere',
+                errorType: 'validation'
+              };
+            }
           }
         }
       } catch (error: any) {
         console.error('[UserRegistrationFlow] ❌ Error searching for user in portal:', error);
-        throw new Error('Erro ao verificar usuário no portal. Tente novamente.');
+        return {
+          success: false,
+          message: 'Erro ao verificar usuário no portal. Tente novamente.',
+          errorType: 'connection'
+        };
       }
 
       // PASSO 4: Se precisar atribuir plano E usuário existe, validar acesso ao portal ANTES de criar local
@@ -184,11 +259,34 @@ export class UserRegistrationFlowService {
 
     } catch (error: any) {
       console.error('[UserRegistrationFlow] ❌ Registration flow error:', error);
+      
+      // Determinar tipo de erro
+      let errorType: 'portal' | 'validation' | 'connection' | 'generic' = 'generic';
+      if (error.message?.includes('portal') || error.message?.includes('MOTV')) {
+        errorType = 'portal';
+      } else if (error.message?.includes('conexão') || error.message?.includes('conectar')) {
+        errorType = 'connection';
+      }
+      
       return {
         success: false,
-        message: error.message || 'Erro ao processar cadastro. Tente novamente.'
+        message: error.message || 'Erro ao processar cadastro. Tente novamente.',
+        errorType
       };
     }
+  }
+  
+  /**
+   * Mascarar email para exibição segura
+   */
+  private static maskEmail(email: string): string {
+    const [localPart, domain] = email.split('@');
+    if (!localPart || !domain) return email;
+    
+    const visibleChars = Math.min(3, Math.floor(localPart.length / 2));
+    const maskedLocal = localPart.substring(0, visibleChars) + '***';
+    
+    return `${maskedLocal}@${domain}`;
   }
 
   /**
