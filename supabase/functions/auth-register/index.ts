@@ -23,8 +23,9 @@ serve(async (req) => {
     });
 
     const requestBody = await req.json();
-    const { email, password, name, cpf, phone, motvUserId, plan_id } = requestBody;
-    const motv_user_id = motvUserId; // Accept motvUserId from frontend
+    const { email, password, name, cpf, phone, motvUserId, planId, plan_id: plan_id_body } = requestBody;
+    const motv_user_id = motvUserId ?? requestBody.motv_user_id; // Accept both motvUserId and motv_user_id
+    const plan_id = planId ?? plan_id_body; // Accept both planId and plan_id
 
     console.log("Creating user with email:", email);
     console.log("Request body:", { email, name, cpf: cpf ? "***" : null, phone, motv_user_id, plan_id });
