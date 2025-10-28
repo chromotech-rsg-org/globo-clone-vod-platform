@@ -28,7 +28,7 @@ interface ContentItem {
   id: string;
   title: string;
   image_url: string | null;
-  image_orientation?: 'vertical' | 'horizontal';
+  image_orientation: string | null;
   category: string | null;
   rating: string | null;
   age_rating_background_color?: string | null;
@@ -44,7 +44,7 @@ const AGE_RATING_OPTIONS = [
   { label: '12+', value: '12', color: '#eab308' },
   { label: '14+', value: '14', color: '#f97316' },
   { label: '16+', value: '16', color: '#ef4444' },
-  { label: '18+', value: '18', color: '#dc2626' },
+  { label: '18+', value: '18', color: '#000000' },
 ];
 
 const ContentEditor = () => {

@@ -9,6 +9,7 @@ interface ContentItem {
   category: string;
   rating: string;
   age_rating_background_color?: string;
+  image_orientation?: string;
 }
 
 interface ContentCarouselProps {
@@ -60,42 +61,49 @@ const ContentCarousel = ({ title, items, type }: ContentCarouselProps) => {
           className="flex space-x-4 overflow-x-auto scrollbar-hide scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className={`flex-none group cursor-pointer ${
-                type === 'horizontal' ? 'w-80' : 'w-48'
-              }`}
-            >
-              <div className="relative overflow-hidden rounded-lg">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
-                    type === 'horizontal' ? 'h-44' : 'h-72'
-                  }`}
-                />
-                
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-gray-300">{item.category}</span>
-                      <span 
-                        className="text-black px-2 py-1 rounded text-xs font-bold"
-                        style={{ backgroundColor: item.age_rating_background_color || '#fbbf24' }}
-                      >
-                        {item.rating}
-                      </span>
+          {items.map((item) => {
+            // Determinar orientação: usar image_orientation do item ou o type da seção
+            const isVertical = item.image_orientation === 'vertical' || (item.image_orientation !== 'horizontal' && type === 'vertical');
+            
+            return (
+              <div
+                key={item.id}
+                className={`flex-none group cursor-pointer ${
+                  isVertical ? 'w-48' : 'w-80'
+                }`}
+              >
+                <div className="relative overflow-hidden rounded-lg">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                      isVertical ? 'h-72' : 'h-44'
+                    }`}
+                  />
+                  
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-300">{item.category}</span>
+                        <span 
+                          className={`px-2 py-1 rounded text-xs font-bold ${
+                            item.age_rating_background_color === '#000000' ? 'text-white' : 'text-black'
+                          }`}
+                          style={{ backgroundColor: item.age_rating_background_color || '#eab308' }}
+                        >
+                          {item.rating}
+                        </span>
+                      </div>
+                      <h3 className="text-white font-semibold text-sm line-clamp-2">
+                        {item.title}
+                      </h3>
                     </div>
-                    <h3 className="text-white font-semibold text-sm line-clamp-2">
-                      {item.title}
-                    </h3>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

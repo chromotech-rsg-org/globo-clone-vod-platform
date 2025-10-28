@@ -89,7 +89,8 @@ const Home = () => {
                 image: item.image_url || '',
                 category: item.category || '',
                 rating: item.rating || '',
-                age_rating_background_color: (item as any).age_rating_background_color || '#fbbf24'
+                age_rating_background_color: item.age_rating_background_color || '#eab308',
+                image_orientation: (item as any).image_orientation || 'vertical'
               }))}
               type={section.type}
             />
