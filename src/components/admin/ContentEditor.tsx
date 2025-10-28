@@ -519,8 +519,7 @@ const ContentEditor = () => {
           <DialogTrigger asChild>
             <Button 
               onClick={() => {
-                setEditingSection({} as ContentSection);
-                setSectionModalOpen(true);
+                setEditingSection(null);
               }} 
               variant="admin" 
               size="sm"
@@ -535,7 +534,7 @@ const ContentEditor = () => {
                 {editingSection?.id ? 'Editar Seção' : 'Nova Seção'}
               </DialogTitle>
             </DialogHeader>
-            <SectionEditor section={editingSection?.id ? editingSection : undefined} />
+            <SectionEditor section={editingSection || undefined} />
           </DialogContent>
         </Dialog>
       </div>
