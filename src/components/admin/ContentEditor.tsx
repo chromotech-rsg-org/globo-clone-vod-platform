@@ -13,6 +13,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ContentSection {
   id: string;
@@ -56,6 +73,13 @@ const ContentEditor = () => {
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
   const [currentSectionId, setCurrentSectionId] = useState<string>('');
   const { toast } = useToast();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     fetchSections();
@@ -305,6 +329,89 @@ const ContentEditor = () => {
     }
   };
 
+  const handleSectionDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sections.findIndex((s) => s.id === active.id);
+    const newIndex = sections.findIndex((s) => s.id === over.id);
+
+    const reorderedSections = arrayMove(sections, oldIndex, newIndex);
+    setSections(reorderedSections);
+
+    try {
+      // Atualizar order_index no banco
+      const updates = reorderedSections.map((section, index) => 
+        supabase
+          .from('content_sections')
+          .update({ order_index: index })
+          .eq('id', section.id)
+      );
+
+      await Promise.all(updates);
+
+      toast({
+        title: "Sucesso",
+        description: "Ordem das seções atualizada!"
+      });
+    } catch (error) {
+      console.error('Erro ao reordenar seções:', error);
+      await fetchSections();
+      toast({
+        title: "Erro",
+        description: "Não foi possível reordenar as seções.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleItemDragEnd = async (event: DragEndEvent, sectionId: string) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const section = sections.find(s => s.id === sectionId);
+    if (!section?.content_items) return;
+
+    const oldIndex = section.content_items.findIndex((item) => item.id === active.id);
+    const newIndex = section.content_items.findIndex((item) => item.id === over.id);
+
+    const reorderedItems = arrayMove(section.content_items, oldIndex, newIndex);
+
+    // Atualizar estado local
+    setSections(sections.map(s => 
+      s.id === sectionId 
+        ? { ...s, content_items: reorderedItems }
+        : s
+    ));
+
+    try {
+      // Atualizar order_index no banco
+      const updates = reorderedItems.map((item, index) => 
+        supabase
+          .from('content_items')
+          .update({ order_index: index })
+          .eq('id', item.id)
+      );
+
+      await Promise.all(updates);
+
+      toast({
+        title: "Sucesso",
+        description: "Ordem dos itens atualizada!"
+      });
+    } catch (error) {
+      console.error('Erro ao reordenar itens:', error);
+      await fetchSections();
+      toast({
+        title: "Erro",
+        description: "Não foi possível reordenar os itens.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const ItemEditor = ({
     item,
     sectionId
@@ -506,6 +613,132 @@ const ContentEditor = () => {
       </div>;
   };
 
+  const SortableSectionTab = ({ section }: { section: ContentSection }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+    } = useSortable({ id: section.id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+
+    return (
+      <div ref={setNodeRef} style={style} className="inline-flex">
+        <TabsTrigger value={section.id} className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing mr-2">
+            <GripVertical className="h-4 w-4" />
+          </div>
+          {section.title}
+          <Badge variant="secondary" className="ml-2 text-xs">
+            {section.content_items?.length || 0}
+          </Badge>
+        </TabsTrigger>
+      </div>
+    );
+  };
+
+  const SortableItem = ({ item, section }: { item: ContentItem; section: ContentSection }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+    } = useSortable({ id: item.id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+
+    return (
+      <div ref={setNodeRef} style={style}>
+        <Card className="bg-admin-muted border-admin-border">
+          <CardContent className="p-4 bg-black">
+            <div className="space-y-3 bg-black">
+              <div className="flex items-start justify-between">
+                <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1">
+                  <GripVertical className="h-5 w-5 text-admin-muted-foreground" />
+                </div>
+              </div>
+              {item.image_url && (
+                <img 
+                  src={item.image_url} 
+                  alt={item.title} 
+                  className={`w-full object-cover rounded ${
+                    item.image_orientation === 'horizontal' ? 'h-32' : 'h-48'
+                  }`} 
+                />
+              )}
+              <div className="bg-black">
+                <h4 className="font-medium text-admin-foreground text-sm">
+                  {item.title}
+                </h4>
+                <div className="flex items-center justify-between mt-2 bg-black">
+                  <span className="text-xs text-admin-muted-foreground">
+                    {item.category}
+                  </span>
+                  {item.rating && (
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs font-semibold" 
+                      style={{
+                        backgroundColor: item.age_rating_background_color || '#10b981',
+                        color: '#ffffff',
+                        borderColor: item.age_rating_background_color || '#10b981'
+                      }}
+                    >
+                      {item.rating}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div className="flex space-x-2 bg-black">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      onClick={() => {
+                        setEditingItem(item);
+                        setCurrentSectionId(section.id);
+                      }} 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 border-admin-border text-black bg-white hover:bg-gray-100"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-admin-card border-admin-border max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-admin-foreground">Editar Item</DialogTitle>
+                    </DialogHeader>
+                    <ItemEditor item={item} sectionId={section.id} />
+                  </DialogContent>
+                </Dialog>
+                <Button 
+                  onClick={() => duplicateItem(item)} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 border-admin-border text-black bg-white hover:bg-gray-100"
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+                <Button onClick={() => deleteItem(item.id)} variant="destructive" size="sm" className="flex-1">
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   if (loading) {
     return <div className="text-admin-foreground bg-black">Carregando conteúdo...</div>;
   }
@@ -540,14 +773,22 @@ const ContentEditor = () => {
       </div>
 
       <Tabs defaultValue={sections[0]?.id} className="space-y-4 bg-black">
-        <TabsList className="bg-admin-muted">
-          {sections.map(section => <TabsTrigger key={section.id} value={section.id} className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
-              {section.title}
-              <Badge variant="secondary" className="ml-2 text-xs">
-                {section.content_items?.length || 0}
-              </Badge>
-            </TabsTrigger>)}
-        </TabsList>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleSectionDragEnd}
+        >
+          <SortableContext
+            items={sections.map(s => s.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <TabsList className="bg-admin-muted flex flex-wrap gap-2">
+              {sections.map(section => (
+                <SortableSectionTab key={section.id} section={section} />
+              ))}
+            </TabsList>
+          </SortableContext>
+        </DndContext>
 
         {sections.map(section => <TabsContent key={section.id} value={section.id} className="space-y-4 bg-black">
             <Card className="bg-admin-card border-admin-border">
@@ -645,81 +886,22 @@ const ContentEditor = () => {
                 </div>
               </CardHeader>
               <CardContent className="bg-black">
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-black">
-                  {section.content_items?.map(item => <Card key={item.id} className="bg-admin-muted border-admin-border">
-                      <CardContent className="p-4 bg-black">
-                        <div className="space-y-3 bg-black">
-                          {item.image_url && (
-                            <img 
-                              src={item.image_url} 
-                              alt={item.title} 
-                              className={`w-full object-cover rounded ${
-                                item.image_orientation === 'horizontal' ? 'h-32' : 'h-48'
-                              }`} 
-                            />
-                          )}
-                          <div className="bg-black">
-                            <h4 className="font-medium text-admin-foreground text-sm">
-                              {item.title}
-                            </h4>
-                            <div className="flex items-center justify-between mt-2 bg-black">
-                              <span className="text-xs text-admin-muted-foreground">
-                                {item.category}
-                              </span>
-                              {item.rating && (
-                                <Badge 
-                                  variant="outline" 
-                                  className="text-xs font-semibold" 
-                                  style={{
-                                    backgroundColor: item.age_rating_background_color || '#10b981',
-                                    color: '#ffffff',
-                                    borderColor: item.age_rating_background_color || '#10b981'
-                                  }}
-                                >
-                                  {item.rating}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex space-x-2 bg-black">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  onClick={() => {
-                                    setEditingItem(item);
-                                    setCurrentSectionId(section.id);
-                                  }} 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="flex-1 border-admin-border text-black bg-white hover:bg-gray-100"
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="bg-admin-card border-admin-border max-h-[90vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle className="text-admin-foreground">Editar Item</DialogTitle>
-                                </DialogHeader>
-                                <ItemEditor item={item} sectionId={section.id} />
-                              </DialogContent>
-                            </Dialog>
-                            <Button 
-                              onClick={() => duplicateItem(item)} 
-                              variant="outline" 
-                              size="sm" 
-                              className="flex-1 border-admin-border text-black bg-white hover:bg-gray-100"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                            <Button onClick={() => deleteItem(item.id)} variant="destructive" size="sm" className="flex-1">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>)}
-                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(event) => handleItemDragEnd(event, section.id)}
+                >
+                  <SortableContext
+                    items={section.content_items?.map(item => item.id) || []}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-black">
+                      {section.content_items?.map(item => (
+                        <SortableItem key={item.id} item={item} section={section} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               </CardContent>
             </Card>
           </TabsContent>)}
