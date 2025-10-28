@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from '@/components/ui/image-upload';
-import { Save, Edit, Plus, Trash2, Eye, GripVertical } from 'lucide-react';
+import { Save, Edit, Plus, Trash2, Eye, GripVertical, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -110,6 +110,7 @@ const ContentEditor = () => {
       }
       await fetchSections();
       setEditingSection(null);
+      setSectionModalOpen(false);
       toast({
         title: "Sucesso",
         description: "Seção salva com sucesso!"
@@ -217,6 +218,88 @@ const ContentEditor = () => {
       toast({
         title: "Erro",
         description: "Não foi possível remover a seção.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const duplicateItem = async (item: ContentItem) => {
+    try {
+      const { error } = await supabase.from('content_items').insert({
+        title: `${item.title} (Cópia)`,
+        image_url: item.image_url,
+        image_orientation: item.image_orientation,
+        category: item.category,
+        rating: item.rating,
+        age_rating_background_color: item.age_rating_background_color,
+        section_id: item.section_id,
+        order_index: item.order_index + 1,
+        active: true
+      });
+      if (error) throw error;
+      await fetchSections();
+      toast({
+        title: "Sucesso",
+        description: "Item duplicado com sucesso!"
+      });
+    } catch (error) {
+      console.error('Erro ao duplicar item:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível duplicar o item.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const duplicateSection = async (section: ContentSection) => {
+    try {
+      // Cria a nova seção
+      const { data: newSection, error: sectionError } = await supabase
+        .from('content_sections')
+        .insert({
+          title: `${section.title} (Cópia)`,
+          type: section.type,
+          page: section.page,
+          order_index: sections.length,
+          active: true
+        })
+        .select()
+        .single();
+      
+      if (sectionError) throw sectionError;
+
+      // Duplica todos os itens da seção
+      if (section.content_items && section.content_items.length > 0) {
+        const itemsToInsert = section.content_items.map(item => ({
+          title: item.title,
+          image_url: item.image_url,
+          image_orientation: item.image_orientation,
+          category: item.category,
+          rating: item.rating,
+          age_rating_background_color: item.age_rating_background_color,
+          section_id: newSection.id,
+          order_index: item.order_index,
+          active: true
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('content_items')
+          .insert(itemsToInsert);
+        
+        if (itemsError) throw itemsError;
+      }
+
+      await fetchSections();
+      toast({
+        title: "Sucesso",
+        description: "Seção duplicada com sucesso!"
+      });
+    } catch (error) {
+      console.error('Erro ao duplicar seção:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível duplicar a seção.",
         variant: "destructive"
       });
     }
@@ -499,6 +582,15 @@ const ContentEditor = () => {
                     </DialogContent>
                   </Dialog>
 
+                  <Button 
+                    onClick={() => duplicateSection(section)} 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-admin-border text-black bg-white hover:bg-gray-100"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm">
@@ -613,6 +705,14 @@ const ContentEditor = () => {
                                 <ItemEditor item={item} sectionId={section.id} />
                               </DialogContent>
                             </Dialog>
+                            <Button 
+                              onClick={() => duplicateItem(item)} 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1 border-admin-border text-black bg-white hover:bg-gray-100"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
                             <Button onClick={() => deleteItem(item.id)} variant="destructive" size="sm" className="flex-1">
                               <Trash2 className="h-3 w-3" />
                             </Button>
