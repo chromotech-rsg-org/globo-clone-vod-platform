@@ -401,6 +401,7 @@ export type Database = {
           category: string | null
           created_at: string | null
           id: string
+          image_orientation: string | null
           image_url: string | null
           order_index: number
           rating: string | null
@@ -414,6 +415,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           id?: string
+          image_orientation?: string | null
           image_url?: string | null
           order_index?: number
           rating?: string | null
@@ -427,6 +429,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           id?: string
+          image_orientation?: string | null
           image_url?: string | null
           order_index?: number
           rating?: string | null
@@ -1257,16 +1260,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cancel_user_plan: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      cancel_user_plan: { Args: never; Returns: boolean }
       check_role_change_rate_limit: {
         Args: { user_id: string }
         Returns: boolean
       }
       get_admin_dashboard_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           admin_count: number
           last_updated: string
@@ -1275,12 +1275,9 @@ export type Database = {
           user_count: number
         }[]
       }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_user_role: { Args: never; Returns: string }
       get_dashboard_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_auctions: number
           documents_count: number
@@ -1302,18 +1299,12 @@ export type Database = {
           status: string
         }[]
       }
-      health_check: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      health_check: { Args: never; Returns: Json }
       reopen_registration: {
         Args: { p_auction: string; p_user: string }
         Returns: undefined
       }
-      set_bid_winner: {
-        Args: { p_bid_id: string }
-        Returns: undefined
-      }
+      set_bid_winner: { Args: { p_bid_id: string }; Returns: undefined }
       set_bid_winner_and_finalize_lot: {
         Args: { p_bid_id: string }
         Returns: Json
