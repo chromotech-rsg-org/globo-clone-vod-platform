@@ -4,7 +4,7 @@ import { useCustomizations } from '@/hooks/useCustomizations';
 export const DynamicSEO = () => {
   const { getCustomization } = useCustomizations('home');
   
-  const siteName = getCustomization('global', 'site_name', 'Agromercado');
+  const siteName = getCustomization('global', 'site_name', 'Agroplay');
   const siteDescription = getCustomization('global', 'site_description', 'Agora o conteúdo mais relevante do mercado agro está ao seu alcance, em qualquer lugar! Notícias, eventos e muitos mais na nossa plataforma de streaming.');
   const logoUrl = getCustomization('global', 'logo_url', '');
   const faviconUrl = getCustomization('global', 'favicon_image', '');

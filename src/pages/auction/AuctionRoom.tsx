@@ -765,6 +765,7 @@ const recalculateNextBidValue = () => {
               lots={lots}
               loading={bidsLoading}
               currentUserId={user?.id}
+              currentUserRole={user?.role}
             />
           </div>
         </div>

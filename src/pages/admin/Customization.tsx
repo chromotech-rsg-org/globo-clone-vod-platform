@@ -314,7 +314,7 @@ const AdminCustomization = () => {
       page: 'home',
       placeholder: 'Meu Streaming',
       description: 'Nome principal do site',
-      defaultValue: 'Globoplay'
+      defaultValue: 'Agroplay'
     }, {
       key: 'global_site_background_color',
       label: 'Cor de Fundo Global',
@@ -557,6 +557,23 @@ const AdminCustomization = () => {
       page: 'login',
       description: 'Cor de fundo dos campos de entrada',
       defaultValue: '#f9fafb'
+    }, {
+      key: 'terms_title',
+      label: 'Título Termos e Condições',
+      type: 'text',
+      section: 'content',
+      page: 'terms',
+      placeholder: 'Termos e Condições',
+      description: 'Título da página de termos',
+      defaultValue: 'Termos e Condições'
+    }, {
+      key: 'terms_content',
+      label: 'Conteúdo Termos',
+      type: 'textarea',
+      section: 'content',
+      page: 'terms',
+      description: 'Conteúdo HTML dos termos e condições',
+      defaultValue: '<h2>1. Aceitação dos Termos</h2><p>Ao acessar e usar este serviço, você aceita e concorda em estar vinculado aos termos e condições deste acordo.</p>'
     }];
   
   const getCurrentValue = (config: CustomizationConfig) => {
@@ -646,7 +663,7 @@ const AdminCustomization = () => {
 
       <div className="p-6 bg-black">
         <Tabs defaultValue="home" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-black border border-gray-800">
+          <TabsList className="grid w-full grid-cols-5 bg-black border border-gray-800">
             <TabsTrigger value="home" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <Home className="h-4 w-4 mr-2" />
               Página Inicial
@@ -658,6 +675,10 @@ const AdminCustomization = () => {
             <TabsTrigger value="login" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <LogIn className="h-4 w-4 mr-2" />
               Login
+            </TabsTrigger>
+            <TabsTrigger value="terms" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
+              <Settings className="h-4 w-4 mr-2" />
+              Termos
             </TabsTrigger>
             <TabsTrigger value="global" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-white bg-black hover:bg-gray-900">
               <Settings className="h-4 w-4 mr-2" />
@@ -693,6 +714,10 @@ const AdminCustomization = () => {
             {renderSection('login', 'branding', 'Logo e Marca', 'Configure os textos dos logos')}
             {renderSection('login', 'background', 'Fundo da Página', 'Configure a cor e imagem de fundo')}
             {renderSection('login', 'theme', 'Cores do Tema', 'Configure as cores dos elementos')}
+          </TabsContent>
+
+          <TabsContent value="terms" className="space-y-6 bg-black">
+            {renderSection('terms', 'content', 'Termos e Condições', 'Configure o conteúdo da página de termos')}
           </TabsContent>
 
           <TabsContent value="global" className="space-y-6 bg-black">

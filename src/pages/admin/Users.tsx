@@ -24,6 +24,12 @@ interface User {
   motv_user_id?: string;
   created_at: string;
   updated_at: string;
+  subscriptions?: Array<{
+    status: string;
+    plans?: {
+      name: string;
+    };
+  }>;
 }
 
 const AdminUsers = () => {
@@ -82,7 +88,15 @@ const AdminUsers = () => {
       
       let query = supabase
         .from('profiles')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          subscriptions!left(
+            status,
+            plans!left(
+              name
+            )
+          )
+        `, { count: 'exact' })
         .order('created_at', { ascending: false });
 
       // If the current user is not a developer, exclude developer users
@@ -310,11 +324,12 @@ const AdminUsers = () => {
                        className="border-gray-600"
                      />
                    </TableHead>
-                   <TableHead className="text-gray-300">Nome</TableHead>
-                   <TableHead className="text-gray-300">Email</TableHead>
-                   <TableHead className="text-gray-300">Função</TableHead>
-                   <TableHead className="text-gray-300">ID {projectName}</TableHead>
-                   <TableHead className="text-gray-300">Ações</TableHead>
+                    <TableHead className="text-gray-300">Nome</TableHead>
+                    <TableHead className="text-gray-300">Email</TableHead>
+                    <TableHead className="text-gray-300">Plano</TableHead>
+                    <TableHead className="text-gray-300">Função</TableHead>
+                    <TableHead className="text-gray-300">ID {projectName}</TableHead>
+                    <TableHead className="text-gray-300">Ações</TableHead>
                  </TableRow>
                </TableHeader>
               <TableBody>
@@ -337,6 +352,15 @@ const AdminUsers = () => {
                     </TableCell>
                      <TableCell className="text-white">{user.name}</TableCell>
                      <TableCell className="text-white">{user.email}</TableCell>
+                     <TableCell>
+                       {user.subscriptions && user.subscriptions.length > 0 && user.subscriptions[0].status === 'active' ? (
+                         <Badge variant="outline" className="text-xs text-blue-400 border-blue-500/30 bg-blue-500/10">
+                           {user.subscriptions[0].plans?.name || 'Plano Ativo'}
+                         </Badge>
+                       ) : (
+                         <span className="text-gray-500 text-xs">Sem plano</span>
+                       )}
+                     </TableCell>
                      <TableCell>
                        <Badge variant={
                          user.role === 'admin' ? 'admin-success' :

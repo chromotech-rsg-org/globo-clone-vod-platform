@@ -16,6 +16,7 @@ import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
 import Checkout from "./pages/Checkout";
+import Terms from "./pages/Terms";
 import Dashboard from "./pages/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminPackages from "./pages/admin/Packages";
@@ -136,6 +137,7 @@ function AppContent() {
           <Checkout />
         </PublicRoute>
       } />
+      <Route path="/terms" element={<Terms />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={

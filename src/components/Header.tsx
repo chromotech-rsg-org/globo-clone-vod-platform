@@ -30,7 +30,7 @@ const Header = () => {
   }
 
   const logoImage = getCustomization('header', 'header_logo_image', '');
-  const siteName = getCustomization('global', 'global_site_name', 'Globoplay');
+  const siteName = getCustomization('global', 'global_site_name', 'Agroplay');
   const headerBgColor = getCustomization('header', 'header_background_color', 'transparent');
   const headerTextColor = getCustomization('header', 'header_text_color', '#ffffff');
   const headerHoverColor = getCustomization('header', 'header_hover_color', '#ef4444');

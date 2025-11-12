@@ -24,9 +24,11 @@ interface BidHistoryProps {
   bids: Bid[];
   loading: boolean;
   currentUserId?: string;
+  currentUserRole?: string;
 }
 
-const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId }) => {
+const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId, currentUserRole }) => {
+  const isAdminOrDev = currentUserRole === 'admin' || currentUserRole === 'desenvolvedor';
   const getStatusIcon = (status: string, isWinner: boolean, bidOrigin?: string, lotStatus?: string) => {
     if (isWinner) return <Trophy className="h-3 w-3 text-green-400" />;
     
@@ -136,7 +138,7 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids, loading, currentUserId })
                     <p className="font-medium text-white text-sm truncate">
                       {bid.user_id === currentUserId 
                         ? `${bid.user_name || 'Você'} (Você)`
-                        : 'Investidor'
+                        : (isAdminOrDev ? (bid.user_name || 'Usuário') : 'Investidor')
                       }
                     </p>
                     <p className="text-xs text-gray-400">

@@ -6,7 +6,7 @@ import { useCustomizations } from '@/hooks/useCustomizations';
 const CheckoutHeader = () => {
   const { getCustomization } = useCustomizations('global');
   
-  const siteName = getCustomization('global_site_name', 'Globoplay');
+  const siteName = getCustomization('global_site_name', 'Agroplay');
   const logoUrl = getCustomization('global_logo_url', '');
 
   return (

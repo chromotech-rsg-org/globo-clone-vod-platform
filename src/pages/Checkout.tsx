@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRegistrationFlowService } from '@/services/userRegistrationFlow';
+import { collectBrowserData } from '@/utils/browserData';
 import CheckoutHeader from '@/components/checkout/CheckoutHeader';
 import CheckoutFooter from '@/components/checkout/CheckoutFooter';
 import CheckoutSteps from '@/components/checkout/CheckoutSteps';
@@ -116,7 +117,28 @@ const Checkout = () => {
         return;
       }
 
-      // Sucesso!
+      // Sucesso! Salvar aceite de termos
+      if (registrationResult.userId) {
+        try {
+          const browserData = collectBrowserData();
+          const { error: termsError } = await supabase.functions.invoke('save-terms-acceptance', {
+            body: {
+              user_id: registrationResult.userId,
+              subscription_id: null,
+              browser_data: browserData
+            }
+          });
+          
+          if (termsError) {
+            console.error('Error saving terms acceptance:', termsError);
+          } else {
+            console.log('✅ Terms acceptance saved successfully');
+          }
+        } catch (termsError) {
+          console.error('Error saving terms acceptance:', termsError);
+        }
+      }
+
       setModalState({
         type: 'success',
         data: {

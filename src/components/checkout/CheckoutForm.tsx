@@ -9,6 +9,9 @@ import { formatCpf, formatPhone } from '@/utils/formatters';
 import { validatePassword, validatePasswordMatch } from '@/utils/validators';
 import { supabase } from '@/integrations/supabase/client';
 
+import { Checkbox } from '@/components/ui/checkbox';
+import { Link } from 'react-router-dom';
+
 interface CheckoutFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
   isLoading: boolean;
@@ -21,6 +24,7 @@ interface FormData {
   email: string;
   password: string;
   confirmPassword: string;
+  termsAccepted: boolean;
 }
 
 const CheckoutForm = ({ onSubmit, isLoading }: CheckoutFormProps) => {
@@ -31,7 +35,8 @@ const CheckoutForm = ({ onSubmit, isLoading }: CheckoutFormProps) => {
     phone: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    termsAccepted: false
   });
 
   const [couponCode, setCouponCode] = useState('');
@@ -90,6 +95,15 @@ const CheckoutForm = ({ onSubmit, isLoading }: CheckoutFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.termsAccepted) {
+      toast({
+        title: "Ação necessária",
+        description: "Você precisa aceitar os termos e condições para continuar",
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (!validatePasswordMatch(formData.password, formData.confirmPassword)) {
       toast({
@@ -236,7 +250,31 @@ const CheckoutForm = ({ onSubmit, isLoading }: CheckoutFormProps) => {
             )}
           </div>
 
-          <Button 
+          {/* Termos e Condições */}
+          <div className="flex items-start space-x-3 p-4 bg-gray-900 border border-green-600/30 rounded-lg">
+            <Checkbox 
+              id="terms" 
+              checked={formData.termsAccepted}
+              onCheckedChange={(checked) => 
+                setFormData(prev => ({ ...prev, termsAccepted: checked as boolean }))
+              }
+              required
+              className="mt-1"
+            />
+            <label htmlFor="terms" className="text-sm text-gray-300 leading-relaxed cursor-pointer">
+              Eu li e aceito os{' '}
+              <Link 
+                to="/terms" 
+                target="_blank"
+                className="text-green-400 hover:text-green-300 underline font-medium"
+              >
+                Termos e Condições
+              </Link>
+              {' '}e autorizo a coleta dos meus dados para fins de cadastro e contato.
+            </label>
+          </div>
+
+          <Button
             type="submit" 
             className="w-full bg-red-600 hover:bg-red-700"
             disabled={isLoading}

@@ -12,9 +12,10 @@ interface BidHistoryWithFiltersProps {
   lots: AuctionItem[];
   loading: boolean;
   currentUserId?: string;
+  currentUserRole?: string;
 }
 
-const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistoryWithFiltersProps) => {
+const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId, currentUserRole }: BidHistoryWithFiltersProps) => {
   const [selectedLotId, setSelectedLotId] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [originFilter, setOriginFilter] = useState<string>('all');
@@ -230,7 +231,9 @@ const BidHistoryWithFilters = ({ bids, lots, loading, currentUserId }: BidHistor
                         <p className="font-medium text-white text-sm truncate">
                           {isCurrentUser 
                             ? `${bid.user_name || 'Você'} (Você)`
-                            : 'Investidor'
+                            : (currentUserRole === 'admin' || currentUserRole === 'desenvolvedor'
+                                ? (bid.user_name || 'Usuário')
+                                : 'Investidor')
                           }
                         </p>
                         <p className="text-xs text-gray-400">
