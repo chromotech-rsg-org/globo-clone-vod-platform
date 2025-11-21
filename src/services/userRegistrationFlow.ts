@@ -45,14 +45,23 @@ export class UserRegistrationFlowService {
 
       // PASSO 1: Pré-validação do plano (se fornecido)
       let packageCode: string | null = null;
+      let hasPortalIntegration = false;
+      
       if (userData.selectedPlanId) {
         try {
           console.log('[UserRegistrationFlow] 🔎 Pre-validating plan package code...');
           packageCode = await this.getPackageCodeForPlan(userData.selectedPlanId);
-          console.log('[UserRegistrationFlow] ✅ Package code validated:', packageCode);
+          
+          if (packageCode) {
+            console.log('[UserRegistrationFlow] ✅ Package code validated:', packageCode);
+            hasPortalIntegration = true;
+          } else {
+            console.log('[UserRegistrationFlow] ⚠️ Plan has no package - will create user without portal integration');
+            hasPortalIntegration = false;
+          }
         } catch (e) {
-          console.error('[UserRegistrationFlow] ❌ Plan pre-validation failed:', e);
-          throw new Error('Não foi possível encontrar o pacote configurado para o plano selecionado. Verifique a configuração do plano ou tente novamente mais tarde.');
+          console.error('[UserRegistrationFlow] ❌ Error checking plan configuration:', e);
+          throw e; // Re-throw errors that are not "no package" scenarios
         }
       }
 
@@ -69,11 +78,15 @@ export class UserRegistrationFlowService {
         };
       }
 
-      // PASSO 3: Verificar existência no portal (via busca)
-      console.log('[UserRegistrationFlow] 🔎 Checking portal for existing user...');
+      // PASSO 3: Verificar existência no portal (via busca) - APENAS se tiver integração
       let motvUserId: number | null = null;
       let userExistsInPortal = false;
       let portalUserData: any = null;
+      
+      if (!hasPortalIntegration) {
+        console.log('[UserRegistrationFlow] ⚠️ Skipping portal check - no portal integration for this plan');
+      } else {
+        console.log('[UserRegistrationFlow] 🔎 Checking portal for existing user...');
       
       try {
         const searchResult = await MotvApiService.customerSearch(userData.email);
@@ -165,17 +178,18 @@ export class UserRegistrationFlowService {
             }
           }
         }
-      } catch (error: any) {
-        console.error('[UserRegistrationFlow] ❌ Error searching for user in portal:', error);
-        return {
-          success: false,
-          message: 'Erro ao verificar usuário no portal. Tente novamente.',
-          errorType: 'connection'
-        };
+        } catch (error: any) {
+          console.error('[UserRegistrationFlow] ❌ Error searching for user in portal:', error);
+          return {
+            success: false,
+            message: 'Erro ao verificar usuário no portal. Tente novamente.',
+            errorType: 'connection'
+          };
+        }
       }
 
-      // PASSO 4: Se precisar atribuir plano E usuário existe, validar acesso ao portal ANTES de criar local
-      if (userData.selectedPlanId && motvUserId && packageCode && userExistsInPortal) {
+      // PASSO 4: Se tiver integração com portal E usuário existe, validar acesso ao portal ANTES de criar local
+      if (hasPortalIntegration && userData.selectedPlanId && motvUserId && packageCode && userExistsInPortal) {
         console.log('[UserRegistrationFlow] 🔍 Pre-validating portal access for existing user...');
         try {
           // Tenta buscar histórico de planos para validar que o portal está acessível
@@ -191,8 +205,8 @@ export class UserRegistrationFlowService {
         }
       }
       
-      // PASSO 5: Criar usuário no portal (apenas se não existir)
-      if (!motvUserId) {
+      // PASSO 5: Criar usuário no portal (apenas se tiver integração E não existir)
+      if (hasPortalIntegration && !motvUserId) {
         console.log('[UserRegistrationFlow] 📝 Creating user in portal...');
         try {
           const createResult = await MotvApiService.customerCreate({
@@ -217,8 +231,8 @@ export class UserRegistrationFlowService {
         }
       }
 
-      // PASSO 6: Atribuir plano no portal (se fornecido)
-      if (userData.selectedPlanId && motvUserId && packageCode) {
+      // PASSO 6: Atribuir plano no portal (se tiver integração E fornecido)
+      if (hasPortalIntegration && userData.selectedPlanId && motvUserId && packageCode) {
         console.log('[UserRegistrationFlow] 📦 Assigning plan in portal...');
         try {
           await this.managePlanInMotv(motvUserId, packageCode);
@@ -297,8 +311,9 @@ export class UserRegistrationFlowService {
 
   /**
    * Resolve package code via secure backend function
+   * Returns null if no package is configured (plan without portal integration)
    */
-  private static async getPackageCodeForPlan(planId: string): Promise<string> {
+  private static async getPackageCodeForPlan(planId: string): Promise<string | null> {
     console.log('[UserRegistrationFlow] 🔎 Resolving package code for plan via edge function:', planId);
 
     const { data, error } = await supabase.functions.invoke('plans-resolve-package-code', {
@@ -312,9 +327,15 @@ export class UserRegistrationFlowService {
       throw new Error('Erro ao buscar informações do pacote do plano');
     }
 
-    if (!data?.success || !data?.packageCode) {
-      console.error('[UserRegistrationFlow] ❌ Package code not found:', data?.message);
-      throw new Error(data?.message || 'Código do pacote não configurado');
+    if (!data?.success) {
+      console.error('[UserRegistrationFlow] ❌ Package resolution failed:', data?.message);
+      throw new Error(data?.message || 'Erro ao verificar configuração do plano');
+    }
+
+    // If plan has no package configured, return null (registration without portal)
+    if (!data.hasPackage || !data.packageCode) {
+      console.log('[UserRegistrationFlow] ⚠️ Plan has no package - will register without portal integration');
+      return null;
     }
 
     return String(data.packageCode);

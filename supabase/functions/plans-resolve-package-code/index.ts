@@ -74,9 +74,9 @@ serve(async (req) => {
       console.log('[plans-resolve-package-code] 📦 Package via plan.package_id:', { pkg, pkgError });
 
       if (!pkgError && pkg?.code) {
-        console.log('[plans-resolve-package-code] ✅ Package code found via direct relation:', pkg.code);
+      console.log('[plans-resolve-package-code] ✅ Package code found via direct relation:', pkg.code);
         return new Response(
-          JSON.stringify({ success: true, packageCode: String(pkg.code) }),
+          JSON.stringify({ success: true, hasPackage: true, packageCode: String(pkg.code) }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -99,13 +99,14 @@ serve(async (req) => {
     }
 
     if (!planPackages || planPackages.length === 0) {
-      console.error('[plans-resolve-package-code] ❌ No packages found for plan');
+      console.log('[plans-resolve-package-code] ⚠️ No packages configured for plan - will allow registration without portal integration');
       return new Response(
         JSON.stringify({ 
-          success: false, 
-          message: 'Código do pacote não configurado. Por favor, configure o pacote no plano antes de continuar.' 
+          success: true,
+          hasPackage: false,
+          message: 'Plano sem pacote configurado - cadastro permitido sem integração com portal' 
         }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -127,13 +128,14 @@ serve(async (req) => {
     }
 
     if (!packages || packages.length === 0) {
-      console.error('[plans-resolve-package-code] ❌ No valid packages found');
+      console.log('[plans-resolve-package-code] ⚠️ No valid packages found - will allow registration without portal integration');
       return new Response(
         JSON.stringify({ 
-          success: false, 
-          message: 'Nenhum pacote válido encontrado para o plano' 
+          success: true,
+          hasPackage: false,
+          message: 'Plano sem pacote válido - cadastro permitido sem integração com portal' 
         }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -153,7 +155,7 @@ serve(async (req) => {
 
     console.log('[plans-resolve-package-code] ✅ Package code resolved:', preferred.code);
     return new Response(
-      JSON.stringify({ success: true, packageCode: String(preferred.code) }),
+      JSON.stringify({ success: true, hasPackage: true, packageCode: String(preferred.code) }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

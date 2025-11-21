@@ -143,7 +143,8 @@ const Checkout = () => {
         type: 'success',
         data: {
           userName: formData.name,
-          planName: currentPlan.name
+          planName: currentPlan.name,
+          hasPortalAccess: !!registrationResult.motvUserId
         }
       });
 
@@ -240,6 +241,7 @@ const Checkout = () => {
         isOpen={modalState.type === 'success'}
         userName={modalState.data?.userName || ''}
         planName={modalState.data?.planName}
+        hasPortalAccess={modalState.data?.hasPortalAccess}
         onAccessAccount={handleAccessAccount}
         onGoToPortal={handleGoToPortal}
       />
