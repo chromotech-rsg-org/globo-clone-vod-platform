@@ -181,7 +181,7 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || formData.price <= 0) {
+    if (!formData.name || formData.price < 0) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios",
