@@ -631,8 +631,8 @@ const ContentEditor = () => {
     };
 
     return (
-      <div ref={setNodeRef} style={style} className="inline-flex">
-        <TabsTrigger value={section.id} className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50">
+      <div ref={setNodeRef} style={style} className="inline-block flex-shrink-0">
+        <TabsTrigger value={section.id} className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50 whitespace-nowrap">
           <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing mr-2">
             <GripVertical className="h-4 w-4" />
           </div>
@@ -791,11 +791,13 @@ const ContentEditor = () => {
             items={sections.map(s => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            <TabsList className="bg-admin-muted flex gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap">
-              {sections.map(section => (
-                <SortableSectionTab key={section.id} section={section} />
-              ))}
-            </TabsList>
+            <div className="overflow-x-auto overflow-y-hidden">
+              <TabsList className="bg-admin-muted inline-flex gap-2 w-max min-w-full">
+                {sections.map(section => (
+                  <SortableSectionTab key={section.id} section={section} />
+                ))}
+              </TabsList>
+            </div>
           </SortableContext>
         </DndContext>
 
