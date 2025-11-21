@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from '@/components/ui/image-upload';
-import { Save, Edit, Plus, Trash2, Eye, GripVertical, Copy } from 'lucide-react';
+import { Save, Edit, Plus, Trash2, Eye, EyeOff, GripVertical, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -94,7 +94,7 @@ const ContentEditor = () => {
       } = await supabase.from('content_sections').select(`
           *,
           content_items (*)
-        `).eq('active', true).order('order_index');
+        `).order('order_index');
       if (error) throw error;
       setSections(data || []);
     } catch (error) {
@@ -630,6 +630,34 @@ const ContentEditor = () => {
       transition,
     };
 
+    const handleToggleActive = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        const { error } = await supabase
+          .from('content_sections')
+          .update({ active: !section.active })
+          .eq('id', section.id);
+
+        if (error) throw error;
+
+        toast({
+          title: section.active ? "Seção desativada" : "Seção ativada",
+          description: section.active 
+            ? "A seção não aparecerá mais na home"
+            : "A seção agora aparecerá na home",
+        });
+
+        fetchSections();
+      } catch (error) {
+        console.error('Error toggling section:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível alterar o status da seção",
+          variant: "destructive",
+        });
+      }
+    };
+
     return (
       <div ref={setNodeRef} style={style} className="inline-block flex-shrink-0">
         <TabsTrigger value={section.id} className="data-[state=active]:bg-admin-primary data-[state=active]:text-admin-primary-foreground text-slate-50 whitespace-nowrap">
@@ -640,6 +668,15 @@ const ContentEditor = () => {
           <Badge variant="secondary" className="ml-2 text-xs">
             {section.content_items?.length || 0}
           </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`ml-2 h-6 w-6 p-0 ${section.active ? 'hover:bg-yellow-500/20' : 'hover:bg-green-500/20 opacity-50'}`}
+            onClick={handleToggleActive}
+            title={section.active ? "Desativar seção" : "Ativar seção"}
+          >
+            {section.active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+          </Button>
         </TabsTrigger>
       </div>
     );
