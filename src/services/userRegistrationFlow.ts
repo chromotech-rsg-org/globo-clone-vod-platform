@@ -46,6 +46,7 @@ export class UserRegistrationFlowService {
       // PASSO 1: Pré-validação do plano (se fornecido)
       let packageCode: string | null = null;
       let hasPortalIntegration = false;
+      let isZeroPackage = false;
       
       if (userData.selectedPlanId) {
         try {
@@ -54,7 +55,15 @@ export class UserRegistrationFlowService {
           
           if (packageCode) {
             console.log('[UserRegistrationFlow] ✅ Package code validated:', packageCode);
-            hasPortalIntegration = true;
+            
+            // Check if package code is "0" (special case: create user but no plan in MOTV)
+            if (packageCode === "0") {
+              console.log('[UserRegistrationFlow] ⚠️ Package code is "0" - will create user in MOTV but skip plan assignment');
+              isZeroPackage = true;
+              hasPortalIntegration = true; // Still needs to create user in MOTV
+            } else {
+              hasPortalIntegration = true;
+            }
           } else {
             console.log('[UserRegistrationFlow] ⚠️ Plan has no package - will create user without portal integration');
             hasPortalIntegration = false;
@@ -231,8 +240,8 @@ export class UserRegistrationFlowService {
         }
       }
 
-      // PASSO 6: Atribuir plano no portal (se tiver integração E fornecido)
-      if (hasPortalIntegration && userData.selectedPlanId && motvUserId && packageCode) {
+      // PASSO 6: Atribuir plano no portal (se tiver integração E fornecido E não for código "0")
+      if (hasPortalIntegration && userData.selectedPlanId && motvUserId && packageCode && !isZeroPackage) {
         console.log('[UserRegistrationFlow] 📦 Assigning plan in portal...');
         try {
           await this.managePlanInMotv(motvUserId, packageCode);
@@ -243,6 +252,8 @@ export class UserRegistrationFlowService {
           // Usuário fica no portal mas sem plano (pode ser corrigido em nova tentativa)
           throw new Error('Erro ao atribuir o plano no portal. Tente novamente. Se o problema persistir, entre em contato com o suporte.');
         }
+      } else if (isZeroPackage) {
+        console.log('[UserRegistrationFlow] ⚠️ Skipping plan assignment - package code is "0"');
       }
 
       // PASSO 7: Criar usuário no sistema interno (só depois do plano ser atribuído no portal)
@@ -274,7 +285,7 @@ export class UserRegistrationFlowService {
         success: true,
         message: 'Cadastro realizado com sucesso!',
         userId,
-        motvUserId: motvUserId?.toString()
+        motvUserId: isZeroPackage ? undefined : motvUserId?.toString() // No portal access for zero package
       };
 
     } catch (error: any) {
