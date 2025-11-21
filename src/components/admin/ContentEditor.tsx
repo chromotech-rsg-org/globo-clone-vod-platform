@@ -791,7 +791,7 @@ const ContentEditor = () => {
             items={sections.map(s => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            <TabsList className="bg-admin-muted flex gap-2 overflow-x-auto max-w-full">
+            <TabsList className="bg-admin-muted flex gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap">
               {sections.map(section => (
                 <SortableSectionTab key={section.id} section={section} />
               ))}
