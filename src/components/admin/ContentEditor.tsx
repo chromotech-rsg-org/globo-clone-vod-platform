@@ -70,6 +70,7 @@ const ContentEditor = () => {
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [editingSection, setEditingSection] = useState<ContentSection | null>(null);
   const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [editItemModalOpen, setEditItemModalOpen] = useState(false);
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
   const [currentSectionId, setCurrentSectionId] = useState<string>('');
   const { toast } = useToast();
@@ -181,6 +182,7 @@ const ContentEditor = () => {
       await fetchSections();
       setEditingItem(null);
       setItemModalOpen(false);
+      setEditItemModalOpen(false);
       toast({
         title: "Sucesso",
         description: "Item salvo com sucesso!"
@@ -548,6 +550,7 @@ const ContentEditor = () => {
               onClick={() => {
                 setEditingItem(null);
                 setItemModalOpen(false);
+                setEditItemModalOpen(false);
               }} 
               variant="outline" 
               size="sm" 
@@ -699,12 +702,18 @@ const ContentEditor = () => {
                 </div>
               </div>
               <div className="flex space-x-2 bg-black">
-                <Dialog>
+                <Dialog open={editItemModalOpen && editingItem?.id === item.id} onOpenChange={(open) => {
+                  if (!open) {
+                    setEditingItem(null);
+                    setEditItemModalOpen(false);
+                  }
+                }}>
                   <DialogTrigger asChild>
                     <Button 
                       onClick={() => {
                         setEditingItem(item);
                         setCurrentSectionId(section.id);
+                        setEditItemModalOpen(true);
                       }} 
                       variant="outline" 
                       size="sm" 
@@ -782,7 +791,7 @@ const ContentEditor = () => {
             items={sections.map(s => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            <TabsList className="bg-admin-muted flex flex-wrap gap-2">
+            <TabsList className="bg-admin-muted flex gap-2 overflow-x-auto max-w-full">
               {sections.map(section => (
                 <SortableSectionTab key={section.id} section={section} />
               ))}
@@ -800,27 +809,17 @@ const ContentEditor = () => {
                   </p>
                 </div>
                 <div className="flex space-x-2 bg-black">
-                  <Dialog open={sectionModalOpen} onOpenChange={setSectionModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        onClick={() => {
-                          setEditingSection(section);
-                          setSectionModalOpen(true);
-                        }} 
-                        variant="outline" 
-                        size="sm" 
-                        className="border-admin-border text-black bg-white hover:bg-gray-100"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-admin-card border-admin-border">
-                      <DialogHeader>
-                        <DialogTitle className="text-admin-foreground">Editar Seção</DialogTitle>
-                      </DialogHeader>
-                      <SectionEditor section={section} />
-                    </DialogContent>
-                  </Dialog>
+                  <Button 
+                    onClick={() => {
+                      setEditingSection(section);
+                      setSectionModalOpen(true);
+                    }} 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-admin-border text-black bg-white hover:bg-gray-100"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
 
                   <Button 
                     onClick={() => duplicateSection(section)} 
