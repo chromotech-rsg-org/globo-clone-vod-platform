@@ -12,6 +12,7 @@ interface CheckoutSuccessModalProps {
   isOpen: boolean;
   userName: string;
   planName?: string;
+  hasPortalAccess?: boolean;
   onAccessAccount: () => void;
   onGoToPortal: () => void;
 }
@@ -20,6 +21,7 @@ export function CheckoutSuccessModal({
   isOpen,
   userName,
   planName,
+  hasPortalAccess = true,
   onAccessAccount,
   onGoToPortal,
 }: CheckoutSuccessModalProps) {
@@ -50,15 +52,17 @@ export function CheckoutSuccessModal({
             Acessar Minha Conta
           </Button>
 
-          <Button
-            onClick={onGoToPortal}
-            variant="outline"
-            className="w-full"
-            size="lg"
-          >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Ir para o Portal
-          </Button>
+          {hasPortalAccess && (
+            <Button
+              onClick={onGoToPortal}
+              variant="outline"
+              className="w-full"
+              size="lg"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Ir para o Portal
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
