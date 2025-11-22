@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Copy, ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SubscriptionTesterProps {
   environment: 'sandbox' | 'production';
@@ -107,21 +108,35 @@ export const SubscriptionTester: React.FC<SubscriptionTesterProps> = ({ environm
 
     setLoading(true);
     try {
-      const baseUrl = environment === 'sandbox' 
-        ? 'https://sandbox.asaas.com/api/v3'
-        : 'https://www.asaas.com/api/v3';
-
-      const response = await fetch(`${baseUrl}/subscriptions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
+      console.log('[SubscriptionTester] Calling asaas-api-proxy...', {
+        endpoint: '/subscriptions',
+        environment,
+        hasApiKey: !!apiKey
       });
 
-      const data = await response.json();
-      setResponse({ status: response.status, data });
+      // Use supabase.functions.invoke instead of fetch
+      const { data: result, error: functionError } = await supabase.functions.invoke('asaas-api-proxy', {
+        body: {
+          method: 'POST',
+          endpoint: '/subscriptions',
+          body: requestBody,
+          apiKey: apiKey, // Don't add 'Bearer ' - edge function adds it
+          environment
+        }
+      });
+
+      // Check for edge function error
+      if (functionError) {
+        console.error('[SubscriptionTester] Edge function error:', functionError);
+        throw new Error(functionError.message);
+      }
+
+      console.log('[SubscriptionTester] Response received:', result);
+
+      setResponse({ 
+        status: result?.status || 'unknown', 
+        data: result?.data 
+      });
 
       // Save to logs
       const logEntry = {
@@ -130,30 +145,35 @@ export const SubscriptionTester: React.FC<SubscriptionTesterProps> = ({ environm
         endpoint: '/v3/subscriptions',
         environment,
         requestBody,
-        response: { status: response.status, data }
+        response: { status: result?.status, data: result?.data }
       };
       
       const logs = JSON.parse(localStorage.getItem('asaas-request-logs') || '[]');
       logs.unshift(logEntry);
       localStorage.setItem('asaas-request-logs', JSON.stringify(logs.slice(0, 100)));
 
-      if (response.ok) {
+      if (result?.success) {
         toast({
           title: "Assinatura criada com sucesso",
-          description: `ID: ${data.id}`,
+          description: `ID: ${result.data?.id}`,
         });
       } else {
         toast({
           title: "Erro ao criar assinatura",
-          description: data.errors?.[0]?.description || "Erro desconhecido",
+          description: result?.data?.errors?.[0]?.description || result?.error || "Erro desconhecido",
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[SubscriptionTester] Error:', error);
       toast({
         title: "Erro de conexão",
-        description: "Não foi possível conectar com a API do Asaas.",
+        description: error.message || "Não foi possível conectar com a API do Asaas.",
         variant: "destructive"
+      });
+      setResponse({
+        status: 'error',
+        data: { error: error.message }
       });
     } finally {
       setLoading(false);
