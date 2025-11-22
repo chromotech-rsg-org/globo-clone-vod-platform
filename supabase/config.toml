@@ -17,3 +17,15 @@ verify_jwt = false
 
 [functions.manage-subscription-motv]
 verify_jwt = false
+
+[functions.asaas-create-customer]
+verify_jwt = true
+
+[functions.asaas-create-payment]
+verify_jwt = true
+
+[functions.asaas-webhook-handler]
+verify_jwt = false
+
+[functions.asaas-check-payment-status]
+verify_jwt = true

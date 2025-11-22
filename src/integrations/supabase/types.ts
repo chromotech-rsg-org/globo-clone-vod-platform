@@ -14,6 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
+      asaas_customers: {
+        Row: {
+          asaas_customer_id: string
+          created_at: string | null
+          customer_data: Json | null
+          environment: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          asaas_customer_id: string
+          created_at?: string | null
+          customer_data?: Json | null
+          environment: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          asaas_customer_id?: string
+          created_at?: string | null
+          customer_data?: Json | null
+          environment?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_customers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asaas_payments: {
+        Row: {
+          asaas_customer_id: string
+          asaas_payment_id: string
+          bank_slip_url: string | null
+          created_at: string | null
+          credit_card_data: Json | null
+          due_date: string | null
+          environment: string
+          id: string
+          invoice_url: string | null
+          payment_date: string | null
+          payment_method: string
+          pix_copy_paste: string | null
+          pix_qr_code: string | null
+          plan_id: string
+          raw_data: Json | null
+          status: string
+          updated_at: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          asaas_customer_id: string
+          asaas_payment_id: string
+          bank_slip_url?: string | null
+          created_at?: string | null
+          credit_card_data?: Json | null
+          due_date?: string | null
+          environment: string
+          id?: string
+          invoice_url?: string | null
+          payment_date?: string | null
+          payment_method: string
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
+          plan_id: string
+          raw_data?: Json | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+          value: number
+        }
+        Update: {
+          asaas_customer_id?: string
+          asaas_payment_id?: string
+          bank_slip_url?: string | null
+          created_at?: string | null
+          credit_card_data?: Json | null
+          due_date?: string | null
+          environment?: string
+          id?: string
+          invoice_url?: string | null
+          payment_date?: string | null
+          payment_method?: string
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
+          plan_id?: string
+          raw_data?: Json | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asaas_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asaas_settings: {
+        Row: {
+          created_at: string | null
+          environment: string
+          id: string
+          is_active: boolean | null
+          production_api_key: string | null
+          sandbox_api_key: string | null
+          updated_at: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          environment?: string
+          id?: string
+          is_active?: boolean | null
+          production_api_key?: string | null
+          sandbox_api_key?: string | null
+          updated_at?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          environment?: string
+          id?: string
+          is_active?: boolean | null
+          production_api_key?: string | null
+          sandbox_api_key?: string | null
+          updated_at?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      asaas_webhook_events: {
+        Row: {
+          asaas_payment_id: string | null
+          created_at: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean | null
+          processed_at: string | null
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          processed_at?: string | null
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       auction_items: {
         Row: {
           auction_id: string
@@ -976,6 +1161,7 @@ export type Database = {
           id: string
           name: string
           package_id: string | null
+          payment_methods: string[] | null
           payment_type: string | null
           price: number
           priority: number | null
@@ -992,6 +1178,7 @@ export type Database = {
           id?: string
           name: string
           package_id?: string | null
+          payment_methods?: string[] | null
           payment_type?: string | null
           price: number
           priority?: number | null
@@ -1008,6 +1195,7 @@ export type Database = {
           id?: string
           name?: string
           package_id?: string | null
+          payment_methods?: string[] | null
           payment_type?: string | null
           price?: number
           priority?: number | null

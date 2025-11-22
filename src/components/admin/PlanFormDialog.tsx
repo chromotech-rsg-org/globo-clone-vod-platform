@@ -16,6 +16,7 @@ interface Plan {
   price: number;
   billing_cycle: string;
   payment_type: string;
+  payment_methods?: string[];
   active: boolean;
   best_seller: boolean;
   priority: number;
@@ -54,6 +55,7 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
     price: 0,
     billing_cycle: 'monthly',
     payment_type: 'credit_card',
+    payment_methods: ['CREDIT_CARD'] as string[],
     active: true,
     best_seller: false,
     priority: 0,
@@ -103,6 +105,11 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
             price: plan.price,
             billing_cycle: plan.billing_cycle,
             payment_type: plan.payment_type,
+            payment_methods: plan.payment_methods || [
+              plan.payment_type === 'credit_card' ? 'CREDIT_CARD' :
+              plan.payment_type === 'pix' ? 'PIX' : 
+              plan.payment_type === 'boleto' ? 'BOLETO' : 'CREDIT_CARD'
+            ],
             active: plan.active,
             best_seller: plan.best_seller,
             priority: plan.priority,
@@ -120,6 +127,7 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
           price: 0,
           billing_cycle: 'monthly',
           payment_type: 'credit_card',
+          payment_methods: ['CREDIT_CARD'],
           active: true,
           best_seller: false,
           priority: 0,
@@ -200,6 +208,7 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
         price: formData.price,
         billing_cycle: formData.billing_cycle,
         payment_type: formData.payment_type,
+        payment_methods: formData.payment_methods,
         active: formData.active,
         best_seller: formData.best_seller,
         priority: formData.priority,
@@ -316,38 +325,79 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="billing_cycle" className="text-white">Ciclo de Cobrança</Label>
-              <Select 
-                value={formData.billing_cycle} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, billing_cycle: value }))}
-              >
-                <SelectTrigger className="bg-black border-green-600/30 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-black border-green-600/30">
-                  <SelectItem value="monthly" className="text-white hover:bg-gray-800">Mensal</SelectItem>
-                  <SelectItem value="yearly" className="text-white hover:bg-gray-800">Anual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="billing_cycle" className="text-white">Ciclo de Cobrança</Label>
+            <Select 
+              value={formData.billing_cycle} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, billing_cycle: value }))}
+            >
+              <SelectTrigger className="bg-black border-green-600/30 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-black border-green-600/30">
+                <SelectItem value="monthly" className="text-white hover:bg-gray-800">Mensal</SelectItem>
+                <SelectItem value="yearly" className="text-white hover:bg-gray-800">Anual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="payment_type" className="text-white">Tipo de Pagamento</Label>
-              <Select 
-                value={formData.payment_type} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, payment_type: value }))}
-              >
-                <SelectTrigger className="bg-black border-green-600/30 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-black border-green-600/30">
-                  <SelectItem value="credit_card" className="text-white hover:bg-gray-800">Cartão de Crédito</SelectItem>
-                  <SelectItem value="pix" className="text-white hover:bg-gray-800">PIX</SelectItem>
-                  <SelectItem value="boleto" className="text-white hover:bg-gray-800">Boleto</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="space-y-2">
+            <Label className="text-white">Métodos de Pagamento Aceitos</Label>
+            <div className="space-y-2 border border-green-600/30 rounded p-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="method-credit-card"
+                  checked={formData.payment_methods.includes('CREDIT_CARD')}
+                  onCheckedChange={(checked) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      payment_methods: checked
+                        ? [...prev.payment_methods, 'CREDIT_CARD']
+                        : prev.payment_methods.filter(m => m !== 'CREDIT_CARD')
+                    }));
+                  }}
+                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
+                <Label htmlFor="method-credit-card" className="text-white cursor-pointer">
+                  Cartão de Crédito
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="method-pix"
+                  checked={formData.payment_methods.includes('PIX')}
+                  onCheckedChange={(checked) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      payment_methods: checked
+                        ? [...prev.payment_methods, 'PIX']
+                        : prev.payment_methods.filter(m => m !== 'PIX')
+                    }));
+                  }}
+                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
+                <Label htmlFor="method-pix" className="text-white cursor-pointer">
+                  PIX
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="method-boleto"
+                  checked={formData.payment_methods.includes('BOLETO')}
+                  onCheckedChange={(checked) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      payment_methods: checked
+                        ? [...prev.payment_methods, 'BOLETO']
+                        : prev.payment_methods.filter(m => m !== 'BOLETO')
+                    }));
+                  }}
+                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
+                <Label htmlFor="method-boleto" className="text-white cursor-pointer">
+                  Boleto Bancário
+                </Label>
+              </div>
             </div>
           </div>
 
