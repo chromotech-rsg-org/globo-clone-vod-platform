@@ -142,24 +142,35 @@ export const CustomerTester: React.FC<CustomerTesterProps> = ({ environment, api
 
     setLoading(true);
     try {
-      // Use Supabase Edge Function to proxy the request
-      const response = await fetch('/functions/v1/asaas-api-proxy', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      console.log('[CustomerTester] Calling asaas-api-proxy...', {
+        endpoint: '/customers',
+        environment,
+        hasApiKey: !!apiKey
+      });
+
+      // Use supabase.functions.invoke instead of fetch
+      const { data: result, error: functionError } = await supabase.functions.invoke('asaas-api-proxy', {
+        body: {
           method: 'POST',
           endpoint: '/customers',
           body: requestBody,
-          apiKey: `Bearer ${apiKey}`,
+          apiKey: apiKey, // Don't add 'Bearer ' - edge function adds it
           environment
-        })
+        }
       });
 
-      const result = await response.json();
-      setResponse({ status: result.status, data: result.data });
+      // Check for edge function error
+      if (functionError) {
+        console.error('[CustomerTester] Edge function error:', functionError);
+        throw new Error(functionError.message);
+      }
+
+      console.log('[CustomerTester] Response received:', result);
+
+      setResponse({ 
+        status: result?.status || 'unknown', 
+        data: result?.data 
+      });
 
       // Save to logs
       const logEntry = {
@@ -168,14 +179,14 @@ export const CustomerTester: React.FC<CustomerTesterProps> = ({ environment, api
         endpoint: '/v3/customers',
         environment,
         requestBody,
-        response: { status: result.status, data: result.data }
+        response: { status: result?.status, data: result?.data }
       };
       
       const logs = JSON.parse(localStorage.getItem('asaas-request-logs') || '[]');
       logs.unshift(logEntry);
       localStorage.setItem('asaas-request-logs', JSON.stringify(logs.slice(0, 100)));
 
-      if (result.success) {
+      if (result?.success) {
         toast({
           title: "Cliente criado com sucesso",
           description: `ID: ${result.data?.id}`,
@@ -183,15 +194,20 @@ export const CustomerTester: React.FC<CustomerTesterProps> = ({ environment, api
       } else {
         toast({
           title: "Erro ao criar cliente",
-          description: result.data?.errors?.[0]?.description || result.error || "Erro desconhecido",
+          description: result?.data?.errors?.[0]?.description || result?.error || "Erro desconhecido",
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[CustomerTester] Error:', error);
       toast({
         title: "Erro de conexão",
-        description: "Não foi possível conectar com a API do Asaas.",
+        description: error.message || "Não foi possível conectar com a API do Asaas.",
         variant: "destructive"
+      });
+      setResponse({
+        status: 'error',
+        data: { error: error.message }
       });
     } finally {
       setLoading(false);
