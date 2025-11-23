@@ -168,7 +168,14 @@ export const CheckoutTester: React.FC<CheckoutTesterProps> = ({ environment, api
         hasApiKey: !!apiKey
       });
 
-      // Use supabase.functions.invoke instead of fetch
+      // Get the current session to ensure we're authenticated
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error('Você precisa estar autenticado para usar esta funcionalidade');
+      }
+
+      // Use supabase.functions.invoke with explicit authorization
       const { data: result, error: functionError } = await supabase.functions.invoke('asaas-api-proxy', {
         body: {
           method: 'POST',
@@ -176,6 +183,9 @@ export const CheckoutTester: React.FC<CheckoutTesterProps> = ({ environment, api
           body: requestBody,
           apiKey: apiKey, // Don't add 'Bearer ' - edge function adds it
           environment
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`
         }
       });
 
