@@ -68,7 +68,7 @@ serve(async (req) => {
     const response = await fetch(fullUrl, {
       method: method || 'GET',
       headers: {
-        'Authorization': apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
+        'access_token': apiKey,  // Asaas uses 'access_token' header, not Authorization
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
