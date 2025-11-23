@@ -79,24 +79,13 @@ serve(async (req) => {
     const responseData = await response.json();
 
     // Log the request for debugging
-    const logEntry = {
-      timestamp: new Date().toISOString(),
+    console.log('[ASAAS-API-PROXY] Request:', {
       method: method || 'GET',
       endpoint,
       environment,
       status: response.status,
-      success: response.ok,
-      user_id: user.id
-    };
-
-    // Store log in database (optional)
-    await supabaseClient
-      .from('api_request_logs')
-      .insert([logEntry])
-      .catch(() => {
-        // Ignore logging errors - don't fail the main request
-        console.log('Failed to store request log');
-      });
+      success: response.ok
+    });
 
     return new Response(JSON.stringify({
       success: response.ok,
