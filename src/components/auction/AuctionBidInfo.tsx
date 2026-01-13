@@ -70,14 +70,6 @@ const AuctionBidInfo = ({ auction, bids, nextBidValue }: AuctionBidInfoProps) =>
         </div>
         <div>
           <p className="text-sm text-gray-400 uppercase tracking-wide">
-            Lance Inicial
-          </p>
-          <p className="text-lg font-medium text-gray-300">
-            {formatCurrency(auction.initial_bid_value)}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-gray-400 uppercase tracking-wide">
             {getNextBidLabel()}
           </p>
           <p className={`text-xl font-semibold ${hasWinner ? 'text-yellow-400' : 'text-white'}`}>
