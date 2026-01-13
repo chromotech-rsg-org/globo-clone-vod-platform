@@ -124,11 +124,12 @@ const AuctionUserActions = ({
               <Package className="h-4 w-4 text-blue-400" />
               <AlertDescription className="text-blue-300">
                 <p className="font-bold mb-2">Modo Pré-Lance Ativo</p>
-                <p className="mb-3">Selecione o lote para fazer seu lance:</p>
-                <Select value={localSelectedLotId} onValueChange={handleLotChange}>
-                  <SelectTrigger className="w-full bg-gray-800 border-gray-600 text-white">
-                    <SelectValue placeholder="Selecione um lote" />
-                  </SelectTrigger>
+                <p className="mb-3">Selecione o lote para dar seu lance:</p>
+                <div className="flex items-center gap-2">
+                  <Select value={localSelectedLotId} onValueChange={handleLotChange}>
+                    <SelectTrigger className="flex-1 bg-gray-800 border-gray-600 text-white">
+                      <SelectValue placeholder="Selecione um lote" />
+                    </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-600">
                     {preBiddingLots.map((lot) => (
                       <SelectItem key={lot.id} value={lot.id} className="text-white hover:bg-gray-700">
@@ -140,8 +141,20 @@ const AuctionUserActions = ({
                         </div>
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-blue-500/50 text-blue-300 hover:bg-blue-900/30"
+                    onClick={() => {
+                      const lotsSection = document.getElementById('lots-section');
+                      if (lotsSection) lotsSection.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    Ver lotes
+                  </Button>
+                </div>
               </AlertDescription>
             </Alert>
           </div>
@@ -254,7 +267,7 @@ const AuctionUserActions = ({
               <Gavel className="h-5 w-5" />
               <span>
                 {isPreBiddingMode 
-                  ? `Fazer Pré-Lance - ${formatCurrency(nextBidValue)}`
+                  ? `Dar Pré-Lance - ${formatCurrency(nextBidValue)}`
                   : `Lance - ${formatCurrency(nextBidValue)}`
                 }
               </span>
@@ -305,8 +318,9 @@ const AuctionUserActions = ({
                 <Trophy className="h-4 w-4 text-orange-400" />
                 <AlertDescription className="text-orange-300">
                   <div className="text-center">
-                    <p className="font-bold">Leilão Finalizado</p>
-                    <p>Lance vencedor: {formatCurrency(anyWinner.bid_value)}</p>
+                    <p className="font-bold">Lote Finalizado</p>
+                    <p>Este Lote já foi finalizado e possui um vencedor.</p>
+                    <p className="mt-1">Lance vencedor: {formatCurrency(anyWinner.bid_value)}</p>
                   </div>
                 </AlertDescription>
               </Alert>
