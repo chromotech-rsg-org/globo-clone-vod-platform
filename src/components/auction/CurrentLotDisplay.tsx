@@ -82,20 +82,12 @@ const CurrentLotDisplay = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col justify-between px-4 py-4">
-        {/* Valores do Lote */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-400 mb-1">Valor Inicial</p>
-            <p className="text-lg font-bold text-white break-words">
-              {formatCurrency(currentLot.initial_value)}
-            </p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-400 mb-1">Lance Atual</p>
-            <p className="text-xl font-bold text-green-400 break-words">
-              {formatCurrency(currentBidValue)}
-            </p>
-          </div>
+        {/* Valor do Lote */}
+        <div className="bg-gray-800/50 rounded-lg p-4 text-center">
+          <p className="text-sm text-gray-400 mb-1">Lance Atual</p>
+          <p className="text-xl font-bold text-green-400 break-words">
+            {formatCurrency(currentBidValue)}
+          </p>
         </div>
 
         {/* Controles de Incremento */}
