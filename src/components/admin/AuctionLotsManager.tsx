@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, GripVertical, Edit2, Trash2, Save, X, ArrowUpDown, Copy } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Save, X, ArrowUpDown, Copy, AlertTriangle } from 'lucide-react';
 import ImageUpload from '@/components/ui/image-upload';
 import { useAuctionItems } from '@/hooks/useAuctionItems';
 
@@ -14,6 +13,16 @@ import { useToast } from '@/hooks/use-toast';
 import { AuctionItem } from '@/types/auction';
 import CurrencyInput from '@/components/ui/currency-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   DndContext,
   closestCenter,
@@ -75,15 +84,17 @@ const SortableItem = ({
   onQuickStatusUpdate,
   onChange,
   isExpanded = false,
-  onToggleExpand
+  onToggleExpand,
+  hasInProgressLot
 }: {
   item: AuctionItem;
   onDelete: () => void;
   onDuplicate: () => void;
-  onQuickStatusUpdate: (itemId: string, status: string) => void;
+  onQuickStatusUpdate: (itemId: string, status: string, currentStatus: string) => void;
   onChange: (itemId: string, changes: Partial<LotFormData>) => void;
   isExpanded?: boolean;
   onToggleExpand: (itemId: string) => void;
+  hasInProgressLot: boolean;
 }) => {
   const {
     attributes,
@@ -220,7 +231,7 @@ const SortableItem = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onQuickStatusUpdate(item.id, 'not_started');
+                onQuickStatusUpdate(item.id, 'not_started', item.status);
               }}
               className={`h-6 px-2 text-xs ${
                 item.status === 'not_started' 
@@ -238,7 +249,7 @@ const SortableItem = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onQuickStatusUpdate(item.id, 'pre_bidding');
+                onQuickStatusUpdate(item.id, 'pre_bidding', item.status);
               }}
               className={`h-6 px-2 text-xs ${
                 item.status === 'pre_bidding' 
@@ -256,7 +267,7 @@ const SortableItem = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onQuickStatusUpdate(item.id, 'in_progress');
+                onQuickStatusUpdate(item.id, 'in_progress', item.status);
               }}
               className={`h-6 px-2 text-xs ${
                 item.status === 'in_progress' 
@@ -264,6 +275,7 @@ const SortableItem = ({
                   : 'border-green-600 text-green-400 hover:bg-green-900/30'
                 }`}
               title="Em Andamento"
+              disabled={hasInProgressLot && item.status !== 'in_progress'}
             >
               ▶
             </Button>
@@ -274,7 +286,7 @@ const SortableItem = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onQuickStatusUpdate(item.id, 'finished');
+                onQuickStatusUpdate(item.id, 'finished', item.status);
               }}
               className={`h-6 px-2 text-xs ${
                 item.status === 'finished' 
@@ -317,6 +329,13 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
   const [lotChanges, setLotChanges] = useState<LotChanges>({});
   const [allLotsExpanded, setAllLotsExpanded] = useState(false);
   const [expandedLots, setExpandedLots] = useState<Set<string>>(new Set());
+  
+  // Dialog states
+  const [showInProgressWarning, setShowInProgressWarning] = useState(false);
+  const [showFinishWithoutWinnerDialog, setShowFinishWithoutWinnerDialog] = useState(false);
+  const [pendingFinishLotId, setPendingFinishLotId] = useState<string | null>(null);
+  const [showStartNextLotDialog, setShowStartNextLotDialog] = useState(false);
+  
   const [formData, setFormData] = useState<LotFormData>({
     name: '',
     description: '',
@@ -326,6 +345,51 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     image_url: '',
     order_index: 0
   });
+
+  // Check if there's a lot in progress
+  const getInProgressLot = () => {
+    const inProgressFromItems = items.find(item => item.status === 'in_progress');
+    if (inProgressFromItems) return inProgressFromItems;
+    
+    // Also check in pending changes
+    for (const [itemId, changes] of Object.entries(lotChanges)) {
+      if (changes.status === 'in_progress') {
+        return items.find(item => item.id === itemId);
+      }
+    }
+    return null;
+  };
+
+  const hasInProgressLot = !!getInProgressLot();
+
+  // Get the next lot in sequence
+  const getNextLot = (currentLotId: string) => {
+    const currentItem = items.find(item => item.id === currentLotId);
+    if (!currentItem) return null;
+    
+    const sortedItems = [...items].sort((a, b) => a.order_index - b.order_index);
+    const currentIndex = sortedItems.findIndex(item => item.id === currentLotId);
+    
+    // Find next lot that is not finished
+    for (let i = currentIndex + 1; i < sortedItems.length; i++) {
+      if (sortedItems[i].status !== 'finished' && sortedItems[i].status !== 'indisponivel') {
+        return sortedItems[i];
+      }
+    }
+    return null;
+  };
+
+  // Check if lot has a winner bid
+  const checkLotHasWinner = async (lotId: string): Promise<boolean> => {
+    const { data, error } = await supabase
+      .from('bids')
+      .select('id')
+      .eq('auction_item_id', lotId)
+      .eq('is_winner', true)
+      .limit(1);
+    
+    return !error && data && data.length > 0;
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -496,9 +560,59 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     }
   };
 
-  const handleQuickStatusUpdate = (itemId: string, newStatus: string) => {
-    // Only update local state, don't save immediately
+  const handleQuickStatusUpdate = async (itemId: string, newStatus: string, currentStatus: string) => {
+    // Check if trying to set to in_progress when another lot is already in progress
+    if (newStatus === 'in_progress' && currentStatus !== 'in_progress') {
+      const inProgressLot = getInProgressLot();
+      if (inProgressLot && inProgressLot.id !== itemId) {
+        setShowInProgressWarning(true);
+        return;
+      }
+    }
+
+    // Check if finishing a lot
+    if (newStatus === 'finished' && currentStatus === 'in_progress') {
+      const hasWinner = await checkLotHasWinner(itemId);
+      if (!hasWinner) {
+        setPendingFinishLotId(itemId);
+        setShowFinishWithoutWinnerDialog(true);
+        return;
+      }
+    }
+
+    // Normal status update
     handleLotChange(itemId, { status: newStatus as LotFormData['status'] });
+  };
+
+  const handleConfirmFinishWithoutWinner = () => {
+    if (pendingFinishLotId) {
+      handleLotChange(pendingFinishLotId, { status: 'finished' });
+      setShowFinishWithoutWinnerDialog(false);
+      
+      // Check if there's a next lot to start
+      const nextLot = getNextLot(pendingFinishLotId);
+      if (nextLot) {
+        setShowStartNextLotDialog(true);
+      } else {
+        setPendingFinishLotId(null);
+      }
+    }
+  };
+
+  const handleStartNextLot = () => {
+    if (pendingFinishLotId) {
+      const nextLot = getNextLot(pendingFinishLotId);
+      if (nextLot) {
+        handleLotChange(nextLot.id, { status: 'in_progress' });
+      }
+    }
+    setShowStartNextLotDialog(false);
+    setPendingFinishLotId(null);
+  };
+
+  const handleSkipStartNextLot = () => {
+    setShowStartNextLotDialog(false);
+    setPendingFinishLotId(null);
   };
 
   const toggleLotExpansion = (lotId: string) => {
@@ -681,44 +795,6 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
     }
   };
 
-  // Expose methods to parent through ref
-  React.useImperativeHandle(ref, () => ({
-    savePendingChanges: async () => {
-      try {
-        const updates = Object.entries(lotChanges);
-        
-        for (const [itemId, changes] of updates) {
-          if (Object.keys(changes).length > 0) {
-            const { error } = await supabase
-              .from('auction_items')
-              .update(changes)
-              .eq('id', itemId);
-
-            if (error) throw error;
-          }
-        }
-
-        if (updates.length > 0) {
-          toast({
-            title: "Lotes salvos",
-            description: `${updates.length} lote(s) foram atualizados com sucesso.`,
-          });
-          
-          setLotChanges({});
-          refetch();
-        }
-      } catch (error: any) {
-        console.error('Error saving lot changes:', error);
-        toast({
-          title: "Erro ao salvar lotes",
-          description: error.message,
-          variant: "destructive",
-        });
-        throw error;
-      }
-    }
-  }));
-
   if (loading) {
     return <div className="text-center py-4 text-gray-400">Carregando lotes...</div>;
   }
@@ -882,12 +958,96 @@ export const AuctionLotsManager = React.forwardRef<AuctionLotsManagerRef, Auctio
                    onChange={handleLotChange}
                    isExpanded={expandedLots.has(item.id)}
                    onToggleExpand={toggleLotExpansion}
+                   hasInProgressLot={hasInProgressLot}
                  />
                 ))}
               </div>
             </SortableContext>
           </DndContext>
         )}
+
+        {/* Warning Dialog: Cannot have two lots in progress */}
+        <AlertDialog open={showInProgressWarning} onOpenChange={setShowInProgressWarning}>
+          <AlertDialogContent className="bg-gray-900 border-yellow-600/50">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-yellow-400 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                Lote em Andamento
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-300">
+                Já existe um lote em andamento. Você precisa finalizar o lote atual antes de iniciar outro.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction 
+                onClick={() => setShowInProgressWarning(false)}
+                className="bg-yellow-600 hover:bg-yellow-700"
+              >
+                Entendi
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Dialog: Finish without winner */}
+        <AlertDialog open={showFinishWithoutWinnerDialog} onOpenChange={setShowFinishWithoutWinnerDialog}>
+          <AlertDialogContent className="bg-gray-900 border-orange-600/50">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-orange-400 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                Finalizar Sem Vencedor
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-300">
+                Este lote não possui um lance vencedor definido. Deseja finalizar mesmo assim?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel 
+                onClick={() => {
+                  setShowFinishWithoutWinnerDialog(false);
+                  setPendingFinishLotId(null);
+                }}
+                className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              >
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleConfirmFinishWithoutWinner}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                Sim, Finalizar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Dialog: Start next lot */}
+        <AlertDialog open={showStartNextLotDialog} onOpenChange={setShowStartNextLotDialog}>
+          <AlertDialogContent className="bg-gray-900 border-green-600/50">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-green-400">
+                Iniciar Próximo Lote?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-300">
+                O lote foi finalizado. Deseja iniciar o próximo lote automaticamente?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel 
+                onClick={handleSkipStartNextLot}
+                className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              >
+                Não, apenas finalizar
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleStartNextLot}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Sim, Iniciar Próximo
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
