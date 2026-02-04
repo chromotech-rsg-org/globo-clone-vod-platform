@@ -238,44 +238,55 @@ const AuctionUserActions = ({
           </Alert>
         )}
          
-      {/* Botão Principal - SEMPRE mostrar em pré-lance, priorizando habilitação */}
+      {/* Botão Principal - Mostrar habilitação sempre, mas lance só quando há lote ativo ou pré-lance */}
       {(shouldAllowBidding || isPreBiddingMode) && (
-        <Button 
-          onClick={
-            userState === 'need_registration' 
-              ? onRequestRegistration 
-              : userState === 'can_bid' 
-              ? handleBidClick 
-              : stateInfo.onClick
-          }
-          disabled={
-            submittingBid || 
-            userState === 'registration_pending' ||
-            (userState !== 'need_registration' && !shouldAllowBidding) ||
-            (isPreBiddingMode && hasMultiplePreBiddingLots && !localSelectedLotId)
-          }
-          className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50"
-        >
-          {submittingBid ? (
-            <span>Enviando lance...</span>
-          ) : userState === 'need_registration' ? (
-            <span>Habilite-se</span>
-          ) : userState === 'registration_pending' ? (
-            <span>Habilitação em Análise</span>
-          ) : userState === 'can_bid' ? (
-            <div className="flex items-center justify-center gap-2">
-              <Gavel className="h-5 w-5" />
-              <span>
-                {isPreBiddingMode 
-                  ? `Dar Pré-Lance - ${formatCurrency(nextBidValue)}`
-                  : `Lance - ${formatCurrency(nextBidValue)}`
-                }
-              </span>
-            </div>
-          ) : (
-            <span>Aguardando...</span>
+        <>
+          {/* Botão de habilitação - sempre visível quando precisa se habilitar */}
+          {userState === 'need_registration' && (
+            <Button 
+              onClick={onRequestRegistration}
+              className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-bold text-lg"
+            >
+              <span>Habilite-se</span>
+            </Button>
           )}
-        </Button>
+          
+          {/* Botão de habilitação em análise */}
+          {userState === 'registration_pending' && (
+            <Button 
+              disabled
+              className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50"
+            >
+              <span>Habilitação em Análise</span>
+            </Button>
+          )}
+          
+          {/* Botão de lance - só mostrar se há lote em andamento (ao vivo) ou pré-lance ativo */}
+          {userState === 'can_bid' && (isPreBiddingMode || !isTransmissionEnded) && (
+            <Button 
+              onClick={handleBidClick}
+              disabled={
+                submittingBid || 
+                (isPreBiddingMode && hasMultiplePreBiddingLots && !localSelectedLotId)
+              }
+              className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-bold text-lg disabled:opacity-50"
+            >
+              {submittingBid ? (
+                <span>Enviando lance...</span>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <Gavel className="h-5 w-5" />
+                  <span>
+                    {isPreBiddingMode 
+                      ? `Dar Pré-Lance - ${formatCurrency(nextBidValue)}`
+                      : `Lance - ${formatCurrency(nextBidValue)}`
+                    }
+                  </span>
+                </div>
+              )}
+            </Button>
+          )}
+        </>
       )}
 
         {/* Status do lance do usuário */}
