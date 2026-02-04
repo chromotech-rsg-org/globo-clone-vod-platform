@@ -21,6 +21,7 @@ interface AuctionUserActionsProps {
   selectedLotId?: string;
   customIncrement?: number;
   nextBidValue?: number;
+  hasActiveLot?: boolean; // Nova prop para saber se há lote em andamento
   onBidClick: (lotId?: string) => void;
   onRequestRegistration: () => void;
   onLotSelect?: (lotId: string) => void;
@@ -39,6 +40,7 @@ const AuctionUserActions = ({
   selectedLotId,
   customIncrement = 0,
   nextBidValue = 0,
+  hasActiveLot = false,
   onBidClick,
   onRequestRegistration,
   onLotSelect,
@@ -262,7 +264,7 @@ const AuctionUserActions = ({
           )}
           
           {/* Botão de lance - só mostrar se há lote em andamento (ao vivo) ou pré-lance ativo */}
-          {userState === 'can_bid' && (isPreBiddingMode || !isTransmissionEnded) && (
+          {userState === 'can_bid' && (isPreBiddingMode || hasActiveLot) && (
             <Button 
               onClick={handleBidClick}
               disabled={
