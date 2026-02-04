@@ -45,8 +45,12 @@ export const useAuctionItems = (auctionId: string | undefined) => {
   useEffect(() => {
     if (!auctionId) return;
 
+    const channelId = Math.random().toString(36).slice(2);
+    const channelName = `auction_items_changes_${auctionId}_${channelId}`;
+    console.log(`📡 [useAuctionItems] Creating channel: ${channelName}`);
+
     const channel = supabase
-      .channel(`auction_items_changes_${auctionId}_${Math.random().toString(36).slice(2)}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -55,13 +59,34 @@ export const useAuctionItems = (auctionId: string | undefined) => {
           table: 'auction_items',
           filter: `auction_id=eq.${auctionId}`,
         },
-        () => {
-          fetchItems();
+        (payload) => {
+          console.log('🔔 [useAuctionItems] Real-time lot update:', payload);
+          
+          // Atualização imediata com dados do payload
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedItem = payload.new as AuctionItem;
+            console.log('✨ [useAuctionItems] Atualizando lote imediatamente:', updatedItem);
+            
+            setItems(currentItems => 
+              currentItems.map(item => 
+                item.id === updatedItem.id ? updatedItem : item
+              )
+            );
+          } else if (payload.eventType === 'INSERT' && payload.new) {
+            console.log('➕ [useAuctionItems] Novo lote adicionado');
+            fetchItems();
+          } else if (payload.eventType === 'DELETE') {
+            console.log('➖ [useAuctionItems] Lote removido');
+            fetchItems();
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`📡 [useAuctionItems] Subscription status: ${status}`);
+      });
 
     return () => {
+      console.log(`📡 [useAuctionItems] Removing channel: ${channelName}`);
       supabase.removeChannel(channel);
     };
   }, [auctionId, fetchItems]);

@@ -101,11 +101,21 @@ export const useAuctionDetails = (auctionId: string) => {
           schema: 'public',
           table: 'auctions',
           filter: `id=eq.${auctionId}`
-        }, () => {
-          console.log('🔔 [useAuctionDetails] Real-time auction update');
+        }, (payload) => {
+          console.log('🔔 [useAuctionDetails] Real-time auction update:', payload);
+          
+          // Atualização imediata com dados do payload
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            console.log('✨ [useAuctionDetails] Atualizando leilão imediatamente:', payload.new);
+            setAuction(payload.new as Auction);
+          }
+          
+          // Também fazer refetch para garantir consistência
           fetchAuction();
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`📡 [useAuctionDetails] Subscription status: ${status}`);
+        });
 
       return () => {
         console.log(`📡 [useAuctionDetails] Removing channel: ${channelName}`);
