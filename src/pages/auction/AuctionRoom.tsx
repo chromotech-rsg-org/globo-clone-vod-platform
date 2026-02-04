@@ -744,6 +744,7 @@ const recalculateNextBidValue = () => {
                 selectedLotId={selectedPreBiddingLotId}
                 customIncrement={customIncrement}
                 nextBidValue={nextBidValue}
+                hasActiveLot={hasActiveLot}
                 onBidClick={openBidDialogComAtualizacao}
                 onRequestRegistration={requestRegistration}
                 onLotSelect={setSelectedPreBiddingLotId}
