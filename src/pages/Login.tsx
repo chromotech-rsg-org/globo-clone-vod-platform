@@ -32,7 +32,7 @@ const Login = () => {
   const { login, register, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { getCustomization } = useCustomizations('login');
+  const { getCustomization, loading: customizationsLoading } = useCustomizations('login');
   
   const handlePlansClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -140,30 +140,6 @@ const Login = () => {
     setModalState({ type: null });
   };
 
-  // Show loading while checking authentication state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-white">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render if user is already logged in
-  if (user) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-white">Redirecionando...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Get customizations using the correct keys
   const loginTitle = getCustomization('form', 'title', 'Acessar Agro Play');
   const loginSubtitle = getCustomization('form', 'subtitle', 'Gerenciar Conta');
@@ -189,6 +165,30 @@ const Login = () => {
       window.open(logoLink, '_blank');
     }
   };
+
+  // Show loading while checking authentication state or loading customizations
+  if (isLoading || customizationsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-white">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if user is already logged in
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-white">Redirecionando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
